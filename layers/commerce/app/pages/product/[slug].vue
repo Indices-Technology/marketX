@@ -11,7 +11,7 @@
 
     <!-- Not found -->
     <div
-      v-else-if="!product"
+      v-else-if="status === 'success' && !product"
       class="flex min-h-[60vh] flex-col items-center justify-center gap-4 text-center"
     >
       <Icon
@@ -316,7 +316,7 @@ const route = useRoute()
 const slug = computed(() => route.params.slug as string)
 
 // Fetch product by slug
-const { data, pending } = await useLazyAsyncData(
+const { data, pending, status } = await useLazyAsyncData(
   `product-${slug.value}`,
   () =>
     $fetch<{ success: boolean; data: any }>(

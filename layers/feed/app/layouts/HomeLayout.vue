@@ -294,9 +294,7 @@ const showCategoryBar = computed(() => {
   return route.name === 'index'
 })
 
-const showFeedReelsTabs = computed(() =>
-  route.name === 'index' || route.name === 'reels',
-)
+const showFeedReelsTabs = computed(() => route.name === 'index')
 
 const showRightSidebar = computed(() => {
   if (props.hideRightSidebar) return false

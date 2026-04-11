@@ -35,7 +35,7 @@
         {{ error }}
       </div>
 
-      <form @submit.prevent="handleSubmit" class="space-y-5">
+      <form class="space-y-5" @submit.prevent="handleSubmit">
         <!-- Banner -->
         <div
           class="space-y-4 rounded-2xl border border-gray-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900"
@@ -138,8 +138,8 @@
               </p>
               <button
                 type="button"
-                @click="logoInput?.click()"
                 class="mt-1 text-[11px] font-semibold text-brand transition-colors hover:text-[#d81b36]"
+                @click="logoInput?.click()"
               >
                 {{ logoPreview ? 'Change logo' : 'Upload logo' }}
               </button>
@@ -284,28 +284,46 @@
         </div>
 
         <!-- Map Discovery -->
-        <div class="space-y-4 rounded-2xl border border-gray-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900">
+        <div
+          class="space-y-4 rounded-2xl border border-gray-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900"
+        >
           <div class="flex items-center justify-between">
             <div>
-              <h2 class="text-[14px] font-semibold text-gray-900 dark:text-neutral-100">Map Discovery</h2>
-              <p class="mt-0.5 text-[12px] text-gray-500 dark:text-neutral-400">Let buyers find your store on the Near Me map</p>
+              <h2
+                class="text-[14px] font-semibold text-gray-900 dark:text-neutral-100"
+              >
+                Map Discovery
+              </h2>
+              <p class="mt-0.5 text-[12px] text-gray-500 dark:text-neutral-400">
+                Let buyers find your store on the Near Me map
+              </p>
             </div>
             <button
               type="button"
               class="flex items-center gap-2 rounded-xl px-3 py-2 text-[12px] font-semibold transition"
-              :class="form.hideLocation
-                ? 'bg-gray-100 text-gray-500 dark:bg-neutral-800 dark:text-neutral-400'
-                : 'bg-brand/10 text-brand'"
+              :class="
+                form.hideLocation
+                  ? 'bg-gray-100 text-gray-500 dark:bg-neutral-800 dark:text-neutral-400'
+                  : 'bg-brand/10 text-brand'
+              "
               @click="form.hideLocation = !form.hideLocation"
             >
-              <Icon :name="form.hideLocation ? 'mdi:eye-off-outline' : 'mdi:eye-outline'" size="15" />
+              <Icon
+                :name="
+                  form.hideLocation ? 'mdi:eye-off-outline' : 'mdi:eye-outline'
+                "
+                size="15"
+              />
               {{ form.hideLocation ? 'Hidden' : 'Visible on map' }}
             </button>
           </div>
 
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="mb-1.5 block text-[12px] font-semibold text-gray-600 dark:text-neutral-400">City</label>
+              <label
+                class="mb-1.5 block text-[12px] font-semibold text-gray-600 dark:text-neutral-400"
+                >City</label
+              >
               <input
                 v-model="form.city"
                 type="text"
@@ -314,7 +332,10 @@
               />
             </div>
             <div>
-              <label class="mb-1.5 block text-[12px] font-semibold text-gray-600 dark:text-neutral-400">State / Region</label>
+              <label
+                class="mb-1.5 block text-[12px] font-semibold text-gray-600 dark:text-neutral-400"
+                >State / Region</label
+              >
               <input
                 v-model="form.state"
                 type="text"
@@ -325,7 +346,10 @@
           </div>
 
           <div>
-            <label class="mb-1.5 block text-[12px] font-semibold text-gray-600 dark:text-neutral-400">Display location label</label>
+            <label
+              class="mb-1.5 block text-[12px] font-semibold text-gray-600 dark:text-neutral-400"
+              >Display location label</label
+            >
             <input
               v-model="form.locationLabel"
               type="text"
@@ -336,14 +360,21 @@
 
           <div>
             <div class="mb-1.5 flex items-center justify-between">
-              <label class="text-[12px] font-semibold text-gray-600 dark:text-neutral-400">GPS Coordinates</label>
+              <label
+                class="text-[12px] font-semibold text-gray-600 dark:text-neutral-400"
+                >GPS Coordinates</label
+              >
               <button
                 type="button"
                 :disabled="gettingLocation"
                 class="flex items-center gap-1 rounded-lg bg-gray-100 px-2.5 py-1.5 text-[11px] font-semibold text-gray-600 transition hover:bg-brand/10 hover:text-brand disabled:opacity-50 dark:bg-neutral-800 dark:text-neutral-300"
                 @click="detectLocation"
               >
-                <Icon :name="gettingLocation ? 'mdi:loading' : 'mdi:crosshairs-gps'" size="13" :class="gettingLocation && 'animate-spin'" />
+                <Icon
+                  :name="gettingLocation ? 'mdi:loading' : 'mdi:crosshairs-gps'"
+                  size="13"
+                  :class="gettingLocation && 'animate-spin'"
+                />
                 {{ gettingLocation ? 'Detecting…' : 'Detect my location' }}
               </button>
             </div>
@@ -364,7 +395,8 @@
               />
             </div>
             <p class="mt-1.5 text-[11px] text-gray-400 dark:text-neutral-500">
-              Used to show your store on the buyer map. City-level precision recommended.
+              Used to show your store on the buyer map. City-level precision
+              recommended.
             </p>
           </div>
         </div>
@@ -585,7 +617,9 @@ const detectLocation = () => {
       form.longitude = Math.round(pos.coords.longitude * 1e6) / 1e6
       gettingLocation.value = false
     },
-    () => { gettingLocation.value = false },
+    () => {
+      gettingLocation.value = false
+    },
     { enableHighAccuracy: false, timeout: 10000 },
   )
 }

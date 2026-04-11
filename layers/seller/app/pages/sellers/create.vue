@@ -541,6 +541,111 @@
           </Transition>
         </div>
 
+        <!-- Map Discovery accordion -->
+        <div
+          class="overflow-hidden rounded-2xl border border-gray-200 dark:border-neutral-700"
+        >
+          <button
+            type="button"
+            class="flex w-full items-center justify-between px-4 py-3.5 text-left transition-colors hover:bg-gray-50 dark:hover:bg-neutral-800/50"
+            @click="mapOpen = !mapOpen"
+          >
+            <div class="flex items-center gap-3">
+              <div
+                class="flex h-8 w-8 items-center justify-center rounded-xl bg-brand/10"
+              >
+                <Icon name="mdi:map-marker-outline" size="16" class="text-brand" />
+              </div>
+              <div>
+                <p class="text-[13px] font-semibold text-gray-800 dark:text-neutral-200">
+                  Map Discovery
+                  <span class="ml-1.5 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold text-gray-400 dark:bg-neutral-800 dark:text-neutral-500">optional</span>
+                </p>
+                <p class="text-[11px] text-gray-400 dark:text-neutral-500">
+                  Let buyers find your store on the Near Me map
+                </p>
+              </div>
+            </div>
+            <Icon
+              name="mdi:chevron-down"
+              size="18"
+              class="shrink-0 text-gray-400 transition-transform duration-200"
+              :class="mapOpen ? 'rotate-180' : ''"
+            />
+          </button>
+
+          <Transition
+            enter-active-class="transition-all duration-200 ease-out"
+            enter-from-class="opacity-0 -translate-y-1"
+            enter-to-class="opacity-100 translate-y-0"
+            leave-active-class="transition-all duration-150 ease-in"
+            leave-from-class="opacity-100 translate-y-0"
+            leave-to-class="opacity-0 -translate-y-1"
+          >
+            <div
+              v-if="mapOpen"
+              class="space-y-3 border-t border-gray-100 px-4 pb-4 pt-3 dark:border-neutral-700"
+            >
+              <!-- Visibility toggle -->
+              <div class="flex items-center justify-between">
+                <p class="text-[12px] font-semibold text-gray-600 dark:text-neutral-400">Show on map</p>
+                <button
+                  type="button"
+                  class="flex items-center gap-2 rounded-xl px-3 py-2 text-[12px] font-semibold transition"
+                  :class="form.hideLocation
+                    ? 'bg-gray-100 text-gray-500 dark:bg-neutral-800 dark:text-neutral-400'
+                    : 'bg-brand/10 text-brand'"
+                  @click="form.hideLocation = !form.hideLocation"
+                >
+                  <Icon :name="form.hideLocation ? 'mdi:eye-off-outline' : 'mdi:eye-outline'" size="15" />
+                  {{ form.hideLocation ? 'Hidden' : 'Visible on map' }}
+                </button>
+              </div>
+
+              <!-- City + State -->
+              <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label class="mb-1 block text-[11px] font-semibold text-gray-500 dark:text-neutral-400">City</label>
+                  <input v-model="form.city" type="text" placeholder="Lagos" class="input-sm" />
+                </div>
+                <div>
+                  <label class="mb-1 block text-[11px] font-semibold text-gray-500 dark:text-neutral-400">State / Region</label>
+                  <input v-model="form.state" type="text" placeholder="Lagos State" class="input-sm" />
+                </div>
+              </div>
+
+              <!-- Display label -->
+              <div>
+                <label class="mb-1 block text-[11px] font-semibold text-gray-500 dark:text-neutral-400">Display location label</label>
+                <input v-model="form.locationLabel" type="text" placeholder="e.g. Yaba, Lagos" class="input-sm" />
+              </div>
+
+              <!-- GPS coordinates -->
+              <div>
+                <div class="mb-1.5 flex items-center justify-between">
+                  <label class="text-[11px] font-semibold text-gray-500 dark:text-neutral-400">GPS Coordinates</label>
+                  <button
+                    type="button"
+                    :disabled="gettingLocation"
+                    class="flex items-center gap-1 rounded-lg bg-gray-100 px-2.5 py-1.5 text-[11px] font-semibold text-gray-600 transition hover:bg-brand/10 hover:text-brand disabled:opacity-50 dark:bg-neutral-800 dark:text-neutral-300"
+                    @click="detectLocation"
+                  >
+                    <Icon :name="gettingLocation ? 'mdi:loading' : 'mdi:crosshairs-gps'" size="13" :class="gettingLocation && 'animate-spin'" />
+                    {{ gettingLocation ? 'Detecting…' : 'Detect my location' }}
+                  </button>
+                </div>
+                <div class="grid grid-cols-2 gap-2.5">
+                  <input v-model.number="form.latitude" type="number" step="0.000001" placeholder="Latitude e.g. 6.5244" class="input-sm" />
+                  <input v-model.number="form.longitude" type="number" step="0.000001" placeholder="Longitude e.g. 3.3792" class="input-sm" />
+                </div>
+                <p class="mt-1.5 text-[11px] text-gray-400 dark:text-neutral-500">
+                  Used to show your store on the buyer map. City-level precision recommended.
+                </p>
+              </div>
+            </div>
+          </Transition>
+        </div>
+
         <!-- Submit -->
         <button
           type="submit"
@@ -607,6 +712,8 @@ const isUploadingLogo = ref(false)
 const isUploadingBanner = ref(false)
 const isSubmitting = ref(false)
 const shipFromOpen = ref(false)
+const mapOpen = ref(false)
+const gettingLocation = ref(false)
 
 const form = reactive({
   store_name: '',
@@ -625,12 +732,35 @@ const form = reactive({
   shipFromZip: '',
   shipFromCountry: 'NG',
   shipFromPhone: '',
+  // Map / Discovery
+  latitude: null as number | null,
+  longitude: null as number | null,
+  city: '',
+  state: '',
+  locationLabel: '',
+  hideLocation: false,
 })
 
 // Per-field inline errors
 const fieldErrors = reactive<Record<string, string>>({})
 const clearFieldError = (field: string) => {
   fieldErrors[field] = ''
+}
+
+// ── Location detection ──────────────────────────────────────────────────────
+
+const detectLocation = () => {
+  if (!navigator.geolocation) return
+  gettingLocation.value = true
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      form.latitude = Math.round(pos.coords.latitude * 1e6) / 1e6
+      form.longitude = Math.round(pos.coords.longitude * 1e6) / 1e6
+      gettingLocation.value = false
+    },
+    () => { gettingLocation.value = false },
+    { enableHighAccuracy: false, timeout: 10000 },
+  )
 }
 
 // ── Client-side validation ──────────────────────────────────────────────────
@@ -796,6 +926,13 @@ const handleSubmit = async () => {
       shipFromZip: form.shipFromZip || undefined,
       shipFromCountry: form.shipFromCountry || undefined,
       shipFromPhone: form.shipFromPhone || undefined,
+      // Map / Discovery
+      latitude: form.latitude,
+      longitude: form.longitude,
+      city: form.city || undefined,
+      state: form.state || undefined,
+      locationLabel: form.locationLabel || undefined,
+      hideLocation: form.hideLocation,
     })
   } catch (err: any) {
     // Map API field errors back to inline messages
