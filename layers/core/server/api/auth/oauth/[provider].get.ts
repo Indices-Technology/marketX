@@ -39,8 +39,8 @@ export default defineEventHandler(async (event) => {
   }
 
   const config = useRuntimeConfig()
-  const appUrl = (config.public.baseURL as string) || 'http://localhost:3000'
-  const callback = `${appUrl.replace(/\/$/, '')}/api/auth/oauth/${provider}/callback`
+  const appUrl = ((config.public.baseURL as string) || 'http://localhost:3000').trim().replace(/\/$/, '')
+  const callback = `${appUrl}/api/auth/oauth/${provider}/callback`
   const state = crypto.randomUUID()
   const authorizeUrl = getOAuthAuthorizeUrl(provider, state, callback)
 

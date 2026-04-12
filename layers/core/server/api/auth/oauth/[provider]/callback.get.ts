@@ -30,9 +30,9 @@ export default defineEventHandler(async (event) => {
   const error = typeof query.error === 'string' ? query.error : ''
 
   const config = useRuntimeConfig()
-  const appUrl = (
-    (config.public.baseURL as string) || 'http://localhost:3000'
-  ).replace(/\/$/, '')
+  const appUrl = ((config.public.baseURL as string) || 'http://localhost:3000')
+    .trim()
+    .replace(/\/$/, '')
   const redirectPath = decodeURIComponent(
     getCookie(event, 'oauth_redirect') || '/',
   )
