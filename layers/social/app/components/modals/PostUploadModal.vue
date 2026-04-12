@@ -38,7 +38,13 @@
           </div>
 
           <!-- ── Scrollable body ── -->
-          <div class="flex-1 overflow-y-auto overscroll-contain">
+          <div
+            class="flex-1 overflow-y-auto overscroll-contain"
+            @dragover.prevent="isDragging = true"
+            @dragleave.prevent="isDragging = false"
+            @drop.prevent="handleDrop"
+            :class="isDragging ? 'ring-2 ring-inset ring-brand/40' : ''"
+          >
             <!-- Author row -->
             <div class="flex items-center gap-3 px-4 pb-1 pt-3">
               <Avatar
@@ -54,21 +60,21 @@
                 </p>
                 <button
                   @click="showContentTypeSelector = true"
-                  class="mt-0.5 flex items-center gap-1 text-[12px] text-gray-500 transition-colors hover:text-brand dark:text-neutral-400"
+                  class="mt-0.5 flex items-center gap-1 rounded-full border border-gray-200 px-2 py-0.5 text-[11px] font-medium text-gray-500 transition-colors hover:border-brand hover:text-brand dark:border-neutral-700 dark:text-neutral-400"
                 >
-                  <Icon name="mdi:label-outline" size="14" />
+                  <Icon name="mdi:label-outline" size="12" />
                   {{ contentTypeLabel }}
-                  <Icon name="mdi:chevron-down" size="14" />
+                  <Icon name="mdi:chevron-down" size="12" />
                 </button>
               </div>
             </div>
 
             <!-- Caption textarea -->
-            <div class="px-4 pb-3">
+            <div class="px-4 pb-2 pt-1">
               <textarea
                 v-model="content"
                 :placeholder="$t('upload.whatOnMind')"
-                class="min-h-[90px] w-full resize-none bg-transparent p-0 text-[15px] leading-relaxed text-gray-900 placeholder-gray-400 focus:outline-none dark:text-neutral-100 dark:placeholder-neutral-500"
+                class="caption-input w-full resize-none bg-transparent p-0 text-[16px] leading-relaxed text-gray-900 placeholder-gray-400 focus:outline-none dark:text-neutral-100 dark:placeholder-neutral-500"
                 @input="extractHashtags"
               />
               <div
@@ -84,12 +90,10 @@
               </div>
             </div>
 
-            <!-- ── Media Grid ── -->
-            <div class="px-4 pb-3">
-              <!-- Previews grid -->
+            <!-- ── Media previews (only when files are selected) ── -->
+            <div v-if="mediaFiles.length > 0" class="px-4 pb-3">
               <div
-                v-if="mediaFiles.length > 0"
-                class="mb-2 grid gap-1.5"
+                class="grid gap-1.5"
                 :class="gridClass"
               >
                 <div
@@ -178,69 +182,11 @@
                   }}</span>
                 </button>
               </div>
-
-              <!-- Empty drop zone -->
-              <div
-                v-if="mediaFiles.length === 0"
-                class="cursor-pointer rounded-2xl border-2 border-dashed p-8 text-center transition-colors"
-                :class="
-                  isDragging
-                    ? 'border-brand bg-brand/5'
-                    : 'border-gray-200 hover:border-brand hover:bg-gray-50 dark:border-neutral-700 dark:hover:bg-neutral-800'
-                "
-                @click="triggerFileInput"
-                @dragover.prevent="isDragging = true"
-                @dragleave.prevent="isDragging = false"
-                @drop.prevent="handleDrop"
-              >
-                <div
-                  class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 dark:bg-neutral-800"
-                >
-                  <Icon
-                    name="mdi:image-plus-outline"
-                    size="32"
-                    class="text-gray-400 dark:text-neutral-500"
-                  />
-                </div>
-                <p
-                  class="mb-1 text-[14px] font-semibold text-gray-700 dark:text-neutral-300"
-                >
-                  {{ $t('upload.addPhotosVideos') }}
-                </p>
-                <p class="text-[12px] text-gray-400 dark:text-neutral-500">
-                  {{ $t('upload.dragDrop') }}
-                </p>
-              </div>
-
-              <input
-                ref="fileInput"
-                type="file"
-                accept="image/*,video/*"
-                multiple
-                class="hidden"
-                @change="handleFileSelect"
-              />
             </div>
 
-            <!-- ── Background music ── -->
-            <div class="px-4 pb-3">
-              <div v-if="!selectedMusic">
-                <button
-                  :disabled="mediaFiles.length === 0"
-                  class="flex items-center gap-2 rounded-full px-3 py-2 text-[13px] font-medium transition-all disabled:cursor-not-allowed disabled:opacity-40"
-                  :class="
-                    mediaFiles.length > 0
-                      ? 'bg-gradient-to-r from-pink-500/10 to-purple-500/10 text-pink-600 hover:from-pink-500/20 hover:to-purple-500/20 dark:text-pink-400'
-                      : 'bg-gray-100 text-gray-400 dark:bg-neutral-800'
-                  "
-                  @click="showMusicPicker = true"
-                >
-                  <Icon name="mdi:music-note-plus" size="16" />
-                  {{ $t('upload.addMusic') }}
-                </button>
-              </div>
+            <!-- ── Music chip (when selected) ── -->
+            <div v-if="selectedMusic" class="px-4 pb-3">
               <div
-                v-else
                 class="flex items-center gap-3 rounded-xl border border-pink-100 bg-gradient-to-r from-pink-50 to-purple-50 px-3 py-2.5 dark:border-pink-900/30 dark:from-pink-950/20 dark:to-purple-950/20"
               >
                 <div
@@ -271,100 +217,128 @@
               </div>
             </div>
 
-            <!-- Product tagging -->
-            <div
-              v-if="showProductTagging"
-              class="border-t border-gray-100 px-4 pb-3 pt-3 dark:border-neutral-800"
-            >
-              <button
-                @click="showProductSelector = true"
-                class="flex items-center gap-2 text-[13px] text-gray-500 transition-colors hover:text-brand dark:text-neutral-400"
-              >
-                <Icon name="mdi:tag-outline" size="18" />
-                <span>{{ $t('upload.tagProducts') }}</span>
-                <span
-                  v-if="taggedProducts.length > 0"
-                  class="ml-1 rounded-full bg-brand/10 px-1.5 py-0.5 text-[11px] font-semibold text-brand"
-                  >{{ taggedProducts.length }}</span
-                >
-              </button>
-              <div
-                v-if="taggedProducts.length > 0"
-                class="mt-2 flex flex-wrap gap-2"
-              >
+            <!-- ── Tagged products chips ── -->
+            <div v-if="taggedProducts.length > 0" class="px-4 pb-3">
+              <div class="flex flex-wrap gap-2">
                 <div
                   v-for="product in taggedProducts"
                   :key="product.id"
-                  class="flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-[12px] dark:bg-neutral-800"
+                  class="flex items-center gap-1.5 rounded-full bg-brand/10 px-2.5 py-1 text-[12px]"
                 >
-                  <span class="text-gray-800 dark:text-neutral-200">{{
-                    product.name
-                  }}</span>
+                  <Icon name="mdi:tag-outline" size="12" class="text-brand" />
+                  <span class="font-medium text-brand">{{ product.name }}</span>
                   <button @click="removeProduct(product.id)">
                     <Icon
                       name="mdi:close-circle"
                       size="14"
-                      class="text-gray-400"
+                      class="text-brand/60"
                     />
                   </button>
                 </div>
               </div>
             </div>
 
-            <!-- Advanced options -->
-            <div
-              class="border-t border-gray-100 px-4 pb-8 pt-3 dark:border-neutral-800"
-            >
-              <button
-                @click="showAdvancedOptions = !showAdvancedOptions"
-                class="flex w-full items-center justify-between text-[13px] text-gray-500 transition-colors hover:text-gray-700 dark:text-neutral-400 dark:hover:text-neutral-200"
-              >
-                <div class="flex items-center gap-2">
-                  <Icon name="mdi:tune" size="16" />
-                  {{ $t('upload.advancedOptions') }}
+            <input
+              ref="fileInput"
+              type="file"
+              accept="image/*,video/*"
+              multiple
+              class="hidden"
+              @change="handleFileSelect"
+            />
+          </div>
+
+          <!-- ── Bottom Toolbar ── -->
+          <div class="shrink-0 border-t border-gray-100 dark:border-neutral-800">
+            <!-- Advanced options panel -->
+            <Transition name="expand">
+              <div v-if="showAdvancedOptions" class="space-y-3 px-4 pb-3 pt-3">
+                <div>
+                  <label
+                    class="mb-1.5 block text-[12px] font-medium text-gray-600 dark:text-neutral-400"
+                    >{{ $t('upload.whoCanSee') }}</label
+                  >
+                  <select
+                    v-model="visibility"
+                    class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-[13px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+                  >
+                    <option value="PUBLIC">
+                      {{ $t('upload.everyone') }}
+                    </option>
+                    <option value="FOLLOWERS">
+                      {{ $t('upload.followersOnly') }}
+                    </option>
+                    <option value="PRIVATE">{{ $t('upload.onlyMe') }}</option>
+                  </select>
                 </div>
+                <label
+                  class="flex cursor-pointer items-center justify-between border-t border-gray-100 pt-3 dark:border-neutral-800"
+                >
+                  <span
+                    class="text-[13px] text-gray-700 dark:text-neutral-300"
+                    >{{ $t('upload.allowComments') }}</span
+                  >
+                  <input
+                    v-model="allowComments"
+                    type="checkbox"
+                    class="h-5 w-5 rounded text-brand focus:ring-brand"
+                  />
+                </label>
+              </div>
+            </Transition>
+
+            <!-- Toolbar row -->
+            <div class="flex items-center gap-0.5 px-2 py-2">
+              <!-- Photo / Video -->
+              <button
+                @click="triggerFileInput"
+                class="toolbar-action group flex items-center gap-1.5 rounded-xl px-3 py-2 transition-colors hover:bg-gray-100 dark:hover:bg-neutral-800"
+                :title="$t('upload.addPhotosVideos')"
+              >
+                <Icon name="mdi:image-outline" size="22" class="text-green-500" />
+                <span class="text-[13px] font-medium text-gray-600 dark:text-neutral-400">Photo</span>
+              </button>
+
+              <!-- Music -->
+              <button
+                @click="showMusicPicker = true"
+                class="toolbar-action rounded-xl p-2 transition-colors hover:bg-gray-100 dark:hover:bg-neutral-800"
+                :class="selectedMusic ? 'text-pink-500' : ''"
+                :title="$t('upload.addMusic')"
+              >
                 <Icon
-                  name="mdi:chevron-down"
-                  size="18"
-                  class="transition-transform"
-                  :class="{ 'rotate-180': showAdvancedOptions }"
+                  name="mdi:music-note-outline"
+                  size="22"
+                  :class="selectedMusic ? 'text-pink-500' : 'text-gray-500 dark:text-neutral-400'"
                 />
               </button>
-              <Transition name="expand">
-                <div v-if="showAdvancedOptions" class="mt-3 space-y-3">
-                  <div>
-                    <label
-                      class="mb-1.5 block text-[12px] font-medium text-gray-600 dark:text-neutral-400"
-                      >{{ $t('upload.whoCanSee') }}</label
-                    >
-                    <select
-                      v-model="visibility"
-                      class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-[13px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
-                    >
-                      <option value="PUBLIC">
-                        {{ $t('upload.everyone') }}
-                      </option>
-                      <option value="FOLLOWERS">
-                        {{ $t('upload.followersOnly') }}
-                      </option>
-                      <option value="PRIVATE">{{ $t('upload.onlyMe') }}</option>
-                    </select>
-                  </div>
-                  <label
-                    class="flex cursor-pointer items-center justify-between"
-                  >
-                    <span
-                      class="text-[13px] text-gray-700 dark:text-neutral-300"
-                      >{{ $t('upload.allowComments') }}</span
-                    >
-                    <input
-                      v-model="allowComments"
-                      type="checkbox"
-                      class="h-5 w-5 rounded text-brand focus:ring-brand"
-                    />
-                  </label>
-                </div>
-              </Transition>
+
+              <!-- Tag Products -->
+              <button
+                v-if="showProductTagging"
+                @click="showProductSelector = true"
+                class="toolbar-action rounded-xl p-2 transition-colors hover:bg-gray-100 dark:hover:bg-neutral-800"
+                :title="$t('upload.tagProducts')"
+              >
+                <Icon
+                  name="mdi:tag-outline"
+                  size="22"
+                  :class="taggedProducts.length > 0 ? 'text-brand' : 'text-gray-500 dark:text-neutral-400'"
+                />
+              </button>
+
+              <!-- Advanced options toggle -->
+              <button
+                @click="showAdvancedOptions = !showAdvancedOptions"
+                class="toolbar-action ml-auto rounded-xl p-2 transition-colors hover:bg-gray-100 dark:hover:bg-neutral-800"
+                :title="$t('upload.advancedOptions')"
+              >
+                <Icon
+                  name="mdi:dots-horizontal"
+                  size="22"
+                  :class="showAdvancedOptions ? 'text-brand' : 'text-gray-500 dark:text-neutral-400'"
+                />
+              </button>
             </div>
           </div>
         </div>
@@ -700,6 +674,12 @@ const handleClose = () => {
 .expand-leave-from {
   max-height: 400px;
   opacity: 1;
+}
+
+/* Auto-grow textarea — caption fills available space */
+.caption-input {
+  min-height: 120px;
+  field-sizing: content; /* Chrome 123+ progressive enhancement */
 }
 
 /* Green checkmark fades out after 2s */

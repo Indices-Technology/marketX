@@ -24,6 +24,18 @@ export default defineNuxtConfig({
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
         { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
         { rel: 'preconnect', href: 'https://res.cloudinary.com' },
+        // Non-blocking font load — preload first, swap to stylesheet on load
+        {
+          rel: 'preload',
+          as: 'style',
+          href: 'https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Sora:wght@700;800&display=swap',
+        },
+        {
+          rel: 'stylesheet',
+          href: 'https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Sora:wght@700;800&display=swap',
+          media: 'print',
+          onload: "this.media='all'",
+        },
       ],
     },
   },
@@ -170,6 +182,22 @@ export default defineNuxtConfig({
     scheduledTasks: {
       '* * * * *': ['processQueues'],
       '0 */6 * * *': ['releaseShippedOrders'],
+    },
+    routeRules: {
+      '/**': {
+        headers: {
+          'X-Frame-Options': 'SAMEORIGIN',
+          'X-Content-Type-Options': 'nosniff',
+          'Referrer-Policy': 'strict-origin-when-cross-origin',
+          'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
+          'Permissions-Policy': 'geolocation=(self), camera=(), microphone=()',
+          'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+        },
+      },
+      // Long-lived cache for hashed static assets
+      '/_nuxt/**': {
+        headers: { 'Cache-Control': 'public, max-age=31536000, immutable' },
+      },
     },
   },
 

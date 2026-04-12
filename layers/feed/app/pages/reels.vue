@@ -5,6 +5,15 @@
     :hide-right-sidebar="false"
     :custom-padding="true"
   >
+    <!-- ─── BACK BUTTON (mobile only — header is hidden on reels) ───────── -->
+    <button
+      class="fixed left-4 top-[calc(env(safe-area-inset-top,0px)+12px)] z-10 flex h-9 w-9 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition-opacity hover:bg-black/60 md:hidden"
+      aria-label="Go back"
+      @click="$router.back()"
+    >
+      <Icon name="mdi:arrow-left" size="20" />
+    </button>
+
     <!-- ─── FULL-SCREEN IMMERSIVE CONTAINER ──────────────────────────── -->
     <!-- Fixed to cover the screen, but perfectly avoids the desktop RightSideNav -->
     <div

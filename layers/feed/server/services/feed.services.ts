@@ -92,6 +92,9 @@ export const feedService = {
         total: postTotal,
         limit,
         offset,
+        // nextOffset is the post-based skip for the next page — client must use
+        // this, not items.length (which includes injected product cards)
+        nextOffset: offset + postLimit,
         hasMore: offset + postLimit < postTotal,
       },
     }

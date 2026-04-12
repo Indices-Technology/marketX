@@ -19,8 +19,9 @@ export default defineEventHandler(async (event) => {
 
     // 2. Extract Context (Optional User Auth)
     const userId = event.context.user?.id
-    const page = Math.floor(query.offset / query.limit)
-    const cacheKey = `feed:home:page:${page}:limit:${query.limit}`
+    // Use exact offset in cache key — page-based key was wrong because offset
+    // doesn't align to page boundaries (post count ≠ total item count per page)
+    const cacheKey = `feed:home:offset:${query.offset}:limit:${query.limit}`
 
     // Creator bypass — skip cache for 30s after they publish content
     const bypass = userId ? await consumeCreatorBypass(userId) : false

@@ -138,21 +138,35 @@
         </button>
       </div>
 
-      <!-- Default text (EXPERIENCE, ENTERTAINMENT, COMMERCE, etc.) -->
+      <!-- Default text (EXPERIENCE, ENTERTAINMENT, COMMERCE, etc.) — styled gradient card -->
       <div
         v-else
-        class="cursor-pointer px-3 pb-2"
+        class="mx-3 mb-3 cursor-pointer overflow-hidden rounded-2xl"
+        :style="{ background: textBgStyle.bg }"
         @click="$emit('open-details', post)"
       >
-        <p
-          class="whitespace-pre-wrap text-[14px] leading-relaxed text-gray-900 dark:text-neutral-100"
-          :class="isTextLong && !textExpanded ? 'line-clamp-6' : ''"
+        <div
+          class="flex min-h-[140px] items-center justify-center px-5 py-6"
+          :class="isTextLong ? 'items-start pt-5' : 'items-center'"
         >
-          {{ cleanCaption || post.content }}
-        </p>
+          <p
+            class="w-full whitespace-pre-wrap leading-relaxed text-white"
+            :class="[
+              isTextLong
+                ? 'text-[14px]'
+                : (cleanCaption || post.content || '').length < 80
+                  ? 'text-center text-[20px] font-semibold'
+                  : 'text-[15px] font-medium',
+              isTextLong && !textExpanded ? 'line-clamp-6' : '',
+            ]"
+          >
+            {{ cleanCaption || post.content }}
+          </p>
+        </div>
         <button
           v-if="isTextLong && !textExpanded"
-          class="mt-0.5 text-[12px] text-gray-400 dark:text-neutral-500"
+          class="w-full pb-3 text-center text-[12px] font-semibold"
+          :style="{ color: textBgStyle.text }"
           @click.stop="textExpanded = true"
         >
           {{ $t('common.more') }}
@@ -189,12 +203,12 @@
           </div>
         </div>
         <button
-          v-if="!post.bgMusic"
-          @click.stop="toggleMute"
+          @click.stop="toggleAllSound"
           class="pointer-events-auto absolute bottom-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm transition-colors hover:bg-black/70"
+          :class="post.bgMusic ? 'bottom-14' : 'bottom-3'"
         >
           <Icon
-            :name="videoMuted ? 'mdi:volume-off' : 'mdi:volume-high'"
+            :name="soundEnabled ? 'mdi:volume-high' : 'mdi:volume-off'"
             size="16"
             class="text-white"
           />
@@ -231,6 +245,18 @@
           v-if="!imageLoaded && !imageError"
           class="absolute inset-0 animate-pulse bg-gray-200 dark:bg-neutral-800"
         />
+        <!-- Sound button for images that have background music -->
+        <button
+          v-if="post.bgMusic"
+          @click.stop="toggleAllSound"
+          class="absolute bottom-14 right-3 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm transition-colors hover:bg-black/70"
+        >
+          <Icon
+            :name="soundEnabled ? 'mdi:volume-high' : 'mdi:volume-off'"
+            size="16"
+            class="text-white"
+          />
+        </button>
       </div>
 
       <!-- ── MULTI-IMAGE COLLAGE ── -->
@@ -692,8 +718,15 @@ const cardVisible = ref(false)
 // soundEnabled — so audio.play() is called while the gesture is still "active"
 // and the browser allows it even on iOS Safari.
 watch(soundEnabled, (enabled) => {
-  if (!cardVisible.value || !musicRef.value) return
-  if (enabled) {
+  // Imperatively sync video muted state — Vue's :muted binding alone isn't
+  // always reliable on video elements after initial mount
+  if (videoRef.value) {
+    videoRef.value.muted = !enabled || !!props.post.bgMusic
+  }
+
+  // Control bgMusic audio element
+  if (!musicRef.value) return
+  if (enabled && cardVisible.value) {
     musicRef.value.play()
       .then(() => { musicPlaying.value = true })
       .catch(() => { musicPlaying.value = false })
@@ -822,6 +855,20 @@ const isCaptionLong = computed(
 )
 const isTextLong = computed(() => (props.post.content?.length ?? 0) > 200)
 
+// ─── Text-post backgrounds — dark shade of each content type's accent ────────
+const TEXT_BG_MAP: Record<string, { bg: string; text: string }> = {
+  EXPERIENCE:    { bg: 'linear-gradient(160deg, #0d1b2e 0%, #1a3a5c 100%)', text: '#7dd3fc' },
+  INSPIRATION:   { bg: 'linear-gradient(160deg, #1f1400 0%, #3d2800 100%)', text: '#fde047' },
+  EDUCATIONAL:   { bg: 'linear-gradient(160deg, #1a0d00 0%, #3b1f00 100%)', text: '#fb923c' },
+  ENTERTAINMENT: { bg: 'linear-gradient(160deg, #1f0016 0%, #3d0030 100%)', text: '#f472b6' },
+  COMMERCE:      { bg: 'linear-gradient(160deg, #00180f 0%, #003d22 100%)', text: '#34d399' },
+}
+const TEXT_BG_DEFAULT = { bg: 'linear-gradient(160deg, #111111 0%, #222222 100%)', text: '#f3f4f6' }
+
+const textBgStyle = computed(() =>
+  TEXT_BG_MAP[props.post.contentType] ?? TEXT_BG_DEFAULT
+)
+
 // ─── Tagged products ──────────────────────────────────────────────────────────
 const isSeller = computed(() => props.post.author?.role === 'seller')
 
@@ -899,19 +946,17 @@ const timeAgo = (date: Date | string) => {
 }
 
 // ─── Video mute toggle ────────────────────────────────────────────────────────
-const { settings: appSettings } = useSettings()
-// Force muted when bg music is present — music provides the audio, video stays silent
-const videoMuted = ref(!!props.post.bgMusic || appSettings.value.autoMute)
-const toggleMute = () => {
-  videoMuted.value = !videoMuted.value
-  if (videoRef.value) videoRef.value.muted = videoMuted.value
-}
+// Muted when: feed sound is globally off, OR bgMusic is present (bgMusic owns the audio track)
+const videoMuted = computed(() => !soundEnabled.value || !!props.post.bgMusic)
+// Single control for all audio on this card — bgMusic + video natural sound together
+const toggleAllSound = () => { soundEnabled.value = !soundEnabled.value }
 
 // ─── Video + Music autoplay on scroll ─────────────────────────────────────────
 onMounted(() => {
   // Video observer
   if (videoRef.value) {
-    videoRef.value.muted = appSettings.value.autoMute
+    // Apply initial muted state imperatively — :muted binding isn't always reliable
+    videoRef.value.muted = !soundEnabled.value || !!props.post.bgMusic
     observer.value = new IntersectionObserver(
       ([entry]) => {
         if (entry!.isIntersecting) videoRef.value?.play().catch(() => {})

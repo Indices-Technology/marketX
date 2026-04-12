@@ -1,28 +1,28 @@
 <!-- layouts/default.vue (or your home layout file) -->
 <template>
-  <!-- ─── MOBILE HEADER ─────────────────────────────────────────────────────── -->
-  <HeaderNavMobile
-    class="fixed left-0 right-0 top-0 z-30 transition-transform duration-300 ease-in-out"
+  <!-- ─── MOBILE HEADER — hidden on reels (full-screen), auto-hides on scroll elsewhere -->
+  <div
+    v-if="route.name !== 'reels'"
+    class="fixed left-0 right-0 top-0 z-30 md:hidden transition-transform duration-300 ease-in-out"
     :class="mobileNavVisible ? 'translate-y-0' : '-translate-y-full'"
-    @open-search="showSearchOverlay = true"
-    @open-notifications="showNotificationOverlay = true"
-    @open-cart="showCart = true"
-  />
+  >
+    <HeaderNavMobile
+      @open-search="showSearchOverlay = true"
+      @open-notifications="showNotificationOverlay = true"
+      @open-cart="showCart = true"
+    />
+  </div>
 
-  <!-- ─── MOBILE FEED TABS ────────────────────────────────────────────────── -->
-  <CategoryListMobile
-    v-if="showCategoryBar"
-    class="fixed left-0 right-0 z-20 transition-transform duration-300 ease-in-out"
-    :style="{ top: 'calc(3.5rem + env(safe-area-inset-top, 0px))' }"
-    :class="mobileNavVisible ? 'translate-y-0' : '-translate-y-full'"
-  />
-
-  <!-- ─── FEED / REELS SWITCHER ─────────────────────────────────────────────── -->
+  <!-- ─── FEED / REELS TAB — chases header up, always stays visible ────────── -->
   <div
     v-if="showFeedReelsTabs"
-    class="fixed left-0 right-0 z-[19] flex h-10 items-center justify-center border-b border-gray-200/60 bg-white/90 backdrop-blur-md transition-transform duration-300 ease-in-out md:hidden dark:border-neutral-800/60 dark:bg-neutral-900/90"
-    :style="{ top: 'calc(7rem + env(safe-area-inset-top, 0px))' }"
-    :class="mobileNavVisible ? 'translate-y-0' : '-translate-y-full'"
+    class="fixed left-0 right-0 z-[29] flex h-10 items-center justify-center border-b border-gray-200/60 bg-white/90 backdrop-blur-md md:hidden dark:border-neutral-800/60 dark:bg-neutral-900/90"
+    :style="{
+      top: mobileNavVisible
+        ? 'calc(3.5rem + env(safe-area-inset-top, 0px))'
+        : 'env(safe-area-inset-top, 0px)',
+      transition: 'top 300ms ease-in-out',
+    }"
   >
     <div
       class="flex overflow-hidden rounded-full border border-gray-200 dark:border-neutral-700"
@@ -225,7 +225,6 @@ import { useRoute } from 'vue-router'
 
 // ─── Always-visible layout components (eager) ───────────────────────────────
 import BottomNavMobile from '~~/layers/core/app/layouts/children/BottomNavMobile.vue'
-import CategoryListMobile from '~~/layers/core/app/layouts/children/TopMobileCategory.vue'
 import SideNav from '~~/layers/core/app/layouts/children/SideNav.vue'
 import HeaderNavMobile from '~~/layers/core/app/layouts/children/HeaderNavMobile.vue'
 import RightSideNav from '~~/layers/core/app/layouts/children/RightSideNav.vue'
@@ -277,7 +276,6 @@ const { refresh } = useLayoutData()
 const props = defineProps<{
   narrowFeed?: boolean
   hideRightSidebar?: boolean
-  hideCategoryBar?: boolean
   customPadding?: boolean
 }>()
 
@@ -289,11 +287,6 @@ const isNarrowFeed = computed(() => {
   )
 })
 
-const showCategoryBar = computed(() => {
-  if (props.hideCategoryBar) return false
-  return route.name === 'index'
-})
-
 const showFeedReelsTabs = computed(() => route.name === 'index')
 
 const showRightSidebar = computed(() => {
@@ -303,12 +296,8 @@ const showRightSidebar = computed(() => {
 
 const mainContentClasses = computed(() => {
   if (props.customPadding) return ''
-  if (showCategoryBar.value && showFeedReelsTabs.value)
-    return 'pt-[9.5rem] md:pt-6 lg:px-4'
-  if (showCategoryBar.value)
-    return 'pt-28 md:pt-6 lg:px-4'
-  if (showFeedReelsTabs.value)
-    return 'pt-[6.5rem] md:pt-6 lg:px-4'
+  // header (3.5rem/56px) + feed/reels tab (2.5rem/40px) = 6rem on mobile
+  if (showFeedReelsTabs.value) return 'pt-24 md:pt-6 lg:px-4'
   return 'pt-16 md:pt-6 lg:px-4'
 })
 

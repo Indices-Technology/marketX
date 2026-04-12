@@ -55,6 +55,9 @@
               v-if="product.media?.[0]?.url"
               :src="product.media[0].url"
               :alt="product.title"
+              loading="lazy"
+              width="130"
+              height="130"
               class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
             <div v-else class="flex h-full w-full items-center justify-center">

@@ -45,7 +45,7 @@ export const useFeedStore = defineStore('feed', () => {
    */
   const setInitialFeed = (
     items: IFeedItem[],
-    meta: IFeedResponse['meta'],
+    meta: Partial<IFeedResponse['meta']>,
     feedType: 'main' | 'following' | 'discover' = 'main',
   ) => {
     const targetFeed =
@@ -56,8 +56,10 @@ export const useFeedStore = defineStore('feed', () => {
           : mainFeed
 
     targetFeed.value = items
-    hasMore.value = meta.hasMore
-    currentOffset.value = meta.offset + items.length
+    hasMore.value = meta?.hasMore ?? items.length >= (meta?.limit ?? 20)
+    // Use nextOffset if the server provides it (avoids post/product count mismatch)
+    // Falls back to items.length only when nextOffset is absent
+    currentOffset.value = (meta as any)?.nextOffset ?? items.length
   }
 
   /**
@@ -65,7 +67,7 @@ export const useFeedStore = defineStore('feed', () => {
    */
   const appendToFeed = (
     items: IFeedItem[],
-    meta: IFeedResponse['meta'],
+    meta: Partial<IFeedResponse['meta']>,
     feedType: 'main' | 'following' | 'discover' = 'main',
   ) => {
     const targetFeed =
@@ -75,9 +77,13 @@ export const useFeedStore = defineStore('feed', () => {
           ? discoverFeed
           : mainFeed
 
-    targetFeed.value = mergeFeedItems(targetFeed.value, items)
-    hasMore.value = meta.hasMore
-    currentOffset.value = meta.offset + items.length
+    // Deduplicate without re-sorting — preserve server order, just skip dupes
+    const existingIds = new Set(targetFeed.value.map((i) => i.id))
+    const newItems = items.filter((i) => !existingIds.has(i.id))
+    targetFeed.value = [...targetFeed.value, ...newItems]
+    hasMore.value = meta?.hasMore ?? items.length >= (meta?.limit ?? 20)
+    // Prefer server-provided nextOffset; fall back to incrementing by items received
+    currentOffset.value = (meta as any)?.nextOffset ?? (currentOffset.value + items.length)
   }
 
   /**

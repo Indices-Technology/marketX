@@ -40,6 +40,9 @@
         </div>
       </Transition>
 
+      <!-- Category tabs — inline on mobile, desktop uses SideNav -->
+      <CategoryListMobile class="-mx-2 mb-3 sm:-mx-4" />
+
       <!-- Stories Section (Logged-in users only, hidden when showStories is off) -->
       <section
         v-if="profileStore.isLoggedIn && settings.showStories"
@@ -55,6 +58,7 @@
           <!-- Scroll Arrows -->
           <button
             v-if="storiesScrollLeft > 0"
+            aria-label="Scroll stories left"
             class="absolute -left-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white/90 shadow-md backdrop-blur-sm transition-all hover:bg-gray-50 dark:border-neutral-700 dark:bg-neutral-900/90 dark:hover:bg-neutral-800"
             @click="scrollStories('left')"
           >
@@ -67,6 +71,7 @@
 
           <button
             v-if="storiesCanScrollRight"
+            aria-label="Scroll stories right"
             class="absolute -right-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white/90 shadow-md backdrop-blur-sm transition-all hover:bg-gray-50 dark:border-neutral-700 dark:bg-neutral-900/90 dark:hover:bg-neutral-800"
             @click="scrollStories('right')"
           >
@@ -304,10 +309,16 @@
       </section>
 
       <!-- Shop Today Banner -->
-      <section v-if="settings.showShopToday && shopTodayItems.length">
+      <section v-if="settings.showShopToday">
         <FeedProductShelf
+          v-if="shopTodayItems.length"
           :products="shopTodayItems"
           @open-product="openProduct"
+        />
+        <!-- Reserve height while loading to prevent CLS -->
+        <div
+          v-else
+          class="h-52 animate-pulse rounded-2xl bg-gray-100 dark:bg-neutral-800"
         />
       </section>
 
@@ -446,6 +457,7 @@ import { useRouter } from '#imports'
 
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import SplashScreen from '~~/layers/feed/app/components/SplashScreen.vue'
+import CategoryListMobile from '~~/layers/core/app/layouts/children/TopMobileCategory.vue'
 import StoryUploadModal from '~~/layers/feed/app/components/modals/StoryUploadModal.vue'
 import ProductDetailModal from '~~/layers/commerce/app/components/modals/ProductDetailModal.vue'
 import PostDetailModal from '~~/layers/social/app/components/modals/PostDetailModal.vue'
@@ -725,11 +737,13 @@ const loadMore = async () => {
       limit: 20,
       offset: feedStore.currentOffset,
     })
-    if (result?.items?.length) {
-      feedStore.appendToFeed(result.items, result.meta, 'main')
-    } else {
-      feedStore.appendToFeed([], { ...result.meta, hasMore: false }, 'main')
+    const items = result?.items ?? []
+    const meta = {
+      ...(result?.meta ?? {}),
+      // Trust the server's hasMore; only override if server omitted it
+      hasMore: result?.meta?.hasMore ?? items.length > 0,
     }
+    feedStore.appendToFeed(items, meta, 'main')
   } catch {
     // silently fail
   } finally {

@@ -1,6 +1,6 @@
 <template>
   <header
-    class="mobile-header fixed left-0 right-0 top-0 z-20 border-b border-gray-200/60 bg-white/80 backdrop-blur-md transition-transform duration-300 ease-in-out dark:border-neutral-800/60 dark:bg-neutral-900/80"
+    class="mobile-header border-b border-gray-200/60 bg-white/80 backdrop-blur-md dark:border-neutral-800/60 dark:bg-neutral-900/80"
   >
     <div class="flex h-14 items-center justify-between px-4">
       <!-- Logo -->
