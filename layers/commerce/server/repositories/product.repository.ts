@@ -62,6 +62,8 @@ const productInclude = {
   },
 }
 
+import type { CreateProductInput, UpdateProductInput } from '../schemas/product.schema'
+
 // Upsert tags by name and sync the product→tag join table
 async function upsertProductTags(productId: number, tagNames: string[]) {
   const cleaned = tagNames
@@ -100,9 +102,10 @@ export const productRepository = {
   async createProduct(
     sellerId: string,
     storeSlug: string,
-    data: any,
+    data: CreateProductInput & { slug: string },
     authorId?: string,
   ) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const productData: any = {
       title: data.title,
       slug: data.slug,
@@ -309,7 +312,8 @@ export const productRepository = {
     })
   },
 
-  async updateProduct(id: number, data: any, authorId?: string) {
+  async updateProduct(id: number, data: UpdateProductInput, authorId?: string) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateData: any = {}
     if (data.title !== undefined) updateData.title = data.title
     if (data.description !== undefined)
@@ -470,12 +474,153 @@ export const productRepository = {
 
   async checkOwnership(id: number, userId: string): Promise<boolean> {
     const product = await prisma.products.findFirst({
-      where: {
-        id,
-        seller: { profileId: userId },
-      },
+      where: { id, seller: { profileId: userId } },
       select: { id: true },
     })
     return !!product
+  },
+
+  // ── Likes ─────────────────────────────────────────────────────────────────
+
+  async likeProduct(userId: string, productId: number) {
+    await prisma.like.upsert({
+      where: { userId_productId: { userId, productId } },
+      create: { userId, productId },
+      update: {},
+    })
+    return prisma.like.count({ where: { productId } })
+  },
+
+  async unlikeProduct(userId: string, productId: number) {
+    await prisma.like.deleteMany({ where: { userId, productId } })
+    return prisma.like.count({ where: { productId } })
+  },
+
+  async isLikedByUser(userId: string, productId: number): Promise<boolean> {
+    const like = await prisma.like.findUnique({
+      where: { userId_productId: { userId, productId } },
+      select: { userId: true },
+    })
+    return !!like
+  },
+
+  // ── Comments ──────────────────────────────────────────────────────────────
+
+  async getComments(productId: number, limit: number, offset: number) {
+    return prisma.comment.findMany({
+      where: { productId, parentId: null },
+      include: {
+        author: { select: { id: true, username: true, avatar: true } },
+        _count: { select: { likes: true, replies: true } },
+      },
+      orderBy: { created_at: 'desc' },
+      take: limit,
+      skip: offset,
+    })
+  },
+
+  async countComments(productId: number): Promise<number> {
+    return prisma.comment.count({ where: { productId, parentId: null } })
+  },
+
+  async getProductWithOwner(productId: number) {
+    return prisma.products.findUnique({
+      where: { id: productId },
+      select: {
+        id: true,
+        title: true,
+        seller: { select: { profile: { select: { userId: true } } } },
+      },
+    })
+  },
+
+  async createComment(data: {
+    text: string
+    authorId: string
+    productId: number
+    parentId?: string | null
+  }) {
+    return prisma.comment.create({
+      data: {
+        id: crypto.randomUUID(),
+        text: data.text,
+        authorId: data.authorId,
+        productId: data.productId,
+        parentId: data.parentId ?? null,
+      },
+      include: {
+        author: { select: { id: true, username: true, avatar: true } },
+        _count: { select: { likes: true, replies: true } },
+      },
+    })
+  },
+
+  // ── Reviews ───────────────────────────────────────────────────────────────
+
+  async getReviews(productId: number, limit: number, offset: number) {
+    return prisma.review.findMany({
+      where: { productId },
+      orderBy: { created_at: 'desc' },
+      take: limit,
+      skip: offset,
+      select: {
+        id: true,
+        rating: true,
+        title: true,
+        body: true,
+        verified: true,
+        created_at: true,
+        author: { select: { username: true, avatar: true } },
+      },
+    })
+  },
+
+  async countReviews(productId: number): Promise<number> {
+    return prisma.review.count({ where: { productId } })
+  },
+
+  async getReviewAggregate(productId: number) {
+    return prisma.review.aggregate({
+      where: { productId },
+      _avg: { rating: true },
+      _count: true,
+    })
+  },
+
+  async upsertReview(data: {
+    productId: number
+    authorId: string
+    rating: number
+    title?: string
+    body?: string
+  }) {
+    return prisma.review.upsert({
+      where: { productId_authorId: { productId: data.productId, authorId: data.authorId } },
+      create: {
+        productId: data.productId,
+        authorId: data.authorId,
+        rating: data.rating,
+        title: data.title,
+        body: data.body,
+      },
+      update: { rating: data.rating, title: data.title, body: data.body },
+      select: { id: true, rating: true, title: true, body: true, created_at: true },
+    })
+  },
+
+  async updateProductRating(productId: number, averageRating: number, totalReviews: number) {
+    return prisma.products.update({
+      where: { id: productId },
+      data: { averageRating, totalReviews },
+    })
+  },
+
+  // ── Categories ────────────────────────────────────────────────────────────
+
+  async getCategories() {
+    return prisma.category.findMany({
+      select: { id: true, name: true, slug: true, thumbnailCatUrl: true },
+      orderBy: { name: 'asc' },
+    })
   },
 }

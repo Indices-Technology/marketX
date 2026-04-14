@@ -192,6 +192,56 @@ export async function sendPasswordResetEmail(
 }
 
 /**
+ * Send checkout OTP email
+ */
+export async function sendOtpEmail(
+  email: string,
+  code: string,
+  isNewUser: boolean,
+  appName = 'MarketX',
+): Promise<{ id: string }> {
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
+          .container { max-width: 480px; margin: 40px auto; background: #fff; border-radius: 12px; overflow: hidden; }
+          .header { background: #e31837; padding: 28px 32px; text-align: center; }
+          .header h1 { color: #fff; margin: 0; font-size: 22px; }
+          .body { padding: 32px; }
+          .otp { display: block; font-size: 42px; font-weight: 800; letter-spacing: 10px; color: #e31837; text-align: center; margin: 24px 0; }
+          .note { font-size: 13px; color: #888; text-align: center; margin-top: 8px; }
+          .footer { text-align: center; padding: 16px; font-size: 12px; color: #aaa; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header"><h1>${appName}</h1></div>
+          <div class="body">
+            <p style="color:#333;font-size:15px;margin:0 0 8px;">
+              ${isNewUser ? 'Welcome! Use the code below to verify your email and complete your order.' : 'Use the code below to confirm your identity and complete your order.'}
+            </p>
+            <span class="otp">${code}</span>
+            <p class="note">This code expires in <strong>10 minutes</strong> and can only be used once.</p>
+            <p class="note" style="margin-top:16px;">If you didn't attempt to check out on ${appName}, you can safely ignore this email.</p>
+          </div>
+          <div class="footer">&copy; ${new Date().getFullYear()} ${appName}. All rights reserved.</div>
+        </div>
+      </body>
+    </html>
+  `
+
+  return sendEmail({
+    to: email,
+    subject: `${code} is your ${appName} verification code`,
+    html,
+    text: `Your ${appName} verification code is: ${code}\n\nExpires in 10 minutes.`,
+  })
+}
+
+/**
  * Send welcome email
  */
 export async function sendWelcomeEmail(

@@ -72,26 +72,38 @@ export const useAffiliate = () => {
     }
   }
 
-  /** Call this on any page to capture ?ref=CODE from the URL into localStorage */
+  const REF_KEY = 'mx_affiliate_ref'
+  const REF_EXP_KEY = 'mx_affiliate_ref_exp'
+  const REF_TTL_MS = 30 * 24 * 60 * 60 * 1000 // 30 days
+
+  /** Capture ?ref=CODE from the current URL and store it with a 30-day TTL */
   const captureAffiliateRef = () => {
     if (!import.meta.client) return
     const route = useRoute()
     const ref = route.query.ref as string | undefined
-    if (ref) {
-      localStorage.setItem('affiliate_ref', ref)
-    }
+    if (!ref) return
+    localStorage.setItem(REF_KEY, ref)
+    localStorage.setItem(REF_EXP_KEY, String(Date.now() + REF_TTL_MS))
   }
 
-  /** Returns the stored affiliate code (for attaching to order payload) */
+  /** Returns the stored affiliate code if it hasn't expired */
   const getStoredRef = (): string | null => {
     if (!import.meta.client) return null
-    return localStorage.getItem('affiliate_ref')
+    const code = localStorage.getItem(REF_KEY)
+    const exp = Number(localStorage.getItem(REF_EXP_KEY) || 0)
+    if (!code || Date.now() > exp) {
+      localStorage.removeItem(REF_KEY)
+      localStorage.removeItem(REF_EXP_KEY)
+      return null
+    }
+    return code
   }
 
   /** Clear after a successful order */
   const clearStoredRef = () => {
     if (!import.meta.client) return
-    localStorage.removeItem('affiliate_ref')
+    localStorage.removeItem(REF_KEY)
+    localStorage.removeItem(REF_EXP_KEY)
   }
 
   return {

@@ -29,7 +29,7 @@
       >
     </div>
 
-    <div v-else class="mx-auto max-w-5xl px-4 py-6">
+    <div v-else-if="product" class="mx-auto max-w-5xl px-4 py-6">
       <!-- Back -->
       <button
         @click="$router.back()"
@@ -262,10 +262,7 @@
               @click="copyLink"
               class="flex items-center gap-1.5 rounded-xl border border-gray-200 px-4 py-2 text-xs font-semibold text-gray-600 transition-colors hover:border-brand hover:text-brand dark:border-neutral-700 dark:text-neutral-400"
             >
-              <Icon
-                :name="copied ? 'mdi:check' : 'mdi:link-variant'"
-                size="15"
-              />
+              <Icon :name="copied ? 'mdi:check' : 'mdi:link-variant'" size="15" />
               {{ copied ? 'Copied!' : 'Copy link' }}
             </button>
             <button
@@ -275,6 +272,34 @@
               <Icon name="mdi:share-variant-outline" size="15" />
               Share
             </button>
+          </div>
+
+          <!-- Affiliate link panel — visible only to enrolled affiliates -->
+          <div
+            v-if="isEnrolled && affiliateUrl"
+            class="rounded-2xl border border-brand/20 bg-brand/5 p-4 dark:border-brand/30 dark:bg-brand/10"
+          >
+            <div class="mb-2 flex items-center gap-2">
+              <Icon name="mdi:link-variant-plus" size="15" class="text-brand" />
+              <p class="text-xs font-bold uppercase tracking-wide text-brand">
+                Your Affiliate Link
+              </p>
+            </div>
+            <p class="mb-3 text-xs text-gray-500 dark:text-neutral-400">
+              Share this link to earn a commission on every sale you refer.
+            </p>
+            <div class="flex items-center gap-2 rounded-xl border border-brand/20 bg-white px-3 py-2 dark:bg-neutral-900">
+              <span class="flex-1 truncate text-xs text-gray-600 dark:text-neutral-400">
+                {{ affiliateUrl }}
+              </span>
+              <button
+                @click="copyAffiliateLink"
+                class="shrink-0 rounded-lg bg-brand px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-brand/90"
+              >
+                <Icon :name="copiedAffiliate ? 'mdi:check' : 'mdi:content-copy'" size="13" class="mr-1" />
+                {{ copiedAffiliate ? 'Copied!' : 'Copy' }}
+              </button>
+            </div>
           </div>
 
           <!-- Description -->
@@ -309,11 +334,20 @@
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import ProductReviews from '~~/layers/commerce/app/components/ProductReviews.vue'
 import { useCart } from '~~/layers/commerce/app/composables/useCart'
+import { useAffiliate } from '~~/layers/commerce/app/composables/useAffiliate'
 import { formatProductPrice } from '~~/shared/utils/currency'
 import { notify } from '@kyvg/vue3-notification'
 
 const route = useRoute()
 const slug = computed(() => route.params.slug as string)
+const { captureAffiliateRef, affiliateCode, isEnrolled, fetchAffiliateStatus } = useAffiliate()
+
+// Capture ?ref= from URL on every product page load (30-day TTL)
+onMounted(() => {
+  captureAffiliateRef()
+  // Silently load affiliate status so we can show the affiliate link section
+  fetchAffiliateStatus().catch(() => {})
+})
 
 // Fetch product by slug
 const { data, pending, status } = await useLazyAsyncData(
@@ -335,11 +369,13 @@ const mediaItems = computed(() =>
   ),
 )
 
-// Reset gallery index when product changes
+// Reset gallery index when product changes + track view once loaded
+const { trackProduct } = useViewTracker()
 watch(
   () => product.value?.id,
-  () => {
+  (id) => {
     currentIndex.value = 0
+    if (id) trackProduct(id)
   },
 )
 
@@ -388,25 +424,39 @@ const handleAddToCart = async () => {
 
 // Share
 const copied = ref(false)
-const productUrl = computed(() =>
+const copiedAffiliate = ref(false)
+
+const baseProductUrl = computed(() =>
   import.meta.client
     ? `${window.location.origin}/product/${slug.value}`
     : `/product/${slug.value}`,
 )
 
+// Plain URL for non-affiliate sharing or SEO
+const productUrl = baseProductUrl
+
+// Affiliate link — only built when user is enrolled
+const affiliateUrl = computed(() => {
+  if (!isEnrolled.value || !affiliateCode.value) return null
+  return `${baseProductUrl.value}?ref=${affiliateCode.value}`
+})
+
 const copyLink = async () => {
   await navigator.clipboard.writeText(productUrl.value).catch(() => {})
   copied.value = true
-  setTimeout(() => {
-    copied.value = false
-  }, 2000)
+  setTimeout(() => { copied.value = false }, 2000)
+}
+
+const copyAffiliateLink = async () => {
+  if (!affiliateUrl.value) return
+  await navigator.clipboard.writeText(affiliateUrl.value).catch(() => {})
+  copiedAffiliate.value = true
+  setTimeout(() => { copiedAffiliate.value = false }, 2000)
 }
 
 const handleShare = async () => {
   if (navigator.share) {
-    await navigator
-      .share({ title: product.value?.title, url: productUrl.value })
-      .catch(() => {})
+    await navigator.share({ title: product.value?.title, url: productUrl.value }).catch(() => {})
   } else {
     await copyLink()
   }

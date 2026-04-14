@@ -17,15 +17,11 @@ export default defineEventHandler(async (event) => {
       Number(quantity),
     )
     return { success: true, data: result }
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof UserError)
-      throw createError({
-        statusCode: error.status,
-        statusMessage: error.message,
-      })
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'Internal server error',
-    })
+      throw createError({ statusCode: error.status, statusMessage: error.message })
+    // Pass through H3 errors (including 401 from requireAuth)
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error
+    throw createError({ statusCode: 500, statusMessage: 'Internal server error' })
   }
 })

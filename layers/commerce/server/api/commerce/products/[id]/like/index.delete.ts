@@ -1,25 +1,21 @@
 // DELETE /api/commerce/products/[id]/like
-
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
+import { productService } from '~~/layers/commerce/server/services/product.service'
 
 export default defineEventHandler(async (event) => {
   try {
     const user = await requireAuth(event)
     const id = Number(getRouterParam(event, 'id'))
     if (!id) throw new UserError('INVALID_ID', 'Product ID is required', 400)
-
-    await prisma.like.deleteMany({ where: { userId: user.id, productId: id } })
-
-    const likeCount = await prisma.like.count({ where: { productId: id } })
-    return { success: true, data: { liked: false, likeCount } }
-  } catch (error: any) {
+    const data = await productService.unlikeProduct(user.id, id)
+    return { success: true, data }
+  } catch (error: unknown) {
     if (error instanceof UserError)
       throw createError({
         statusCode: error.status,
         statusMessage: error.message,
       })
-    console.error('[DELETE /api/commerce/products/:id]/like]', error)
     throw createError({
       statusCode: 500,
       statusMessage: 'Internal server error',

@@ -469,6 +469,7 @@
 <script setup lang="ts">
 import WithdrawModal from '../modals/WithdrawModal.vue'
 import { useWallet } from '~~/layers/commerce/app/composables/useWallet'
+import { useAffiliate } from '~~/layers/commerce/app/composables/useAffiliate'
 import { BaseApiClient } from '~~/layers/core/app/services/base.api'
 import { useSellerStore } from '~~/layers/seller/app/store/seller.store'
 import { useCurrency } from '~~/layers/core/app/composables/useCurrency'
@@ -490,17 +491,10 @@ const showWithdrawModal = ref(false)
 const sellerStore = useSellerStore()
 const api = new BaseApiClient()
 const { formatKobo } = useCurrency()
+const { stats: affiliateStats, fetchAffiliateStatus } = useAffiliate()
 
-// Affiliate earnings for buyer wallet (pulled from transactions CREDIT entries)
-const affiliateEarnings = computed(() =>
-  transactions.value
-    .filter(
-      (t: any) =>
-        t.type === 'CREDIT' &&
-        t.description?.toLowerCase().includes('affiliate'),
-    )
-    .reduce((sum: number, t: any) => sum + (t.amount ?? 0), 0),
-)
+// Affiliate earnings pulled from affiliate stats (works for non-sellers too)
+const affiliateEarnings = computed(() => affiliateStats.value?.totalEarnings ?? 0)
 
 // ── Bank accounts ─────────────────────────────────────────────────────────────
 const bankAccounts = ref<any[]>([])
@@ -585,7 +579,12 @@ const NIGERIAN_BANKS = [
 
 onMounted(async () => {
   try {
-    await Promise.all([fetchWallet(), fetchTransactions(), loadBankAccounts()])
+    await Promise.all([
+      fetchWallet(),
+      fetchTransactions(),
+      loadBankAccounts(),
+      fetchAffiliateStatus().catch(() => {}),
+    ])
   } catch {
     // Wallet might not exist yet for non-sellers — handled gracefully
   }

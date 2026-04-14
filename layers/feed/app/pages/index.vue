@@ -134,8 +134,8 @@
         </div>
       </section>
 
-      <!-- Affiliate Program Banner (logged-in only) -->
-      <section v-if="profileStore.isLoggedIn">
+      <!-- Affiliate Program Banner (logged-in, not yet enrolled) -->
+      <section v-if="profileStore.isLoggedIn && !isEnrolled">
         <NuxtLink
           :to="`/profile/${profileStore.me?.username}?tab=affiliate`"
           class="group flex items-center gap-4 overflow-hidden rounded-2xl bg-gradient-to-r from-purple-600 via-purple-500 to-pink-500 p-4 shadow-md transition-all hover:shadow-lg hover:brightness-105 active:scale-[0.99]"
@@ -478,6 +478,7 @@ import { useProductDetail } from '~~/layers/commerce/app/composables/useProductD
 import { useFeedStore } from '~~/layers/feed/app/stores/feed.stores'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import { useFollow } from '~~/layers/profile/app/composables/useFollow'
+import { useAffiliate } from '~~/layers/commerce/app/composables/useAffiliate'
 import type { IFeedItem } from '~~/layers/feed/app/types/feed.types'
 import type { IProduct } from '~~/layers/social/app/types/post.types'
 
@@ -488,6 +489,7 @@ const { settings } = useSettings()
 const { checkFollowingBatch } = useFollow()
 const { stories, fetchStories } = useStory()
 const { activeTab, setTab, FEED_TABS } = useFeedTab()
+const { isEnrolled, fetchAffiliateStatus: fetchAffiliate } = useAffiliate()
 
 // SEO
 useSeo().setHomePage()
@@ -760,6 +762,7 @@ onMounted(() => {
   loadNearbyStores()
 
   if (profileStore.isLoggedIn) {
+    fetchAffiliate().catch(() => {})
     setTimeout(() => {
       fetchStories()
         .catch(() => {})

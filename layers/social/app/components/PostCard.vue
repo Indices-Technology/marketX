@@ -508,15 +508,25 @@
         </button>
       </div>
 
-      <!-- Like count -->
-      <button
-        v-if="localLikeCount > 0"
-        class="px-1 text-left text-[13px] font-semibold leading-snug text-gray-900 transition-opacity hover:opacity-70 dark:text-neutral-100"
-        @click.stop="showLikes = true"
-      >
-        {{ localLikeCount.toLocaleString() }}
-        {{ localLikeCount === 1 ? $t('post.like') : $t('post.likes') }}
-      </button>
+      <!-- Like count + View count -->
+      <div class="flex items-center justify-between px-1">
+        <button
+          v-if="localLikeCount > 0"
+          class="text-left text-[13px] font-semibold leading-snug text-gray-900 transition-opacity hover:opacity-70 dark:text-neutral-100"
+          @click.stop="showLikes = true"
+        >
+          {{ localLikeCount.toLocaleString() }}
+          {{ localLikeCount === 1 ? $t('post.like') : $t('post.likes') }}
+        </button>
+        <span v-else />
+        <span
+          v-if="post.viewCount"
+          class="flex items-center gap-1 text-[11px] text-gray-400 dark:text-neutral-500"
+        >
+          <Icon name="mdi:eye-outline" size="14" />
+          {{ post.viewCount.toLocaleString() }}
+        </span>
+      </div>
 
       <LikesModal
         :is-open="showLikes"
@@ -640,6 +650,7 @@ const emit = defineEmits([
 const profileStore = useProfileStore()
 const postStore = usePostStore()
 const { likePost, unlikePost, savePost, unsavePost, deletePost } = usePost()
+const { trackPost } = useViewTracker()
 const cardRef = ref<HTMLElement | null>(null)
 const videoRef = ref<HTMLVideoElement | null>(null)
 const musicRef = ref<HTMLAudioElement | null>(null)
@@ -950,6 +961,30 @@ const timeAgo = (date: Date | string) => {
 const videoMuted = computed(() => !soundEnabled.value || !!props.post.bgMusic)
 // Single control for all audio on this card — bgMusic + video natural sound together
 const toggleAllSound = () => { soundEnabled.value = !soundEnabled.value }
+
+// ─── View tracking (3s dwell at ≥50% visibility) ─────────────────────────────
+onMounted(() => {
+  if (!cardRef.value) return
+  let dwellTimer: ReturnType<typeof setTimeout> | null = null
+  const viewObserver = new IntersectionObserver(
+    ([entry]) => {
+      if (entry!.isIntersecting) {
+        dwellTimer = setTimeout(() => trackPost(props.post.id), 3000)
+      } else {
+        if (dwellTimer) {
+          clearTimeout(dwellTimer)
+          dwellTimer = null
+        }
+      }
+    },
+    { threshold: 0.5 },
+  )
+  viewObserver.observe(cardRef.value)
+  onUnmounted(() => {
+    viewObserver.disconnect()
+    if (dwellTimer) clearTimeout(dwellTimer)
+  })
+})
 
 // ─── Video + Music autoplay on scroll ─────────────────────────────────────────
 onMounted(() => {

@@ -280,6 +280,15 @@
           <span>{{ product._count?.comments ?? 0 }}</span>
         </button>
 
+        <!-- Views -->
+        <span
+          v-if="product.viewCount"
+          class="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-gray-400 dark:text-neutral-500"
+        >
+          <Icon name="mdi:eye-outline" size="15" />
+          {{ product.viewCount.toLocaleString() }}
+        </span>
+
         <!-- Share -->
         <button
           class="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-gray-500 transition-colors hover:bg-green-50 hover:text-green-500 dark:text-neutral-400 dark:hover:bg-green-500/10"

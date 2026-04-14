@@ -6,6 +6,7 @@ import { UserError } from '~~/layers/profile/server/types/user.types'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
 import { getClientIP } from '~~/server/layers/shared/utils/security'
 import { orderService } from '../../../services/order.service'
+import { orderRepository } from '../../../repositories/order.repository'
 
 
 const schema = z.object({
@@ -44,16 +45,11 @@ export default defineEventHandler(async (event) => {
       userAgent,
     )
 
-    // 2. Build a unique Paystack reference
+    // 2. Build a unique Paystack reference and persist it
     const reference = `stylex_${order.id}_${Date.now()}`
+    await orderRepository.setPaymentRef(order.id, reference)
 
-    // 3. Store the reference on the order
-    await prisma.orders.update({
-      where: { id: order.id },
-      data: { paymentRef: reference },
-    })
-
-    // 4. Initialize Paystack transaction
+    // 3. Initialize Paystack transaction
     const config = useRuntimeConfig()
     const ps = await paystack.initializeTransaction({
       email: user.email,

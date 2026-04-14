@@ -3,16 +3,13 @@
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
 import { walletService } from '../../../services/wallet.service'
+import { walletRepository } from '../../../repositories/wallet.repository'
 
 export default defineEventHandler(async (event) => {
   try {
     const user = await requireAuth(event)
 
-    // Get ALL seller profiles for this user (not just first)
-    const sellerProfiles = await prisma.sellerProfile.findMany({
-      where: { profileId: user.id, is_active: true },
-      select: { id: true, store_name: true, store_slug: true },
-    })
+    const sellerProfiles = await walletRepository.getActiveSellerProfiles(user.id)
 
     if (!sellerProfiles.length) {
       // Non-seller: return empty wallet state

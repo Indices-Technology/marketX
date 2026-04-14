@@ -108,9 +108,9 @@
           </h1>
 
           <p class="max-w-md text-xl font-light leading-relaxed text-gray-500">
-            MarketX is where everyday businesses run, grow, and get discovered.
-            Find stores near you, buy directly from the feed, and sell to the
-            world — all in one place.
+            Social commerce built for Africa. Discover products in a live feed,
+            buy in seconds without signing up, and earn by sharing links —
+            all in one place.
           </p>
 
           <div class="flex flex-col gap-4 sm:flex-row">
@@ -321,7 +321,7 @@
             The Ecosystem
           </p>
           <h2 class="text-4xl font-black tracking-tighter text-gray-900">
-            Built for how Africa shops
+            One platform. Sellers, affiliates & buyers.
           </h2>
         </div>
 
@@ -339,8 +339,8 @@
               Shoppable Feed
             </h3>
             <p class="text-sm leading-relaxed text-gray-500">
-              Scroll a live feed of fashion posts. Every image has a price tag.
-              Tap to buy without leaving the app.
+              Scroll a live feed of African fashion posts. Every image has a
+              price tag. Tap to buy instantly — no account required.
             </p>
             <p
               class="mt-4 flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-brand group-hover:gap-2"
@@ -379,11 +379,11 @@
               🧠
             </div>
             <h3 class="mb-2 text-lg font-black text-gray-900">
-              RAG Style Intelligence
+              Affiliate in one tap
             </h3>
             <p class="text-sm leading-relaxed text-gray-500">
-              Powered by AxiomsAI. Describe your look in plain English. Our AI
-              finds it, styles it, and learns your taste over time.
+              Share any product with your unique link. When someone buys, you
+              earn automatically — no inventory, no storefront needed.
             </p>
           </div>
 
@@ -396,11 +396,11 @@
               🔒
             </div>
             <h3 class="mb-2 text-lg font-black text-gray-900">
-              Secure Payments
+              Guest Checkout
             </h3>
             <p class="text-sm leading-relaxed text-gray-500">
-              Paystack for local cards and bank transfers. PayPal for
-              international buyers. Both fully encrypted.
+              Buyers can check out with just an email — no registration wall.
+              Verify with a one-time code and you're done in under a minute.
             </p>
           </div>
 
@@ -416,8 +416,8 @@
               Live Global Shipping
             </h3>
             <p class="text-sm leading-relaxed text-gray-500">
-              Real-time DHL and UPS rates at checkout from the seller's actual
-              location. Lagos to London in 3–5 days.
+              Real-time DHL and UPS rates from the seller's actual location.
+              Pay via Paystack or PayPal. Lagos to London in 3–5 days.
             </p>
           </div>
 
@@ -503,8 +503,8 @@
             </p>
             <h3 class="mb-2 text-lg font-black text-gray-900">Add to cart</h3>
             <p class="text-sm leading-relaxed text-gray-500">
-              Pick size, colour, quantity. Bulk discounts apply automatically —
-              buy more, pay less.
+              Pick size, colour, quantity. Bulk discounts apply automatically.
+              Your cart saves even if you're not signed in.
             </p>
           </div>
 
@@ -520,11 +520,11 @@
               Step 03
             </p>
             <h3 class="mb-2 text-lg font-black text-gray-900">
-              Delivered to you
+              Checkout in 60 seconds
             </h3>
             <p class="text-sm leading-relaxed text-gray-500">
-              Choose your carrier, pay securely via Paystack or PayPal, and
-              track your order to the door.
+              Enter your email for a one-time code — no password, no redirect.
+              Pay and track your order to the door.
             </p>
           </div>
         </div>
@@ -571,7 +571,8 @@
             </h2>
             <p class="text-lg font-light leading-relaxed text-slate-400">
               Post your collection, manage orders, receive global payments.
-              Every post is a storefront. Every follower is a potential buyer.
+              Every post is a storefront. Every follower — and every affiliate
+              sharing your links — is a potential buyer.
             </p>
             <div class="flex flex-col gap-3 sm:flex-row">
               <NuxtLink
@@ -699,7 +700,8 @@
           Africa's feed is open.
         </h2>
         <p class="text-lg font-light leading-relaxed text-gray-500">
-          Join thousands of buyers and sellers already on MarketX.
+          Shop from the feed. Sell to the world. Earn by sharing.
+          MarketX is social commerce — no account needed to start.
         </p>
         <div
           class="flex flex-col items-center justify-center gap-4 sm:flex-row"
@@ -738,7 +740,7 @@
               >
             </div>
             <p class="max-w-xs text-sm leading-relaxed text-gray-400">
-              Your business, fully alive. Discover stores, buy local, sell globally.
+              Social commerce for Africa. Scroll it. Buy it. Share it.
             </p>
           </div>
 
@@ -832,19 +834,21 @@
 definePageMeta({ layout: false })
 
 const tickerItems = [
-  'New arrivals daily',
+  'Social commerce for Africa',
   '✦',
-  'Free storefronts for sellers',
+  'Buy without signing up',
+  '✦',
+  'Earn by sharing links',
   '✦',
   'Ships to 30+ countries',
   '✦',
+  'Free storefronts for sellers',
+  '✦',
   'Pay with Paystack or PayPal',
   '✦',
-  'Thrift finds from across Africa',
+  'Instant affiliate commissions',
   '✦',
-  'AI-powered style search',
-  '✦',
-  'Live shipping rates at checkout',
+  'Thrift & new fashion in one feed',
   '✦',
 ]
 
@@ -866,10 +870,12 @@ const trustItems = [
 ]
 
 const affiliatePerks = [
-  'No minimum payout',
-  'Instant link generation',
+  'No inventory needed',
+  '30-day attribution window',
+  'Auto-paid on delivery',
+  'Share from any product page',
   'Real-time earnings dashboard',
-  'Works on any product',
+  'No minimum payout',
 ]
 
 const affiliateStats = [
@@ -880,13 +886,13 @@ const affiliateStats = [
 
 const sellerFeatures = [
   'Free storefront with your own custom URL',
-  'Post to your social feed & storefront simultaneously',
+  'Post videos & photos directly to your shoppable feed',
+  'Built-in affiliate program — let others sell for you',
   'Bulk discount & offer management tools',
   'Real-time order tracking & fulfilment dashboard',
   'Live DHL / UPS shipping rate integration',
   'Wallet with instant NGN & USD payouts',
-  'Buyer notifications & review management',
-  'AI-matched product discovery for your listings',
+  'Affiliate commission tracking & payout reporting',
 ]
 </script>
 

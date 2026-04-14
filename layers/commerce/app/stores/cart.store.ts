@@ -55,6 +55,15 @@ export const useCartStore = defineStore(
       const existing = items.value.find((i) => i.variantId === item.variantId)
       if (existing) {
         existing.quantity += item.quantity
+        // Refresh variant data if missing or stale (e.g. price was 0 from old localStorage)
+        if (item.variant) {
+          const hasPrice =
+            (existing.variant?.price != null && existing.variant.price > 0) ||
+            (existing.variant?.product?.price != null && existing.variant.product.price > 0)
+          if (!existing.variant || !hasPrice) {
+            existing.variant = item.variant
+          }
+        }
       } else {
         items.value.push(item)
       }

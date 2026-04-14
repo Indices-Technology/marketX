@@ -416,7 +416,7 @@ const sellerProductStats = ref<{
 
 const affiliateLink = computed(() =>
   affiliateCode.value
-    ? `${window?.location?.origin ?? 'https://stylex.indicestech.com'}/ref/${affiliateCode.value}`
+    ? `${window?.location?.origin ?? 'https://stylex.indicestech.com'}/?ref=${affiliateCode.value}`
     : '',
 )
 
@@ -471,8 +471,8 @@ const loadMoreAvailable = () => fetchAvailableProducts()
 
 const copyAffiliateProductLink = (product: any) => {
   const base = window?.location?.origin ?? ''
-  const slug = product.seller?.store_slug ?? ''
-  const link = `${base}/sellers/profile/${slug}?ref=${affiliateCode.value}&pid=${product.id}`
+  const slug = product.slug ?? ''
+  const link = `${base}/product/${slug}?ref=${affiliateCode.value}`
   navigator.clipboard.writeText(link)
   toast.showToast('Affiliate link copied!', 'success')
 }

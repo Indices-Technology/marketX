@@ -1,3 +1,21 @@
+export interface CreateOrderData {
+  name: string
+  address: string
+  zipcode: string
+  county: string
+  country: string
+  totalAmount: number
+  paymentMethod: string
+  affiliateUserId?: string
+  affiliateCut?: number
+  stripeId?: string
+  items: Array<{
+    variantId: number
+    quantity: number
+    price: number
+    affiliateCut: number
+  }>
+}
 
 const orderInclude = {
   orderItem: {
@@ -28,7 +46,7 @@ const orderInclude = {
 }
 
 export const orderRepository = {
-  async createOrder(userId: string, data: any) {
+  async createOrder(userId: string, data: CreateOrderData) {
     return prisma.orders.create({
       data: {
         userId,
@@ -36,20 +54,18 @@ export const orderRepository = {
         name: data.name,
         address: data.address,
         zipcode: data.zipcode,
-        county: data.county || '',
+        county: data.county,
         country: data.country,
         totalAmount: data.totalAmount,
-        paymentMethod: data.paymentMethod || 'card',
-        ...(data.affiliateUserId
-          ? { affiliateUserId: data.affiliateUserId }
-          : {}),
+        paymentMethod: data.paymentMethod,
+        ...(data.affiliateUserId ? { affiliateUserId: data.affiliateUserId } : {}),
         ...(data.affiliateCut ? { affiliateCut: data.affiliateCut } : {}),
         orderItem: {
-          create: data.items.map((item: any) => ({
+          create: data.items.map((item) => ({
             variantId: item.variantId,
             quantity: item.quantity,
-            price: item.price ?? 0,
-            affiliateCut: item.affiliateCut ?? 0,
+            price: item.price,
+            affiliateCut: item.affiliateCut,
           })),
         },
       },
@@ -77,6 +93,39 @@ export const orderRepository = {
       data: { status: status as any },
       include: orderInclude,
     })
+  },
+
+  async updatePaymentStatus(
+    id: number,
+    paymentStatus: 'PAID' | 'FAILED' | 'PENDING',
+    orderStatus?: string,
+  ) {
+    return prisma.orders.update({
+      where: { id },
+      data: {
+        paymentStatus,
+        ...(orderStatus ? { status: orderStatus as any } : {}),
+      },
+    })
+  },
+
+  async setPaymentRef(id: number, paymentRef: string) {
+    return prisma.orders.update({ where: { id }, data: { paymentRef } })
+  },
+
+  async getOrderByPaymentRef(paymentRef: string) {
+    return prisma.orders.findUnique({ where: { paymentRef } })
+  },
+
+  async restoreStock(items: Array<{ variantId: number; quantity: number }>) {
+    await Promise.all(
+      items.map((item) =>
+        prisma.productVariant.update({
+          where: { id: item.variantId },
+          data: { stock: { increment: item.quantity } },
+        }),
+      ),
+    )
   },
 
   async countUserOrders(userId: string) {

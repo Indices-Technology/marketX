@@ -108,8 +108,16 @@
         </NuxtLink>
       </div>
 
-      <!-- Expiry -->
-      <div class="absolute bottom-6 left-0 right-0 z-10 flex justify-center">
+      <!-- Views + Expiry -->
+      <div class="absolute bottom-6 left-0 right-0 z-10 flex items-center justify-between px-4">
+        <span
+          v-if="story.viewCount"
+          class="flex items-center gap-1 text-[11px] text-white/60"
+        >
+          <Icon name="mdi:eye-outline" size="13" />
+          {{ story.viewCount.toLocaleString() }}
+        </span>
+        <span v-else />
         <p class="text-[10px] text-white/40">Expires {{ expiryText }}</p>
       </div>
     </div>
@@ -136,11 +144,15 @@ const DURATION = 5000 // ms for image stories
 let timer: ReturnType<typeof setTimeout> | null = null
 let progressInterval: ReturnType<typeof setInterval> | null = null
 
+const { trackStory } = useViewTracker()
+
 onMounted(async () => {
   try {
     const res: any = await api.getStoryById(storyId.value)
     story.value = res?.data
     if (story.value?.media?.type !== 'VIDEO') startProgress()
+    // Track view once the story is successfully loaded and shown
+    if (story.value?.id) trackStory(story.value.id)
   } catch (e: any) {
     error.value = e.message || 'Story not found or expired'
   } finally {

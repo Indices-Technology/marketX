@@ -1,90 +1,80 @@
-import { orderRepository } from '../repositories/order.repository'
+import { orderRepository, type CreateOrderData } from '../repositories/order.repository'
 import { cartRepository } from '../repositories/cart.repository'
+import { affiliateRepository } from '../repositories/affiliate.repository'
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { auditQueue } from '~~/server/queues/audit.queue'
 
+export interface PlaceOrderInput {
+  items: Array<{ variantId: number; quantity: number }>
+  name: string
+  address: string
+  zipcode: string
+  county?: string
+  country: string
+  paymentMethod?: string
+  affiliateCode?: string
+}
 
 export const orderService = {
   async placeOrder(
     userId: string,
-    data: any,
+    data: PlaceOrderInput,
     ipAddress: string,
     userAgent: string,
   ) {
-    const {
-      items,
-      name,
-      address,
-      zipcode,
-      county,
-      country,
-      paymentMethod,
-      affiliateCode,
-    } = data
+    const { items, name, address, zipcode, county, country, paymentMethod, affiliateCode } = data
 
     if (!items || !Array.isArray(items) || items.length === 0) {
-      throw new UserError(
-        'INVALID_ORDER',
-        'Order must have at least one item',
-        400,
-      )
+      throw new UserError('INVALID_ORDER', 'Order must have at least one item', 400)
     }
 
-    // Resolve affiliate code → profileId (if provided)
+    // Resolve affiliate code → profileId (ignore self-referral)
     let affiliateUserId: string | undefined
     if (affiliateCode) {
-      const affiliateProfile = await prisma.profile.findUnique({
-        where: { affiliateCode },
-        select: { id: true },
-      })
-      // Ignore self-referral
+      const affiliateProfile = await affiliateRepository.findByCode(affiliateCode)
       if (affiliateProfile && affiliateProfile.id !== userId) {
         affiliateUserId = affiliateProfile.id
       }
     }
 
-    // Validate stock for all items and compute prices + affiliate cuts
-    let totalAmount = 0
-    let totalAffiliateCut = 0
-    const enrichedItems: any[] = []
-
-    for (const item of items) {
-      const variant = await prisma.productVariant.findUnique({
-        where: { id: item.variantId },
-        include: {
-          product: {
-            include: {
-              offers: {
-                where: { isActive: true },
-                orderBy: { minQuantity: 'desc' },
+    // ── Pre-validate all variants BEFORE entering the transaction ────────────
+    // Fetch every variant + product so we can compute prices and check stock.
+    const variantRows = await Promise.all(
+      items.map((item) =>
+        prisma.productVariant.findUnique({
+          where: { id: item.variantId },
+          include: {
+            product: {
+              include: {
+                offers: { where: { isActive: true }, orderBy: { minQuantity: 'desc' } },
               },
             },
           },
-        },
-      })
-      if (!variant)
-        throw new UserError(
-          'VARIANT_NOT_FOUND',
-          `Variant ${item.variantId} not found`,
-          404,
-        )
+        }),
+      ),
+    )
+
+    let totalAmount = 0
+    let totalAffiliateCut = 0
+    const enrichedItems: CreateOrderData['items'] = []
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i]!
+      const variant = variantRows[i]
+      if (!variant) {
+        throw new UserError('VARIANT_NOT_FOUND', `Variant ${item.variantId} not found`, 404)
+      }
       if (variant.stock < item.quantity) {
-        throw new UserError(
-          'INSUFFICIENT_STOCK',
-          `Not enough stock for variant ${item.variantId}`,
-          400,
-        )
+        throw new UserError('INSUFFICIENT_STOCK', `Not enough stock for variant ${item.variantId}`, 400)
       }
 
       const basePrice = variant.price ?? variant.product.price
       const productDiscount = variant.product.discount ?? 0
       let unitPrice = basePrice * (1 - productDiscount / 100)
 
-      // Apply best active offer that the ordered quantity qualifies for
       const bestOffer = (variant.product.offers ?? [])
         .filter((o) => o.isActive && item.quantity >= o.minQuantity)
         .sort((a, b) => b.minQuantity - a.minQuantity)[0]
-
       if (bestOffer) {
         unitPrice = unitPrice * (1 - bestOffer.discount / 100)
       }
@@ -92,8 +82,6 @@ export const orderService = {
       const lineTotalKobo = Math.round(unitPrice * item.quantity * 100)
       totalAmount += lineTotalKobo
 
-      // Affiliate cut for this line item — affiliateCommission is a fixed Naira
-      // amount (not a percentage), so convert directly to kobo
       let itemAffiliateCut = 0
       if (affiliateUserId && variant.product.affiliateCommission) {
         itemAffiliateCut = Math.round(variant.product.affiliateCommission * 100)
@@ -108,29 +96,80 @@ export const orderService = {
       })
     }
 
-    // Create order
-    const order = await orderRepository.createOrder(userId, {
-      name,
-      address,
-      zipcode,
-      county: county || '',
-      country,
-      totalAmount,
-      paymentMethod: paymentMethod || 'card',
-      affiliateUserId,
-      affiliateCut: totalAffiliateCut,
-      items: enrichedItems,
+    // ── Atomic transaction: create order + decrement stock together ───────────
+    const order = await prisma.$transaction(async (tx) => {
+      // Re-check stock inside the transaction to prevent race conditions
+      for (const item of enrichedItems) {
+        const locked = await tx.productVariant.findUnique({
+          where: { id: item.variantId },
+          select: { stock: true },
+        })
+        if (!locked || locked.stock < item.quantity) {
+          throw new UserError('INSUFFICIENT_STOCK', `Stock changed for variant ${item.variantId}`, 400)
+        }
+      }
+
+      const created = await tx.orders.create({
+        data: {
+          userId,
+          stripeId: `order_${Date.now()}_${userId.slice(0, 8)}`,
+          name,
+          address,
+          zipcode,
+          county: county || '',
+          country,
+          totalAmount,
+          paymentMethod: paymentMethod || 'card',
+          ...(affiliateUserId ? { affiliateUserId } : {}),
+          ...(totalAffiliateCut ? { affiliateCut: totalAffiliateCut } : {}),
+          orderItem: {
+            create: enrichedItems.map((item) => ({
+              variantId: item.variantId,
+              quantity: item.quantity,
+              price: item.price,
+              affiliateCut: item.affiliateCut,
+            })),
+          },
+        },
+        include: {
+          orderItem: {
+            include: {
+              variant: {
+                select: {
+                  id: true,
+                  size: true,
+                  price: true,
+                  product: {
+                    select: {
+                      id: true,
+                      title: true,
+                      slug: true,
+                      price: true,
+                      seller: { select: { store_slug: true, store_name: true } },
+                      media: { take: 1, where: { isBgMusic: false }, select: { id: true, url: true, type: true } },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      })
+
+      // Decrement stock atomically with the order creation
+      await Promise.all(
+        enrichedItems.map((item) =>
+          tx.productVariant.update({
+            where: { id: item.variantId },
+            data: { stock: { decrement: item.quantity } },
+          }),
+        ),
+      )
+
+      return created
     })
 
-    // Decrement stock
-    for (const item of enrichedItems) {
-      await prisma.productVariant.update({
-        where: { id: item.variantId },
-        data: { stock: { decrement: item.quantity } },
-      })
-    }
-
-    // Clear cart after order
+    // Clear cart and fire audit outside the transaction (non-critical)
     await cartRepository.clearCart(userId)
 
     auditQueue.enqueue({
@@ -139,11 +178,7 @@ export const orderService = {
       resource: 'Orders',
       resourceId: String(order.id),
       reason: 'Placed new order',
-      changes: {
-        totalAmount,
-        itemCount: enrichedItems.length,
-        affiliateUserId,
-      },
+      changes: { totalAmount, itemCount: enrichedItems.length, affiliateUserId },
       ipAddress,
       userAgent,
     })
@@ -186,14 +221,7 @@ export const orderService = {
     }
 
     const updated = await orderRepository.updateOrderStatus(id, 'CANCELLED')
-
-    // Restore stock
-    for (const item of order.orderItem) {
-      await prisma.productVariant.update({
-        where: { id: item.variantId },
-        data: { stock: { increment: item.quantity } },
-      })
-    }
+    await orderRepository.restoreStock(order.orderItem)
 
     auditQueue.enqueue({
       userId,

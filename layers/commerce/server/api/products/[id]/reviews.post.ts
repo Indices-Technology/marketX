@@ -1,6 +1,8 @@
-import { defineEventHandler, getRouterParam, readBody } from 'h3'
+// POST /api/products/:id/reviews — authenticated, one review per user per product
 import { z } from 'zod'
+import { UserError } from '~~/layers/profile/server/types/user.types'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
+import { productService } from '~~/layers/commerce/server/services/product.service'
 
 const reviewSchema = z.object({
   rating: z.number().int().min(1).max(5),
@@ -8,43 +10,18 @@ const reviewSchema = z.object({
   body: z.string().max(2000).optional(),
 })
 
-/**
- * POST /api/products/:id/reviews
- * Authenticated. One review per user per product (enforced by @@unique).
- */
 export default defineEventHandler(async (event) => {
-  const user = await requireAuth(event)
-  const userId = user.id
-  const productId = parseInt(getRouterParam(event, 'id') || '0')
-  const body = await readBody(event)
-  const { rating, title, body: reviewBody } = reviewSchema.parse(body)
+  try {
+    const user = await requireAuth(event)
+    const productId = parseInt(getRouterParam(event, 'id') || '0')
+    if (!productId) throw new UserError('INVALID_ID', 'Invalid product ID', 400)
 
-  const review = await prisma.review.upsert({
-    where: { productId_authorId: { productId, authorId: userId } },
-    create: { productId, authorId: userId, rating, title, body: reviewBody },
-    update: { rating, title, body: reviewBody },
-    select: {
-      id: true,
-      rating: true,
-      title: true,
-      body: true,
-      created_at: true,
-    },
-  })
-
-  // Recalculate averageRating on product
-  const agg = await prisma.review.aggregate({
-    where: { productId },
-    _avg: { rating: true },
-    _count: true,
-  })
-  await prisma.products.update({
-    where: { id: productId },
-    data: {
-      averageRating: agg._avg.rating ?? 0,
-      totalReviews: agg._count,
-    },
-  })
-
-  return { success: true, data: review }
+    const body = reviewSchema.parse(await readBody(event))
+    const review = await productService.submitProductReview(user.id, productId, body)
+    return { success: true, data: review }
+  } catch (error: unknown) {
+    if (error instanceof UserError)
+      throw createError({ statusCode: error.status, statusMessage: error.message })
+    throw createError({ statusCode: 500, statusMessage: 'Internal server error' })
+  }
 })

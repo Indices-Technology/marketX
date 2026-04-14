@@ -37,6 +37,7 @@ export default defineEventHandler(async (event) => {
       select: {
         id: true,
         title: true,
+        slug: true,
         price: true,
         affiliateCommission: true,
         seller: {

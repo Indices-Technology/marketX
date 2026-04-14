@@ -1,11 +1,30 @@
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { auditQueue } from '~~/server/queues/audit.queue'
+import { notificationService } from '~~/layers/profile/server/services/notification.service'
+import { auditService } from '~~/server/layers/shared/audit/audit.service'
 import { productRepository } from '../repositories/product.repository'
 import {
   createProductSchema,
   updateProductSchema,
   listProductsSchema,
+  type CreateProductInput,
+  type UpdateProductInput,
 } from '../schemas/product.schema'
+
+export interface ProductFilters {
+  status?: string
+  sellerId?: string
+  search?: string
+  storeSlug?: string
+  isThrift?: boolean
+  categorySlug?: string
+}
+
+export interface ReviewInput {
+  rating: number
+  title?: string
+  body?: string
+}
 
 async function generateUniqueSlug(title: string): Promise<string> {
   const base = title
@@ -27,7 +46,7 @@ export const productService = {
   async createProduct(
     sellerId: string,
     storeSlug: string,
-    data: any,
+    data: CreateProductInput,
     ipAddress: string,
     userAgent: string,
     authorId?: string,
@@ -57,7 +76,10 @@ export const productService = {
     return product
   },
 
-  async getProducts(filters: any, pagination: any) {
+  async getProducts(
+    filters: ProductFilters,
+    pagination: { limit?: number; offset?: number },
+  ) {
     const { limit, offset, status, search, sellerId, isThrift, categorySlug } =
       listProductsSchema.parse({
         limit: pagination?.limit,
@@ -121,7 +143,7 @@ export const productService = {
   async updateProduct(
     id: number,
     sellerId: string,
-    data: any,
+    data: UpdateProductInput,
     ipAddress: string,
     userAgent: string,
     authorId?: string,
@@ -156,6 +178,107 @@ export const productService = {
       })
 
     return updated
+  },
+
+  // ── Likes ──────────────────────────────────────────────────────────────────
+
+  async likeProduct(userId: string, productId: number) {
+    const product = await productRepository.getProductById(productId)
+    if (!product) throw new UserError('PRODUCT_NOT_FOUND', 'Product not found', 404)
+    const likeCount = await productRepository.likeProduct(userId, productId)
+    return { liked: true, likeCount }
+  },
+
+  async unlikeProduct(userId: string, productId: number) {
+    const likeCount = await productRepository.unlikeProduct(userId, productId)
+    return { liked: false, likeCount }
+  },
+
+  // ── Comments ───────────────────────────────────────────────────────────────
+
+  async getProductComments(productId: number, limit: number, offset: number) {
+    const [comments, total] = await Promise.all([
+      productRepository.getComments(productId, limit, offset),
+      productRepository.countComments(productId),
+    ])
+    return { comments, total, limit, offset, hasMore: offset + comments.length < total }
+  },
+
+  async createProductComment(
+    userId: string,
+    username: string,
+    productId: number,
+    text: string,
+    parentId?: string | null,
+  ) {
+    const product = await productRepository.getProductWithOwner(productId)
+    if (!product) throw new UserError('PRODUCT_NOT_FOUND', 'Product not found', 404)
+
+    const comment = await productRepository.createComment({ text, authorId: userId, productId, parentId })
+
+    // Notify product owner (non-blocking, skip self-notifications)
+    const ownerId = product.seller?.profile?.userId
+    if (ownerId && ownerId !== userId) {
+      notificationService
+        .createNotification({
+          userId: ownerId,
+          type: 'PRODUCT_COMMENT',
+          actorId: userId,
+          message: `${username} commented on your product "${product.title}"`,
+          commentId: comment.id,
+        })
+        .catch(() => {})
+    }
+
+    auditService
+      .logUserAction({
+        userId,
+        action: 'PRODUCT_COMMENT_CREATED',
+        resource: 'ProductComment',
+        resourceId: comment.id,
+        reason: `Comment on product ${productId}`,
+      })
+      .catch(() => {})
+
+    return comment
+  },
+
+  // ── Reviews ────────────────────────────────────────────────────────────────
+
+  async getProductReviews(productId: number, limit: number, offset: number) {
+    const [reviews, total, agg] = await Promise.all([
+      productRepository.getReviews(productId, limit, offset),
+      productRepository.countReviews(productId),
+      productRepository.getReviewAggregate(productId),
+    ])
+    return {
+      reviews,
+      meta: {
+        total,
+        averageRating: agg._avg.rating,
+        limit,
+        offset,
+        hasMore: offset + limit < total,
+      },
+    }
+  },
+
+  async submitProductReview(userId: string, productId: number, data: ReviewInput) {
+    const review = await productRepository.upsertReview({
+      productId,
+      authorId: userId,
+      ...data,
+    })
+
+    // Recalculate average rating on the product
+    const agg = await productRepository.getReviewAggregate(productId)
+    await productRepository.updateProductRating(
+      productId,
+      agg._avg.rating ?? 0,
+      agg._count,
+    )
+
+    return review
   },
 
   async archiveProduct(

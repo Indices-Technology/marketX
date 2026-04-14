@@ -1,4 +1,11 @@
 export const walletRepository = {
+  async getActiveSellerProfiles(userId: string) {
+    return prisma.sellerProfile.findMany({
+      where: { profileId: userId, is_active: true },
+      select: { id: true, store_name: true, store_slug: true },
+    })
+  },
+
   async getWalletBySellerId(sellerId: string) {
     return prisma.sellerWallet.findUnique({
       where: { sellerId },

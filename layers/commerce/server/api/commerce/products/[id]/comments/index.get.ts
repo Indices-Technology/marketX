@@ -1,4 +1,7 @@
 // GET /api/commerce/products/[id]/comments
+
+import { productService } from '~~/layers/commerce/server/services/product.service'
+
 export default defineEventHandler(async (event) => {
   const id = Number(getRouterParam(event, 'id'))
   if (!id)
@@ -8,23 +11,10 @@ export default defineEventHandler(async (event) => {
   const limit = Math.min(Math.max(Number(query.limit) || 20, 1), 100)
   const offset = Math.max(Number(query.offset) || 0, 0)
 
-  const [comments, total] = await Promise.all([
-    prisma.comment.findMany({
-      where: { productId: id, parentId: null },
-      include: {
-        author: { select: { id: true, username: true, avatar: true } },
-        _count: { select: { likes: true, replies: true } },
-      },
-      orderBy: { created_at: 'desc' },
-      take: limit,
-      skip: offset,
-    }),
-    prisma.comment.count({ where: { productId: id, parentId: null } }),
-  ])
-
+  const result = await productService.getProductComments(id, limit, offset)
   return {
     success: true,
-    data: comments,
-    meta: { total, limit, offset, hasMore: offset + comments.length < total },
+    data: result.comments,
+    meta: { total: result.total, limit, offset, hasMore: result.hasMore },
   }
 })

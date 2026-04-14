@@ -1,43 +1,14 @@
-import { defineEventHandler, getRouterParam, getQuery } from 'h3'
+// GET /api/products/:id/reviews?limit=10&offset=0
+import { productService } from '~~/layers/commerce/server/services/product.service'
 
-/**
- * GET /api/products/:id/reviews?limit=10&offset=0
- */
 export default defineEventHandler(async (event) => {
   const productId = parseInt(getRouterParam(event, 'id') || '0')
-  const { limit = 10, offset = 0 } = getQuery(event) as Record<string, any>
-  const take = Math.min(Number(limit) || 10, 50)
-  const skip = Number(offset) || 0
+  if (!productId) throw createError({ statusCode: 400, statusMessage: 'Invalid product ID' })
 
-  const [reviews, total, avg] = await Promise.all([
-    prisma.review.findMany({
-      where: { productId },
-      orderBy: { created_at: 'desc' },
-      take,
-      skip,
-      select: {
-        id: true,
-        rating: true,
-        title: true,
-        body: true,
-        verified: true,
-        created_at: true,
-        author: { select: { username: true, avatar: true } },
-      },
-    }),
-    prisma.review.count({ where: { productId } }),
-    prisma.review.aggregate({ where: { productId }, _avg: { rating: true } }),
-  ])
+  const query = getQuery(event)
+  const limit = Math.min(Number(query.limit) || 10, 50)
+  const offset = Math.max(Number(query.offset) || 0, 0)
 
-  return {
-    success: true,
-    data: reviews,
-    meta: {
-      total,
-      averageRating: avg._avg.rating,
-      limit: take,
-      offset: skip,
-      hasMore: skip + take < total,
-    },
-  }
+  const result = await productService.getProductReviews(productId, limit, offset)
+  return { success: true, data: result.reviews, meta: result.meta }
 })

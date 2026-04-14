@@ -36,6 +36,7 @@ const PRODUCT_SELECT = {
     take: 5,
   },
   _count: { select: { likes: true, comments: true } },
+  viewCount: true,
 }
 
 export const feedService = {

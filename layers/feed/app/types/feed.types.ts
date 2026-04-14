@@ -52,6 +52,7 @@ export interface IFeedItem {
   likeCount: number
   commentCount: number
   shareCount?: number
+  viewCount?: number
 
   // Product references
   taggedProducts?: Partial<IProduct>[] // Products tagged in post

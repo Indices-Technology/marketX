@@ -18,9 +18,11 @@ export default defineNuxtRouteMiddleware(() => {
 
   const profileStore = useProfileStore()
 
-  // If not logged in, redirect to login
+  // If not logged in, redirect to login and preserve the return URL
   if (!profileStore.isLoggedIn) {
-    return navigateTo('/user-login')
+    const route = useRoute()
+    const redirect = route.fullPath !== '/user-login' ? route.fullPath : undefined
+    return navigateTo(redirect ? `/user-login?redirect=${encodeURIComponent(redirect)}` : '/user-login')
   }
 
   // If email not verified and verification is required, redirect to verify

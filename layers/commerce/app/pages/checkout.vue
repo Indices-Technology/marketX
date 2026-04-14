@@ -14,8 +14,102 @@
         </h1>
       </div>
 
+      <!-- ── Inline Auth Step (shown to guests) ───────────────────────────── -->
+      <div
+        v-if="showAuthStep"
+        class="rounded-2xl border border-gray-100 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900"
+      >
+        <div class="mb-5 flex items-center gap-3">
+          <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand/10">
+            <Icon name="mdi:account-circle-outline" size="20" class="text-brand" />
+          </div>
+          <div>
+            <p class="font-semibold text-gray-900 dark:text-neutral-100">
+              {{ otpSent ? 'Enter your verification code' : "Who's buying?" }}
+            </p>
+            <p class="text-xs text-gray-400 dark:text-neutral-500">
+              {{ otpSent
+                ? `We sent a 6-digit code to ${authForm.email}`
+                : 'We\'ll create an account for you automatically if you\'re new.' }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Step 1: email + name + phone -->
+        <template v-if="!otpSent">
+          <div class="space-y-3">
+            <input
+              v-model="authForm.email"
+              type="email"
+              placeholder="Email address"
+              class="input-field"
+              @keydown.enter="handleSendOtp"
+            />
+            <input
+              v-model="authForm.name"
+              type="text"
+              placeholder="Full name (for your order)"
+              class="input-field"
+            />
+            <input
+              v-model="authForm.phone"
+              type="tel"
+              placeholder="Phone number (optional)"
+              class="input-field"
+            />
+          </div>
+          <p v-if="authError" class="mt-3 text-xs text-red-500">{{ authError }}</p>
+          <button
+            @click="handleSendOtp"
+            :disabled="authLoading || !authForm.email"
+            class="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-brand py-3 text-sm font-bold text-white transition-colors hover:bg-brand/90 disabled:opacity-50"
+          >
+            <Icon v-if="authLoading" name="eos-icons:loading" size="18" class="animate-spin" />
+            {{ authLoading ? 'Sending…' : 'Continue' }}
+          </button>
+        </template>
+
+        <!-- Step 2: OTP entry -->
+        <template v-else>
+          <div class="space-y-3">
+            <input
+              v-model="otpCode"
+              type="text"
+              inputmode="numeric"
+              maxlength="6"
+              placeholder="6-digit code"
+              class="input-field text-center text-xl font-bold tracking-[0.5em]"
+              @keydown.enter="handleVerifyOtp"
+            />
+          </div>
+          <p v-if="authError" class="mt-3 text-xs text-red-500">{{ authError }}</p>
+          <button
+            @click="handleVerifyOtp"
+            :disabled="authLoading || otpCode.length !== 6"
+            class="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-brand py-3 text-sm font-bold text-white transition-colors hover:bg-brand/90 disabled:opacity-50"
+          >
+            <Icon v-if="authLoading" name="eos-icons:loading" size="18" class="animate-spin" />
+            {{ authLoading ? 'Verifying…' : 'Verify & Continue' }}
+          </button>
+          <button
+            @click="otpSent = false; otpCode = ''; authError = ''"
+            class="mt-2 w-full text-center text-xs text-gray-400 hover:text-brand dark:text-neutral-500"
+          >
+            ← Change email
+          </button>
+          <button
+            @click="handleSendOtp"
+            :disabled="authLoading"
+            class="mt-1 w-full text-center text-xs text-gray-400 hover:text-brand disabled:opacity-50 dark:text-neutral-500"
+          >
+            Resend code
+          </button>
+        </template>
+      </div>
+      <!-- ───────────────────────────────────────────────────────────────────── -->
+
       <!-- Empty cart guard -->
-      <div v-if="!items.length" class="py-24 text-center">
+      <div v-else-if="!items.length" class="py-24 text-center">
         <Icon
           name="mdi:cart-outline"
           size="56"
@@ -32,7 +126,7 @@
       </div>
 
       <div v-else class="space-y-5">
-        <!-- Currency badge — shown when not NGN -->
+        <!-- Currency badge — shown when not NGN (logged in + has cart items) -->
         <div
           v-if="activeCurrency !== 'NGN'"
           class="flex items-center gap-2 rounded-xl border border-blue-100 bg-blue-50 px-4 py-2.5 text-xs text-blue-700 dark:border-blue-900/40 dark:bg-blue-900/20 dark:text-blue-300"
@@ -652,11 +746,87 @@ import {
   type ISavedAddress,
 } from '~~/layers/commerce/app/services/address.api'
 import { notify } from '@kyvg/vue3-notification'
-
-definePageMeta({ middleware: 'auth' })
+import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
+import { useAuthStore } from '~~/layers/core/app/stores/auth.store'
+import { useAuth } from '~~/layers/core/app/composables/useAuth'
+import { useCart as useCartComposable } from '~~/layers/commerce/app/composables/useCart'
 
 const { setCheckoutPage } = useSeo()
 setCheckoutPage()
+
+// ── Inline auth ───────────────────────────────────────────────────────────────
+const profileStore = useProfileStore()
+const authStore = useAuthStore()
+const { syncUserToProfile } = useAuth()
+
+const showAuthStep = computed(() => !profileStore.isLoggedIn)
+
+const authForm = reactive({ email: '', name: '', phone: '' })
+const otpCode = ref('')
+const otpSent = ref(false)
+const otpIsNewUser = ref(false)
+const authLoading = ref(false)
+const authError = ref('')
+
+const handleSendOtp = async () => {
+  authError.value = ''
+  if (!authForm.email) { authError.value = 'Please enter your email'; return }
+  authLoading.value = true
+  try {
+    const res: any = await $fetch('/api/auth/checkout-otp/send', {
+      method: 'POST',
+      body: { email: authForm.email, name: authForm.name, phone: authForm.phone },
+    })
+    otpIsNewUser.value = res.isNewUser
+    otpSent.value = true
+  } catch (e: any) {
+    authError.value = e?.data?.statusMessage || 'Failed to send code. Try again.'
+  } finally {
+    authLoading.value = false
+  }
+}
+
+const { syncGuestCartToServer } = useCartComposable()
+
+const handleVerifyOtp = async () => {
+  authError.value = ''
+  if (otpCode.value.length !== 6) { authError.value = 'Enter the 6-digit code'; return }
+  authLoading.value = true
+  try {
+    const res: any = await $fetch('/api/auth/checkout-otp/verify', {
+      method: 'POST',
+      body: { email: authForm.email, code: otpCode.value, name: authForm.name, phone: authForm.phone },
+    })
+    // Persist tokens then sync profile (same as regular login)
+    authStore.setAccessToken(res.accessToken)
+    authStore.setRefreshToken(res.refreshToken)
+    await syncUserToProfile(res.user)
+
+    // Push local guest cart items to the server now that we have an account
+    await syncGuestCartToServer().catch(() => {})
+
+    // Pre-fill shipping name from auth form
+    if (authForm.name && !form.name) form.name = authForm.name
+
+    // Load saved addresses
+    try {
+      const addrResult = await addressApi.getAddresses()
+      savedAddresses.value = addrResult.data
+      const def = addrResult.data.find((a: ISavedAddress) => a.isDefault) || addrResult.data[0]
+      if (def) selectSavedAddress(def)
+    } catch {}
+
+    if (res.isNewUser) {
+      notify({ type: 'success', text: 'Account created! A password setup link was sent to your email.' })
+    }
+  } catch (e: any) {
+    authError.value = e?.data?.statusMessage || 'Invalid or expired code. Try again.'
+  } finally {
+    authLoading.value = false
+  }
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 const { items, cartTotal, fetchCart } = useCart()
 const {
   calculation: shippingCalculation,
@@ -921,12 +1091,15 @@ const handleCheckout = async () => {
 onMounted(async () => {
   captureAffiliateRef()
   await fetchCart()
-  try {
-    const result = await addressApi.getAddresses()
-    savedAddresses.value = result.data
-    const def = result.data.find((a) => a.isDefault) || result.data[0]
-    if (def) selectSavedAddress(def)
-  } catch {}
+  // Only load saved addresses when already authenticated
+  if (profileStore.isLoggedIn) {
+    try {
+      const result = await addressApi.getAddresses()
+      savedAddresses.value = result.data
+      const def = result.data.find((a: ISavedAddress) => a.isDefault) || result.data[0]
+      if (def) selectSavedAddress(def)
+    } catch {}
+  }
 })
 
 const COUNTRIES = [

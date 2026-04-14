@@ -54,6 +54,7 @@
   },
   "devDependencies": {
     "@iconify-json/mdi": "^1.2.3",
+    "@iconify-json/simple-icons": "^1.2.78",
     "@nuxt/test-utils-edge": "^3.8.0-28284309.b3d3d7f4",
     "@types/pg": "^8.16.0",
     "@typescript-eslint/eslint-plugin": "^7.7.0",
