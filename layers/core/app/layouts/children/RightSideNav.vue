@@ -8,26 +8,26 @@
       class="flex shrink-0 gap-1 border-b border-gray-100 bg-gray-50/80 p-2 backdrop-blur-sm dark:border-neutral-800/50 dark:bg-neutral-900/70"
     >
       <button
-        @click="activeTab = 'discover'"
         class="flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all"
         :class="
           activeTab === 'discover'
             ? 'border border-gray-200 bg-white text-gray-900 shadow-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-white'
             : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-300'
         "
+        @click="activeTab = 'discover'"
       >
         <Icon name="mdi:compass-outline" size="18" />
         <span>Discover</span>
       </button>
 
       <button
-        @click="activeTab = 'ai'"
         class="relative flex flex-1 items-center justify-center gap-2 overflow-hidden rounded-lg px-3 py-2.5 text-sm font-semibold transition-all"
         :class="
           activeTab === 'ai'
             ? 'border border-transparent bg-gradient-to-r from-brand to-purple-600 text-white shadow-md shadow-brand/20'
             : 'text-gray-500 hover:bg-gray-100 hover:text-brand dark:text-neutral-400 dark:hover:bg-neutral-800'
         "
+        @click="activeTab = 'ai'"
       >
         <div
           v-if="activeTab === 'ai'"
@@ -56,7 +56,7 @@
           >
             <div class="flex items-center gap-3">
               <Avatar
-                :username="profileStore.me?.username || 'Shopper'"
+                :username="profileStore.me?.username ?? 'Shopper'"
                 :avatar="profileStore.me?.avatar"
                 size="md"
                 class="ring-2 ring-white/80 dark:ring-neutral-900/80"
@@ -123,8 +123,8 @@
                   class="relative transition-transform group-hover:scale-105"
                 >
                   <StoreAvatar
-                    :store-name="seller.store_name ?? ''"
-                    :logo="seller.store_logo ?? ''"
+                    :store-name="seller.store_name ?? undefined"
+                    :logo="seller.store_logo ?? undefined"
                     size="lg"
                   />
                   <div
@@ -151,13 +151,13 @@
               <ClientOnly>
                 <button
                   v-if="profileStore.isLoggedIn"
-                  @click.stop.prevent="toggleFollow(seller)"
                   class="ml-2 shrink-0 rounded-full px-3 py-1 text-xs font-semibold transition-all"
                   :class="
                     followedIds.has(seller.id)
                       ? 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-600'
                       : 'bg-brand text-white hover:bg-brand/90 hover:shadow-md hover:shadow-brand/20'
                   "
+                  @click.stop.prevent="toggleFollow(seller)"
                 >
                   {{ followedIds.has(seller.id) ? 'Following' : 'Follow' }}
                 </button>
@@ -172,7 +172,11 @@
           class="rounded-2xl border border-gray-100 bg-gray-50/70 p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-800/40"
         >
           <div class="mb-4 flex items-center gap-2">
-            <Icon name="mdi:shape-outline" size="20" class="text-gray-500 dark:text-neutral-400" />
+            <Icon
+              name="mdi:shape-outline"
+              size="20"
+              class="text-gray-500 dark:text-neutral-400"
+            />
             <h3 class="font-bold text-gray-900 dark:text-white">Categories</h3>
           </div>
 
@@ -220,7 +224,11 @@
           class="rounded-2xl border border-gray-100 bg-gray-50/70 p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-800/40"
         >
           <div class="mb-3 flex items-center gap-2">
-            <Icon name="mdi:link-variant" size="20" class="text-gray-500 dark:text-neutral-400" />
+            <Icon
+              name="mdi:link-variant"
+              size="20"
+              class="text-gray-500 dark:text-neutral-400"
+            />
             <h3 class="font-bold text-gray-900 dark:text-white">Quick Links</h3>
           </div>
           <div class="space-y-2">
@@ -241,7 +249,10 @@
               >
                 <Icon name="mdi:lightning-bolt-outline" size="18" />
               </div>
-              <span class="text-sm font-medium text-gray-700 transition-colors group-hover:text-brand dark:text-neutral-300">Fresh Drops</span>
+              <span
+                class="text-sm font-medium text-gray-700 transition-colors group-hover:text-brand dark:text-neutral-300"
+                >Fresh Drops</span
+              >
             </NuxtLink>
             <NuxtLink to="/discover?tab=deals" class="quick-link group">
               <div
@@ -249,7 +260,10 @@
               >
                 <Icon name="mdi:tag-outline" size="18" />
               </div>
-              <span class="text-sm font-medium text-gray-700 transition-colors group-hover:text-brand dark:text-neutral-300">Deals</span>
+              <span
+                class="text-sm font-medium text-gray-700 transition-colors group-hover:text-brand dark:text-neutral-300"
+                >Deals</span
+              >
             </NuxtLink>
             <NuxtLink to="/reels" class="quick-link group">
               <div
@@ -257,7 +271,10 @@
               >
                 <Icon name="mdi:play-box-multiple-outline" size="18" />
               </div>
-              <span class="text-sm font-medium text-gray-700 transition-colors group-hover:text-brand dark:text-neutral-300">Reels</span>
+              <span
+                class="text-sm font-medium text-gray-700 transition-colors group-hover:text-brand dark:text-neutral-300"
+                >Reels</span
+              >
             </NuxtLink>
             <NuxtLink to="/discover?tab=preloved" class="quick-link group">
               <div
@@ -265,7 +282,10 @@
               >
                 <Icon name="mdi:heart-circle-outline" size="18" />
               </div>
-              <span class="text-sm font-medium text-gray-700 transition-colors group-hover:text-brand dark:text-neutral-300">Pre-loved</span>
+              <span
+                class="text-sm font-medium text-gray-700 transition-colors group-hover:text-brand dark:text-neutral-300"
+                >Pre-loved</span
+              >
             </NuxtLink>
           </div>
         </div>
@@ -304,21 +324,39 @@
       </div>
 
       <!-- AI TAB -->
-      <div v-show="activeTab === 'ai'" class="flex h-full flex-col items-center justify-center px-4 pb-6 pt-8">
-        <div class="relative overflow-hidden rounded-3xl border border-brand/20 bg-gradient-to-br from-brand/10 via-purple-500/10 to-transparent p-8 text-center shadow-sm dark:border-brand/30 dark:from-brand/15 dark:via-purple-500/15">
-          <div class="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-brand/10 blur-3xl" />
-          <div class="pointer-events-none absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-purple-500/10 blur-2xl" />
+      <div
+        v-show="activeTab === 'ai'"
+        class="flex h-full flex-col items-center justify-center px-4 pb-6 pt-8"
+      >
+        <div
+          class="relative overflow-hidden rounded-3xl border border-brand/20 bg-gradient-to-br from-brand/10 via-purple-500/10 to-transparent p-8 text-center shadow-sm dark:border-brand/30 dark:from-brand/15 dark:via-purple-500/15"
+        >
+          <div
+            class="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-brand/10 blur-3xl"
+          />
+          <div
+            class="pointer-events-none absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-purple-500/10 blur-2xl"
+          />
           <div class="relative z-10 flex flex-col items-center">
-            <div class="mb-5 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-brand to-purple-600 shadow-xl shadow-brand/30">
+            <div
+              class="mb-5 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-brand to-purple-600 shadow-xl shadow-brand/30"
+            >
               <Icon name="mdi:robot-happy" size="40" class="text-white" />
             </div>
-            <h3 class="mb-2 text-xl font-extrabold text-gray-900 dark:text-white">
+            <h3
+              class="mb-2 text-xl font-extrabold text-gray-900 dark:text-white"
+            >
               Dasah
             </h3>
-            <p class="mb-6 max-w-[220px] text-sm leading-relaxed text-gray-500 dark:text-neutral-400">
-              Your Dasah AI shopping assistant — search smarter, discover faster.
+            <p
+              class="mb-6 max-w-[220px] text-sm leading-relaxed text-gray-500 dark:text-neutral-400"
+            >
+              Your Dasah AI shopping assistant — search smarter, discover
+              faster.
             </p>
-            <span class="inline-flex items-center gap-1.5 rounded-full border border-brand/30 bg-brand/10 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-brand dark:border-brand/40 dark:bg-brand/20">
+            <span
+              class="inline-flex items-center gap-1.5 rounded-full border border-brand/30 bg-brand/10 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-brand dark:border-brand/40 dark:bg-brand/20"
+            >
               <Icon name="mdi:clock-fast" size="14" />
               Launching soon
             </span>
@@ -358,11 +396,15 @@ onMounted(async () => {
   try {
     const res = await socialApi.getFollowedSellerIds()
     followedIds.value = new Set(res.data ?? [])
-  } catch {}
+  } catch (err) {
+    console.error('Failed to fetch followed seller IDs:', err)
+  }
 })
 
 const getFollowerCount = (seller: Seller) => {
-  return followerCountOverrides.value.get(seller.id) ?? seller.followers_count ?? 0
+  return (
+    followerCountOverrides.value.get(seller.id) ?? seller.followers_count ?? 0
+  )
 }
 
 const toggleFollow = async (seller: Seller) => {

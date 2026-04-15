@@ -180,8 +180,8 @@
             <span
               class="absolute left-3.5 top-1/2 -translate-y-1/2 select-none text-[13px] text-gray-400 dark:text-neutral-500"
               >{{
-                $config.public.brandDomain || 'stylex.indicestech.com'
-              }}/sellers/</span
+                $config.public.brandDomain || 'marketx.app'
+              }}/</span
             >
             <input
               v-model="form.store_slug"
@@ -189,7 +189,7 @@
               placeholder="your-store"
               maxlength="50"
               required
-              class="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-[144px] pr-10 text-[14px] text-gray-900 placeholder-gray-400 transition focus:outline-none focus:ring-2 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+              class="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-[120px] pr-10 text-[14px] text-gray-900 placeholder-gray-400 transition focus:outline-none focus:ring-2 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
               :class="
                 slugStatus === 'available'
                   ? 'border-emerald-400 focus:ring-emerald-400/20'

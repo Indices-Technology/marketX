@@ -83,6 +83,46 @@ export const useAuth = () => {
     }
   }
 
+  // ==================== REGISTER + CREATE STORE (seller onboarding) ====================
+
+  const registerSeller = async (payload: {
+    email: string
+    username: string
+    password: string
+    confirmPassword: string
+    store_name: string
+    store_slug: string
+    store_description?: string
+    store_location?: string
+    store_logo?: string
+    store_currency?: string
+  }) => {
+    authStore.setLoading(true)
+    authStore.setError(null)
+    try {
+      const result = await $fetch<{
+        success: boolean
+        accessToken: string
+        refreshToken: string
+        user: any
+        store: { store_slug: string; store_name: string }
+      }>('/api/auth/register-seller', { method: 'POST', body: payload })
+
+      authStore.setAccessToken(result.accessToken)
+      authStore.setRefreshToken(result.refreshToken)
+
+      // Hydrate profile store from API (same as login flow)
+      await syncUserToProfile(result.user)
+
+      return result
+    } catch (e: unknown) {
+      authStore.setError(extractErrorMessage(e, 'Registration failed'))
+      throw e
+    } finally {
+      authStore.setLoading(false)
+    }
+  }
+
   // ==================== LOGIN ====================
 
   /**
@@ -396,6 +436,7 @@ export const useAuth = () => {
     message,
     // Methods
     register,
+    registerSeller,
     login,
     socialLogin,
     logout,

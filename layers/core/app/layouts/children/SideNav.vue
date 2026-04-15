@@ -57,11 +57,11 @@
           @click="$emit('create')"
         >
           <Icon name="mdi:plus-circle-outline" size="24" />
-          <span class="nav-text">create</span>
+          <span class="nav-text">Create</span>
         </button>
         <NuxtLink v-else to="/user-register" class="sell-button group">
           <Icon name="mdi:plus-circle-outline" size="24" />
-          <span class="nav-text">create post</span>
+          <span class="nav-text">Create</span>
         </NuxtLink>
       </ClientOnly>
 

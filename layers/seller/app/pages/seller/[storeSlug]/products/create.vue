@@ -18,20 +18,25 @@
       class="mb-6 max-w-3xl rounded-2xl border border-brand/20 bg-gradient-to-r from-brand/10 to-purple-600/10 p-5 dark:from-brand/20 dark:to-purple-600/20"
     >
       <div class="flex items-start gap-4">
-        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand shadow-lg shadow-brand/25">
+        <div
+          class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand shadow-lg shadow-brand/25"
+        >
           <span class="text-sm font-black italic text-white">MX</span>
         </div>
         <div>
-          <h2 class="font-bold text-gray-900 dark:text-white">One last step — add your first product!</h2>
+          <h2 class="font-bold text-gray-900 dark:text-white">
+            One last step — add your first product!
+          </h2>
           <p class="mt-1 text-sm text-gray-600 dark:text-neutral-400">
-            Your store is live. Add a product now so buyers can find you. You can add more any time from your dashboard.
+            Your store is live. Add a product now so buyers can find you. You
+            can add more any time from your dashboard.
           </p>
         </div>
       </div>
     </div>
 
     <div class="max-w-3xl">
-      <form @submit.prevent="handleSubmit" class="space-y-6">
+      <form class="space-y-6" @submit.prevent="handleSubmit">
         <!-- Error -->
         <div
           v-if="error"
@@ -77,8 +82,8 @@
               </div>
               <button
                 type="button"
-                @click="removeMediaItem(i)"
                 class="absolute right-1 top-1 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
+                @click="removeMediaItem(i)"
               >
                 <Icon name="mdi:close" size="12" />
               </button>
@@ -126,9 +131,9 @@
             </div>
             <button
               type="button"
-              @click="autoFillWithAI"
               :disabled="isGeneratingAI || mediaItems[0]?.uploading"
               class="flex w-full shrink-0 items-center justify-center gap-2 rounded-lg bg-gray-900 px-5 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 sm:w-auto dark:bg-white dark:text-gray-900"
+              @click="autoFillWithAI"
             >
               <Icon
                 v-if="isGeneratingAI"
@@ -142,9 +147,14 @@
           </div>
 
           <!-- Background Music -->
-          <div class="mt-4 border-t border-gray-100 pt-4 dark:border-neutral-700">
-            <h3 class="mb-2 text-sm font-medium text-gray-700 dark:text-neutral-300">
-              Background Music <span class="font-normal text-gray-400">(optional)</span>
+          <div
+            class="mt-4 border-t border-gray-100 pt-4 dark:border-neutral-700"
+          >
+            <h3
+              class="mb-2 text-sm font-medium text-gray-700 dark:text-neutral-300"
+            >
+              Background Music
+              <span class="font-normal text-gray-400">(optional)</span>
             </h3>
 
             <!-- Selected music chip -->
@@ -152,23 +162,34 @@
               v-if="selectedMusic"
               class="flex items-center gap-3 rounded-xl border border-pink-100 bg-gradient-to-r from-pink-50 to-purple-50 px-3 py-2.5 dark:border-pink-900/30 dark:from-pink-950/20 dark:to-purple-950/20"
             >
-              <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-pink-400 to-purple-500">
+              <div
+                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-pink-400 to-purple-500"
+              >
                 <Icon name="mdi:music-note" size="16" class="text-white" />
               </div>
               <div class="min-w-0 flex-1">
-                <p class="truncate text-[13px] font-semibold text-gray-900 dark:text-neutral-100">
+                <p
+                  class="truncate text-[13px] font-semibold text-gray-900 dark:text-neutral-100"
+                >
                   {{ selectedMusic.name }}
                 </p>
                 <p class="text-[11px] text-pink-400">
-                  {{ selectedMusic.source === 'jamendo' ? selectedMusic.artist : 'Local file' }}
+                  {{
+                    selectedMusic.source === 'jamendo'
+                      ? selectedMusic.artist
+                      : 'Local file'
+                  }}
                 </p>
               </div>
-              <div v-if="bgMusicUploading" class="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+              <div
+                v-if="bgMusicUploading"
+                class="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-brand border-t-transparent"
+              />
               <button
                 v-else
                 type="button"
-                @click="removeBgMusic"
                 class="shrink-0 rounded-full p-1 transition-colors hover:bg-pink-100 dark:hover:bg-pink-900/30"
+                @click="removeBgMusic"
               >
                 <Icon name="mdi:close" size="16" class="text-gray-500" />
               </button>
@@ -178,10 +199,14 @@
             <button
               v-else
               type="button"
-              @click="showMusicPicker = true"
               class="flex items-center gap-2 rounded-lg border border-dashed border-gray-300 px-4 py-2.5 text-sm text-gray-500 transition-colors hover:border-brand hover:bg-brand/5 dark:border-neutral-600 dark:text-neutral-400"
+              @click="showMusicPicker = true"
             >
-              <Icon name="mdi:music-note-plus" size="18" class="text-gray-400 dark:text-neutral-500" />
+              <Icon
+                name="mdi:music-note-plus"
+                size="18"
+                class="text-gray-400 dark:text-neutral-500"
+              />
               Add background music
             </button>
           </div>
@@ -214,14 +239,19 @@
               class="mb-1 block text-sm font-medium text-gray-700 dark:text-neutral-300"
               >Description *</label
             >
-            <textarea
-              v-model="form.description"
-              required
-              rows="4"
-              minlength="10"
-              placeholder="Describe your product..."
-              class="w-full resize-none rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
-            />
+            <ClientOnly>
+              <HtmlDescriptionEditor
+                v-model="form.description"
+                placeholder="Describe your product…"
+              />
+              <template #fallback>
+                <textarea
+                  v-model="form.description"
+                  rows="4"
+                  class="w-full resize-none rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
+                />
+              </template>
+            </ClientOnly>
           </div>
 
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -405,8 +435,8 @@
             </div>
             <button
               type="button"
-              @click="addVariant"
               class="flex items-center gap-1.5 rounded-lg border border-brand/30 bg-brand/5 px-3 py-1.5 text-sm font-semibold text-brand transition-colors hover:bg-brand/10"
+              @click="addVariant"
             >
               <Icon name="mdi:plus" size="15" /> Add Variant
             </button>
@@ -463,8 +493,8 @@
               </div>
               <button
                 type="button"
-                @click="removeVariant(i)"
                 class="mt-6 flex-shrink-0 rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
+                @click="removeVariant(i)"
               >
                 <Icon name="mdi:trash-can-outline" size="16" />
               </button>
@@ -475,8 +505,8 @@
           <button
             v-else
             type="button"
-            @click="addVariant"
             class="flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed border-gray-200 py-8 transition-colors hover:border-brand hover:bg-brand/5 dark:border-neutral-700"
+            @click="addVariant"
           >
             <Icon
               name="mdi:tag-multiple-outline"
@@ -508,8 +538,8 @@
             </div>
             <button
               type="button"
-              @click="addOffer"
               class="flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400"
+              @click="addOffer"
             >
               <Icon name="mdi:plus" size="15" /> Add Offer
             </button>
@@ -574,8 +604,8 @@
                 </span>
                 <button
                   type="button"
-                  @click="removeOffer(i)"
                   class="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
+                  @click="removeOffer(i)"
                 >
                   <Icon name="mdi:trash-can-outline" size="16" />
                 </button>
@@ -586,8 +616,8 @@
           <button
             v-else
             type="button"
-            @click="addOffer"
             class="flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed border-gray-200 py-6 transition-colors hover:border-emerald-400 hover:bg-emerald-50/50 dark:border-neutral-700"
+            @click="addOffer"
           >
             <Icon
               name="mdi:percent-outline"
@@ -629,13 +659,13 @@
               v-for="cat in categories"
               :key="cat.id"
               type="button"
-              @click="toggleCategory(cat.id)"
               class="rounded-full border px-3 py-1.5 text-sm font-medium transition-colors"
               :class="
                 form.categoryIds.includes(cat.id)
                   ? 'border-brand bg-brand text-white'
                   : 'border-gray-200 bg-gray-100 text-gray-700 hover:border-brand dark:border-neutral-600 dark:bg-neutral-700 dark:text-neutral-300'
               "
+              @click="toggleCategory(cat.id)"
             >
               {{ cat.name }}
             </button>
@@ -664,8 +694,8 @@
               #{{ tag }}
               <button
                 type="button"
-                @click="form.tagNames.splice(i, 1)"
                 class="ml-0.5 rounded-full hover:bg-brand/20"
+                @click="form.tagNames.splice(i, 1)"
               >
                 <Icon name="mdi:close" size="13" />
               </button>
@@ -692,64 +722,151 @@
           class="rounded-xl border border-brand/20 bg-gradient-to-br from-brand/5 to-purple-600/5 p-4 sm:p-6 dark:from-brand/10 dark:to-purple-600/10"
         >
           <div class="mb-4 flex items-center gap-2">
-            <Icon name="mdi:share-variant-outline" size="20" class="text-brand" />
+            <Icon
+              name="mdi:share-variant-outline"
+              size="20"
+              class="text-brand"
+            />
             <div>
-              <h2 class="font-semibold text-gray-900 dark:text-neutral-100">Distribution</h2>
-              <p class="text-xs text-gray-500 dark:text-neutral-400">Choose where this product appears</p>
+              <h2 class="font-semibold text-gray-900 dark:text-neutral-100">
+                Distribution
+              </h2>
+              <p class="text-xs text-gray-500 dark:text-neutral-400">
+                Choose where this product appears
+              </p>
             </div>
           </div>
 
           <div class="space-y-3">
             <!-- Shop & Discover: always ON, not toggleable -->
-            <div class="flex items-center justify-between rounded-xl border border-gray-200 bg-white px-4 py-3 dark:border-neutral-700 dark:bg-neutral-800">
+            <div
+              class="flex items-center justify-between rounded-xl border border-gray-200 bg-white px-4 py-3 dark:border-neutral-700 dark:bg-neutral-800"
+            >
               <div class="flex items-center gap-3">
-                <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-brand/10">
-                  <Icon name="mdi:storefront-outline" size="18" class="text-brand" />
+                <div
+                  class="flex h-9 w-9 items-center justify-center rounded-lg bg-brand/10"
+                >
+                  <Icon
+                    name="mdi:storefront-outline"
+                    size="18"
+                    class="text-brand"
+                  />
                 </div>
                 <div>
-                  <p class="text-sm font-medium text-gray-900 dark:text-neutral-100">Shop &amp; Discover</p>
-                  <p class="text-xs text-gray-400 dark:text-neutral-500">Always visible in your store and discovery pages</p>
+                  <p
+                    class="text-sm font-medium text-gray-900 dark:text-neutral-100"
+                  >
+                    Shop &amp; Discover
+                  </p>
+                  <p class="text-xs text-gray-400 dark:text-neutral-500">
+                    Always visible in your store and discovery pages
+                  </p>
                 </div>
               </div>
-              <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">Always On</span>
+              <span
+                class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                >Always On</span
+              >
             </div>
 
             <!-- Share to Feed (Premium only) -->
-            <div class="rounded-xl border bg-white dark:bg-neutral-800"
-              :class="form.showInFeed ? 'border-brand/30 dark:border-brand/30' : 'border-gray-200 dark:border-neutral-700'">
+            <div
+              class="rounded-xl border bg-white dark:bg-neutral-800"
+              :class="
+                form.showInFeed
+                  ? 'border-brand/30 dark:border-brand/30'
+                  : 'border-gray-200 dark:border-neutral-700'
+              "
+            >
               <button
                 type="button"
                 class="flex w-full items-center justify-between px-4 py-3"
                 :disabled="!isPremiumSeller"
-                :title="!isPremiumSeller ? 'Upgrade to Premium to publish products to the social feed' : undefined"
+                :title="
+                  !isPremiumSeller
+                    ? 'Upgrade to Premium to publish products to the social feed'
+                    : undefined
+                "
                 @click="isPremiumSeller && (form.showInFeed = !form.showInFeed)"
               >
                 <div class="flex items-center gap-3">
-                  <div class="flex h-9 w-9 items-center justify-center rounded-lg" :class="form.showInFeed ? 'bg-brand/10' : 'bg-gray-100 dark:bg-neutral-700'">
-                    <Icon name="mdi:image-multiple-outline" size="18" :class="form.showInFeed ? 'text-brand' : 'text-gray-500 dark:text-neutral-400'" />
+                  <div
+                    class="flex h-9 w-9 items-center justify-center rounded-lg"
+                    :class="
+                      form.showInFeed
+                        ? 'bg-brand/10'
+                        : 'bg-gray-100 dark:bg-neutral-700'
+                    "
+                  >
+                    <Icon
+                      name="mdi:image-multiple-outline"
+                      size="18"
+                      :class="
+                        form.showInFeed
+                          ? 'text-brand'
+                          : 'text-gray-500 dark:text-neutral-400'
+                      "
+                    />
                   </div>
                   <div class="text-left">
-                    <p class="text-sm font-medium text-gray-900 dark:text-neutral-100">
+                    <p
+                      class="text-sm font-medium text-gray-900 dark:text-neutral-100"
+                    >
                       Share to Feed
-                      <span v-if="!isPremiumSeller" class="ml-1.5 rounded-full bg-violet px-2 py-0.5 text-[10px] font-bold text-white">PREMIUM</span>
+                      <span
+                        v-if="!isPremiumSeller"
+                        class="ml-1.5 rounded-full bg-violet px-2 py-0.5 text-[10px] font-bold text-white"
+                        >PREMIUM</span
+                      >
                     </p>
                     <p class="text-xs text-gray-400 dark:text-neutral-500">
-                      {{ isPremiumSeller ? 'Post this product as a social feed card' : 'Available on Premium plan' }}
+                      {{
+                        isPremiumSeller
+                          ? 'Post this product as a social feed card'
+                          : 'Available on Premium plan'
+                      }}
                     </p>
                   </div>
                 </div>
                 <!-- Toggle pill -->
-                <div class="relative h-6 w-11 shrink-0 rounded-full transition-colors"
-                  :class="!isPremiumSeller ? 'opacity-40' : form.showInFeed ? 'bg-brand' : 'bg-gray-200 dark:bg-neutral-600'">
-                  <div class="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform" :class="form.showInFeed ? 'translate-x-5' : 'translate-x-0.5'" />
+                <div
+                  class="relative h-6 w-11 shrink-0 rounded-full transition-colors"
+                  :class="
+                    !isPremiumSeller
+                      ? 'opacity-40'
+                      : form.showInFeed
+                        ? 'bg-brand'
+                        : 'bg-gray-200 dark:bg-neutral-600'
+                  "
+                >
+                  <div
+                    class="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform"
+                    :class="
+                      form.showInFeed ? 'translate-x-5' : 'translate-x-0.5'
+                    "
+                  />
                 </div>
               </button>
               <!-- Feed caption (shown when toggle is ON) -->
-              <Transition enter-active-class="transition-all duration-200" enter-from-class="opacity-0 -translate-y-1" enter-to-class="opacity-100 translate-y-0" leave-active-class="transition-all duration-150" leave-from-class="opacity-100" leave-to-class="opacity-0">
-                <div v-if="form.showInFeed" class="border-t border-brand/10 px-4 pb-4 pt-3 dark:border-brand/20">
-                  <label class="mb-1.5 block text-xs font-semibold text-gray-600 dark:text-neutral-400">
+              <Transition
+                enter-active-class="transition-all duration-200"
+                enter-from-class="opacity-0 -translate-y-1"
+                enter-to-class="opacity-100 translate-y-0"
+                leave-active-class="transition-all duration-150"
+                leave-from-class="opacity-100"
+                leave-to-class="opacity-0"
+              >
+                <div
+                  v-if="form.showInFeed"
+                  class="border-t border-brand/10 px-4 pb-4 pt-3 dark:border-brand/20"
+                >
+                  <label
+                    class="mb-1.5 block text-xs font-semibold text-gray-600 dark:text-neutral-400"
+                  >
                     Feed caption
-                    <span class="font-normal text-gray-400">— optional, up to 2200 chars</span>
+                    <span class="font-normal text-gray-400"
+                      >— optional, up to 2200 chars</span
+                    >
                   </label>
                   <textarea
                     v-model="form.socialCaptions.feedCaption"
@@ -758,96 +875,268 @@
                     placeholder="Write a caption for the feed post… #hashtags work too"
                     class="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm placeholder-gray-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
                   />
-                  <p class="mt-0.5 text-right text-[11px] text-gray-400">{{ (form.socialCaptions.feedCaption || '').length }}/2200</p>
+                  <p class="mt-0.5 text-right text-[11px] text-gray-400">
+                    {{ (form.socialCaptions.feedCaption || '').length }}/2200
+                  </p>
                 </div>
               </Transition>
             </div>
 
             <!-- Share to Reels (Premium + video required) -->
-            <div class="rounded-xl border bg-white dark:bg-neutral-800"
-              :class="form.showInReels ? 'border-brand/30 dark:border-brand/30' : 'border-gray-200 dark:border-neutral-700'">
+            <div
+              class="rounded-xl border bg-white dark:bg-neutral-800"
+              :class="
+                form.showInReels
+                  ? 'border-brand/30 dark:border-brand/30'
+                  : 'border-gray-200 dark:border-neutral-700'
+              "
+            >
               <button
                 type="button"
                 class="flex w-full items-center justify-between px-4 py-3"
                 :disabled="!hasVideo || !isPremiumSeller"
-                :title="!isPremiumSeller ? 'Upgrade to Premium to publish products to Reels' : !hasVideo ? 'Upload a video to enable Reels' : undefined"
-                @click="hasVideo && isPremiumSeller && (form.showInReels = !form.showInReels)"
+                :title="
+                  !isPremiumSeller
+                    ? 'Upgrade to Premium to publish products to Reels'
+                    : !hasVideo
+                      ? 'Upload a video to enable Reels'
+                      : undefined
+                "
+                @click="
+                  hasVideo &&
+                    isPremiumSeller &&
+                    (form.showInReels = !form.showInReels)
+                "
               >
                 <div class="flex items-center gap-3">
-                  <div class="flex h-9 w-9 items-center justify-center rounded-lg" :class="form.showInReels ? 'bg-brand/10' : 'bg-gray-100 dark:bg-neutral-700'">
-                    <Icon name="mdi:play-box-multiple-outline" size="18" :class="form.showInReels ? 'text-brand' : 'text-gray-500 dark:text-neutral-400'" />
+                  <div
+                    class="flex h-9 w-9 items-center justify-center rounded-lg"
+                    :class="
+                      form.showInReels
+                        ? 'bg-brand/10'
+                        : 'bg-gray-100 dark:bg-neutral-700'
+                    "
+                  >
+                    <Icon
+                      name="mdi:play-box-multiple-outline"
+                      size="18"
+                      :class="
+                        form.showInReels
+                          ? 'text-brand'
+                          : 'text-gray-500 dark:text-neutral-400'
+                      "
+                    />
                   </div>
                   <div class="text-left">
-                    <p class="text-sm font-medium text-gray-900 dark:text-neutral-100">
+                    <p
+                      class="text-sm font-medium text-gray-900 dark:text-neutral-100"
+                    >
                       Share to Reels
-                      <span v-if="!isPremiumSeller" class="ml-1.5 rounded-full bg-violet px-2 py-0.5 text-[10px] font-bold text-white">PREMIUM</span>
+                      <span
+                        v-if="!isPremiumSeller"
+                        class="ml-1.5 rounded-full bg-violet px-2 py-0.5 text-[10px] font-bold text-white"
+                        >PREMIUM</span
+                      >
                     </p>
                     <p class="text-xs text-gray-400 dark:text-neutral-500">
-                      {{ !isPremiumSeller ? 'Available on Premium plan' : hasVideo ? 'Feature as a shoppable Reel' : 'Requires a video upload' }}
+                      {{
+                        !isPremiumSeller
+                          ? 'Available on Premium plan'
+                          : hasVideo
+                            ? 'Feature as a shoppable Reel'
+                            : 'Requires a video upload'
+                      }}
                     </p>
                   </div>
                 </div>
-                <div class="relative h-6 w-11 shrink-0 rounded-full transition-colors"
-                  :class="!isPremiumSeller || !hasVideo ? 'opacity-40' : form.showInReels ? 'bg-brand' : 'bg-gray-200 dark:bg-neutral-600'">
-                  <div class="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform" :class="form.showInReels ? 'translate-x-5' : 'translate-x-0.5'" />
+                <div
+                  class="relative h-6 w-11 shrink-0 rounded-full transition-colors"
+                  :class="
+                    !isPremiumSeller || !hasVideo
+                      ? 'opacity-40'
+                      : form.showInReels
+                        ? 'bg-brand'
+                        : 'bg-gray-200 dark:bg-neutral-600'
+                  "
+                >
+                  <div
+                    class="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform"
+                    :class="
+                      form.showInReels ? 'translate-x-5' : 'translate-x-0.5'
+                    "
+                  />
                 </div>
               </button>
             </div>
 
             <!-- Pre-loved (Thrift) toggle -->
-            <div class="rounded-xl border bg-white dark:bg-neutral-800"
-              :class="form.isThrift ? 'border-pink-200 dark:border-pink-800/30' : 'border-gray-200 dark:border-neutral-700'">
-              <button type="button" class="flex w-full items-center justify-between px-4 py-3" @click="form.isThrift = !form.isThrift">
+            <div
+              class="rounded-xl border bg-white dark:bg-neutral-800"
+              :class="
+                form.isThrift
+                  ? 'border-pink-200 dark:border-pink-800/30'
+                  : 'border-gray-200 dark:border-neutral-700'
+              "
+            >
+              <button
+                type="button"
+                class="flex w-full items-center justify-between px-4 py-3"
+                @click="form.isThrift = !form.isThrift"
+              >
                 <div class="flex items-center gap-3">
-                  <div class="flex h-9 w-9 items-center justify-center rounded-lg" :class="form.isThrift ? 'bg-pink-50 dark:bg-pink-900/20' : 'bg-gray-100 dark:bg-neutral-700'">
-                    <Icon name="mdi:heart-circle-outline" size="18" :class="form.isThrift ? 'text-pink-500' : 'text-gray-500 dark:text-neutral-400'" />
+                  <div
+                    class="flex h-9 w-9 items-center justify-center rounded-lg"
+                    :class="
+                      form.isThrift
+                        ? 'bg-pink-50 dark:bg-pink-900/20'
+                        : 'bg-gray-100 dark:bg-neutral-700'
+                    "
+                  >
+                    <Icon
+                      name="mdi:heart-circle-outline"
+                      size="18"
+                      :class="
+                        form.isThrift
+                          ? 'text-pink-500'
+                          : 'text-gray-500 dark:text-neutral-400'
+                      "
+                    />
                   </div>
                   <div class="text-left">
-                    <p class="text-sm font-medium text-gray-900 dark:text-neutral-100">Pre-loved / Thrift</p>
-                    <p class="text-xs text-gray-400 dark:text-neutral-500">Shows in Pre-loved section — set condition below</p>
+                    <p
+                      class="text-sm font-medium text-gray-900 dark:text-neutral-100"
+                    >
+                      Pre-loved / Thrift
+                    </p>
+                    <p class="text-xs text-gray-400 dark:text-neutral-500">
+                      Shows in Pre-loved section — set condition below
+                    </p>
                   </div>
                 </div>
-                <div class="relative h-6 w-11 shrink-0 rounded-full transition-colors" :class="form.isThrift ? 'bg-pink-500' : 'bg-gray-200 dark:bg-neutral-600'">
-                  <div class="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform" :class="form.isThrift ? 'translate-x-5' : 'translate-x-0.5'" />
+                <div
+                  class="relative h-6 w-11 shrink-0 rounded-full transition-colors"
+                  :class="
+                    form.isThrift
+                      ? 'bg-pink-500'
+                      : 'bg-gray-200 dark:bg-neutral-600'
+                  "
+                >
+                  <div
+                    class="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform"
+                    :class="form.isThrift ? 'translate-x-5' : 'translate-x-0.5'"
+                  />
                 </div>
               </button>
-              <Transition enter-active-class="transition-all duration-200" enter-from-class="opacity-0 -translate-y-1" enter-to-class="opacity-100 translate-y-0" leave-active-class="transition-all duration-150" leave-from-class="opacity-100" leave-to-class="opacity-0">
-                <div v-if="form.isThrift" class="border-t border-pink-100 px-4 pb-4 pt-3 dark:border-pink-900/30">
-                  <label class="mb-1.5 block text-xs font-semibold text-gray-600 dark:text-neutral-400">Condition</label>
+              <Transition
+                enter-active-class="transition-all duration-200"
+                enter-from-class="opacity-0 -translate-y-1"
+                enter-to-class="opacity-100 translate-y-0"
+                leave-active-class="transition-all duration-150"
+                leave-from-class="opacity-100"
+                leave-to-class="opacity-0"
+              >
+                <div
+                  v-if="form.isThrift"
+                  class="border-t border-pink-100 px-4 pb-4 pt-3 dark:border-pink-900/30"
+                >
+                  <label
+                    class="mb-1.5 block text-xs font-semibold text-gray-600 dark:text-neutral-400"
+                    >Condition</label
+                  >
                   <div class="flex flex-wrap gap-2">
                     <button
                       v-for="c in CONDITIONS"
                       :key="c.value"
                       type="button"
                       class="rounded-full border px-3 py-1 text-xs font-medium transition-colors"
-                      :class="form.condition === c.value ? 'border-pink-400 bg-pink-50 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300' : 'border-gray-200 bg-gray-50 text-gray-600 hover:border-pink-300 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400'"
+                      :class="
+                        form.condition === c.value
+                          ? 'border-pink-400 bg-pink-50 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300'
+                          : 'border-gray-200 bg-gray-50 text-gray-600 hover:border-pink-300 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400'
+                      "
                       @click="form.condition = c.value"
-                    >{{ c.label }}</button>
+                    >
+                      {{ c.label }}
+                    </button>
                   </div>
                 </div>
               </Transition>
             </div>
 
             <!-- Deal toggle -->
-            <div class="rounded-xl border bg-white dark:bg-neutral-800"
-              :class="form.isDeal ? 'border-amber-200 dark:border-amber-800/30' : 'border-gray-200 dark:border-neutral-700'">
-              <button type="button" class="flex w-full items-center justify-between px-4 py-3" @click="form.isDeal = !form.isDeal">
+            <div
+              class="rounded-xl border bg-white dark:bg-neutral-800"
+              :class="
+                form.isDeal
+                  ? 'border-amber-200 dark:border-amber-800/30'
+                  : 'border-gray-200 dark:border-neutral-700'
+              "
+            >
+              <button
+                type="button"
+                class="flex w-full items-center justify-between px-4 py-3"
+                @click="form.isDeal = !form.isDeal"
+              >
                 <div class="flex items-center gap-3">
-                  <div class="flex h-9 w-9 items-center justify-center rounded-lg" :class="form.isDeal ? 'bg-amber-50 dark:bg-amber-900/20' : 'bg-gray-100 dark:bg-neutral-700'">
-                    <Icon name="mdi:tag-outline" size="18" :class="form.isDeal ? 'text-amber-500' : 'text-gray-500 dark:text-neutral-400'" />
+                  <div
+                    class="flex h-9 w-9 items-center justify-center rounded-lg"
+                    :class="
+                      form.isDeal
+                        ? 'bg-amber-50 dark:bg-amber-900/20'
+                        : 'bg-gray-100 dark:bg-neutral-700'
+                    "
+                  >
+                    <Icon
+                      name="mdi:tag-outline"
+                      size="18"
+                      :class="
+                        form.isDeal
+                          ? 'text-amber-500'
+                          : 'text-gray-500 dark:text-neutral-400'
+                      "
+                    />
                   </div>
                   <div class="text-left">
-                    <p class="text-sm font-medium text-gray-900 dark:text-neutral-100">Flash Deal</p>
-                    <p class="text-xs text-gray-400 dark:text-neutral-500">Shows in Deals section with countdown timer</p>
+                    <p
+                      class="text-sm font-medium text-gray-900 dark:text-neutral-100"
+                    >
+                      Flash Deal
+                    </p>
+                    <p class="text-xs text-gray-400 dark:text-neutral-500">
+                      Shows in Deals section with countdown timer
+                    </p>
                   </div>
                 </div>
-                <div class="relative h-6 w-11 shrink-0 rounded-full transition-colors" :class="form.isDeal ? 'bg-amber-500' : 'bg-gray-200 dark:bg-neutral-600'">
-                  <div class="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform" :class="form.isDeal ? 'translate-x-5' : 'translate-x-0.5'" />
+                <div
+                  class="relative h-6 w-11 shrink-0 rounded-full transition-colors"
+                  :class="
+                    form.isDeal
+                      ? 'bg-amber-500'
+                      : 'bg-gray-200 dark:bg-neutral-600'
+                  "
+                >
+                  <div
+                    class="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform"
+                    :class="form.isDeal ? 'translate-x-5' : 'translate-x-0.5'"
+                  />
                 </div>
               </button>
-              <Transition enter-active-class="transition-all duration-200" enter-from-class="opacity-0 -translate-y-1" enter-to-class="opacity-100 translate-y-0" leave-active-class="transition-all duration-150" leave-from-class="opacity-100" leave-to-class="opacity-0">
-                <div v-if="form.isDeal" class="border-t border-amber-100 px-4 pb-4 pt-3 dark:border-amber-900/30">
-                  <label class="mb-1.5 block text-xs font-semibold text-gray-600 dark:text-neutral-400">Deal ends at</label>
+              <Transition
+                enter-active-class="transition-all duration-200"
+                enter-from-class="opacity-0 -translate-y-1"
+                enter-to-class="opacity-100 translate-y-0"
+                leave-active-class="transition-all duration-150"
+                leave-from-class="opacity-100"
+                leave-to-class="opacity-0"
+              >
+                <div
+                  v-if="form.isDeal"
+                  class="border-t border-amber-100 px-4 pb-4 pt-3 dark:border-amber-900/30"
+                >
+                  <label
+                    class="mb-1.5 block text-xs font-semibold text-gray-600 dark:text-neutral-400"
+                    >Deal ends at</label
+                  >
                   <input
                     v-model="form.dealEndsAt"
                     type="datetime-local"
@@ -935,6 +1224,7 @@ import { useAiApi } from '~~/layers/core/app/services/ai.api'
 import { notify } from '@kyvg/vue3-notification'
 import MusicPicker from '~~/layers/core/app/components/MusicPicker.vue'
 import type { MusicSelection } from '~~/layers/core/app/components/MusicPicker.vue'
+import HtmlDescriptionEditor from '~~/layers/seller/app/components/HtmlDescriptionEditor.vue'
 
 definePageMeta({ middleware: 'auth', layout: 'store-layout' })
 
@@ -971,7 +1261,11 @@ interface MediaItem {
 const mediaItems = ref<MediaItem[]>([])
 const showMusicPicker = ref(false)
 const selectedMusic = ref<MusicSelection | null>(null)
-const bgMusicResult = ref<{ url: string; public_id: string; name?: string } | null>(null)
+const bgMusicResult = ref<{
+  url: string
+  public_id: string
+  name?: string
+} | null>(null)
 const bgMusicUploading = ref(false)
 
 const isAnyUploading = computed(
@@ -1020,7 +1314,11 @@ const onMusicSelected = async (music: MusicSelection) => {
   try {
     if (music.source === 'upload' && music.file) {
       const res = await uploadMedia(music.file)
-      bgMusicResult.value = { url: res.url, public_id: res.public_id, name: music.name }
+      bgMusicResult.value = {
+        url: res.url,
+        public_id: res.public_id,
+        name: music.name,
+      }
     } else if (music.source === 'jamendo' && music.url) {
       bgMusicResult.value = {
         url: music.url,
@@ -1087,7 +1385,9 @@ const CONDITIONS = [
 ]
 
 const hasVideo = computed(() =>
-  mediaItems.value.some((m) => m.result?.type === 'VIDEO' || m.file.type.startsWith('video/')),
+  mediaItems.value.some(
+    (m) => m.result?.type === 'VIDEO' || m.file.type.startsWith('video/'),
+  ),
 )
 
 const minDealDate = computed(() => {
@@ -1237,7 +1537,10 @@ const handleSubmit = async () => {
       showInFeed: form.showInFeed,
       showInReels: form.showInReels,
       isDeal: form.isDeal,
-      dealEndsAt: form.isDeal && form.dealEndsAt ? new Date(form.dealEndsAt).toISOString() : undefined,
+      dealEndsAt:
+        form.isDeal && form.dealEndsAt
+          ? new Date(form.dealEndsAt).toISOString()
+          : undefined,
       condition: form.isThrift && form.condition ? form.condition : undefined,
       // Include the social captions in the payload to save them to the DB
       socialCaptions: form.socialCaptions,

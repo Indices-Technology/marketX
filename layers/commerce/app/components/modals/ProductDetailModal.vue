@@ -134,11 +134,20 @@
                     @click="currentIndex = i"
                   >
                     <img
-                      :src="m.type === 'VIDEO' ? videoThumb(m.url) : imgThumb(m.url)"
+                      :src="
+                        m.type === 'VIDEO' ? videoThumb(m.url) : imgThumb(m.url)
+                      "
                       class="h-full w-full object-cover"
                     />
-                    <div v-if="m.type === 'VIDEO'" class="absolute inset-0 flex items-center justify-center bg-black/20">
-                      <Icon name="mdi:play-circle" size="20" class="text-white drop-shadow" />
+                    <div
+                      v-if="m.type === 'VIDEO'"
+                      class="absolute inset-0 flex items-center justify-center bg-black/20"
+                    >
+                      <Icon
+                        name="mdi:play-circle"
+                        size="20"
+                        class="text-white drop-shadow"
+                      />
                     </div>
                   </button>
                 </div>
@@ -267,10 +276,18 @@
                   v-if="loading && !product.description"
                   class="space-y-2 rounded-2xl bg-gray-50 p-4 dark:bg-neutral-800"
                 >
-                  <div class="h-2.5 w-20 animate-pulse rounded bg-gray-200 dark:bg-neutral-700" />
-                  <div class="h-3 w-full animate-pulse rounded bg-gray-200 dark:bg-neutral-700" />
-                  <div class="h-3 w-5/6 animate-pulse rounded bg-gray-200 dark:bg-neutral-700" />
-                  <div class="h-3 w-4/6 animate-pulse rounded bg-gray-200 dark:bg-neutral-700" />
+                  <div
+                    class="h-2.5 w-20 animate-pulse rounded bg-gray-200 dark:bg-neutral-700"
+                  />
+                  <div
+                    class="h-3 w-full animate-pulse rounded bg-gray-200 dark:bg-neutral-700"
+                  />
+                  <div
+                    class="h-3 w-5/6 animate-pulse rounded bg-gray-200 dark:bg-neutral-700"
+                  />
+                  <div
+                    class="h-3 w-4/6 animate-pulse rounded bg-gray-200 dark:bg-neutral-700"
+                  />
                 </div>
 
                 <!-- Description -->
@@ -279,25 +296,24 @@
                   class="rounded-2xl bg-gray-50 p-4 dark:bg-neutral-800"
                 >
                   <p
-                    class="mb-1.5 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-neutral-500"
+                    class="mb-2 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-neutral-500"
                   >
                     Description
                   </p>
                   <div class="relative">
-                    <p
-                      class="text-[13.5px] leading-relaxed text-gray-700 md:text-[14px] dark:text-neutral-300"
-                      :class="descExpanded ? '' : 'line-clamp-4'"
-                    >
-                      {{ product.description }}
-                    </p>
+                    <div
+                      class="product-desc text-[13.5px] leading-relaxed text-gray-700 md:text-[14px] dark:text-neutral-300"
+                      :class="descExpanded ? '' : 'desc-collapsed'"
+                      v-html="sanitizedDescription"
+                    />
                     <!-- Gradient fade when collapsed -->
                     <div
-                      v-if="!descExpanded && product.description.length > 150"
-                      class="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-gray-50 dark:from-neutral-800"
+                      v-if="!descExpanded && descTextLength > 200"
+                      class="pointer-events-none absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-gray-50 dark:from-neutral-800"
                     />
                   </div>
                   <button
-                    v-if="product.description.length > 150"
+                    v-if="descTextLength > 200"
                     class="mt-2 flex items-center gap-1 text-[12px] font-semibold text-brand hover:underline"
                     @click="descExpanded = !descExpanded"
                   >
@@ -452,13 +468,23 @@
                     />
                   </button>
                   <div class="min-w-0 flex-1">
-                    <p class="truncate text-[12px] font-bold text-gray-900 dark:text-neutral-100">
+                    <p
+                      class="truncate text-[12px] font-bold text-gray-900 dark:text-neutral-100"
+                    >
                       {{ bgMusic.altText || 'Background Music' }}
                     </p>
                     <div class="mt-0.5 flex items-center gap-1">
-                      <Icon name="mdi:music-note" size="12" class="text-pink-400" />
-                      <span class="text-[11px] font-medium text-pink-400 dark:text-pink-500">
-                        {{ bgMusicPlaying ? 'Playing now...' : 'Tap to listen' }}
+                      <Icon
+                        name="mdi:music-note"
+                        size="12"
+                        class="text-pink-400"
+                      />
+                      <span
+                        class="text-[11px] font-medium text-pink-400 dark:text-pink-500"
+                      >
+                        {{
+                          bgMusicPlaying ? 'Playing now...' : 'Tap to listen'
+                        }}
                       </span>
                     </div>
                   </div>
@@ -705,8 +731,14 @@
             "
             @click="currentIndex = i"
           >
-            <img :src="m.type === 'VIDEO' ? videoThumb(m.url) : imgDetail(m.url)" class="h-full w-full object-cover" />
-            <div v-if="m.type === 'VIDEO'" class="absolute inset-0 flex items-center justify-center bg-black/20">
+            <img
+              :src="m.type === 'VIDEO' ? videoThumb(m.url) : imgDetail(m.url)"
+              class="h-full w-full object-cover"
+            />
+            <div
+              v-if="m.type === 'VIDEO'"
+              class="absolute inset-0 flex items-center justify-center bg-black/20"
+            >
               <Icon name="mdi:play-circle" size="18" class="text-white" />
             </div>
           </button>
@@ -726,6 +758,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import DOMPurify from 'dompurify'
 import type {
   IProduct,
   IProductVariant,
@@ -759,6 +792,14 @@ const isAdding = ref(false)
 const cartAdded = ref(false)
 const showProductLikes = ref(false)
 const descExpanded = ref(false)
+// Strip HTML tags to get plain-text length for "Read more" threshold
+const descTextLength = computed(
+  () => (props.product?.description || '').replace(/<[^>]*>/g, '').length,
+)
+// Sanitize HTML to prevent XSS attacks
+const sanitizedDescription = computed(() =>
+  DOMPurify.sanitize(props.product?.description || ''),
+)
 const showPostModal = ref(false)
 const showStoryModal = ref(false)
 const bgMusicPlaying = ref(false)
@@ -807,7 +848,7 @@ const mediaItems = computed(() =>
     .map((m: any) => ({
       ...m,
       // Keep original URL for video; apply imgDetail only for images
-      url: m.type === 'VIDEO' ? m.url : (imgDetail(m.url) ?? m.url),
+      url: m.type === 'VIDEO' ? m.url : imgDetail(m.url) ?? m.url,
     })),
 )
 const currentItem = computed(() => mediaItems.value[currentIndex.value] ?? null)
@@ -939,13 +980,121 @@ const handleAddToCart = async () => {
 }
 
 @keyframes progress-slide {
-  0% { left: -40%; width: 40%; }
-  50% { left: 30%; width: 60%; }
-  100% { left: 110%; width: 40%; }
+  0% {
+    left: -40%;
+    width: 40%;
+  }
+  50% {
+    left: 30%;
+    width: 60%;
+  }
+  100% {
+    left: 110%;
+    width: 40%;
+  }
 }
 
 .loading-bar {
   position: absolute;
   animation: progress-slide 1.4s ease-in-out infinite;
+}
+
+/* ── HTML description prose styles ─────────────────────────────────────── */
+.desc-collapsed {
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.product-desc :deep(p) {
+  margin-bottom: 0.6em;
+}
+.product-desc :deep(p:last-child) {
+  margin-bottom: 0;
+}
+.product-desc :deep(ul) {
+  list-style: disc;
+  padding-left: 1.3em;
+  margin-bottom: 0.6em;
+}
+.product-desc :deep(ol) {
+  list-style: decimal;
+  padding-left: 1.3em;
+  margin-bottom: 0.6em;
+}
+.product-desc :deep(li) {
+  margin-bottom: 0.2em;
+}
+.product-desc :deep(strong),
+.product-desc :deep(b) {
+  font-weight: 600;
+}
+.product-desc :deep(em),
+.product-desc :deep(i) {
+  font-style: italic;
+}
+.product-desc :deep(u) {
+  text-decoration: underline;
+}
+.product-desc :deep(s),
+.product-desc :deep(del),
+.product-desc :deep(strike) {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+.product-desc :deep(a) {
+  color: #f43f5e;
+  text-decoration: underline;
+  word-break: break-word;
+}
+.product-desc :deep(h1),
+.product-desc :deep(h2),
+.product-desc :deep(h3),
+.product-desc :deep(h4),
+.product-desc :deep(h5),
+.product-desc :deep(h6) {
+  font-weight: 600;
+  margin-bottom: 0.3em;
+  margin-top: 0.5em;
+}
+.product-desc :deep(h1) {
+  font-size: 1.15em;
+}
+.product-desc :deep(h2) {
+  font-size: 1.1em;
+}
+.product-desc :deep(h3) {
+  font-size: 1.05em;
+}
+.product-desc :deep(blockquote) {
+  border-left: 3px solid #e5e7eb;
+  padding-left: 0.75em;
+  margin: 0.5em 0;
+  opacity: 0.85;
+}
+.product-desc :deep(pre) {
+  background: #f3f4f6;
+  border-radius: 6px;
+  padding: 0.5em 0.75em;
+  overflow-x: auto;
+  font-size: 0.85em;
+  margin-bottom: 0.5em;
+}
+.product-desc :deep(code) {
+  font-family: monospace;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 3px;
+  padding: 0.1em 0.3em;
+  font-size: 0.9em;
+}
+:global(.dark) .product-desc :deep(blockquote) {
+  border-color: #404040;
+}
+:global(.dark) .product-desc :deep(pre) {
+  background: #262626;
+}
+:global(.dark) .product-desc :deep(code) {
+  background: rgba(255, 255, 255, 0.08);
 }
 </style>

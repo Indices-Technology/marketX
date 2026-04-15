@@ -24,7 +24,7 @@
         >
           <Icon name="mdi:plus-circle-outline" size="20" class="text-white" />
           <span class="text-[11px] font-bold leading-none text-white"
-            >create</span
+            >Create</span
           >
         </button>
         <NuxtLink
@@ -35,7 +35,7 @@
         >
           <Icon name="mdi:plus-circle-outline" size="20" class="text-white" />
           <span class="text-[11px] font-bold leading-none text-white"
-            >create</span
+            >Create</span
           >
         </NuxtLink>
         <template #fallback>

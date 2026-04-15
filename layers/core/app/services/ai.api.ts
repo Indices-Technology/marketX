@@ -23,6 +23,16 @@ export class AiApiClient extends BaseApiClient {
       silent: true, // caller shows context-specific AI error messages
     }) as Promise<{ success: boolean; data: IAiListingResult }>
   }
+
+  async enhanceDescription(
+    description: string,
+  ): Promise<{ success: boolean; html: string }> {
+    return this.request('/api/ai/enhance-description', {
+      method: 'POST',
+      body: { description },
+      silent: true,
+    }) as Promise<{ success: boolean; html: string }>
+  }
 }
 
 let instance: AiApiClient | null = null

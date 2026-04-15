@@ -298,13 +298,19 @@
                 class="mb-1 block text-sm font-medium text-gray-700 dark:text-neutral-300"
                 >Description *</label
               >
-              <textarea
-                v-model="form.description"
-                required
-                minlength="10"
-                rows="4"
-                class="w-full resize-none rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
-              />
+              <ClientOnly>
+                <HtmlDescriptionEditor
+                  v-model="form.description"
+                  placeholder="Describe your product…"
+                />
+                <template #fallback>
+                  <textarea
+                    v-model="form.description"
+                    rows="4"
+                    class="w-full resize-none rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
+                  />
+                </template>
+              </ClientOnly>
             </div>
 
             <div class="grid grid-cols-2 gap-4">
@@ -812,6 +818,9 @@ import { useProduct } from '~~/layers/commerce/app/composables/useProduct'
 import { useProductApi } from '~~/layers/commerce/app/services/product.api'
 import { useMediaUpload } from '~~/layers/core/app/composables/useMediaUpload'
 import { useAiApi } from '~~/layers/core/app/services/ai.api'
+
+import ProductPromotePanel from '~~/layers/seller/app/components/ProductPromotePanel.vue'
+import HtmlDescriptionEditor from '~~/layers/seller/app/components/HtmlDescriptionEditor.vue'
 
 definePageMeta({ middleware: 'auth', layout: 'store-layout' })
 

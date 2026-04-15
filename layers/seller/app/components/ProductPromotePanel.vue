@@ -69,7 +69,7 @@
         <div v-show="activeTab === p.id">
           <!-- Empty state — no captions yet -->
           <div
-            v-if="!captions[p.id as keyof typeof captions]"
+            v-if="!localCaptions[p.id as keyof typeof localCaptions]"
             class="py-8 text-center"
           >
             <Icon
