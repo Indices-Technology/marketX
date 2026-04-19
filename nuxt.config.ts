@@ -18,11 +18,19 @@ export default defineNuxtConfig({
         { name: 'format-detection', content: 'telephone=no' },
       ],
       link: [
-        { rel: 'apple-touch-icon', sizes: '192x192', href: '/icons/icon-192.svg' },
+        {
+          rel: 'apple-touch-icon',
+          sizes: '192x192',
+          href: '/icons/icon-192.svg',
+        },
         { rel: 'icon', type: 'image/svg+xml', href: '/icons/icon-512.svg' },
         { rel: 'manifest', href: '/manifest.webmanifest' },
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
-        { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
+        {
+          rel: 'preconnect',
+          href: 'https://fonts.gstatic.com',
+          crossorigin: '',
+        },
         { rel: 'preconnect', href: 'https://res.cloudinary.com' },
         // Non-blocking font load — preload first, swap to stylesheet on load
         {
@@ -70,7 +78,8 @@ export default defineNuxtConfig({
     manifest: {
       name: 'MarketX',
       short_name: 'MarketX',
-      description: 'Your business, fully alive. Discover stores, buy local, sell globally.',
+      description:
+        'Your business, fully alive. Discover stores, buy local, sell globally.',
       theme_color: '#F43F5E',
       background_color: '#0f172a',
       display: 'standalone',
@@ -80,25 +89,43 @@ export default defineNuxtConfig({
       id: '/',
       categories: ['shopping', 'business', 'social'],
       icons: [
-        { src: '/icons/icon-192.svg', sizes: '192x192', type: 'image/svg+xml', purpose: 'any' },
-        { src: '/icons/icon-512.svg', sizes: '512x512', type: 'image/svg+xml', purpose: 'any' },
-        { src: '/icons/icon-maskable-512.svg', sizes: '512x512', type: 'image/svg+xml', purpose: 'maskable' },
+        {
+          src: '/icons/icon-192.svg',
+          sizes: '192x192',
+          type: 'image/svg+xml',
+          purpose: 'any',
+        },
+        {
+          src: '/icons/icon-512.svg',
+          sizes: '512x512',
+          type: 'image/svg+xml',
+          purpose: 'any',
+        },
+        {
+          src: '/icons/icon-maskable-512.svg',
+          sizes: '512x512',
+          type: 'image/svg+xml',
+          purpose: 'maskable',
+        },
       ],
       shortcuts: [
         {
-          name: 'Discover', short_name: 'Discover',
+          name: 'Discover',
+          short_name: 'Discover',
           description: 'Browse trending products and stores',
           url: '/discover?source=pwa-shortcut',
           icons: [{ src: '/icons/shortcut-discover.svg', sizes: '96x96' }],
         },
         {
-          name: 'Near Me', short_name: 'Near Me',
+          name: 'Near Me',
+          short_name: 'Near Me',
           description: 'Find stores around you',
           url: '/map?source=pwa-shortcut',
           icons: [{ src: '/icons/shortcut-map.svg', sizes: '96x96' }],
         },
         {
-          name: 'My Store', short_name: 'Sell',
+          name: 'My Store',
+          short_name: 'Sell',
           description: 'Manage your store',
           url: '/seller/dashboard?source=pwa-shortcut',
           icons: [{ src: '/icons/shortcut-sell.svg', sizes: '96x96' }],
@@ -183,6 +210,7 @@ export default defineNuxtConfig({
     scheduledTasks: {
       '* * * * *': ['processQueues'],
       '0 */6 * * *': ['releaseShippedOrders'],
+      '*/15 * * * *': ['releaseExpiredOrders'],
     },
     routeRules: {
       '/**': {
@@ -190,7 +218,8 @@ export default defineNuxtConfig({
           'X-Frame-Options': 'SAMEORIGIN',
           'X-Content-Type-Options': 'nosniff',
           'Referrer-Policy': 'strict-origin-when-cross-origin',
-          'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
+          'Strict-Transport-Security':
+            'max-age=31536000; includeSubDomains; preload',
           'Permissions-Policy': 'geolocation=(self), camera=(), microphone=()',
           'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
         },
@@ -256,8 +285,10 @@ export default defineNuxtConfig({
       // Brand — all UI fallbacks read from here. Change .env, not component code.
       siteName: process.env.NUXT_PUBLIC_SITE_NAME || 'MarketX',
       brandDomain: process.env.NUXT_PUBLIC_BRAND_DOMAIN || 'marketx.app',
-      supportEmail: process.env.NUXT_PUBLIC_SUPPORT_EMAIL || 'support@marketx.app',
-      privacyEmail: process.env.NUXT_PUBLIC_PRIVACY_EMAIL || 'privacy@marketx.app',
+      supportEmail:
+        process.env.NUXT_PUBLIC_SUPPORT_EMAIL || 'support@marketx.app',
+      privacyEmail:
+        process.env.NUXT_PUBLIC_PRIVACY_EMAIL || 'privacy@marketx.app',
       legalEmail: process.env.NUXT_PUBLIC_LEGAL_EMAIL || 'legal@marketx.app',
       baseURL: process.env.NUXT_PUBLIC_BASE_URL || 'http://localhost:3000',
       // Payments

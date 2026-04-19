@@ -450,7 +450,6 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
-import { definePageMeta } from '#app'
 import { useRoute } from 'vue-router'
 import { notify } from '@kyvg/vue3-notification'
 import { useProduct } from '~~/layers/commerce/app/composables/useProduct'

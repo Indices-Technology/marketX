@@ -43,11 +43,11 @@ export const cartRepository = {
     })
   },
 
-  async addToCart(userId: string, variantId: number, quantity: number) {
+  async addToCart(userId: string, variantId: number, quantity: number, priceAtAdd?: number) {
     return prisma.cartItem.upsert({
       where: { userId_variantId: { userId, variantId } },
       update: { quantity: { increment: quantity } },
-      create: { userId, variantId, quantity },
+      create: { userId, variantId, quantity, priceAtAdd: priceAtAdd ?? null },
       include: cartInclude,
     })
   },

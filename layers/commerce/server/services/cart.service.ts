@@ -18,7 +18,12 @@ export const cartService = {
 
     const variant = await prisma.productVariant.findUnique({
       where: { id: variantId },
-      select: { id: true, stock: true },
+      select: {
+        id: true,
+        stock: true,
+        price: true,
+        product: { select: { price: true, discount: true } },
+      },
     })
     if (!variant)
       throw new UserError('VARIANT_NOT_FOUND', 'Product variant not found', 404)
@@ -29,7 +34,12 @@ export const cartService = {
         400,
       )
 
-    const item = await cartRepository.addToCart(userId, variantId, quantity)
+    // Record effective price at add time so we can detect price changes later
+    const basePrice = variant.price ?? variant.product?.price ?? 0
+    const discount = variant.product?.discount ?? 0
+    const priceAtAdd = Math.round(basePrice * (1 - discount / 100))
+
+    const item = await cartRepository.addToCart(userId, variantId, quantity, priceAtAdd)
     auditService
       .logUserAction({
         userId,

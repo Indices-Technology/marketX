@@ -100,8 +100,26 @@
               <li
                 v-for="item in items"
                 :key="item.variantId"
-                class="group flex gap-3 rounded-xl p-2 transition-colors hover:bg-gray-50 dark:hover:bg-neutral-800/50"
+                class="group flex flex-col gap-0 rounded-xl transition-colors"
+                :class="itemWarning(item.variantId) ? 'bg-red-50/60 dark:bg-red-950/20' : 'hover:bg-gray-50 dark:hover:bg-neutral-800/50'"
               >
+                <!-- Staleness warning banner -->
+                <div
+                  v-if="itemWarning(item.variantId)"
+                  class="flex items-center gap-1.5 rounded-t-xl px-2.5 pt-2 text-[11px] font-semibold"
+                  :class="{
+                    'text-red-600 dark:text-red-400': itemWarning(item.variantId)?.status === 'unavailable' || itemWarning(item.variantId)?.status === 'insufficient_stock',
+                    'text-amber-600 dark:text-amber-400': itemWarning(item.variantId)?.status === 'price_increased',
+                    'text-emerald-600 dark:text-emerald-400': itemWarning(item.variantId)?.status === 'price_decreased',
+                  }"
+                >
+                  <Icon
+                    :name="itemWarning(item.variantId)?.status === 'price_decreased' ? 'mdi:tag-arrow-down-outline' : 'mdi:alert-circle-outline'"
+                    size="13"
+                  />
+                  <span>{{ warningText(item.variantId) }}</span>
+                </div>
+                <div class="flex gap-3 p-2">
                 <!-- Thumbnail -->
                 <div
                   class="h-[60px] w-[60px] shrink-0 overflow-hidden rounded-xl bg-gray-100 dark:bg-neutral-800"
@@ -198,6 +216,7 @@
                     </button>
                   </div>
                 </div>
+                </div>
               </li>
             </ul>
           </div>
@@ -266,11 +285,54 @@ const showEmptyState = computed(
     !isLoading.value,
 )
 
+// Cart staleness validation
+type ValidationResult = {
+  variantId: number
+  status: 'ok' | 'price_increased' | 'price_decreased' | 'insufficient_stock' | 'unavailable'
+  priceAtAdd?: number
+  currentPrice?: number
+  diff?: number
+  available?: number
+}
+const validationResults = ref<ValidationResult[]>([])
+
+const itemWarning = (variantId: number): ValidationResult | null => {
+  const result = validationResults.value.find((r) => r.variantId === variantId)
+  if (!result || result.status === 'ok') return null
+  return result
+}
+
+const warningText = (variantId: number): string => {
+  const w = itemWarning(variantId)
+  if (!w) return ''
+  if (w.status === 'unavailable') return 'This item is no longer available'
+  if (w.status === 'insufficient_stock')
+    return `Only ${w.available} left in stock — reduce quantity`
+  if (w.status === 'price_increased')
+    return `Price increased by ${formatPrice(w.diff ?? 0)}`
+  if (w.status === 'price_decreased')
+    return `Price dropped by ${formatPrice(Math.abs(w.diff ?? 0))}`
+  return ''
+}
+
+async function validateCart() {
+  if (!profileStore.isLoggedIn || !items.value.length) return
+  try {
+    const res = await $fetch<{ success: boolean; data: { items: ValidationResult[]; hasIssues: boolean } }>(
+      '/api/commerce/cart/validate',
+    )
+    validationResults.value = res.data.items
+  } catch {
+    // silent — validation is best-effort
+  }
+}
+
 watch(
   () => props.isOpen,
   async (open) => {
     if (open && profileStore.isLoggedIn) {
       await fetchCart()
+      validateCart()
     }
   },
 )

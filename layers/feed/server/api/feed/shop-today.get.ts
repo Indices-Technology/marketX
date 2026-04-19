@@ -1,6 +1,8 @@
 // GET /api/feed/shop-today
 // Returns a curated mix: active deals first, then fresh drops (last 7 days),
 // then latest published products — used for the "Shop Today" home banner.
+import { remember } from '~~/server/utils/cache'
+
 const MEDIA_SELECT = {
   id: true,
   url: true,
@@ -27,6 +29,7 @@ const PRODUCT_SELECT = {
 }
 
 export default defineEventHandler(async () => {
+  return remember('feed:shop-today', 180, async () => {
   const now = new Date()
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
   const limit = 20
@@ -79,4 +82,5 @@ export default defineEventHandler(async () => {
   }
 
   return { success: true, data: merged }
+  }) // end remember
 })

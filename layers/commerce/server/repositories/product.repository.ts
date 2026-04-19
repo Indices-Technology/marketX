@@ -351,9 +351,16 @@ export const productRepository = {
       updateData.media = { connect: [{ id: data.mediaId }] }
     }
 
-    // Replace variants if provided — preserve any variant still referenced by an
-    // order or an active cart (deleting those would cascade-wipe buyer cart items)
+    // Sync variants if provided — upsert by size to avoid the unique constraint
+    // on (productId, size) when a protected variant (in an order/cart) can't be deleted.
     if (data.variants !== undefined) {
+      // Current variants by size — used for upsert lookup
+      const currentVariants = await prisma.productVariant.findMany({
+        where: { productId: id },
+        select: { id: true, size: true },
+      })
+
+      // Find protected variant IDs (referenced by orders or active carts)
       const [orderedVariants, cartedVariants] = await Promise.all([
         prisma.orderItem.findMany({
           where: { variant: { productId: id } },
@@ -372,20 +379,33 @@ export const productRepository = {
         ...cartedVariants.map((c) => c.variantId),
       ].filter(Boolean) as number[])
 
-      // Only delete variants not referenced by any order or cart
-      await prisma.productVariant.deleteMany({
-        where: { productId: id, id: { notIn: protectedIds.size ? [...protectedIds] : [-1] } },
-      })
+      const existingBySize = new Map(currentVariants.map((v) => [v.size ?? '', v.id]))
+      const submittedSizes = new Set((data.variants as any[]).map((v) => v.size ?? ''))
 
-      if (data.variants.length > 0) {
-        updateData.variants = {
-          create: data.variants.map((v: any) => ({
-            size: v.size,
-            stock: v.stock,
-            price: v.price,
-          })),
-        }
+      // Delete unprotected variants whose sizes were removed from the submitted form
+      const toDelete = currentVariants
+        .filter((v) => !protectedIds.has(v.id) && !submittedSizes.has(v.size ?? ''))
+        .map((v) => v.id)
+      if (toDelete.length) {
+        await prisma.productVariant.deleteMany({ where: { id: { in: toDelete } } })
       }
+
+      // Upsert each submitted variant: update if the size already exists, create if new
+      await Promise.all(
+        (data.variants as any[]).map((v) => {
+          const existingId = existingBySize.get(v.size ?? '')
+          if (existingId) {
+            return prisma.productVariant.update({
+              where: { id: existingId },
+              data: { stock: v.stock, price: v.price },
+            })
+          }
+          return prisma.productVariant.create({
+            data: { productId: id, size: v.size, stock: v.stock, price: v.price },
+          })
+        }),
+      )
+      // Variants are handled above — do not include in the main Products.update call
     }
 
     // Replace offers if provided (delete all, create new)

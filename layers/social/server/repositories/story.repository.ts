@@ -34,30 +34,29 @@ export const storyRepository = {
   },
 
   async getActiveStoriesForUser(userId: string, limit = 50) {
-    // USER-type follows: followingId is a Profile.id
-    const userFollows = await prisma.follow.findMany({
-      where: { followerId: userId, followingType: 'USER' },
-      select: { followingId: true },
+    // Single follow query for all types, then resolve seller profileIds in parallel
+    const allFollows = await prisma.follow.findMany({
+      where: { followerId: userId },
+      select: { followingId: true, followingType: true },
     })
-    // SELLER-type follows: followingId is SellerProfile.id — resolve to profileId
-    const sellerFollows = await prisma.follow.findMany({
-      where: { followerId: userId, followingType: 'SELLER' },
-      select: { followingId: true },
-    })
-    const sellerProfileIds = sellerFollows.length
+
+    const userFollowIds = allFollows
+      .filter((f) => f.followingType === 'USER')
+      .map((f) => f.followingId)
+    const sellerFollowIds = allFollows
+      .filter((f) => f.followingType === 'SELLER')
+      .map((f) => f.followingId)
+
+    const sellerProfileIds = sellerFollowIds.length
       ? (
           await prisma.sellerProfile.findMany({
-            where: { id: { in: sellerFollows.map((f) => f.followingId) } },
+            where: { id: { in: sellerFollowIds } },
             select: { profileId: true },
           })
         ).map((s) => s.profileId)
       : []
 
-    const profileIds = [
-      userId,
-      ...userFollows.map((f) => f.followingId),
-      ...sellerProfileIds,
-    ]
+    const profileIds = [userId, ...userFollowIds, ...sellerProfileIds]
 
     const stories = await prisma.story.findMany({
       where: { authorId: { in: profileIds }, expiresAt: { gt: new Date() } },

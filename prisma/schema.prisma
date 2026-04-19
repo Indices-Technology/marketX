@@ -234,6 +234,10 @@ model Products {
   stories        Story[]
 
   @@index([sellerId])
+  @@index([status, created_at(sort: Desc)])  // feed/shop queries: WHERE status='PUBLISHED' ORDER BY created_at DESC
+  @@index([status, isDeal, created_at(sort: Desc)])  // shop-today deal filter
+  @@index([status, showInFeed, created_at(sort: Desc)])  // home feed product injection
+  @@index([status, isThrift, created_at(sort: Desc)])  // pre-loved feed
 }
 
 model ProductVariant {
@@ -322,13 +326,15 @@ model OrderItem {
 }
 
 model CartItem {
-  id         String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  quantity   Int
-  created_at DateTime       @default(now())
-  userId     String         @db.Uuid
-  variantId  Int
-  user       Profile        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  variant    ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  id          String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  quantity    Int
+  /// Effective unit price (after discount) at time of add — used to detect price changes
+  priceAtAdd  Float?
+  created_at  DateTime       @default(now())
+  userId      String         @db.Uuid
+  variantId   Int
+  user        Profile        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  variant     ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
 
   @@unique([userId, variantId])
 }
@@ -426,6 +432,9 @@ model Story {
   author     Profile   @relation("UserStories", fields: [authorId], references: [id], onDelete: Cascade)
   media      Media     @relation(fields: [mediaId], references: [id], onDelete: Cascade)
   product    Products? @relation(fields: [productId], references: [id])
+
+  @@index([expiresAt])  // active story filter: WHERE expiresAt > NOW()
+  @@index([authorId, expiresAt])  // user-specific active stories
 }
 
 model Post {
@@ -456,6 +465,8 @@ model Post {
   savedBy        SavedPost[]      @relation("PostSavedBy")
 
   @@index([authorId])
+  @@index([created_at(sort: Desc)])  // feed ordering: ORDER BY created_at DESC
+  @@index([visibility, created_at(sort: Desc)])  // filtered feed: WHERE visibility='PUBLIC' ORDER BY created_at DESC
 }
 
 model SavedPost {
@@ -538,6 +549,7 @@ model Follow {
   @@unique([followerId, followingId, followingType])
   @@index([followerId])
   @@index([followingId])
+  @@index([followerId, followingType])  // stories: WHERE followerId=X AND followingType=Y
 }
 
 model Share {
