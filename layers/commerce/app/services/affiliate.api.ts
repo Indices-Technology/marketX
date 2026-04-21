@@ -26,6 +26,10 @@ export class AffiliateApiClient extends BaseApiClient {
     })
   }
 
+  async getPromoters() {
+    return this.request('/api/commerce/affiliate/promoters', { method: 'GET' })
+  }
+
   async getAvailableProducts(params?: { limit?: number; offset?: number }) {
     const query = params
       ? '?' +

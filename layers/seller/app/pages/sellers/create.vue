@@ -3,7 +3,7 @@
     <div class="mx-auto w-full max-w-xl pb-20 md:pb-6">
       <!-- Back -->
       <NuxtLink
-        to="/sellers/dashboard"
+        to="/seller/dashboard"
         class="mb-5 inline-flex items-center gap-1.5 text-[13px] text-gray-400 transition-colors hover:text-gray-700 dark:hover:text-neutral-300"
       >
         <Icon name="mdi:arrow-left" size="16" />

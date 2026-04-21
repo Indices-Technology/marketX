@@ -5,7 +5,11 @@ import { cartRepository } from '../repositories/cart.repository'
 export const cartService = {
   async getCart(userId: string) {
     const items = await cartRepository.getCartItems(userId)
-    return { items }
+    // POD is only available when every seller in the cart has explicitly opted in
+    const podAvailable =
+      items.length > 0 &&
+      items.every((item) => item.variant?.product?.seller?.pod_enabled === true)
+    return { items, podAvailable }
   },
 
   async addToCart(userId: string, variantId: number, quantity: number = 1) {

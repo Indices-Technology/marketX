@@ -25,8 +25,9 @@ export const useCart = () => {
     store.setLoading(true)
     store.setError(null)
     try {
-      const result: { data: { items: CartItem[] } } = await api.getCart()
+      const result: { data: { items: CartItem[]; podAvailable: boolean } } = await api.getCart()
       store.setItems(result.data?.items || [])
+      store.setPodAvailable(result.data?.podAvailable ?? false)
       return result.data
     } catch (e: unknown) {
       store.setError(extractErrorMessage(e, 'Failed to fetch cart'))

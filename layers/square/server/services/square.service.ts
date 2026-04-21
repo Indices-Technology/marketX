@@ -13,6 +13,7 @@
  *  - Association wallet crediting (called from order completion)
  */
 
+import { prisma } from '~~/server/utils/db'
 import type {
   CreateSquareInput,
   UpdateSquareInput,
@@ -103,25 +104,6 @@ export const squareService = {
         ...SQUARE_PUBLIC_SELECT,
         physicalAddress: true,
         officers: { select: OFFICER_SELECT },
-        memberships: {
-          where: { status: 'ACTIVE' },
-          select: {
-            isPrimary: true,
-            joinedAt: true,
-            seller: {
-              select: {
-                id: true,
-                store_name: true,
-                store_slug: true,
-                store_logo: true,
-                is_verified: true,
-                isPremium: true,
-              },
-            },
-          },
-          orderBy: { joinedAt: 'asc' },
-          take: 20,
-        },
       },
     })
 
@@ -130,13 +112,27 @@ export const squareService = {
       throw createError({ statusCode: 404, statusMessage: 'Square not found' })
 
     // Is the requesting user following this Square?
-    const isFollowing = userId
-      ? !!(await prisma.userSquareFollow.findUnique({
-          where: { userId_squareId: { userId, squareId: square.id } },
-        }))
-      : false
+    // Are they an officer?
+    const [followRow, officerRow] = await Promise.all([
+      userId
+        ? prisma.userSquareFollow.findUnique({
+            where: { userId_squareId: { userId, squareId: square.id } },
+          })
+        : null,
+      userId
+        ? prisma.squareOfficer.findUnique({
+            where: { squareId_profileId: { squareId: square.id, profileId: userId } },
+            select: { role: true },
+          })
+        : null,
+    ])
 
-    return { ...square, isFollowing }
+    return {
+      ...square,
+      isFollowing: !!followRow,
+      isOfficer: !!officerRow,
+      officerRole: officerRow?.role ?? null,
+    }
   },
 
   // ── Admin: create / update ──────────────────────────────────────────────────
@@ -359,12 +355,14 @@ export const squareService = {
     })
     if (!square) throw createError({ statusCode: 404, statusMessage: 'Square not found' })
 
+    // Idempotent — only increment counter on a new follow
+    const existing = await prisma.userSquareFollow.findUnique({
+      where: { userId_squareId: { userId, squareId: square.id } },
+    })
+    if (existing) return { following: true, squareId: square.id }
+
     await prisma.$transaction([
-      prisma.userSquareFollow.upsert({
-        where: { userId_squareId: { userId, squareId: square.id } },
-        create: { userId, squareId: square.id },
-        update: {}, // already following — no-op
-      }),
+      prisma.userSquareFollow.create({ data: { userId, squareId: square.id } }),
       prisma.square.update({
         where: { id: square.id },
         data: { followerCount: { increment: 1 } },

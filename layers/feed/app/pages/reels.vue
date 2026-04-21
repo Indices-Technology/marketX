@@ -108,9 +108,9 @@
     </div>
 
     <!-- ─── MODALS ─────────────────────────────────────────────────── -->
-    <PostDetailModal
+    <ProductDetailModal
       v-if="activeCommentReel"
-      :post="activeCommentReel"
+      :product="activeCommentReel.product ?? null"
       @close="activeCommentReel = null"
     />
   </HomeLayout>
@@ -120,13 +120,13 @@
 import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import ReelItem from '~~/layers/feed/app/components/ReelItem.vue'
-import PostDetailModal from '~~/layers/social/app/components/modals/PostDetailModal.vue'
+import ProductDetailModal from '~~/layers/commerce/app/components/modals/ProductDetailModal.vue'
 import type { IFeedItem } from '~~/layers/feed/app/types/feed.types'
 import { useFeed } from '~~/layers/feed/app/composables/useFeed'
 
 // ─── SEO ──────────────────────────────────────────────────────────────
 useSeoMeta({
-  title: 'Reels · Styli',
+  title: 'Reels · MarketX',
   description:
     'Watch immersive, full-screen fashion reels from creators and sellers.',
 })

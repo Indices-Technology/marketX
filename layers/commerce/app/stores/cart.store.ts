@@ -25,6 +25,7 @@ export const useCartStore = defineStore(
   'cart',
   () => {
     const items = ref<ICartItem[]>([])
+    const podAvailable = ref(false)
     const { isLoading, hasFetchedOnce, isInitialLoad, begin, end, reset } =
       useAsyncStatus()
     const error = ref<string | null>(null)
@@ -72,6 +73,7 @@ export const useCartStore = defineStore(
 
     return {
       items,
+      podAvailable,
       isLoading,
       hasFetchedOnce,
       isInitialLoad,
@@ -79,6 +81,7 @@ export const useCartStore = defineStore(
       cartCount,
       cartTotal,
       setItems,
+      setPodAvailable: (val: boolean) => { podAvailable.value = val },
       updateItem,
       removeItem,
       addItem,
@@ -91,6 +94,7 @@ export const useCartStore = defineStore(
       },
       clearStore: () => {
         items.value = []
+        podAvailable.value = false
         reset()
         error.value = null
       },

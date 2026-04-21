@@ -51,7 +51,7 @@ export function useSellerManagement() {
       if (slug) {
         await router.push(`/seller/${slug}/products/create?onboarding=1`)
       } else {
-        await router.push('/sellers/dashboard')
+        await router.push('/seller/dashboard')
       }
 
       return result
@@ -85,7 +85,10 @@ export function useSellerManagement() {
   const loadUserSellers = async () => {
     if (!import.meta.client) return
     const authStore = useAuthStore()
-    if (!authStore.accessToken) return
+    // Fall back to localStorage — authStore may not be hydrated yet if called
+    // during component setup before pinia-plugin-persistedstate fires.
+    const token = authStore.accessToken || localStorage.getItem('accessToken')
+    if (!token) return
 
     sellerStore.setLoading(true)
     sellerStore.setError(null)

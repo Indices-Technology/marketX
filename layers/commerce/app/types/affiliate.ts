@@ -14,8 +14,11 @@ export interface AffiliateEnrollment {
 }
 
 export interface Referral {
-  id: string
-  name: string
+  id: number
+  date: string
+  commission: number  // kobo
+  status: string
+  products: Array<{ title: string; slug: string }>
 }
 
 export interface ReferralsResponse {
@@ -23,4 +26,18 @@ export interface ReferralsResponse {
   total: number
   limit: number
   offset: number
+  hasMore: boolean
+}
+
+export interface Promoter {
+  id: string
+  username: string
+  avatar: string | null
+  totalEarned: number  // kobo
+  orderCount: number
+}
+
+export interface PromotersResponse {
+  promoters: Promoter[]
+  total: number
 }

@@ -1,11 +1,16 @@
 <template>
-  <HomeLayout :narrow-feed="false" :hide-right-sidebar="true" :custom-padding="true">
+  <HomeLayout
+    :narrow-feed="false"
+    :hide-right-sidebar="true"
+    :custom-padding="true"
+  >
     <div class="mx-auto max-w-5xl pb-20 pt-6 md:pb-0 lg:px-4">
-
       <!-- Page header -->
       <div class="mb-6 flex items-start justify-between gap-4">
         <div>
-          <h1 class="text-2xl font-black tracking-tight text-gray-900 dark:text-white">
+          <h1
+            class="text-2xl font-black tracking-tight text-gray-900 dark:text-white"
+          >
             Market Squares
           </h1>
           <p class="mt-1 text-sm text-gray-500 dark:text-neutral-400">
@@ -55,14 +60,17 @@
       </div>
 
       <!-- Loading skeletons -->
-      <div v-if="pending" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div
+        v-if="pending"
+        class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+      >
         <div
           v-for="i in 6"
           :key="i"
           class="animate-pulse overflow-hidden rounded-2xl border border-gray-100 bg-white dark:border-neutral-800 dark:bg-neutral-900"
         >
           <div class="h-28 bg-gray-100 dark:bg-neutral-800" />
-          <div class="p-4 space-y-2">
+          <div class="space-y-2 p-4">
             <div class="h-4 w-3/4 rounded-md bg-gray-100 dark:bg-neutral-800" />
             <div class="h-3 w-1/2 rounded-md bg-gray-100 dark:bg-neutral-800" />
           </div>
@@ -71,17 +79,33 @@
 
       <!-- Error -->
       <div v-else-if="error" class="py-24 text-center">
-        <Icon name="mdi:store-off-outline" size="52" class="mx-auto mb-3 text-gray-300 dark:text-neutral-600" />
-        <p class="text-sm text-gray-500 dark:text-neutral-400">Failed to load squares. Please try again.</p>
-        <button class="mt-4 text-xs font-semibold text-brand hover:underline" @click="refresh()">Retry</button>
+        <Icon
+          name="mdi:store-off-outline"
+          size="52"
+          class="mx-auto mb-3 text-gray-300 dark:text-neutral-600"
+        />
+        <p class="text-sm text-gray-500 dark:text-neutral-400">
+          Failed to load squares. Please try again.
+        </p>
+        <button
+          class="mt-4 text-xs font-semibold text-brand hover:underline"
+          @click="refresh()"
+        >
+          Retry
+        </button>
       </div>
 
       <template v-else>
         <!-- Geographic squares -->
-        <section v-if="geoSquares.length && activeType !== 'CATEGORY'" class="mb-8">
+        <section
+          v-if="geoSquares.length && activeType !== 'CATEGORY'"
+          class="mb-8"
+        >
           <div class="mb-3 flex items-center gap-2">
             <Icon name="mdi:map-marker" size="16" class="text-amber-500" />
-            <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-neutral-500">
+            <h2
+              class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-neutral-500"
+            >
               Location Communities
             </h2>
           </div>
@@ -100,8 +124,14 @@
         <!-- Category squares -->
         <section v-if="catSquares.length && activeType !== 'GEOGRAPHIC'">
           <div class="mb-3 flex items-center gap-2">
-            <Icon name="mdi:tag-multiple-outline" size="16" class="text-purple-500" />
-            <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-neutral-500">
+            <Icon
+              name="mdi:tag-multiple-outline"
+              size="16"
+              class="text-purple-500"
+            />
+            <h2
+              class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-neutral-500"
+            >
               Category Communities
             </h2>
           </div>
@@ -122,19 +152,36 @@
           v-if="!geoSquares.length && !catSquares.length"
           class="py-24 text-center"
         >
-          <Icon name="mdi:storefront-outline" size="52" class="mx-auto mb-3 text-gray-300 dark:text-neutral-600" />
-          <p class="text-sm font-semibold text-gray-500 dark:text-neutral-400">No squares found</p>
-          <p class="mt-1 text-xs text-gray-400 dark:text-neutral-500">Try a different search or check back later</p>
+          <Icon
+            name="mdi:storefront-outline"
+            size="52"
+            class="mx-auto mb-3 text-gray-300 dark:text-neutral-600"
+          />
+          <p class="text-sm font-semibold text-gray-500 dark:text-neutral-400">
+            No squares found
+          </p>
+          <p class="mt-1 text-xs text-gray-400 dark:text-neutral-500">
+            Try a different search or check back later
+          </p>
         </div>
 
         <!-- Load more -->
-        <div v-if="hasMore" ref="loadMoreTrigger" class="mt-6 flex justify-center">
+        <div
+          v-if="hasMore"
+          ref="loadMoreTrigger"
+          class="mt-6 flex justify-center"
+        >
           <button
             class="rounded-xl border border-gray-200 bg-white px-6 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:border-brand/30 hover:text-brand dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-400"
             :disabled="loadingMore"
             @click="loadMore"
           >
-            <Icon v-if="loadingMore" name="mdi:loading" size="16" class="mr-1.5 inline animate-spin" />
+            <Icon
+              v-if="loadingMore"
+              name="mdi:loading"
+              size="16"
+              class="mr-1.5 inline animate-spin"
+            />
             Load more
           </button>
         </div>
@@ -148,13 +195,15 @@ import { ref, computed, watch } from 'vue'
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import SquareCard from '../../components/SquareCard.vue'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
-
+import { useSquareApi } from '~~/layers/square/app/services/square.api'
 useSeoMeta({
   title: 'Market Squares — MarketX',
-  description: 'Localised communities of shops and buyers. Find your market square.',
+  description:
+    'Localised communities of shops and buyers. Find your market square.',
 })
 
 const profileStore = useProfileStore()
+const squareApi = useSquareApi()
 
 // ── Filters ──────────────────────────────────────────────────────────────────
 const TABS = [
@@ -190,13 +239,17 @@ const { data, pending, error, refresh } = await useFetch('/api/squares', {
 })
 
 // Sync initial data
-watch(data, (d: any) => {
-  if (d?.data) {
-    allSquares.value = d.data
-    total.value = d.meta?.total ?? 0
-    offset.value = allSquares.value.length
-  }
-}, { immediate: true })
+watch(
+  data,
+  (d: any) => {
+    if (d?.data) {
+      allSquares.value = d.data
+      total.value = d.meta?.total ?? 0
+      offset.value = allSquares.value.length
+    }
+  },
+  { immediate: true },
+)
 
 const hasMore = computed(() => allSquares.value.length < total.value)
 
@@ -204,11 +257,9 @@ const loadMore = async () => {
   if (loadingMore.value || !hasMore.value) return
   loadingMore.value = true
   try {
-    const res: any = await $fetch('/api/squares', {
-      query: {
-        ...queryParams.value,
-        offset: offset.value,
-      },
+    const res: any = await squareApi.listSquares({
+      ...queryParams.value,
+      offset: offset.value,
     })
     allSquares.value = [...allSquares.value, ...(res.data ?? [])]
     total.value = res.meta?.total ?? total.value
@@ -240,15 +291,21 @@ const toggleFollow = async (sq: any) => {
   alreadyFollowing ? following.value.delete(sq.id) : following.value.add(sq.id)
   followLoading.value = new Set([...followLoading.value, sq.id])
   try {
-    await $fetch(`/api/squares/${sq.slug}/follow`, {
-      method: alreadyFollowing ? 'DELETE' : 'POST',
-    })
+    if (alreadyFollowing) {
+      await squareApi.unfollowSquare(sq.slug)
+    } else {
+      await squareApi.followSquare(sq.slug)
+    }
   } catch {
     // revert on error
     following.value = new Set(following.value)
-    alreadyFollowing ? following.value.add(sq.id) : following.value.delete(sq.id)
+    alreadyFollowing
+      ? following.value.add(sq.id)
+      : following.value.delete(sq.id)
   } finally {
-    followLoading.value = new Set([...followLoading.value].filter((id) => id !== sq.id))
+    followLoading.value = new Set(
+      [...followLoading.value].filter((id) => id !== sq.id),
+    )
   }
 }
 

@@ -213,12 +213,6 @@
         >
           {{ reel.author?.role === 'seller' ? reel.author?.username : `@${reel.author?.username || 'User'}` }}
         </NuxtLink>
-        <span
-          v-if="reel.contentType === 'POST'"
-          class="rounded-full border border-white/30 bg-white/20 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-md"
-        >
-          Buyer Post
-        </span>
       </div>
 
       <!-- Caption -->
@@ -445,7 +439,7 @@ const handleLike = async () => {
 }
 
 const handleShare = async () => {
-  const url = `${window.location.origin}/post/${props.reel.id}`
+  const url = `${window.location.origin}/product/${props.reel.product?.slug || props.reel.id}`
   if (navigator.share) {
     await navigator
       .share({

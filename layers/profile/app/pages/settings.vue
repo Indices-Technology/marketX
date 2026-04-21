@@ -185,8 +185,8 @@
         />
         <SettingToggle
           icon="mdi:play-circle-outline"
-          label="Show Stories"
-          description="Show stories bar at the top of your home feed"
+          label="Stories"
+          description="Show the stories bar at the top of your home feed (off by default)"
           :value="settings.showStories"
           @change="update('showStories', $event)"
         />
@@ -315,7 +315,7 @@
           <NuxtLink
             :to="
               profileStore.me?.role === 'seller'
-                ? '/sellers/dashboard'
+                ? '/seller/dashboard'
                 : '/buyer/profile'
             "
             class="setting-link border-b border-gray-100 dark:border-neutral-800"

@@ -64,9 +64,9 @@ export default defineEventHandler(async (event) => {
       )
       const unitsSold = paidItems.reduce((s, i) => s + i.quantity, 0)
       const revenue = paidItems.reduce((s, i) => s + i.price * i.quantity, 0)
-      const commissionEarned = Math.round(
-        revenue * ((p.affiliateCommission ?? 0) / 100),
-      )
+      // affiliateCommission is a fixed ₦ amount (major units) per unit sold.
+      // Multiply by 100 to convert to kobo, then by units sold.
+      const commissionEarned = unitsSold * Math.round((p.affiliateCommission ?? 0) * 100)
 
       return {
         id: p.id,

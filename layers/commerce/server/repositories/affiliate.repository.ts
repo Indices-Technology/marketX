@@ -38,4 +38,55 @@ export const affiliateRepository = {
     ])
     return { released, pending }
   },
+
+  async getReferrals(userId: string, limit: number, offset: number) {
+    const [orders, total] = await Promise.all([
+      prisma.orders.findMany({
+        where: { affiliateUserId: userId },
+        select: {
+          id: true,
+          created_at: true,
+          affiliateCut: true,
+          status: true,
+          orderItem: {
+            take: 3,
+            select: {
+              variant: {
+                select: {
+                  product: { select: { title: true, slug: true } },
+                },
+              },
+            },
+          },
+        },
+        orderBy: { created_at: 'desc' },
+        take: limit,
+        skip: offset,
+      }),
+      prisma.orders.count({ where: { affiliateUserId: userId } }),
+    ])
+    return { orders, total }
+  },
+
+  async getPromoters(sellerIds: string[]) {
+    if (!sellerIds.length) return []
+    return prisma.orders.findMany({
+      where: {
+        affiliateUserId: { not: null },
+        status: { notIn: ['CANCELLED', 'CANCELED', 'RETURNED'] },
+        orderItem: {
+          some: {
+            variant: { product: { sellerId: { in: sellerIds } } },
+          },
+        },
+      },
+      select: {
+        affiliateUserId: true,
+        affiliateCut: true,
+        affiliate: {
+          select: { id: true, username: true, avatar: true },
+        },
+      },
+    })
+  },
 }

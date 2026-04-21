@@ -1,4 +1,5 @@
 // GET /api/squares/:slug/members — officer views pending and active memberships
+import { prisma } from '~~/server/utils/db'
 import { z } from 'zod'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
 

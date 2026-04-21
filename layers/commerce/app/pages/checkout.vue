@@ -674,9 +674,9 @@
               <Icon name="logos:paypal" size="18" />
               PayPal
             </button>
-            <!-- POD — only for Nigerian addresses with a shipping fee -->
+            <!-- POD — Nigerian address + shipping fee + every seller has opted in -->
             <button
-              v-if="form.country === 'NG' && shippingCostMajor > 0"
+              v-if="form.country === 'NG' && shippingCostMajor > 0 && cartStore.podAvailable"
               type="button"
               :class="
                 paymentMethod === 'pod'
@@ -795,7 +795,7 @@ import type {
   ICartItem,
   IProduct,
 } from '~~/layers/commerce/app/types/commerce.types'
-import { effectiveUnitPrice } from '~~/layers/commerce/app/stores/cart.store'
+import { effectiveUnitPrice, useCartStore } from '~~/layers/commerce/app/stores/cart.store'
 import {
   useAddressApi,
   type ISavedAddress,
@@ -887,6 +887,7 @@ const handleVerifyOtp = async () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const { items, cartTotal, fetchCart, hasFetchedOnce } = useCart()
+const cartStore = useCartStore()
 const showCartHydrationState = computed(
   () => profileStore.isLoggedIn && !showAuthStep.value && !hasFetchedOnce.value,
 )

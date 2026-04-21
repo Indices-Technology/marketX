@@ -60,6 +60,7 @@ model Profile {
   squareFollows          UserSquareFollow[]   @relation("UserSquareFollows")
   squareMembershipsVerified SquareMembership[] @relation("SquareMembershipVerifier")
   squarePayoutRequests   SquarePayout[]       @relation("SquarePayoutRequests")
+  squareAnnouncements    SquareAnnouncement[] @relation("AnnouncementAuthor")
 }
 
 model SellerProfile {
@@ -800,7 +801,7 @@ model UserSettings {
   show_like_counts    Boolean  @default(true)
   show_near_me        Boolean  @default(true)
   show_shop_today     Boolean  @default(true)
-  show_stories        Boolean  @default(true)
+  show_stories        Boolean  @default(false)
   created_at          DateTime @default(now())
   updated_at          DateTime @updatedAt
 
@@ -872,8 +873,9 @@ model Square {
   followers    UserSquareFollow[]
   wallet       SquareWallet?
   transactions SquareTransaction[]
-  posts        Post[]              @relation("SquarePosts")
-  products     Products[]          @relation("SquareProducts")
+  posts         Post[]               @relation("SquarePosts")
+  products      Products[]           @relation("SquareProducts")
+  announcements SquareAnnouncement[]
 
   @@index([type, status])
   @@index([city, state])
@@ -988,6 +990,23 @@ model SquarePayout {
   requestedBy Profile      @relation("SquarePayoutRequests", fields: [requestedById], references: [id])
 
   @@index([walletId])
+}
+
+/// A broadcast message posted by a Square officer to all members and followers.
+model SquareAnnouncement {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  squareId   String   @db.Uuid
+  authorId   String   @db.Uuid
+  title      String
+  body       String
+  isPinned   Boolean  @default(false)
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+
+  square Square  @relation(fields: [squareId], references: [id], onDelete: Cascade)
+  author Profile @relation("AnnouncementAuthor", fields: [authorId], references: [id])
+
+  @@index([squareId, created_at(sort: Desc)])
+  @@index([squareId, isPinned])
 }
 
 enum SquareType {
