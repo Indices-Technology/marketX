@@ -484,6 +484,17 @@ function buildPinEl(seller: IMapSeller): HTMLElement {
     ? `<span class="tt-badge tt-badge--open">Open</span>`
     : (seller.businessHours ? `<span class="tt-badge tt-badge--closed">Closed</span>` : '')
 
+  const sq = seller.square
+  const squareBadge = sq
+    ? (() => {
+        const color = sq.accentColor || '#f59e0b'
+        return `<a href="/squares/${sq.slug}" class="tt-square" style="background:${color}22;color:${color};border-color:${color}44" onclick="event.stopPropagation()">
+          <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
+          ${sq.name}
+        </a>`
+      })()
+    : ''
+
   wrap.innerHTML = `
     ${pulseClass ? `<div class="${pulseClass}"></div>` : ''}
     <div class="seller-pin${seller.hasActiveDeal ? ' pin-deal' : ''}${seller.isPremium && !seller.hasActiveDeal ? ' pin-premium' : ''}${!seller.isOnline ? ' pin-offline' : ''}">
@@ -507,6 +518,7 @@ function buildPinEl(seller: IMapSeller): HTMLElement {
         <span class="tt-dot">·</span>
         <span>${seller.productCount} products</span>
       </div>
+      ${squareBadge}
       ${seller.hasActiveDeal ? '<div class="tt-deal">🏷️ Active deal</div>' : ''}
       ${seller.isPremium ? '<div class="tt-premium">⭐ Premium store</div>' : ''}
       <div class="tt-status">${statusLine}</div>
@@ -751,6 +763,17 @@ function buildPinEl(seller: IMapSeller): HTMLElement {
   font-size: 10px; color: rgba(255,255,255,0.5); margin-bottom: 5px;
 }
 .tt-dot { color: rgba(255,255,255,0.25); }
+.tt-square {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 9px; font-weight: 800;
+  border-radius: 9999px; padding: 3px 7px;
+  border: 1px solid transparent;
+  margin-bottom: 5px;
+  text-decoration: none;
+  transition: opacity 0.12s;
+  cursor: pointer;
+}
+.tt-square:hover { opacity: 0.8; }
 .tt-deal    { font-size: 10px; font-weight: 700; color: #F43F5E; margin-bottom: 3px; }
 .tt-premium { font-size: 10px; font-weight: 700; color: #a78bfa; margin-bottom: 3px; }
 .tt-status {

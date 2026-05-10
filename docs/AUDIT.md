@@ -1,4 +1,4 @@
-# ReelShop Audit Playbook
+# MarketX Audit Playbook
 
 This document is the practical audit guide for this codebase.
 
@@ -21,7 +21,7 @@ Use these rules throughout the audit:
 
 From a quick inventory, this repo currently has:
 
-- Nuxt app layers under `layers/ai`, `layers/commerce`, `layers/core`, `layers/feed`, `layers/map`, `layers/profile`, `layers/seller`, and `layers/social`
+- Nuxt app layers under `layers/ai`, `layers/commerce`, `layers/core`, `layers/feed`, `layers/map`, `layers/profile`, `layers/seller`, `layers/social`, and `layers/square`
 - shared server infrastructure under `server/`
 - Prisma schema and seed data under `prisma/`
 - queue-backed side effects for audit, email, and notifications
@@ -208,16 +208,91 @@ Primary code areas:
 - edit/delete own post
 - like/unlike post
 - comment on post
+- @mention a user in a post or comment
 - story creation/deletion
 - notification read/unread
 - messages and conversation access
+- follow / unfollow a user or seller
+- view personalized following feed (authenticated users)
+- view public market home feed (guest users)
 
 Primary code areas:
 
 - `layers/social/server/api/posts/*`
+- `layers/social/server/api/mentions/*`
 - `layers/social/server/services/*`
+- `layers/social/app/components/MentionInput.vue`
 - `server/api/shared/notifications/*`
 - `layers/profile/app/pages/messages/*`
+- `layers/feed/app/components/SocialFeed.vue`
+- `layers/feed/app/components/MarketHome.vue`
+- `layers/feed/app/composables/useMarketHome.ts`
+
+### Map And Near Me
+
+- view store map with seller pins
+- filter map by category, open-now, or distance
+- open seller panel / bottom sheet from map pin
+- request location permission to surface nearby sellers
+- browse "Selling now" inline feed on the home screen using cached or live location
+- view store details from the map
+
+Primary code areas:
+
+- `layers/map/app/pages/map.vue`
+- `layers/map/app/components/MapView.vue`
+- `layers/map/app/components/MapStorePanel.vue`
+- `layers/map/app/components/MapBottomSheet.vue`
+- `layers/map/app/composables/useMapSellers.ts`
+- `layers/map/server/map.repository.ts`
+- `layers/map/server/map.service.ts`
+- `server/api/map/sellers.get.ts`
+
+Key risk areas: location data handling and privacy, radius query performance at scale, stale open/closed status, unauthenticated access to seller location data.
+
+### Squares
+
+- browse all squares (list page)
+- search / filter squares by name, city, type
+- view a square's profile, feed, and seller members
+- join a square (seller or buyer)
+- leave a square
+- square admin creates/edits/deletes an announcement
+- square feed (posts and products from member sellers)
+- square membership permissions (member-only actions vs public)
+
+Primary code areas:
+
+- `layers/square/app/pages/squares/index.vue`
+- `layers/square/app/pages/squares/[slug]/index.vue`
+- `layers/square/app/pages/squares/[slug]/join.vue`
+- `layers/square/app/services/square.api.ts`
+- `layers/square/server/api/squares/*`
+- `layers/square/server/services/square.service.ts`
+- `layers/square/server/repositories/square.repository.ts`
+
+Key risk areas: membership gate enforcement server-side, announcement CRUD ownership, square admin privilege escalation, feed mixing member-only content with public requests.
+
+### Reviews
+
+- buyer leaves a product review after order confirmed
+- buyer leaves a seller review after order confirmed
+- seller cannot review their own product
+- view aggregated product rating on product page
+- view aggregated seller rating on seller profile
+- edit or delete own review
+- review visibility (published vs pending moderation)
+
+Primary code areas:
+
+- `layers/commerce/server/api/products/[id]/reviews/*`
+- `layers/seller/server/api/seller/[id]/reviews/*`
+- `layers/commerce/app/components/ProductReviews.vue`
+- `layers/seller/app/components/SellerReviews.vue`
+- `layers/commerce/server/repositories/product.repository.ts`
+- `layers/commerce/server/services/product.service.ts`
+
+Key risk areas: only buyers with a completed order for the product/seller should be allowed to post; duplicate review prevention; rating aggregation correctness after edit or delete.
 
 ### AI
 

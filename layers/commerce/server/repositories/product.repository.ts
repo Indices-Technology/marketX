@@ -630,11 +630,21 @@ export const productRepository = {
   },
 
   async getReviewAggregate(productId: number) {
-    return prisma.review.aggregate({
-      where: { productId },
-      _avg: { rating: true },
-      _count: true,
-    })
+    const [agg, grouped] = await Promise.all([
+      prisma.review.aggregate({
+        where: { productId },
+        _avg: { rating: true },
+        _count: true,
+      }),
+      prisma.review.groupBy({
+        by: ['rating'],
+        where: { productId },
+        _count: { rating: true },
+      }),
+    ])
+    const distribution: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+    for (const g of grouped) distribution[g.rating] = g._count.rating
+    return { ...agg, distribution }
   },
 
   async upsertReview(data: {
@@ -643,6 +653,8 @@ export const productRepository = {
     rating: number
     title?: string
     body?: string
+    orderId?: number
+    verified?: boolean
   }) {
     return prisma.review.upsert({
       where: { productId_authorId: { productId: data.productId, authorId: data.authorId } },
@@ -652,9 +664,11 @@ export const productRepository = {
         rating: data.rating,
         title: data.title,
         body: data.body,
+        orderId: data.orderId,
+        verified: data.verified ?? false,
       },
       update: { rating: data.rating, title: data.title, body: data.body },
-      select: { id: true, rating: true, title: true, body: true, created_at: true },
+      select: { id: true, rating: true, title: true, body: true, verified: true, created_at: true },
     })
   },
 

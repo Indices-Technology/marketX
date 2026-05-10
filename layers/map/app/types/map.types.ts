@@ -19,6 +19,7 @@ export interface IMapSeller {
   closesAt: string | null      // e.g. "18:00" when open
   lastSeenLabel: string | null // e.g. "2h ago" when offline, null when online
   businessHours: Record<string, { open?: string; close?: string; closed?: boolean }> | null
+  square: { slug: string; name: string; accentColor: string | null } | null
 }
 
 export interface IMapSellerPreview extends IMapSeller {

@@ -256,6 +256,8 @@ useSeoMeta({
   description: 'Discover sellers and products near your location.',
 })
 
+const route = useRoute()
+
 const {
   sellers,
   loading,
@@ -277,6 +279,15 @@ const {
 const locationGranted = ref(false)
 const selectedSeller = ref<IMapSeller | null>(null)
 const mobileSearch = ref('')
+
+// Deep-link: ?store=slug — auto-select the seller once data loads
+const deepLinkSlug = route.query.store as string | undefined
+
+const tryAutoSelect = () => {
+  if (!deepLinkSlug || selectedSeller.value) return
+  const found = sellers.value.find((s: any) => s.store_slug === deepLinkSlug)
+  if (found) selectedSeller.value = found as unknown as IMapSeller
+}
 
 // ── Squares ───────────────────────────────────────────────────────────────────
 const mapSquares = ref<IMapSquare[]>([])
@@ -302,6 +313,7 @@ const handleAllowLocation = async () => {
     const { lat, lng } = await requestLocation()
     locationGranted.value = true
     await fetchSellers({ lat, lng })
+    tryAutoSelect()
   } catch {}
 }
 
@@ -356,7 +368,7 @@ onMounted(() => {
     const { lat, lng } = cached
     setLocation(lat, lng)
     locationGranted.value = true
-    fetchSellers({ lat, lng })
+    fetchSellers({ lat, lng }).then(tryAutoSelect)
     navigator.permissions
       ?.query({ name: 'geolocation' })
       .then((r) => {

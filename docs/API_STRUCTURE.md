@@ -1,291 +1,450 @@
-// USER LAYER - BACKEND IMPLEMENTATION PLAN
+# marketX — API Reference
 
-/\*\*
-
-- PRIORITY LEVELS:
-- 🔴 CRITICAL - Must have for MVP
-- 🟡 HIGH - Should have soon
-- 🟢 MEDIUM - Nice to have
-- 🔵 LOW - Future enhancement
-  \*/
-
-// ==================== PHASE 1: CRITICAL (MVP) ====================
-
-// 🔴 Profile Management
-server/layers/user/api/
-├── profile.get.ts ✅ EXISTING
-├── profile.patch.ts ✅ EXISTING
-├── profile-public.get.ts 🔴 NEW - GET /@[username]
-└── profile-by-id.get.ts 🔴 NEW - GET /profile/[id]
-
-// 🔴 Posts (Core Feature)
-server/layers/user/api/posts/
-├── index.get.ts 🔴 GET /api/user/posts (my posts)
-├── index.post.ts 🔴 POST /api/user/posts (create)
-├── [id].get.ts 🔴 GET /api/user/posts/[id]
-├── [id].patch.ts 🔴 PATCH /api/user/posts/[id]
-├── [id].delete.ts 🔴 DELETE /api/user/posts/[id]
-└── public/
-├── [username]/index.get.ts 🔴 GET /@[username]/posts
-└── [username]/[id].get.ts 🔴 GET /@[username]/posts/[id]
-
-// 🔴 Follow System
-server/layers/user/api/follow/
-├── [username].post.ts 🔴 POST /@[username]/follow
-├── [username].delete.ts 🔴 DELETE /@[username]/follow
-├── [username]/status.get.ts 🔴 GET /@[username]/follow-status
-├── followers/index.get.ts 🔴 GET /profile/followers (my)
-├── followers/[username].get.ts 🔴 GET /@[username]/followers
-├── following/index.get.ts 🔴 GET /profile/following (my)
-└── following/[username].get.ts 🔴 GET /@[username]/following
-
-// 🔴 Post Likes
-server/layers/user/api/posts/[id]/
-├── like.post.ts 🔴 POST /api/user/posts/[id]/like
-├── like.delete.ts 🔴 DELETE /api/user/posts/[id]/like
-└── likes/index.get.ts 🔴 GET /api/user/posts/[id]/likes
-
-// 🔴 Account Management (EXISTING)
-server/layers/user/api/
-├── account.delete.ts ✅ EXISTING
-├── email.patch.ts ✅ EXISTING
-├── password.patch.ts ✅ EXISTING
-├── settings.get.ts ✅ EXISTING
-└── settings.patch.ts ✅ EXISTING
+> Auto-derived from `layers/*/server/api/` — last updated 2026-04-22.
+> Base URL: `/api`
 
 ---
 
-// ==================== PHASE 2: HIGH PRIORITY ====================
+## Table of Contents
 
-// 🟡 Comments on Posts
-server/layers/user/api/posts/[id]/comments/
-├── index.get.ts 🟡 GET comments
-├── index.post.ts 🟡 POST create comment
-├── [commentId].patch.ts 🟡 PATCH edit comment
-├── [commentId].delete.ts 🟡 DELETE comment
-├── [commentId]/like.post.ts 🟡 POST like comment
-└── [commentId]/like.delete.ts 🟡 DELETE unlike comment
-
-// 🟡 Stories
-server/layers/user/api/stories/
-├── index.get.ts 🟡 GET my stories
-├── index.post.ts 🟡 POST create story
-├── [id].delete.ts 🟡 DELETE story
-├── [id].get.ts 🟡 GET story details
-├── public/
-│ ├── [username]/index.get.ts 🟡 GET /@[username]/stories
-│ └── [username]/[id].get.ts 🟡 GET view story
-
-// 🟡 Share Posts
-server/layers/user/api/posts/[id]/
-├── share.post.ts 🟡 POST /api/user/posts/[id]/share
-└── shares/index.get.ts 🟡 GET /api/user/posts/[id]/shares
-
-// 🟡 Liked Posts
-server/layers/user/api/
-└── profile/likes.get.ts 🟡 GET /api/user/profile/likes
-
-// 🟡 Notifications
-server/layers/user/api/notifications/
-├── index.get.ts 🟡 GET notifications
-├── unread.get.ts 🟡 GET unread count
-├── [id].patch.ts 🟡 PATCH mark as read
-├── [id].delete.ts 🟡 DELETE notification
-└── read-all.patch.ts 🟡 PATCH mark all as read
+1. [Auth](#auth)
+2. [Profile](#profile)
+3. [Social — Posts](#social--posts)
+4. [Social — Mentions](#social--mentions)
+5. [Stories](#stories)
+6. [Feed](#feed)
+7. [Commerce — Products](#commerce--products)
+8. [Commerce — Cart](#commerce--cart)
+9. [Commerce — Orders](#commerce--orders)
+10. [Commerce — Payments](#commerce--payments)
+11. [Commerce — Shipping](#commerce--shipping)
+12. [Commerce — Wallet](#commerce--wallet)
+13. [Commerce — Affiliate](#commerce--affiliate)
+14. [Commerce — Reviews & Tags](#commerce--reviews--tags)
+15. [Seller](#seller)
+16. [Squares](#squares)
+17. [Map](#map)
+18. [Notifications](#notifications)
+19. [Chat](#chat)
+20. [Media & Search](#media--search)
+21. [AI](#ai)
 
 ---
 
-// ==================== PHASE 3: MEDIUM PRIORITY ====================
+## Auth
 
-// 🟢 Blocking
-server/layers/user/api/block/
-├── [username].post.ts 🟢 POST block user
-├── [username].delete.ts 🟢 DELETE unblock
-└── index.get.ts 🟢 GET blocked users
-
-// 🟢 Reporting
-server/layers/user/api/report/
-├── user/[username].post.ts 🟢 POST report user
-├── posts/[id].post.ts 🟢 POST report post
-└── comments/[id].post.ts 🟢 POST report comment
-
-// 🟢 Search & Discovery
-server/layers/user/api/
-├── search.get.ts 🟢 GET /api/user/search?q=[query]
-├── discover.get.ts 🟢 GET /api/user/discover
-├── trending/posts.get.ts 🟢 GET /api/user/trending/posts
-└── trending/creators.get.ts 🟢 GET /api/user/trending/creators
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/auth/register` | Register a new user account |
+| POST | `/auth/login` | Email + password login |
+| POST | `/auth/logout` | Invalidate session |
+| GET  | `/auth/session` | Get current session / user |
+| GET  | `/auth/refresh-token` | Refresh JWT tokens |
+| POST | `/auth/forgot-password` | Send password reset email |
+| POST | `/auth/reset-password` | Reset password with token |
+| POST | `/auth/send-verification-email` | Re-send email verification |
+| POST | `/auth/verify-email` | Verify email with token |
+| GET  | `/auth/oauth/[provider]` | Start OAuth flow (Google, etc.) |
+| GET  | `/auth/oauth/[provider]/callback` | OAuth callback handler |
+| POST | `/auth/register-seller` | Upgrade account to seller during onboarding |
+| POST | `/auth/checkout-otp/send` | Send OTP for guest checkout |
+| POST | `/auth/checkout-otp/verify` | Verify guest checkout OTP |
 
 ---
 
-// ==================== PHASE 4: LOW PRIORITY ====================
+## Profile
 
-// 🔵 Media Management
-server/layers/user/api/media/
-├── upload.post.ts 🔵 POST upload
-├── [id].delete.ts 🔵 DELETE
-└── index.get.ts 🔵 GET library
+### Own profile (authenticated)
 
-// 🔵 Analytics
-server/layers/user/api/analytics/
-├── posts.get.ts 🔵 GET post stats
-├── followers.get.ts 🔵 GET follower growth
-└── dashboard.get.ts 🔵 GET overall dashboard
+| Method | Path | Description |
+|--------|------|-------------|
+| GET    | `/profile` | Get own profile |
+| PATCH  | `/profile` | Update own profile |
+| DELETE | `/profile` | Delete account |
+| GET    | `/profile/media` | Get own uploaded media |
+| GET    | `/profile/followers` | Own followers list |
+| GET    | `/profile/following` | Own following list |
+| GET    | `/profile/suggestions` | Suggested users to follow |
+| POST   | `/profile/check-following` | Batch check follow status for a list of user IDs |
+| PATCH  | `/profile/email` | Change email address |
+| PATCH  | `/profile/password` | Change password |
+| GET    | `/profile/settings` | Get app settings |
+| PATCH  | `/profile/settings` | Update app settings |
+| GET    | `/profile/addresses` | Saved delivery addresses |
+| POST   | `/profile/addresses` | Add delivery address |
+| DELETE | `/profile/addresses/[id]` | Remove an address |
+| PATCH  | `/profile/addresses/[id]/default` | Set address as default |
 
-// 🔵 Verification
-server/layers/user/api/verification/
-├── status.get.ts 🔵 GET status
-└── request.post.ts 🔵 POST request verification
+### Public profiles
 
----
-
-// ==================== DIRECTORY STRUCTURE ====================
-
-server/layers/user/
-├── api/
-│ ├── profile.get.ts (✅ existing, update for auth)
-│ ├── profile.patch.ts (✅ existing)
-│ ├── profile-public.get.ts (🔴 NEW)
-│ ├── profile-by-id.get.ts (🔴 NEW)
-│ ├── account.delete.ts (✅ existing)
-│ ├── email.patch.ts (✅ existing)
-│ ├── password.patch.ts (✅ existing)
-│ ├── settings.get.ts (✅ existing)
-│ ├── settings.patch.ts (✅ existing)
-│ │
-│ ├── posts/
-│ │ ├── index.get.ts (🔴 NEW)
-│ │ ├── index.post.ts (🔴 NEW)
-│ │ ├── [id].get.ts (🔴 NEW)
-│ │ ├── [id].patch.ts (🔴 NEW)
-│ │ ├── [id].delete.ts (🔴 NEW)
-│ │ ├── [id]/
-│ │ │ ├── like.post.ts (🔴 NEW)
-│ │ │ ├── like.delete.ts (🔴 NEW)
-│ │ │ ├── likes.get.ts (🔴 NEW)
-│ │ │ ├── share.post.ts (🟡 NEW)
-│ │ │ ├── shares.get.ts (🟡 NEW)
-│ │ │ └── comments/
-│ │ │ ├── index.get.ts (🟡 NEW)
-│ │ │ ├── index.post.ts (🟡 NEW)
-│ │ │ └── [id]/
-│ │ │ ├── patch.ts (🟡 NEW)
-│ │ │ ├── delete.ts (🟡 NEW)
-│ │ │ ├── like.post.ts
-│ │ │ └── like.delete.ts
-│ │ └── public/
-│ │ └── [@username]/
-│ │ ├── index.get.ts
-│ │ └── [id].get.ts
-│ │
-│ ├── follow/
-│ │ ├── [@username].post.ts
-│ │ ├── [@username].delete.ts
-│ │ ├── [@username]/status.get.ts
-│ │ ├── followers/
-│ │ │ ├── index.get.ts
-│ │ │ └── [@username].get.ts
-│ │ └── following/
-│ │ ├── index.get.ts
-│ │ └── [@username].get.ts
-│ │
-│ ├── stories/
-│ │ ├── index.get.ts (🟡 NEW)
-│ │ ├── index.post.ts (🟡 NEW)
-│ │ ├── [id].get.ts (🟡 NEW)
-│ │ ├── [id].delete.ts (🟡 NEW)
-│ │ └── public/
-│ │ └── [@username]/
-│ │ ├── index.get.ts
-│ │ └── [id].get.ts
-│ │
-│ ├── notifications/
-│ │ ├── index.get.ts (🟡 NEW)
-│ │ ├── unread.get.ts (🟡 NEW)
-│ │ ├── [id].patch.ts (🟡 NEW)
-│ │ ├── [id].delete.ts (🟡 NEW)
-│ │ └── read-all.patch.ts (🟡 NEW)
-│ │
-│ ├── block/ (🟢 NEW)
-│ ├── report/ (🟢 NEW)
-│ ├── search.get.ts (🟢 NEW)
-│ ├── discover.get.ts (🟢 NEW)
-│ ├── trending/ (🟢 NEW)
-│ ├── media/ (🔵 NEW)
-│ ├── analytics/ (🔵 NEW)
-│ └── verification/ (🔵 NEW)
-│
-├── services/
-│ ├── user.service.ts (update)
-│ ├── post.service.ts (🔴 NEW)
-│ ├── follow.service.ts (🔴 NEW)
-│ ├── like.service.ts (🔴 NEW)
-│ ├── comment.service.ts (🟡 NEW)
-│ ├── story.service.ts (🟡 NEW)
-│ ├── notification.service.ts (🟡 NEW)
-│ ├── block.service.ts (🟢 NEW)
-│ ├── report.service.ts (🟢 NEW)
-│ └── search.service.ts (🟢 NEW)
-│
-├── repositories/
-│ ├── user.repository.ts (update)
-│ ├── post.repository.ts (🔴 NEW)
-│ ├── follow.repository.ts (🔴 NEW)
-│ ├── like.repository.ts (🔴 NEW)
-│ └── ... (same pattern)
-│
-├── schemas/
-│ ├── user.schema.ts (update)
-│ ├── post.schema.ts (🔴 NEW)
-│ ├── follow.schema.ts (🔴 NEW)
-│ ├── comment.schema.ts (🟡 NEW)
-│ └── ... (same pattern)
-│
-└── types/
-├── user.types.ts (update)
-├── post.types.ts (🔴 NEW)
-├── follow.types.ts (🔴 NEW)
-└── ... (same pattern)
+| Method | Path | Description |
+|--------|------|-------------|
+| GET    | `/profile/[username]` | Public profile page data |
+| GET    | `/profile/[username]/posts` | Posts by a user |
+| GET    | `/profile/[username]/posts/[id]` | Single post by a user |
+| GET    | `/profile/[username]/likes` | Posts a user has liked |
+| GET    | `/profile/[username]/followers` | User's followers |
+| GET    | `/profile/[username]/following` | Who a user follows |
+| GET    | `/profile/[username]/stats` | Follower / post / like counts |
+| GET    | `/profile/[username]/status` | Online status |
+| POST   | `/profile/[username]/follow` | Follow a user |
+| DELETE | `/profile/[username]/unfollow` | Unfollow a user |
 
 ---
 
-// ==================== IMPLEMENTATION ORDER ====================
+## Social — Posts
 
-WEEK 1 (PHASE 1 - MVP):
+### Collection
 
-1. Create Post service/repository/schema/types
-2. Create Follow service/repository/schema/types
-3. Create Like service/repository/schema/types
-4. Implement all PHASE 1 endpoints
+| Method | Path | Description |
+|--------|------|-------------|
+| GET  | `/posts` | Paginated post list (public / filtered) |
+| POST | `/posts` | Create a post |
+| GET  | `/posts/tagged` | Posts where the current user is tagged |
+| GET  | `/posts/by-store` | Posts from a specific store (`?storeSlug=`) |
+| GET  | `/posts/liked` | Posts the current user has liked |
 
-WEEK 2 (PHASE 2):
+### Saved posts
 
-1. Create Comment service/repository/schema/types
-2. Create Story service/repository/schema/types
-3. Create Notification service/repository/schema/types
-4. Implement all PHASE 2 endpoints
+| Method | Path | Description |
+|--------|------|-------------|
+| GET    | `/posts/save` | Saved posts collection |
+| POST   | `/posts/save` | Save a post |
+| GET    | `/posts/save/[id]` | Check if a post is saved |
+| DELETE | `/posts/save/[id]` | Unsave a post |
 
-WEEK 3+ (PHASE 3 & 4):
+### Shares
 
-- Implement remaining features as needed
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/posts/share` | Share / repost a post |
+| GET  | `/posts/my-shares` | Posts shared by the current user |
+
+### Single post
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET    | `/posts/[id]` | Get a post |
+| PATCH  | `/posts/[id]` | Edit a post (author only) |
+| DELETE | `/posts/[id]` | Delete a post (author only) |
+| POST   | `/posts/[id]/like` | Like a post |
+| DELETE | `/posts/[id]/like` | Unlike a post |
+| GET    | `/posts/[id]/likes` | Users who liked a post |
+| GET    | `/posts/[id]/shares` | Shares / reposts of a post |
+| POST   | `/posts/[id]/view` | Record a view (analytics) |
+
+### Comments
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET  | `/posts/[id]/comments` | Top-level comments on a post |
+| POST | `/posts/[id]/comments` | Add a comment |
+| PATCH  | `/posts/[id]/comments/[commentId]` | Edit a comment |
+| DELETE | `/posts/[id]/comments/[commentId]` | Delete a comment |
+| POST   | `/posts/[id]/comments/[commentId]/like` | Like a comment |
+| DELETE | `/posts/[id]/comments/[commentId]/like` | Unlike a comment |
+| GET    | `/posts/[id]/comments/[commentId]/replies` | Replies to a comment |
 
 ---
 
-// ==================== SUMMARY ====================
+## Social — Mentions
 
-TOTAL ENDPOINTS:
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/mentions/search?q=` | Autocomplete users + sellers for `@mention` tagging |
 
-- 🔴 CRITICAL (Phase 1): 24 endpoints
-- 🟡 HIGH (Phase 2): 20 endpoints
-- 🟢 MEDIUM (Phase 3): 15 endpoints
-- 🔵 LOW (Phase 4): 12 endpoints
+Returns `{ data: [{ type, id, handle, displayName, avatar }] }`.
+Both user `profileId` and seller owner's `profileId` are returned as `id` so notifications route uniformly.
 
-TOTAL = 71 endpoints
+---
 
-FOR MVP (Phase 1 + Phase 2):
+## Stories
 
-- 44 endpoints
-- 5 services
-- 5 repositories
-- 5 schema files
-- 5 type files
+| Method | Path | Description |
+|--------|------|-------------|
+| GET    | `/stories` | Stories feed (followed users) |
+| POST   | `/stories` | Create a story |
+| GET    | `/stories/[id]` | Single story |
+| DELETE | `/stories/[id]` | Delete own story |
+| POST   | `/stories/[id]/view` | Mark story as viewed |
+
+---
+
+## Feed
+
+All feed endpoints are read-only and return `{ items[], meta }` unless noted.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/feed/home` | Mixed for-you feed (posts + products, cached) |
+| GET | `/feed/following` | Feed from accounts the user follows |
+| GET | `/feed/trending` | Trending posts |
+| GET | `/feed/deals` | Active flash deals (`isDeal=true`) |
+| GET | `/feed/fresh-drops` | Products listed in the last 7 days |
+| GET | `/feed/pre-loved` | Second-hand / thrift listings |
+| GET | `/feed/discover` | Discovery mix for Explore page |
+| GET | `/feed/reels` | Video-first reel feed |
+| GET | `/feed/shop-today` | Curated shoppable shelf (injected into home feed) |
+| GET | `/feed/nearby-stores` | Stores near a given `lat/lng` |
+| GET | `/feed/squares/[slug]` | Feed scoped to a single Square |
+| GET | `/feed/user/[userId]` | Feed for a specific user's profile page |
+
+---
+
+## Commerce — Products
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET    | `/commerce/products` | Browse products (`?search`, `?category`, `?status`, etc.) |
+| POST   | `/commerce/products` | Create a product (seller) |
+| GET    | `/commerce/products/liked` | Products the current user has liked |
+| GET    | `/commerce/products/by-slug/[slug]` | Product by URL slug |
+| GET    | `/commerce/products/[id]` | Product detail |
+| PATCH  | `/commerce/products/[id]` | Update a product |
+| DELETE | `/commerce/products/[id]` | Delete a product |
+| POST   | `/commerce/products/[id]/like` | Like a product |
+| DELETE | `/commerce/products/[id]/like` | Unlike a product |
+| GET    | `/commerce/products/[id]/likes` | Users who liked a product |
+| GET    | `/commerce/products/[id]/comments` | Product comments |
+| POST   | `/commerce/products/[id]/comments` | Add a product comment |
+| GET    | `/commerce/products/variants/[id]` | Product variant detail |
+| GET    | `/commerce/categories` | Product category list |
+| GET    | `/tags` | All product tags |
+| GET    | `/tags/[id]/products` | Products for a tag |
+
+---
+
+## Commerce — Cart
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET    | `/commerce/cart` | Get cart contents |
+| POST   | `/commerce/cart` | Add item to cart |
+| PATCH  | `/commerce/cart/[variantId]` | Update item quantity |
+| DELETE | `/commerce/cart/[variantId]` | Remove item from cart |
+| GET    | `/commerce/cart/validate` | Validate cart (stock, prices) before checkout |
+
+---
+
+## Commerce — Orders
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET    | `/commerce/orders` | Buyer's order history |
+| POST   | `/commerce/orders` | Place an order |
+| GET    | `/commerce/orders/seller` | Seller's incoming orders |
+| GET    | `/commerce/orders/[id]` | Single order detail |
+| POST   | `/commerce/orders/[id]/cancel` | Cancel an order |
+| POST   | `/commerce/orders/[id]/confirm-receipt` | Buyer confirms delivery received |
+| POST   | `/commerce/orders/[id]/confirm-cash` | Seller confirms cash-on-delivery collected |
+| POST   | `/commerce/orders/[id]/refuse-delivery` | Buyer refuses delivery |
+| PATCH  | `/commerce/orders/[id]/status` | Update order status (seller / admin) |
+
+---
+
+## Commerce — Payments
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/commerce/payments/initialize` | Init Paystack / card payment |
+| POST | `/commerce/payments/verify` | Verify payment after redirect |
+| POST | `/commerce/payments/webhook` | Paystack webhook receiver |
+| POST | `/commerce/payments/pod-initialize` | Init Pay-on-Delivery order |
+| POST | `/commerce/payments/pod-verify` | Verify POD (admin / driver) |
+| POST | `/commerce/payments/paypal/create` | Create PayPal order |
+| POST | `/commerce/payments/paypal/capture` | Capture PayPal order after approval |
+
+---
+
+## Commerce — Shipping
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/commerce/shipping/rates` | Get shipping rate quotes |
+| POST | `/commerce/shipping/calculate` | Calculate delivery cost |
+| POST | `/commerce/shipping/create` | Create a shipment |
+| GET  | `/commerce/shipping/zones` | Available shipping zones |
+| GET  | `/commerce/shipping/track/[trackingNumber]` | Track a shipment |
+| POST | `/commerce/shipping/webhook/sendbox` | Sendbox webhook |
+| POST | `/commerce/shipping/webhook/shippo` | Shippo webhook |
+| POST | `/commerce/shipping/seed` | Seed default shipping config (dev only) |
+
+---
+
+## Commerce — Wallet
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET  | `/commerce/wallet` | Current user's wallet balance |
+| GET  | `/commerce/wallet/store/[storeSlug]` | Store wallet balance (seller) |
+| GET  | `/commerce/wallet/transactions` | Transaction history |
+| GET  | `/commerce/wallet/fee-config` | Platform fee configuration |
+| GET  | `/commerce/wallet/payout-preview` | Preview payout amount after fees |
+| POST | `/commerce/wallet/add-funds` | Top up wallet |
+| POST | `/commerce/wallet/withdraw` | Request a withdrawal / payout |
+
+---
+
+## Commerce — Affiliate
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET  | `/commerce/affiliate` | Current user's affiliate status & stats |
+| POST | `/commerce/affiliate/enroll` | Enroll in the affiliate programme |
+| GET  | `/commerce/affiliate/available-products` | Products available to promote |
+| GET  | `/commerce/affiliate/seller-products` | Seller's promotable products |
+| GET  | `/commerce/affiliate/promoters` | Promoters for a seller's products |
+| GET  | `/commerce/affiliate/referrals` | Referral conversions for the current affiliate |
+
+---
+
+## Commerce — Reviews & Tags
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET  | `/products/[id]/reviews` | Reviews for a product |
+| POST | `/products/[id]/reviews` | Submit a product review |
+| GET  | `/products/[id]/reviews/eligibility` | Check if user can review (purchased?) |
+| POST | `/products/[id]/view` | Record a product page view |
+
+> Note: seller-level reviews are under `/seller/[id]/reviews` — see [Seller](#seller).
+
+---
+
+## Seller
+
+### Discovery
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET  | `/seller/list` | Browse all active sellers |
+| GET  | `/seller/featured` | Featured / curated sellers |
+| GET  | `/seller/by-slug/[slug]` | Seller profile by store slug |
+| GET  | `/seller/check-slug` | Check slug availability (`?slug=`) |
+| POST | `/seller/suggest-slug` | AI-suggested slug from store name |
+| GET  | `/seller/following-ids` | IDs of sellers the current user follows |
+
+### Registration & management
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST   | `/seller/register` | Create a seller profile |
+| POST   | `/seller/ping` | Heartbeat — marks seller as online |
+| GET    | `/seller/[id]` | Seller detail |
+| PATCH  | `/seller/[id]` | Update seller profile |
+| POST   | `/seller/[id]/activate` | Activate store |
+| POST   | `/seller/[id]/deactivate` | Deactivate store |
+
+### Social & engagement
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET    | `/seller/[id]/follow-status` | Check if current user follows this seller |
+| POST   | `/seller/[id]/follow` | Follow a seller |
+| DELETE | `/seller/[id]/unfollow` | Unfollow a seller |
+| GET    | `/seller/[id]/products` | Seller's product listings |
+| GET    | `/seller/[id]/messages` | Seller's inbox messages |
+| GET    | `/seller/[id]/reviews` | Reviews for a seller |
+| POST   | `/seller/[id]/reviews` | Review a seller (post-purchase) |
+| GET    | `/seller/[id]/reviews/eligibility` | Check if user can review seller |
+
+### Bank accounts
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET    | `/seller/bank-accounts` | Seller's saved bank accounts |
+| POST   | `/seller/bank-accounts` | Add a bank account |
+| DELETE | `/seller/bank-accounts/[id]` | Remove a bank account |
+| PATCH  | `/seller/bank-accounts/[id]/set-default` | Set default payout account |
+
+---
+
+## Squares
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET    | `/squares` | Browse squares (`?type=GEOGRAPHIC|CATEGORY`, `?search=`) |
+| POST   | `/squares` | Create a square (admin) |
+| GET    | `/squares/[slug]` | Square detail |
+| PATCH  | `/squares/[slug]` | Update square |
+| POST   | `/squares/[slug]/activate` | Activate a square |
+| POST   | `/squares/[slug]/join` | Seller requests to join a square |
+| POST   | `/squares/[slug]/follow` | User follows a square |
+| DELETE | `/squares/[slug]/follow` | User unfollows a square |
+| POST   | `/squares/[slug]/officers` | Assign officers to a square |
+| GET    | `/squares/[slug]/members` | Seller members of a square |
+| PATCH  | `/squares/[slug]/members/[sellerId]` | Update a member's status / role |
+| GET    | `/squares/[slug]/sellers` | Active sellers in a square |
+| GET    | `/squares/[slug]/announcements` | Square announcements |
+| POST   | `/squares/[slug]/announcements` | Post an announcement |
+
+---
+
+## Map
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/map/sellers` | Sellers within radius (`?lat`, `?lng`, `?radius`, `?limit`) |
+| GET | `/map/sellers/[slug]/preview` | Map pin preview card for a seller |
+| GET | `/map/squares` | Squares visible on the map |
+
+---
+
+## Notifications
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/notifications/stream` | SSE stream — real-time notification delivery |
+
+Notification types emitted: `LIKE`, `COMMENT`, `FOLLOW`, `ORDER`, `MENTION`, `REVIEW`, `SYSTEM`.
+
+> Full notification CRUD (mark-read, delete) is managed client-side via the SSE payload and the profile store.
+
+---
+
+## Chat
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET    | `/chat/conversations` | All conversations for the current user |
+| POST   | `/chat/conversations` | Start a new conversation |
+| GET    | `/chat/conversations/[id]` | Conversation detail |
+| DELETE | `/chat/conversations/[id]` | Delete a conversation |
+| GET    | `/chat/conversations/[id]/messages` | Paginated messages |
+| POST   | `/chat/conversations/[id]/messages` | Send a message |
+| WS     | `/chat/ws` | WebSocket for real-time message delivery |
+
+---
+
+## Media & Search
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/media/upload` | Upload image / video to Cloudinary. Returns `{ url, public_id, type }` |
+| GET  | `/music/search?q=` | Search background music tracks |
+| GET  | `/search?q=` | Global search (products, sellers, users, squares) |
+| POST | `/pusher/auth` | Pusher channel authentication |
+
+---
+
+## AI
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/ai/generate-listing` | Generate a product title + description from an image or prompt |
+| POST | `/ai/enhance-description` | Enhance an existing product description |
+
+Both endpoints stream responses and require seller authentication.
+
+---
+
+## Common conventions
+
+| Convention | Detail |
+|---|---|
+| Auth header | `Authorization: Bearer <token>` on protected routes |
+| Pagination | `?limit=20&offset=0` → `{ data[], meta: { total, limit, offset, hasMore } }` |
+| Errors | `{ statusCode, message }` — H3 standard error shape |
+| Timestamps | ISO 8601 UTC strings |
+| Currency | Amounts in **kobo** (NGN × 100) unless noted |
+| IDs | `string` (cuid2) for profiles/posts; `number` (serial) for products/orders |

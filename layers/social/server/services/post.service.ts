@@ -35,6 +35,24 @@ export const contentService = {
       userAgent,
     })
 
+    // Fire mention notifications — fire-and-forget via the queue
+    if (validated.mentions?.length) {
+      const seen = new Set<string>()
+      for (const mention of validated.mentions) {
+        // Don't notify yourself
+        if (mention.id === userId) continue
+        if (seen.has(mention.id)) continue
+        seen.add(mention.id)
+        notificationQueue.enqueue({
+          userId: mention.id,
+          type: 'MENTION',
+          actorId: userId,
+          message: `mentioned you in a post`,
+          postId: post.id,
+        })
+      }
+    }
+
     return post
   },
 

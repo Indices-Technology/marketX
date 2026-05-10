@@ -61,6 +61,7 @@ model Profile {
   squareMembershipsVerified SquareMembership[] @relation("SquareMembershipVerifier")
   squarePayoutRequests   SquarePayout[]       @relation("SquarePayoutRequests")
   squareAnnouncements    SquareAnnouncement[] @relation("AnnouncementAuthor")
+  sellerReviews          SellerReview[]       @relation("SellerReviewAuthor")
 }
 
 model SellerProfile {
@@ -118,6 +119,10 @@ model SellerProfile {
   bankAccounts          BankAccount[]
   verificationDocuments VerificationDocument[]
   conversations         Conversation[]         @relation("ConversationSeller")
+  sellerReviews         SellerReview[]         @relation("SellerReviews")
+  // ── Rating (denormalised — updated on every review write) ────────────────
+  averageRating         Float?
+  totalReviews          Int                    @default(0)
 
   @@unique([profileId, store_slug]) // ← NEW: Composite unique (same user, different slug OK)
   @@index([profileId]) // ← NEW: Index on profileId for faster lookups
@@ -444,6 +449,8 @@ model Post {
   caption        String?
   content        String?
   contentType    String?
+  /// JSON array of { type, id, handle, displayName, avatar } — structured @mentions
+  mentions       Json?
   created_at     DateTime         @default(now()) @db.Timestamptz(6)
   visibility     VisibilityType?  @default(PUBLIC)
   allowComments  Boolean          @default(true)
@@ -829,6 +836,28 @@ model Review {
   @@index([authorId])
 }
 
+/// A buyer's review of a seller store (not a specific product).
+/// Gated on at least one completed order from that seller.
+model SellerReview {
+  id         String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sellerId   String        @db.Uuid
+  authorId   String        @db.Uuid
+  orderId    Int?
+  rating     Int           // 1-5
+  title      String?
+  body       String?
+  verified   Boolean       @default(true)  // always true — gated on completed order
+  created_at DateTime      @default(now()) @db.Timestamptz(6)
+  updated_at DateTime      @updatedAt @db.Timestamptz(6)
+
+  seller     SellerProfile @relation("SellerReviews", fields: [sellerId], references: [id], onDelete: Cascade)
+  author     Profile       @relation("SellerReviewAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@unique([sellerId, authorId])
+  @@index([sellerId])
+  @@index([authorId])
+}
+
 // ==================== SQUARES ====================
 
 /// A Square is a named community of sellers — either anchored to a real
@@ -1085,6 +1114,7 @@ enum NotificationType {
   NEW_FOLLOWER
   NEW_POST
   POST_LIKE
+  MENTION
   SQUARE_ANNOUNCEMENT
   SQUARE_MEMBERSHIP_APPROVED
   SQUARE_MEMBERSHIP_REJECTED

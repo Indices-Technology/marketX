@@ -98,6 +98,8 @@ export const mapService = {
       return `${Math.floor(hrs / 24)}d ago`
     })()
 
+    const primaryMembership = s.squareMemberships?.find((m: any) => m.isPrimary) ?? s.squareMemberships?.[0] ?? null
+
     return {
       id: s.id,
       store_slug: s.store_slug,
@@ -130,6 +132,11 @@ export const mapService = {
         discount: p.discount,
         media: p.media,
       })),
+      square: primaryMembership ? {
+        slug: primaryMembership.square.slug,
+        name: primaryMembership.square.name,
+        accentColor: primaryMembership.square.accentColor,
+      } : null,
     }
   },
 }

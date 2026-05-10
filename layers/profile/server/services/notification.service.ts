@@ -35,6 +35,7 @@ const typeMap: Record<string, string> = {
   PRODUCT_REVIEW: 'REVIEW',
   PRODUCT_COMMENT: 'NEW_COMMENT',
   ORDER: 'ORDER',
+  MENTION: 'MENTION',
 }
 
 export const notificationService = {

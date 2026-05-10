@@ -94,6 +94,12 @@
               <p class="text-xs text-gray-600 dark:text-neutral-400">
                 {{ formatPrice(product.price) }}
               </p>
+              <p
+                v-if="product.seller?.store_name"
+                class="mt-0.5 truncate text-[10px] text-gray-400 dark:text-neutral-500"
+              >
+                from {{ product.seller.store_name }}
+              </p>
             </div>
             <div
               v-if="isSelected(product.id)"
@@ -111,31 +117,34 @@
 <script setup lang="ts">
 import { useProduct } from '~~/layers/commerce/app/composables/useProduct'
 import { useSellerStore } from '~~/layers/seller/app/store/seller.store'
+import { formatProductPrice } from '~~/shared/utils/currency'
 
 const props = defineProps<{ selected: any[] }>()
 const emit = defineEmits(['select', 'close'])
 
-const { fetchSellerProducts, isLoading } = useProduct()
+const { fetchSellerProducts, fetchProducts, isLoading } = useProduct()
 const sellerStore = useSellerStore()
 
 const searchQuery = ref('')
 const selectedProducts = ref([...props.selected])
 const products = ref<any[]>([])
 
+// Sellers get their own products (client-side filtered).
+// Non-sellers search the global catalogue (server-side).
+const storeSlug = computed(() => sellerStore.sellers?.[0]?.store_slug ?? null)
+const isSeller = computed(() => !!storeSlug.value)
+
 const filteredProducts = computed(() => {
+  if (!isSeller.value) return products.value // server already filtered
   if (!searchQuery.value) return products.value
   return products.value.filter((p) =>
     p.title.toLowerCase().includes(searchQuery.value.toLowerCase()),
   )
 })
 
-const getProductImage = (product: any) => {
-  if (product.media?.length) return product.media[0].url
-  return null
-}
-
-import { formatProductPrice } from '~~/shared/utils/currency'
 const formatPrice = (price: number) => formatProductPrice(price, 'NGN')
+
+const getProductImage = (product: any) => product.media?.[0]?.url ?? null
 
 const isSelected = (productId: number) =>
   selectedProducts.value.some((p) => p.id === productId)
@@ -155,17 +164,33 @@ const toggleProduct = (product: any) => {
   }
 }
 
-onMounted(async () => {
-  const storeSlug = sellerStore.sellers?.[0]?.store_slug
-  if (!storeSlug) return
+// Load products — for sellers: fetch own store once; for users: live search
+async function loadProducts(search?: string) {
   try {
-    const result: any = await fetchSellerProducts(storeSlug, {
-      status: 'PUBLISHED',
-      limit: 100,
-    })
-    products.value = result?.products || []
-  } catch {
-    // Not a seller or no products
-  }
+    if (isSeller.value) {
+      const result: any = await fetchSellerProducts(storeSlug.value!, {
+        status: 'PUBLISHED',
+        limit: 100,
+      })
+      products.value = result?.products || []
+    } else {
+      const result: any = await fetchProducts({
+        status: 'PUBLISHED',
+        search: search?.trim() || undefined,
+        limit: 30,
+      })
+      products.value = result?.products || []
+    }
+  } catch {}
+}
+
+// Debounced search for non-sellers (re-queries the API)
+let searchTimer: ReturnType<typeof setTimeout> | null = null
+watch(searchQuery, (q) => {
+  if (isSeller.value) return // client-side filter handles this
+  if (searchTimer) clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => loadProducts(q), 350)
 })
+
+onMounted(() => loadProducts())
 </script>

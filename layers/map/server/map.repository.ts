@@ -51,6 +51,10 @@ function mapSeller(s: any) {
   const nowMs = Date.now()
   const isOnline = s.lastActiveAt ? nowMs - s.lastActiveAt.getTime() < ONLINE_THRESHOLD_MS : false
   const { isOpenNow, closesAt } = computeOpenStatus(s.businessHours, s.timezone ?? 'Africa/Lagos')
+
+  // Primary square (if any)
+  const primaryMembership = s.squareMemberships?.find((m: any) => m.isPrimary) ?? s.squareMemberships?.[0] ?? null
+
   return {
     id: s.id,
     store_slug: s.store_slug,
@@ -71,6 +75,11 @@ function mapSeller(s: any) {
     closesAt,
     lastSeenLabel: computeLastSeenLabel(s.lastActiveAt, isOnline),
     businessHours: s.businessHours ?? null,
+    square: primaryMembership ? {
+      slug: primaryMembership.square.slug,
+      name: primaryMembership.square.name,
+      accentColor: primaryMembership.square.accentColor,
+    } : null,
   }
 }
 
@@ -91,7 +100,16 @@ const BASE_SELECT = {
   businessHours: true,
   timezone: true,
   _count: { select: { products: { where: { status: 'PUBLISHED' } } } },
-} as const
+  squareMemberships: {
+    where: { status: 'ACTIVE' },
+    orderBy: { isPrimary: 'desc' as const },
+    take: 1,
+    select: {
+      isPrimary: true,
+      square: { select: { slug: true, name: true, accentColor: true } },
+    },
+  },
+}
 
 // ── Repository ────────────────────────────────────────────────────────────────
 
@@ -195,6 +213,15 @@ export const mapRepository = {
           },
         },
         _count: { select: { products: { where: { status: 'PUBLISHED' } } } },
+        squareMemberships: {
+          where: { status: 'ACTIVE' },
+          orderBy: { isPrimary: 'desc' as const },
+          take: 1,
+          select: {
+            isPrimary: true,
+            square: { select: { slug: true, name: true, accentColor: true } },
+          },
+        },
       },
     })
   },

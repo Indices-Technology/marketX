@@ -4,18 +4,28 @@
     :hide-right-sidebar="true"
     :custom-padding="true"
   >
-    <div class="mx-auto max-w-5xl pb-20 pt-6 md:pb-0 lg:px-4">
+    <div class="mx-auto max-w-5xl pb-20 pt-16 md:pb-0 md:pt-6 lg:px-4">
       <!-- Page header -->
       <div class="mb-6 flex items-start justify-between gap-4">
-        <div>
-          <h1
-            class="text-2xl font-black tracking-tight text-gray-900 dark:text-white"
+        <div class="flex items-center gap-3">
+          <!-- Back button — mobile only -->
+          <button
+            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-600 transition hover:border-brand/30 hover:text-brand md:hidden dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-400"
+            aria-label="Go back"
+            @click="router.back()"
           >
-            Market Squares
-          </h1>
-          <p class="mt-1 text-sm text-gray-500 dark:text-neutral-400">
-            Localised communities of shops and buyers — find yours.
-          </p>
+            <Icon name="mdi:arrow-left" size="20" />
+          </button>
+          <div>
+            <h1
+              class="text-2xl font-black tracking-tight text-gray-900 dark:text-white"
+            >
+              Market Squares
+            </h1>
+            <p class="mt-1 text-sm text-gray-500 dark:text-neutral-400">
+              Localised communities of shops and buyers — find yours.
+            </p>
+          </div>
         </div>
         <!-- Map shortcut -->
         <NuxtLink
@@ -192,6 +202,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { useRouter } from '#imports'
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import SquareCard from '../../components/SquareCard.vue'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
@@ -202,6 +213,7 @@ useSeoMeta({
     'Localised communities of shops and buyers. Find your market square.',
 })
 
+const router = useRouter()
 const profileStore = useProfileStore()
 const squareApi = useSquareApi()
 

@@ -130,7 +130,12 @@ export const authService = {
     )
     const config = useRuntimeConfig()
     const appUrl = (config.public.baseURL as string) || 'http://localhost:3000'
-    await sendVerifyEmail(email, verificationToken, appUrl).catch((err) => {
+    await sendVerifyEmail(
+      email,
+      verificationToken,
+      appUrl,
+      config.public.siteName,
+    ).catch((err) => {
       logger.error('Failed to send verification email:', err.message)
     })
 
@@ -481,7 +486,7 @@ export const authService = {
     const token = await authRepository.createEmailVerificationToken(userId)
     const config = useRuntimeConfig()
     const appUrl = (config.public.baseURL as string) || 'http://localhost:3000'
-    await sendVerifyEmail(email, token, appUrl)
+    await sendVerifyEmail(email, token, appUrl, config.public.siteName)
 
     return { message: 'Verification email sent' }
   },
@@ -579,9 +584,11 @@ export const authService = {
     // Send reset email
     const config = useRuntimeConfig()
     const appUrl = (config.public.baseURL as string) || 'http://localhost:3000'
-    await sendResetEmail(email, token, appUrl).catch((err) => {
-      logger.error('Failed to send password reset email:', err.message)
-    })
+    await sendResetEmail(email, token, appUrl, config.public.siteName).catch(
+      (err) => {
+        logger.error('Failed to send password reset email:', err.message)
+      },
+    )
 
     return { message: 'If email exists, reset link will be sent' }
   },

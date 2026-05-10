@@ -30,9 +30,8 @@
         <p
           class="whitespace-pre-wrap text-[15px] font-medium italic leading-relaxed text-gray-900 dark:text-neutral-100"
           :class="isTextLong && !textExpanded ? 'line-clamp-6' : ''"
-        >
-          {{ cleanCaption || post.content }}
-        </p>
+          v-html="renderedCaption || post.content"
+        />
         <button
           v-if="isTextLong && !textExpanded"
           class="mt-1 text-[12px] text-amber-500"
@@ -51,9 +50,8 @@
         <p
           class="whitespace-pre-wrap text-[14px] leading-relaxed text-gray-900 dark:text-neutral-100"
           :class="isTextLong && !textExpanded ? 'line-clamp-6' : ''"
-        >
-          {{ cleanCaption || post.content }}
-        </p>
+          v-html="renderedCaption || post.content"
+        />
         <button
           v-if="isTextLong && !textExpanded"
           class="mt-1 text-[12px] text-orange-500"
@@ -84,9 +82,8 @@
                   : 'text-[15px] font-medium',
               isTextLong && !textExpanded ? 'line-clamp-6' : '',
             ]"
-          >
-            {{ cleanCaption || post.content }}
-          </p>
+            v-html="renderedCaption || post.content"
+          />
         </div>
         <button
           v-if="isTextLong && !textExpanded"
@@ -381,6 +378,35 @@ const cleanCaption = computed(() => {
     .trim()
 })
 
+// ─── @mention rendering ────────────────────────────────────────────────────────
+// Replaces @handle in caption with styled anchor links for known mentions.
+// We only match handles that are stored in post.mentions — no XSS risk.
+const renderedCaption = computed(() => {
+  const text = cleanCaption.value
+  if (!text) return ''
+  const rawMentions: any[] = (props.post as any).mentions ?? []
+  if (!rawMentions.length) return escapeHtml(text)
+
+  const mentionMap = new Map(rawMentions.map((m: any) => [m.handle, m]))
+
+  return escapeHtml(text).replace(/@([\w-]+)/g, (match, handle) => {
+    const m = mentionMap.get(handle)
+    if (!m) return match
+    const href = m.type === 'seller'
+      ? `/sellers/profile/${m.handle}`
+      : `/@${m.handle}`
+    return `<a href="${href}" class="post-mention" onclick="event.stopPropagation()">@${escapeHtml(handle)}</a>`
+  })
+})
+
+function escapeHtml(s: string) {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
 const hashtags = computed(() => props.post.caption?.match(/#\w+/g) || [])
 const isCaptionLong = computed(
   () =>
@@ -580,4 +606,17 @@ onUnmounted(() => {
   musicRef.value?.pause()
 })
 </script>
+
+<style>
+/* @mention links rendered inside v-html captions */
+.post-mention {
+  color: #F43F5E;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 4px;
+  padding: 0 1px;
+  transition: opacity 0.12s;
+}
+.post-mention:hover { opacity: 0.75; text-decoration: underline; }
+</style>
 

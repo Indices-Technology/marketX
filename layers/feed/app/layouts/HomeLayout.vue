@@ -3,7 +3,7 @@
   <!-- ─── MOBILE HEADER — hidden on reels (full-screen), auto-hides on scroll elsewhere -->
   <div
     v-if="route.name !== 'reels'"
-    class="fixed left-0 right-0 top-0 z-30 md:hidden transition-transform duration-300 ease-in-out"
+    class="fixed left-0 right-0 top-0 z-30 transition-transform duration-300 ease-in-out md:hidden"
     :class="mobileNavVisible ? 'translate-y-0' : '-translate-y-full'"
   >
     <HeaderNavMobile
@@ -12,44 +12,48 @@
     />
   </div>
 
-  <!-- ─── FEED / REELS TAB — chases header up, always stays visible ────────── -->
-  <div
-    v-if="showFeedReelsTabs"
-    class="fixed left-0 right-0 z-[29] flex h-10 items-center justify-center border-b border-gray-200/60 bg-white/90 backdrop-blur-md md:hidden dark:border-neutral-800/60 dark:bg-neutral-900/90"
-    :style="{
-      top: mobileNavVisible
-        ? 'calc(3.5rem + env(safe-area-inset-top, 0px))'
-        : 'env(safe-area-inset-top, 0px)',
-      transition: 'top 300ms ease-in-out',
-    }"
-  >
+  <!-- ─── FEED / REELS TAB — only for logged-in users on / and /reels ───────
+       ClientOnly: showFeedReelsTabs depends on auth state which differs between
+       SSR (always guest) and client (real session) — prevents hydration mismatch -->
+  <ClientOnly>
     <div
-      class="flex overflow-hidden rounded-full border border-gray-200 dark:border-neutral-700"
+      v-if="showFeedReelsTabs"
+      class="fixed left-0 right-0 z-[29] flex h-10 items-center justify-center border-b border-gray-200/60 bg-white/90 backdrop-blur-md md:hidden dark:border-neutral-800/60 dark:bg-neutral-900/90"
+      :style="{
+        top: mobileNavVisible
+          ? 'calc(3.5rem + env(safe-area-inset-top, 0px))'
+          : 'env(safe-area-inset-top, 0px)',
+        transition: 'top 300ms ease-in-out',
+      }"
     >
-      <NuxtLink
-        to="/"
-        class="px-6 py-1 text-sm font-semibold transition-colors"
-        :class="
-          route.name === 'index'
-            ? 'bg-brand/10 text-brand'
-            : 'text-gray-500 hover:text-gray-900 dark:text-neutral-400 dark:hover:text-neutral-100'
-        "
+      <div
+        class="flex overflow-hidden rounded-full border border-gray-200 dark:border-neutral-700"
       >
-        Feed
-      </NuxtLink>
-      <NuxtLink
-        to="/reels"
-        class="px-6 py-1 text-sm font-semibold transition-colors"
-        :class="
-          route.name === 'reels'
-            ? 'bg-brand/10 text-brand'
-            : 'text-gray-500 hover:text-gray-900 dark:text-neutral-400 dark:hover:text-neutral-100'
-        "
-      >
-        Reels
-      </NuxtLink>
+        <NuxtLink
+          to="/"
+          class="px-6 py-1 text-sm font-semibold transition-colors"
+          :class="
+            route.name === 'index'
+              ? 'bg-brand/10 text-brand'
+              : 'text-gray-500 hover:text-gray-900 dark:text-neutral-400 dark:hover:text-neutral-100'
+          "
+        >
+          Feed
+        </NuxtLink>
+        <NuxtLink
+          to="/reels"
+          class="px-6 py-1 text-sm font-semibold transition-colors"
+          :class="
+            route.name === 'reels'
+              ? 'bg-brand/10 text-brand'
+              : 'text-gray-500 hover:text-gray-900 dark:text-neutral-400 dark:hover:text-neutral-100'
+          "
+        >
+          Reels
+        </NuxtLink>
+      </div>
     </div>
-  </div>
+  </ClientOnly>
 
   <div
     class="min-h-screen bg-gray-50 text-gray-900 dark:bg-neutral-950 dark:text-neutral-100"
@@ -217,7 +221,7 @@ import {
   onMounted,
   onUnmounted,
   watch,
-  defineAsyncComponent
+  defineAsyncComponent,
 } from 'vue'
 import { useRoute } from 'vue-router'
 
@@ -285,17 +289,28 @@ const isNarrowFeed = computed(() => {
   )
 })
 
-const showFeedReelsTabs = computed(() => route.name === 'index')
+const showFeedReelsTabs = computed(
+  () => route.name === 'index' && profileStore.isLoggedIn,
+)
 
 const showRightSidebar = computed(() => {
   if (props.hideRightSidebar) return false
   return true
 })
 
+// hasMounted gates any auth-dependent class bindings so SSR always produces
+// the same markup as the initial client render before hydration completes.
+const hasMounted = ref(false)
+onMounted(() => {
+  hasMounted.value = true
+})
+
 const mainContentClasses = computed(() => {
   if (props.customPadding) return ''
-  // header (3.5rem/56px) + feed/reels tab (2.5rem/40px) = 6rem on mobile
-  if (showFeedReelsTabs.value) return 'pt-24 md:pt-6 lg:px-4'
+  // After mount, add extra top padding when the Feed/Reels tab bar is visible
+  // (header 3.5rem + tab bar 2.5rem = 6rem → pt-24).
+  if (hasMounted.value && showFeedReelsTabs.value)
+    return 'pt-24 md:pt-6 lg:px-4'
   return 'pt-16 md:pt-6 lg:px-4'
 })
 

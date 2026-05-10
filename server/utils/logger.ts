@@ -25,9 +25,10 @@ function write(level: LogLevel, message: string, context?: LogContext) {
     else process.stdout.write(out + '\n')
   } else {
     const tag = `[${ts}] [${level.toUpperCase().padEnd(5)}]`
-    const ctx = context && Object.keys(context).length
-      ? ' ' + JSON.stringify(context)
-      : ''
+    const ctx =
+      context && Object.keys(context).length
+        ? ' ' + JSON.stringify(context)
+        : ''
     const line = `${tag} ${message}${ctx}`
     if (level === 'error') console.error(line)
     else if (level === 'warn') console.warn(line)
@@ -36,8 +37,12 @@ function write(level: LogLevel, message: string, context?: LogContext) {
 }
 
 export const logger = {
-  debug: (message: string, context?: LogContext) => write('debug', message, context),
-  info:  (message: string, context?: LogContext) => write('info',  message, context),
-  warn:  (message: string, context?: LogContext) => write('warn',  message, context),
-  error: (message: string, context?: LogContext) => write('error', message, context),
+  debug: (message: string, context?: LogContext) =>
+    write('debug', message, context),
+  info: (message: string, context?: LogContext) =>
+    write('info', message, context),
+  warn: (message: string, context?: LogContext) =>
+    write('warn', message, context),
+  error: (message: string, context?: LogContext) =>
+    write('error', message, context),
 }

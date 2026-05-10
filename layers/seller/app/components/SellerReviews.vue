@@ -1,12 +1,11 @@
 <template>
-  <div class="space-y-5 px-1">
+  <div class="space-y-5">
 
     <!-- ── Summary card ───────────────────────────────────────────────────── -->
     <div
       v-if="meta && meta.total > 0"
       class="flex items-start gap-5 rounded-2xl bg-gray-50 p-5 dark:bg-neutral-800/60"
     >
-      <!-- Big score -->
       <div class="flex shrink-0 flex-col items-center gap-1">
         <p class="text-5xl font-black leading-none text-gray-900 dark:text-white">
           {{ meta.averageRating ? meta.averageRating.toFixed(1) : '—' }}
@@ -16,8 +15,6 @@
           {{ meta.total }} review{{ meta.total !== 1 ? 's' : '' }}
         </p>
       </div>
-
-      <!-- Distribution bars -->
       <div class="flex-1 space-y-1.5 pt-0.5">
         <div v-for="star in [5, 4, 3, 2, 1]" :key="star" class="flex items-center gap-2">
           <span class="w-2.5 text-right text-[11px] font-semibold text-gray-500 dark:text-neutral-400">{{ star }}</span>
@@ -36,21 +33,23 @@
     </div>
 
     <!-- ── Write review section ───────────────────────────────────────────── -->
-    <template v-if="profileStore.isLoggedIn">
+    <template v-if="profileStore.isLoggedIn && !isOwnStore">
 
       <!-- Already reviewed -->
       <div
-        v-if="userReview"
+        v-if="existingReview"
         class="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-800/60 dark:bg-emerald-900/20"
       >
         <Icon name="mdi:check-circle" size="20" class="shrink-0 text-emerald-500" />
         <div class="min-w-0">
           <p class="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
-            You reviewed this product
+            You reviewed this store
           </p>
           <div class="mt-0.5 flex items-center gap-1.5">
-            <StarRating :rating="userReview.rating" size="xs" />
-            <span class="text-xs text-emerald-600/70 dark:text-emerald-500/70">{{ userReview.body }}</span>
+            <StarRating :rating="existingReview.rating" size="xs" />
+            <span v-if="existingReview.body" class="truncate text-xs text-emerald-600/70 dark:text-emerald-500/70">
+              {{ existingReview.body }}
+            </span>
           </div>
         </div>
       </div>
@@ -62,30 +61,28 @@
       >
         <Icon name="mdi:lock-outline" size="20" class="mt-0.5 shrink-0 text-gray-400" />
         <div>
-          <p class="text-sm font-semibold text-gray-600 dark:text-neutral-300">
-            Verified buyers only
-          </p>
+          <p class="text-sm font-semibold text-gray-600 dark:text-neutral-300">Verified buyers only</p>
           <p class="mt-0.5 text-xs text-gray-400 dark:text-neutral-500">
-            Purchase this product and complete your order to leave a review.
+            Complete an order from this store to leave a review.
           </p>
         </div>
       </div>
 
-      <!-- Write form (verified buyer) -->
+      <!-- Write form -->
       <div
         v-else
         class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
       >
         <p class="mb-4 text-sm font-bold text-gray-900 dark:text-neutral-100">
-          Rate your purchase
+          Rate your experience
         </p>
 
-        <!-- Tap-friendly stars -->
+        <!-- Tap stars -->
         <div class="mb-4 flex items-center gap-1">
           <button
             v-for="n in 5"
             :key="n"
-            class="group rounded-lg p-1.5 transition-transform active:scale-90"
+            class="rounded-lg p-1.5 transition-transform active:scale-90"
             :aria-label="`${n} star${n > 1 ? 's' : ''}`"
             @click="draftRating = n"
             @touchstart.prevent="draftRating = n"
@@ -94,25 +91,28 @@
               <path
                 d="M12 2l2.9 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l7.1-1.01L12 2z"
                 :fill="n <= draftRating ? '#F59E0B' : '#e5e7eb'"
-                class="transition-colors dark:[fill:#404040]"
                 :class="n <= draftRating ? '' : 'dark:!fill-neutral-700'"
               />
             </svg>
           </button>
-          <span
-            v-if="draftRating"
-            class="ml-2 text-sm font-semibold text-amber-500"
-          >
+          <span v-if="draftRating" class="ml-2 text-sm font-semibold text-amber-500">
             {{ ratingLabel(draftRating) }}
           </span>
         </div>
 
+        <input
+          v-model="draftTitle"
+          type="text"
+          placeholder="Summary (optional)"
+          maxlength="120"
+          class="mb-2 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-brand focus:bg-white focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
+        />
         <textarea
           v-model="draftBody"
           rows="3"
-          :placeholder="draftRating ? `Tell others what you ${draftRating >= 4 ? 'loved' : draftRating === 3 ? 'thought' : 'didn\'t like'} about this…` : 'Share your experience…'"
+          placeholder="Share your experience with this store…"
           maxlength="2000"
-          class="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:border-brand focus:bg-white focus:outline-none focus:ring-1 focus:ring-brand/30 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500 dark:focus:bg-neutral-900"
+          class="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:border-brand focus:bg-white focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
         />
 
         <div class="mt-3 flex items-center justify-between">
@@ -130,7 +130,7 @@
 
     <!-- Not logged in -->
     <div
-      v-else
+      v-else-if="!profileStore.isLoggedIn"
       class="rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-4 py-4 text-center dark:border-neutral-700 dark:bg-neutral-800/40"
     >
       <p class="text-sm text-gray-500 dark:text-neutral-400">
@@ -139,7 +139,7 @@
       </p>
     </div>
 
-    <!-- ── Reviews list ───────────────────────────────────────────────────── -->
+    <!-- ── Review list ────────────────────────────────────────────────────── -->
     <div v-if="reviews.length" class="space-y-3">
       <div
         v-for="review in reviews"
@@ -147,19 +147,16 @@
         class="rounded-2xl border border-gray-100 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"
       >
         <div class="flex items-start gap-3">
-          <!-- Avatar -->
           <div
             class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand/10 to-violet-100 text-sm font-black text-brand dark:from-brand/20 dark:to-violet-900/30"
           >
             {{ (review.author?.username ?? 'U')[0].toUpperCase() }}
           </div>
-
           <div class="min-w-0 flex-1">
             <div class="flex flex-wrap items-center gap-2">
               <span class="text-sm font-bold text-gray-900 dark:text-neutral-100">
                 {{ review.author?.username }}
               </span>
-              <!-- Verified buyer badge -->
               <span
                 v-if="review.verified"
                 class="flex items-center gap-0.5 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
@@ -168,24 +165,14 @@
                 Verified buyer
               </span>
             </div>
-
             <div class="mt-1 flex items-center gap-2">
               <StarRating :rating="review.rating" size="xs" />
-              <span class="text-[11px] text-gray-400 dark:text-neutral-500">
-                {{ timeAgo(review.created_at) }}
-              </span>
+              <span class="text-[11px] text-gray-400 dark:text-neutral-500">{{ timeAgo(review.created_at) }}</span>
             </div>
-
-            <p
-              v-if="review.title"
-              class="mt-1.5 text-sm font-semibold text-gray-800 dark:text-neutral-200"
-            >
+            <p v-if="review.title" class="mt-1.5 text-sm font-semibold text-gray-800 dark:text-neutral-200">
               {{ review.title }}
             </p>
-            <p
-              v-if="review.body"
-              class="mt-1 text-sm leading-relaxed text-gray-600 dark:text-neutral-400"
-            >
+            <p v-if="review.body" class="mt-1 text-sm leading-relaxed text-gray-600 dark:text-neutral-400">
               {{ review.body }}
             </p>
           </div>
@@ -193,16 +180,14 @@
       </div>
     </div>
 
-    <!-- Empty state -->
+    <!-- Empty -->
     <div
-      v-else-if="!loading"
+      v-else-if="!loading && meta !== null"
       class="flex flex-col items-center gap-2 py-12 text-center"
     >
       <Icon name="mdi:star-outline" size="40" class="text-gray-200 dark:text-neutral-700" />
       <p class="text-sm font-semibold text-gray-400 dark:text-neutral-500">No reviews yet</p>
-      <p class="text-xs text-gray-400 dark:text-neutral-600">
-        Be the first verified buyer to review this product
-      </p>
+      <p class="text-xs text-gray-400 dark:text-neutral-600">Be the first verified buyer to review this store</p>
     </div>
 
     <!-- Loading -->
@@ -227,9 +212,9 @@ import { ref, onMounted } from 'vue'
 import { notify } from '@kyvg/vue3-notification'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import { extractErrorMessage } from '~~/layers/core/app/utils/errors'
-import StarRating from './StarRating.vue'
+import StarRating from '~~/layers/commerce/app/components/StarRating.vue'
 
-const props = defineProps<{ productId: number }>()
+const props = defineProps<{ storeSlug: string; isOwnStore?: boolean }>()
 
 const profileStore = useProfileStore()
 const reviews = ref<any[]>([])
@@ -244,10 +229,11 @@ const hasMore = ref(false)
 let offset = 0
 
 const draftRating = ref(0)
+const draftTitle = ref('')
 const draftBody = ref('')
 const submitting = ref(false)
-const userReview = ref<any>(null)
 const canReview = ref(false)
+const existingReview = ref<any>(null)
 
 const ratingLabel = (n: number) =>
   ['', 'Poor', 'Fair', 'Good', 'Very good', 'Excellent'][n] ?? ''
@@ -255,8 +241,7 @@ const ratingLabel = (n: number) =>
 const barWidth = (star: number) => {
   const total = meta.value?.total ?? 0
   if (!total) return '0%'
-  const count = meta.value?.distribution?.[star] ?? 0
-  return `${Math.round((count / total) * 100)}%`
+  return `${Math.round(((meta.value?.distribution?.[star] ?? 0) / total) * 100)}%`
 }
 
 const timeAgo = (date: string | Date): string => {
@@ -275,18 +260,12 @@ const fetchReviews = async (reset = false) => {
   if (reset) { offset = 0; reviews.value = [] }
   loading.value = true
   try {
-    const res: any = await $fetch(`/api/products/${props.productId}/reviews`, {
+    const res: any = await $fetch(`/api/seller/${props.storeSlug}/reviews`, {
       query: { limit: 10, offset },
     })
     reviews.value = offset === 0 ? res.data : [...reviews.value, ...res.data]
     meta.value = res.meta
     hasMore.value = res.meta.hasMore
-
-    // Check if user already reviewed
-    if (profileStore.isLoggedIn) {
-      const me = profileStore.me as any
-      userReview.value = res.data.find((r: any) => r.author?.username === me?.username) ?? userReview.value
-    }
   } catch {
     // non-critical
   } finally {
@@ -295,11 +274,11 @@ const fetchReviews = async (reset = false) => {
 }
 
 const checkEligibility = async () => {
-  if (!profileStore.isLoggedIn) return
+  if (!profileStore.isLoggedIn || props.isOwnStore) return
   try {
-    const res: any = await $fetch(`/api/products/${props.productId}/reviews/eligibility`)
+    const res: any = await $fetch(`/api/seller/${props.storeSlug}/reviews/eligibility`)
     canReview.value = res.data?.canReview ?? false
-    if (res.data?.existingReview) userReview.value = res.data.existingReview
+    if (res.data?.existingReview) existingReview.value = res.data.existingReview
   } catch {
     canReview.value = false
   }
@@ -314,13 +293,18 @@ const submitReview = async () => {
   if (draftRating.value === 0) return
   submitting.value = true
   try {
-    const res: any = await $fetch(`/api/products/${props.productId}/reviews`, {
+    const res: any = await $fetch(`/api/seller/${props.storeSlug}/reviews`, {
       method: 'POST',
-      body: { rating: draftRating.value, body: draftBody.value || undefined },
+      body: {
+        rating: draftRating.value,
+        title: draftTitle.value || undefined,
+        body: draftBody.value || undefined,
+      },
     })
     notify({ type: 'success', text: 'Review posted!' })
-    userReview.value = res.data
+    existingReview.value = res.data
     draftRating.value = 0
+    draftTitle.value = ''
     draftBody.value = ''
     await fetchReviews(true)
   } catch (e: any) {

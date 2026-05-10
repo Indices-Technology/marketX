@@ -229,15 +229,21 @@
             <div
               class="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-neutral-500"
             >
+              <NuxtLink
+                v-if="seller.store_location && (seller as any).latitude && (seller as any).longitude"
+                :to="`/map?store=${seller.store_slug}`"
+                class="flex items-center gap-1 text-brand hover:underline"
+                title="View on map"
+              >
+                <Icon name="mdi:map-marker" size="13" class="text-brand" />
+                {{ seller.store_location }}
+                <Icon name="mdi:map-search-outline" size="11" class="opacity-60" />
+              </NuxtLink>
               <span
-                v-if="seller.store_location"
+                v-else-if="seller.store_location"
                 class="flex items-center gap-1"
               >
-                <Icon
-                  name="mdi:map-marker-outline"
-                  size="13"
-                  class="text-brand"
-                />
+                <Icon name="mdi:map-marker-outline" size="13" class="text-brand" />
                 {{ seller.store_location }}
               </span>
               <span class="flex items-center gap-1">
@@ -298,9 +304,10 @@
                 <p
                   class="text-xl font-black text-gray-900 sm:text-2xl dark:text-neutral-100"
                 >
-                  4.8
+                  {{ (seller as any).averageRating ? (seller as any).averageRating.toFixed(1) : '—' }}
                 </p>
                 <Icon
+                  v-if="(seller as any).averageRating"
                   name="mdi:star"
                   size="16"
                   class="mt-0.5 text-yellow-400"
@@ -309,7 +316,7 @@
               <p
                 class="mt-0.5 text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-neutral-500"
               >
-                Rating
+                {{ (seller as any).totalReviews ? `${(seller as any).totalReviews} Reviews` : 'Rating' }}
               </p>
             </div>
           </div>
@@ -758,68 +765,10 @@
 
           <!-- REVIEWS ────────────────────────────────────────────────────── -->
           <div v-show="activeTab === 'reviews'" class="max-w-2xl">
-            <!-- Rating summary -->
-            <div
-              class="mb-4 rounded-2xl border border-gray-100 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900"
-            >
-              <div class="flex items-center gap-6">
-                <div class="shrink-0 text-center">
-                  <p
-                    class="text-5xl font-black text-gray-900 dark:text-neutral-100"
-                  >
-                    4.8
-                  </p>
-                  <div class="mt-1.5 flex items-center justify-center gap-0.5">
-                    <Icon
-                      v-for="i in 5"
-                      :key="i"
-                      name="mdi:star"
-                      size="14"
-                      class="text-yellow-400"
-                    />
-                  </div>
-                  <p class="mt-1 text-[10px] font-bold text-gray-400">
-                    1,234 reviews
-                  </p>
-                </div>
-                <div class="flex-1 space-y-1.5">
-                  <div
-                    v-for="(pct, i) in [72, 18, 6, 3, 1]"
-                    :key="i"
-                    class="flex items-center gap-2"
-                  >
-                    <span class="w-2 text-[10px] font-bold text-gray-400">{{
-                      5 - i
-                    }}</span>
-                    <div
-                      class="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-100 dark:bg-neutral-800"
-                    >
-                      <div
-                        class="h-full rounded-full bg-yellow-400 transition-all"
-                        :style="{ width: pct + '%' }"
-                      />
-                    </div>
-                    <span class="w-6 text-right text-[10px] text-gray-400"
-                      >{{ pct }}%</span
-                    >
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Coming soon -->
-            <div
-              class="rounded-2xl border border-gray-100 bg-gray-50/50 p-12 text-center dark:border-neutral-800/50 dark:bg-neutral-900/30"
-            >
-              <Icon
-                name="mdi:comment-quote-outline"
-                size="36"
-                class="mb-3 text-gray-300 dark:text-neutral-600"
-              />
-              <p class="text-sm font-bold text-gray-500 dark:text-neutral-400">
-                Individual reviews coming soon
-              </p>
-            </div>
+            <SellerReviews
+              :store-slug="storeSlug"
+              :is-own-store="isOwnStore"
+            />
           </div>
         </div>
       </div>
@@ -857,6 +806,7 @@ import { useSellerManagement } from '~~/layers/seller/app/composables/useSellerM
 import { useProduct } from '~~/layers/commerce/app/composables/useProduct'
 import { useAffiliate } from '~~/layers/commerce/app/composables/useAffiliate'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
+import SellerReviews from '~~/layers/seller/app/components/SellerReviews.vue'
 import { useCart } from '~~/layers/commerce/app/composables/useCart'
 import { notify } from '@kyvg/vue3-notification'
 import type { IProduct } from '~~/layers/commerce/app/types/commerce.types'

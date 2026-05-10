@@ -69,10 +69,11 @@
               </div>
             </div>
 
-            <!-- Caption textarea -->
+            <!-- Caption with @mention support -->
             <div class="px-4 pb-2 pt-1">
-              <textarea
+              <MentionInput
                 v-model="content"
+                v-model:mentions="mentions"
                 :placeholder="$t('upload.whatOnMind')"
                 class="caption-input w-full resize-none bg-transparent p-0 text-[16px] leading-relaxed text-gray-900 placeholder-gray-400 focus:outline-none dark:text-neutral-100 dark:placeholder-neutral-500"
                 @input="extractHashtags"
@@ -381,6 +382,8 @@ const { t } = useI18n()
 import { usePost } from '../../composables/usePost'
 import ContentTypeSelector from './ContentTypeSelector.vue'
 import ProductSelector from './ProductSelector.vue'
+import MentionInput from '../MentionInput.vue'
+import type { MentionData } from '../MentionInput.vue'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import Avatar from '~~/layers/profile/app/components/Avatar.vue'
 import type { ICloudinaryUploadResult } from '~~/layers/core/app/types/media.types'
@@ -397,6 +400,7 @@ const { uploadMedia } = useMediaUpload()
 
 // ── Form state ──────────────────────────────────────────────────────────────
 const content = ref('')
+const mentions = ref<MentionData[]>([])
 const contentType = ref<
   'EXPERIENCE' | 'INSPIRATION' | 'EDUCATIONAL' | 'ENTERTAINMENT'
 >('EXPERIENCE')
@@ -621,6 +625,7 @@ const handlePost = async () => {
       visibility: visibility.value,
       allowComments: allowComments.value,
       taggedProducts: taggedProducts.value.map((p) => p.id),
+      mentions: mentions.value.length ? mentions.value : undefined,
     })
 
     emit('posted')
@@ -636,6 +641,7 @@ const handlePost = async () => {
 
 const resetForm = () => {
   content.value = ''
+  mentions.value = []
   contentType.value = 'EXPERIENCE'
   mediaFiles.value.forEach((m) => URL.revokeObjectURL(m.preview))
   mediaFiles.value = []

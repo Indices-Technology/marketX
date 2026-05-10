@@ -194,6 +194,19 @@
                   class="text-[9px] text-white/25"
                 >{{ seller.lastSeenLabel }}</span>
               </p>
+              <!-- Square badge -->
+              <NuxtLink
+                v-if="seller.square"
+                :to="`/squares/${seller.square.slug}`"
+                class="mt-1 inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px] font-bold transition hover:opacity-80"
+                :style="seller.square.accentColor
+                  ? `background:${seller.square.accentColor}22;color:${seller.square.accentColor}`
+                  : 'background:rgba(245,158,11,0.15);color:#f59e0b'"
+                @click.stop
+              >
+                <Icon name="mdi:storefront-outline" size="9" />
+                {{ seller.square.name }}
+              </NuxtLink>
             </div>
 
             <!-- Badges -->
@@ -237,6 +250,20 @@
                 <p v-if="!preview.isOnline && preview.lastSeenLabel" class="mb-2 text-[11px] text-white/30">
                   Last active {{ preview.lastSeenLabel }}
                 </p>
+
+                <!-- Square badge -->
+                <NuxtLink
+                  v-if="(preview as any).square"
+                  :to="`/squares/${(preview as any).square.slug}`"
+                  class="mb-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold transition hover:opacity-80"
+                  :style="(preview as any).square.accentColor
+                    ? `background:${(preview as any).square.accentColor}22;color:${(preview as any).square.accentColor}`
+                    : 'background:rgba(245,158,11,0.15);color:#f59e0b'"
+                  @click.stop
+                >
+                  <Icon name="mdi:storefront-outline" size="11" />
+                  {{ (preview as any).square.name }}
+                </NuxtLink>
 
                 <!-- Description -->
                 <p v-if="preview.description" class="mb-3 text-[12px] leading-relaxed text-white/50">

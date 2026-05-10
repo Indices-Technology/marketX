@@ -7,21 +7,30 @@ export default defineEventHandler(async (event) => {
   const apiKey = config.openaiApiKey
 
   if (!apiKey) {
-    throw createError({ statusCode: 503, statusMessage: 'AI service not configured' })
+    throw createError({
+      statusCode: 503,
+      statusMessage: 'AI service not configured',
+    })
   }
 
   const body = await readBody(event)
   const { description } = body
 
   if (!description || typeof description !== 'string' || !description.trim()) {
-    throw createError({ statusCode: 400, statusMessage: 'description is required' })
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'description is required',
+    })
   }
 
   // Strip HTML tags to get plain text for the prompt
   const plainText = description.replace(/<[^>]*>/g, '').trim()
 
   if (plainText.length < 5) {
-    throw createError({ statusCode: 400, statusMessage: 'Description is too short to enhance' })
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Description is too short to enhance',
+    })
   }
 
   const systemPrompt = `You are an expert e-commerce copywriter for an African fashion & lifestyle marketplace.
@@ -38,27 +47,33 @@ Rules:
   const userPrompt = `Enhance this product description:\n\n${plainText}`
 
   try {
-    const response: any = await $fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
+    const response: any = await $fetch(
+      'https://api.openai.com/v1/chat/completions',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: {
+          model: 'gpt-4o-mini',
+          max_tokens: 600,
+          temperature: 0.7,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt },
+          ],
+        },
       },
-      body: {
-        model: 'gpt-4o-mini',
-        max_tokens: 600,
-        temperature: 0.7,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-      },
-    })
+    )
 
     const html: string = response.choices?.[0]?.message?.content?.trim() || ''
 
     if (!html) {
-      throw createError({ statusCode: 500, statusMessage: 'AI returned empty response' })
+      throw createError({
+        statusCode: 500,
+        statusMessage: 'AI returned empty response',
+      })
     }
 
     // Strip accidental code fences just in case
@@ -71,8 +86,14 @@ Rules:
   } catch (err: any) {
     const status = err?.status || err?.statusCode || 500
     const detail =
-      err?.data?.error?.message || err?.data?.message || err?.message || 'Unknown error'
+      err?.data?.error?.message ||
+      err?.data?.message ||
+      err?.message ||
+      'Unknown error'
     logger.error(`[POST /api/ai/enhance-description] ${status}: ${detail}`)
-    throw createError({ statusCode: status, statusMessage: `AI enhancement failed: ${detail}` })
+    throw createError({
+      statusCode: status,
+      statusMessage: `AI enhancement failed: ${detail}`,
+    })
   }
 })

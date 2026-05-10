@@ -83,6 +83,14 @@ export class FeedApiClient extends BaseApiClient {
     })
   }
 
+  async getFreshDrops(options: IFeedOptions = {}): Promise<any> {
+    const { limit = 20, offset = 0 } = options
+    return this.request(`/api/feed/fresh-drops?limit=${limit}&offset=${offset}`, {
+      method: 'GET',
+      skipAuth: true,
+    })
+  }
+
   /**
    * Fetch reels (video posts)
    */

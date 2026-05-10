@@ -18,6 +18,8 @@
 </template>
 
 <script setup lang="ts">
+import UploadProgressBar from '~~/layers/core/app/components/UploadProgressBar.vue'
+
 const colorMode = useColorMode()
 colorMode.preference = colorMode.preference || 'dark'
 

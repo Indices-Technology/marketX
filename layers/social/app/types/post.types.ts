@@ -28,6 +28,7 @@ export interface ICreatePostData {
   visibility?: 'PUBLIC' | 'PRIVATE' | 'FOLLOWERS'
   allowComments?: boolean
   taggedProducts?: string[]
+  mentions?: Array<{ type: 'user' | 'seller'; id: string; handle: string; displayName: string; avatar?: string | null }>
 }
 
 export interface IPaginatedResponse<T> {

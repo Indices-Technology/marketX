@@ -38,7 +38,7 @@
             <div
               class="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 text-3xl transition-all group-hover:scale-110 group-hover:bg-brand/20"
             >
-              🛍️
+              <icon name="mdi:shopping-outline" class="text-white" size="22" />
             </div>
             <div>
               <p class="text-lg font-black text-white">I'm a Buyer</p>
@@ -62,7 +62,7 @@
             <div
               class="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 text-3xl transition-all group-hover:scale-110 group-hover:bg-brand/20"
             >
-              🏪
+              <icon name="mdi:store-outline" class="text-white" size="22" />
             </div>
             <div>
               <p class="text-lg font-black text-white">I want to Sell</p>

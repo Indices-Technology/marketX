@@ -43,6 +43,14 @@
             class="h-full w-full"
             :style="`background: linear-gradient(135deg, ${square.accentColor || '#f59e0b'}55, ${square.accentColor || '#f59e0b'}11)`"
           />
+          <!-- Back button — mobile only, floats over banner -->
+          <button
+            class="absolute left-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm transition hover:bg-black/70 md:hidden"
+            aria-label="Go back"
+            @click="router.back()"
+          >
+            <Icon name="mdi:arrow-left" size="18" />
+          </button>
           <span
             class="absolute right-3 top-3 rounded-full bg-black/50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-white backdrop-blur-sm"
           >
@@ -543,6 +551,7 @@ import {
 } from 'vue'
 
 const route = useRoute()
+const router = useRouter()
 const slug = computed(() => route.params.slug as string)
 const squareApi = useSquareApi()
 

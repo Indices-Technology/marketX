@@ -3,7 +3,6 @@
     <!-- ── Floating trigger button ────────────────────────────────────────── -->
     <button
       v-if="!isOpen"
-      @click="open"
       class="fixed right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-all duration-300 active:scale-95 md:hidden"
       :class="[
         bannerVisible ? 'bottom-36' : 'bottom-20',
@@ -12,6 +11,7 @@
           : 'bg-gradient-to-br from-purple-500 to-pink-500 text-white',
       ]"
       aria-label="Messages & AI"
+      @click="open"
     >
       <!-- Badge for unread messages -->
       <span
@@ -37,13 +37,13 @@
             <div class="flex items-center justify-between px-4 pb-0 pt-4">
               <div class="flex gap-1">
                 <button
-                  @click="activeTab = 'messages'"
                   class="relative px-4 py-2 text-sm font-semibold transition-colors"
                   :class="
                     activeTab === 'messages'
                       ? 'text-gray-900 dark:text-neutral-100'
                       : 'text-gray-400 dark:text-neutral-500'
                   "
+                  @click="activeTab = 'messages'"
                 >
                   Messages
                   <!-- Unread badge in tab -->
@@ -59,13 +59,13 @@
                   />
                 </button>
                 <button
-                  @click="activeTab = 'ai'"
                   class="relative px-4 py-2 text-sm font-semibold transition-colors"
                   :class="
                     activeTab === 'ai'
                       ? 'text-gray-900 dark:text-neutral-100'
                       : 'text-gray-400 dark:text-neutral-500'
                   "
+                  @click="activeTab = 'ai'"
                 >
                   Dasah
                   <span
@@ -75,8 +75,8 @@
                 </button>
               </div>
               <button
-                @click="close"
                 class="mb-1 flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 dark:hover:bg-neutral-800"
+                @click="close"
               >
                 <Icon name="mdi:close" size="22" />
               </button>
@@ -105,8 +105,8 @@
               </div>
               <NuxtLink
                 to="/messages/new"
-                @click="close"
                 class="flex h-9 w-9 items-center justify-center rounded-xl bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700"
+                @click="close"
               >
                 <Icon name="mdi:pencil-outline" size="20" />
               </NuxtLink>
@@ -128,8 +128,8 @@
                 <p class="text-sm">No messages yet</p>
                 <NuxtLink
                   to="/messages/new"
-                  @click="close"
                   class="mt-2 text-sm text-brand"
+                  @click="close"
                 >
                   Start a conversation
                 </NuxtLink>
@@ -138,8 +138,8 @@
                 v-for="c in filteredConversations"
                 :key="c.id"
                 :to="`/messages/${c.id}`"
-                @click="close"
                 class="flex items-center gap-3 border-b border-gray-100 px-4 py-3 transition-colors active:bg-gray-50 dark:border-neutral-800 dark:active:bg-neutral-900"
+                @click="close"
               >
                 <img
                   :src="
@@ -195,6 +195,9 @@
 <script setup lang="ts">
 import { useNotificationStore } from '~~/layers/profile/app/stores/notification.store'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
+
+import { ref, computed } from 'vue'
+import { useChat } from '~~/layers/profile/app/composables/useChat'
 
 const props = defineProps<{ isOpen: boolean; bannerVisible?: boolean }>()
 const emit = defineEmits(['open', 'close'])

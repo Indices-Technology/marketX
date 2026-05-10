@@ -135,6 +135,7 @@ export async function sendPasswordResetEmail(
   email: string,
   token: string,
   appUrl: string = 'http://localhost:3000',
+  appName?: string,
 ): Promise<{ id: string }> {
   const resetLink = `${appUrl}/reset-password?token=${token}`
 
@@ -176,7 +177,7 @@ export async function sendPasswordResetEmail(
           </div>
           
           <div class="footer">
-            <p>&copy; 2024 ReelCart. All rights reserved.</p>
+            <p>&copy; 2024 ReelCart. All rights reserved. ${{ appName }} </p>
           </div>
         </div>
       </body>

@@ -242,7 +242,10 @@ async function main() {
       where: { email: p.email },
     })
     if (existing) {
-      profiles[p.username] = existing
+      // Ensure the role is correct even for already-seeded profiles
+      profiles[p.username] = existing.role !== p.role
+        ? await prisma.profile.update({ where: { id: existing.id }, data: { role: p.role } })
+        : existing
       continue
     }
     profiles[p.username] = await prisma.profile.create({
@@ -253,6 +256,7 @@ async function main() {
         password_hash: pwHash,
         avatar: p.avatar,
         bio: p.bio,
+        role: p.role,
         email_verified: true,
         email_verified_at: new Date(),
       },

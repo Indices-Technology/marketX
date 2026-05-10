@@ -3,6 +3,7 @@ import { auditQueue } from '~~/server/queues/audit.queue'
 import { notificationService } from '~~/layers/profile/server/services/notification.service'
 import { auditService } from '~~/server/layers/shared/audit/audit.service'
 import { productRepository } from '../repositories/product.repository'
+import { prisma } from '~~/server/utils/db'
 import {
   createProductSchema,
   updateProductSchema,
@@ -256,6 +257,7 @@ export const productService = {
       meta: {
         total,
         averageRating: agg._avg.rating,
+        distribution: agg.distribution,
         limit,
         offset,
         hasMore: offset + limit < total,
@@ -264,9 +266,33 @@ export const productService = {
   },
 
   async submitProductReview(userId: string, productId: number, data: ReviewInput) {
+    // Must have at least one delivered order containing this product
+    const deliveredOrder = await prisma.orders.findFirst({
+      where: {
+        profileId: userId,
+        status: 'DELIVERED',
+        orderItem: {
+          some: {
+            variant: { product: { id: productId } },
+          },
+        },
+      },
+      select: { id: true },
+    })
+
+    if (!deliveredOrder) {
+      throw new UserError(
+        'PURCHASE_REQUIRED',
+        'You can only review products you have purchased and received.',
+        403,
+      )
+    }
+
     const review = await productRepository.upsertReview({
       productId,
       authorId: userId,
+      orderId: deliveredOrder.id,
+      verified: true,
       ...data,
     })
 

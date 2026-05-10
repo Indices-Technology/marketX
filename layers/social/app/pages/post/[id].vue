@@ -131,7 +131,7 @@
               <!-- Actions -->
               <div class="flex items-center justify-between p-4">
                 <div class="flex items-center gap-4">
-                  <button @click="handleLike" class="group">
+                  <button class="group" @click="handleLike">
                     <Icon
                       :name="isLiked ? 'mdi:heart' : 'mdi:heart-outline'"
                       size="26"
@@ -184,8 +184,8 @@
 
               <!-- Add Comment -->
               <form
-                @submit.prevent="addComment"
                 class="border-t border-gray-200 p-4 dark:border-neutral-800"
+                @submit.prevent="addComment"
               >
                 <div class="flex items-center gap-2">
                   <input
@@ -220,6 +220,8 @@ import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import { usePostStore } from '../../store/post.store'
 import { formatAvatarUrl } from '~~/shared/utils/formatters'
 import { notify } from '@kyvg/vue3-notification'
+import FollowButton from '~~/layers/profile/app/components/FollowButton.vue'
+import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 
 const route = useRoute()
 const profileStore = useProfileStore()

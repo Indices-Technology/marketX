@@ -52,6 +52,7 @@ const postInclude = {
   media: { select: mediaSelect },
   ...postCounts,
   ...taggedProductsInclude,
+  // mentions is a Json field — Prisma returns it directly; no include needed
 } as const
 
 export const postRepository = {
@@ -74,6 +75,7 @@ export const postRepository = {
       content: data.content,
       visibility: data.visibility || 'PUBLIC',
       contentType: data.contentType || 'COMMERCE',
+      mentions: data.mentions?.length ? data.mentions : undefined,
       ...(sellerProfile?.primarySquareId && { squareId: sellerProfile.primarySquareId }),
     }
 

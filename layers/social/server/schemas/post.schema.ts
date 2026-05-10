@@ -22,6 +22,13 @@ export const createPostSchema = z
     mediaData: z.array(mediaItemSchema).max(10).optional(),
     musicData: mediaItemSchema.extend({ name: z.string().optional() }).optional(),
     taggedProducts: z.array(z.number()).optional(),
+    mentions: z.array(z.object({
+      type: z.enum(['user', 'seller']),
+      id: z.string(),
+      handle: z.string(),
+      displayName: z.string(),
+      avatar: z.string().nullable().optional(),
+    })).optional(),
     contentType: z
       .enum([
         'COMMERCE',

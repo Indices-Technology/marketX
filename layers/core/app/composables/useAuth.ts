@@ -93,7 +93,7 @@ export const useAuth = () => {
         success: boolean
         accessToken: string
         refreshToken: string
-        user: any
+        user: IAuthUser
         store: { store_slug: string; store_name: string }
       }>('/api/auth/register-seller', { method: 'POST', body: payload })
 
