@@ -1,5 +1,5 @@
 // POST /api/products/:id/reviews — authenticated, one review per user per product
-import { z } from 'zod'
+import { z, ZodError } from 'zod'
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
 import { productService } from '~~/layers/commerce/server/services/product.service'
@@ -20,8 +20,12 @@ export default defineEventHandler(async (event) => {
     const review = await productService.submitProductReview(user.id, productId, body)
     return { success: true, data: review }
   } catch (error: unknown) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error
+    if (error instanceof ZodError)
+      throw createError({ statusCode: 400, statusMessage: 'Invalid request body' })
     if (error instanceof UserError)
       throw createError({ statusCode: error.status, statusMessage: error.message })
+    logger.logError('[POST /api/products/:id/reviews]', error, { requestId: event.context?.requestId })
     throw createError({ statusCode: 500, statusMessage: 'Internal server error' })
   }
 })

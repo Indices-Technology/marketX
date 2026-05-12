@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
 
     const searchFilter = { contains: q, mode: 'insensitive' as const }
 
-    const [users, products, posts, stores, tags] = await Promise.all([
+    const [users, stores, products, posts, tags] = await Promise.all([
       type === 'all' || type === 'users'
         ? prisma.profile.findMany({
             where: {

@@ -57,7 +57,7 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: error.statusCode, statusMessage: error.message })
     }
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
-    logger.error('[Refresh Token API] Error:', error)
+    logger.logError('[POST /api/auth/refresh-token]', error, { requestId: event.context?.requestId })
     throw createError({ statusCode: 500, statusMessage: 'Internal server error' })
   }
 })

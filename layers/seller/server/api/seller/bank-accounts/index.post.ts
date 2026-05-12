@@ -1,5 +1,5 @@
 // POST /api/seller/bank-accounts — add a new bank account
-import { z } from 'zod'
+import { z, ZodError } from 'zod'
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
 
@@ -51,14 +51,12 @@ export default defineEventHandler(async (event) => {
 
     return { success: true, data: account }
   } catch (error: any) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error
+    if (error instanceof ZodError)
+      throw createError({ statusCode: 400, statusMessage: 'Invalid request body' })
     if (error instanceof UserError)
-      throw createError({
-        statusCode: error.status,
-        statusMessage: error.message,
-      })
-    throw createError({
-      statusCode: 500,
-      statusMessage: error.message || 'Server error',
-    })
+      throw createError({ statusCode: error.status, statusMessage: error.message })
+    logger.logError('[POST /api/seller/bank-accounts]', error, { requestId: event.context?.requestId })
+    throw createError({ statusCode: 500, statusMessage: 'Server error' })
   }
 })

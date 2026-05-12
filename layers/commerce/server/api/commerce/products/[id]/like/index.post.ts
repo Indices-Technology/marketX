@@ -10,11 +10,13 @@ export default defineEventHandler(async (event) => {
     const data = await productService.likeProduct(user.id, id)
     return { success: true, data }
   } catch (error: unknown) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error
     if (error instanceof UserError)
       throw createError({
         statusCode: error.status,
         statusMessage: error.message,
       })
+    logger.logError('[POST /api/commerce/products/:id/like]', error)
     throw createError({
       statusCode: 500,
       statusMessage: 'Internal server error',

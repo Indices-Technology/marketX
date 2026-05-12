@@ -7,8 +7,9 @@ export default defineConfig({
     'tests/e2e/**/*.spec.ts',
   ],
   fullyParallel: false, // auth tests share DB state — keep sequential
+  workers: 1, // single worker prevents server startup race condition across spec files
   retries: process.env.CI ? 2 : 0,
-  timeout: 30000,
+  timeout: 60000, // e2e tests: login flow includes SSE/WS connection setup (~15s)
   reporter: [['html', { outputFolder: 'tests/report' }], ['list']],
 
   use: {

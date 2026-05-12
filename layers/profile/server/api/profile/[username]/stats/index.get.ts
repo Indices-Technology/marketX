@@ -27,18 +27,11 @@ export default defineEventHandler(async (event) => {
       data: stats,
     }
   } catch (error: unknown) {
-    logger.error('Get user stats error:', error)
-
     if (error instanceof UserError) {
-      throw createError({
-        statusCode: error.status,
-        message: error.message,
-      })
+      throw createError({ statusCode: error.status, statusMessage: error.message })
     }
-
-    throw createError({
-      statusCode: 500,
-      message: 'Failed to fetch user stats',
-    })
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error
+    logger.logError('[GET /api/profile/:username/stats]', error, { requestId: event.context?.requestId })
+    throw createError({ statusCode: 500, statusMessage: 'Failed to fetch user stats' })
   }
 })

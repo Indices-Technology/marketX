@@ -1,7 +1,7 @@
 // POST /api/commerce/payments/paypal/capture
 // Called after buyer approves the PayPal payment.
 // Captures funds and marks the internal order as PAID.
-import { z } from 'zod'
+import { z, ZodError } from 'zod'
 import { walletService } from '~~/layers/commerce/server/services/wallet.service'
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
@@ -83,14 +83,12 @@ export default defineEventHandler(async (event) => {
       data: { status: result.status.toLowerCase(), orderId },
     }
   } catch (error: any) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error
+    if (error instanceof ZodError)
+      throw createError({ statusCode: 400, statusMessage: 'Invalid request body' })
     if (error instanceof UserError)
-      throw createError({
-        statusCode: error.status,
-        statusMessage: error.message,
-      })
-    throw createError({
-      statusCode: 500,
-      statusMessage: error.message || 'PayPal capture failed',
-    })
+      throw createError({ statusCode: error.status, statusMessage: error.message })
+    logger.logError('[POST /api/commerce/payments/paypal/capture]', error, { requestId: event.context?.requestId })
+    throw createError({ statusCode: 500, statusMessage: 'PayPal capture failed' })
   }
 })

@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
   const [deliveredOrder, existingReview] = await Promise.all([
     prisma.orders.findFirst({
       where: {
-        profileId: user.id,
+        userId: user.id,
         status: 'DELIVERED',
         orderItem: { some: { variant: { product: { id: productId } } } },
       },

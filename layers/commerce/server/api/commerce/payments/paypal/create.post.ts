@@ -1,7 +1,7 @@
 // POST /api/commerce/payments/paypal/create
 // Creates a PENDING internal order then a PayPal order.
 // Returns the PayPal approval URL for redirect.
-import { z } from 'zod'
+import { z, ZodError } from 'zod'
 import { orderService } from '~~/layers/commerce/server/services/order.service'
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
@@ -72,14 +72,12 @@ export default defineEventHandler(async (event) => {
       },
     }
   } catch (error: any) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error
+    if (error instanceof ZodError)
+      throw createError({ statusCode: 400, statusMessage: 'Invalid request body' })
     if (error instanceof UserError)
-      throw createError({
-        statusCode: error.status,
-        statusMessage: error.message,
-      })
-    throw createError({
-      statusCode: 500,
-      statusMessage: error.message || 'PayPal order creation failed',
-    })
+      throw createError({ statusCode: error.status, statusMessage: error.message })
+    logger.logError('[POST /api/commerce/payments/paypal/create]', error, { requestId: event.context?.requestId })
+    throw createError({ statusCode: 500, statusMessage: 'PayPal order creation failed' })
   }
 })

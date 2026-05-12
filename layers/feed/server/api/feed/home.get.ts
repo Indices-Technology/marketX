@@ -46,7 +46,8 @@ export default defineEventHandler(async (event) => {
 
     return feed
   } catch (error: unknown) {
-    // Handle Validation Errors safely
+    // getValidatedQuery re-wraps ZodErrors as H3Errors — pass them through
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error
     if (error instanceof ZodError) {
       throw createError({
         statusCode: 400,
@@ -54,8 +55,7 @@ export default defineEventHandler(async (event) => {
         data: error.errors,
       })
     }
-
-    logger.error('[Home Feed API] Error:', error)
+    logger.logError('[GET /api/feed/home]', error, { requestId: event.context?.requestId })
     throw createError({
       statusCode: 500,
       statusMessage: 'Failed to fetch feed',

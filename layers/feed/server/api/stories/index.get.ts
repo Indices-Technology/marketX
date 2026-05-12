@@ -11,15 +11,11 @@ export default defineEventHandler(async (event) => {
     const limit = Math.min(Number(query.limit) || 50, 100)
     const stories = await storyService.getStories(user?.id, limit)
     return { success: true, data: stories }
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof UserError)
-      throw createError({
-        statusCode: error.status,
-        statusMessage: error.message,
-      })
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'Internal server error',
-    })
+      throw createError({ statusCode: error.status, statusMessage: error.message })
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error
+    logger.logError('[GET /api/stories]', error, { requestId: event.context?.requestId })
+    throw createError({ statusCode: 500, statusMessage: 'Internal server error' })
   }
 })

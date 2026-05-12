@@ -41,9 +41,8 @@ export default defineEventHandler(async (event): Promise<IFeedResponse> => {
       meta: { total, limit, offset, hasMore: items.length === limit },
     }
   } catch (error) {
-    throw createError({
-      statusCode: 500,
-      message: 'Failed to fetch user feed',
-    })
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error
+    logger.logError('[GET /api/feed/user/:userId]', error, { requestId: event.context?.requestId })
+    throw createError({ statusCode: 500, statusMessage: 'Failed to fetch user feed' })
   }
 })

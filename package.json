@@ -14,7 +14,9 @@
     "test:api": "playwright test --project=api",
     "test:e2e": "playwright test --project=e2e",
     "test:auth": "playwright test layers/core/server/api/auth/__tests__",
-    "test:report": "playwright show-report tests/report"
+    "test:report": "playwright show-report tests/report",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
@@ -77,6 +79,6 @@
     "prettier-plugin-tailwindcss": "^0.5.12",
     "prisma": "^7.4.0",
     "tsx": "^4.21.0",
-    "vitest": "^0.33.0"
+    "vitest": "^2.1.9"
   }
 }

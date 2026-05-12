@@ -95,9 +95,11 @@ export default defineEventHandler(async (event) => {
       },
     }
   } catch (error: any) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error
+    logger.logError('[affiliate/seller-products]', error)
     throw createError({
       statusCode: 500,
-      statusMessage: error.message || 'Server error',
+      statusMessage: 'Server error',
     })
   }
 })

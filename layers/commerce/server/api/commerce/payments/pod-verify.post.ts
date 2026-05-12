@@ -2,7 +2,7 @@
 // Called by the client after Paystack redirects back from the shipping fee payment.
 // Sets paymentStatus → SHIPPING_PAID, status → CONFIRMED, then notifies sellers.
 
-import { z } from 'zod'
+import { z, ZodError } from 'zod'
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
 import { notificationQueue } from '~~/server/queues/notification.queue'
@@ -95,9 +95,13 @@ export default defineEventHandler(async (event) => {
 
     return { success: true, data: { status: 'shipping_paid', orderId: order.id } }
   } catch (error: unknown) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error
+    if (error instanceof ZodError)
+      throw createError({ statusCode: 400, statusMessage: 'Invalid request body' })
     if (error instanceof UserError)
       throw createError({ statusCode: error.status, statusMessage: error.message })
-    const msg = error instanceof Error ? error.message : 'POD verification failed'
+    logger.logError('[POST /api/commerce/payments/pod-verify]', error, { requestId: event.context?.requestId })
+    const msg = error instanceof Error ? (error as Error).message : 'POD verification failed'
     throw createError({ statusCode: 500, statusMessage: msg })
   }
 })

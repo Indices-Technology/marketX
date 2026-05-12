@@ -43,11 +43,8 @@ export default defineEventHandler(async (event) => {
       data: followingMap,
     }
   } catch (error: unknown) {
-    logger.error('Check following batch error:', error)
-
-    throw createError({
-      statusCode: error.statusCode || 500,
-      message: error.message || 'Failed to check following status',
-    })
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error
+    logger.logError('[POST /api/profile/check-following]', error, { requestId: event.context?.requestId })
+    throw createError({ statusCode: 500, statusMessage: 'Failed to check following status' })
   }
 })

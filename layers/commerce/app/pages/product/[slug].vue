@@ -9,9 +9,9 @@
       />
     </div>
 
-    <!-- Not found -->
+    <!-- Not found (status=error on 404, or success with null data) -->
     <div
-      v-else-if="status === 'success' && !product"
+      v-else-if="!pending && !product"
       class="flex min-h-[60vh] flex-col items-center justify-center gap-4 text-center"
     >
       <Icon
@@ -351,16 +351,21 @@ import { useAffiliate } from '~~/layers/commerce/app/composables/useAffiliate'
 import { formatProductPrice } from '~~/shared/utils/currency'
 import { videoThumb } from '~~/layers/core/app/utils/cloudinary'
 import { notify } from '@kyvg/vue3-notification'
+import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 
 const route = useRoute()
 const slug = computed(() => route.params.slug as string)
 const { captureAffiliateRef, affiliateCode, isEnrolled, fetchAffiliateStatus } = useAffiliate()
+const profileStore = useProfileStore()
 
 // Capture ?ref= from URL on every product page load (30-day TTL)
 onMounted(() => {
   captureAffiliateRef()
-  // Silently load affiliate status so we can show the affiliate link section
-  fetchAffiliateStatus().catch(() => {})
+  // Only fetch affiliate status when logged in — the API returns 401 for guests
+  // and BaseApiClient.handleError would redirect to /user-login before the .catch fires
+  if (profileStore.isLoggedIn) {
+    fetchAffiliateStatus().catch(() => {})
+  }
 })
 
 // Fetch product by slug

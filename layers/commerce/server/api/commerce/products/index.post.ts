@@ -66,7 +66,7 @@ export default defineEventHandler(async (event) => {
     if (error instanceof ZodError)
       throw createError({ statusCode: 422, statusMessage: error.errors[0]?.message ?? 'Validation error' })
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
-    logger.error('[POST /api/commerce/products]', error)
+    logger.logError('[POST /api/commerce/products]', error, { requestId: event.context?.requestId })
     throw createError({ statusCode: 500, statusMessage: 'Internal server error' })
   }
 })

@@ -46,7 +46,7 @@ export default defineEventHandler(async (event) => {
     }
 
     if ((error as any).name === 'SellerError') {
-      logger.error('[PATCH /api/seller/:id] SellerError:', (error as any).data?.originalError ?? error)
+      logger.logError('[PATCH /api/seller/:id] SellerError', (error as any).data?.originalError ?? error, { requestId: event.context?.requestId })
       throw createError({
         statusCode: (error as any).statusCode || 400,
         statusMessage: (error as Error).message,
@@ -55,10 +55,10 @@ export default defineEventHandler(async (event) => {
 
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
 
-    logger.error('[PATCH /api/seller/:id]', error)
+    logger.logError('[PATCH /api/seller/:id]', error, { requestId: event.context?.requestId })
     throw createError({
       statusCode: 500,
-      statusMessage: `Failed to update seller profile: ${(error as Error).message}`,
+      statusMessage: 'Failed to update seller profile',
     })
   }
 })

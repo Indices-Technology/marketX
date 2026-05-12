@@ -15,15 +15,11 @@ export default defineEventHandler(async (event) => {
     const userAgent = getHeader(event, 'user-agent') || 'unknown'
     await storyService.deleteStory(id, user.id, ipAddress, userAgent)
     return { success: true }
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof UserError)
-      throw createError({
-        statusCode: error.status,
-        statusMessage: error.message,
-      })
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'Internal server error',
-    })
+      throw createError({ statusCode: error.status, statusMessage: error.message })
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error
+    logger.logError('[DELETE /api/stories/:id]', error, { requestId: event.context?.requestId })
+    throw createError({ statusCode: 500, statusMessage: 'Internal server error' })
   }
 })

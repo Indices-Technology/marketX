@@ -121,6 +121,38 @@ test.describe('POST /api/auth/login — auth failures', () => {
   })
 })
 
+// ─── Request tracing ──────────────────────────────────────────────────────────
+
+test.describe('request tracing', () => {
+  test('every API response carries an X-Request-Id header', async ({ request }) => {
+    const res = await request.post(ENDPOINT, {
+      data: { email: TEST_USER.email, password: TEST_USER.password },
+    })
+    const requestId = res.headers()['x-request-id']
+    expect(requestId).toBeTruthy()
+    // Must be a valid UUID v4
+    expect(requestId).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+    )
+  })
+
+  test('each request gets a unique X-Request-Id', async ({ request }) => {
+    const [a, b] = await Promise.all([
+      request.post(ENDPOINT, { data: { email: TEST_USER.email, password: TEST_USER.password } }),
+      request.post(ENDPOINT, { data: { email: TEST_USER.email, password: TEST_USER.password } }),
+    ])
+    expect(a.headers()['x-request-id']).not.toBe(b.headers()['x-request-id'])
+  })
+
+  test('error responses also carry X-Request-Id (traceable failures)', async ({ request }) => {
+    const res = await request.post(ENDPOINT, {
+      data: { email: TEST_USER.email, password: 'wrong-password' },
+    })
+    expect(res.status()).toBe(401)
+    expect(res.headers()['x-request-id']).toBeTruthy()
+  })
+})
+
 // ─── Idempotency / replay safety ───────────────────────────────────────────────
 
 test.describe('POST /api/auth/login — replay safety', () => {

@@ -34,14 +34,10 @@ export default defineEventHandler(async (event) => {
       },
     }
   } catch (error: any) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error
     if (error instanceof UserError)
-      throw createError({
-        statusCode: error.status,
-        statusMessage: error.message,
-      })
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'Internal server error',
-    })
+      throw createError({ statusCode: error.status, statusMessage: error.message })
+    logger.logError('[GET /api/commerce/wallet/store/:storeSlug]', error, { requestId: event.context?.requestId })
+    throw createError({ statusCode: 500, statusMessage: 'Internal server error' })
   }
 })

@@ -63,7 +63,7 @@ export default defineEventHandler(async (event) => {
     // Credit seller wallet (product amount — shipping was already collected upfront)
     walletService
       .creditSellersOnPayment(id)
-      .catch((e) => logger.error('[confirm-cash wallet]', e))
+      .catch((e) => logger.logError('[confirm-cash wallet]', e))
 
     // Notify buyer
     notificationQueue.enqueue({
@@ -79,8 +79,10 @@ export default defineEventHandler(async (event) => {
       data: { message: 'Cash confirmed. Order marked delivered and wallet credited.' },
     }
   } catch (error: any) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error
     if (error instanceof UserError)
       throw createError({ statusCode: error.status, statusMessage: error.message })
-    throw createError({ statusCode: 500, statusMessage: error.message || 'Internal server error' })
+    logger.logError('[orders/confirm-cash]', error)
+    throw createError({ statusCode: 500, statusMessage: 'Internal server error' })
   }
 })

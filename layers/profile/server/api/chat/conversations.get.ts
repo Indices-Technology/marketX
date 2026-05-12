@@ -14,15 +14,10 @@ export default defineEventHandler(async (event) => {
     const result = await chatService.getConversations(user.id, limit, offset)
     return { success: true, data: result }
   } catch (error: any) {
-    if (error instanceof UserError) {
-      throw createError({
-        statusCode: error.status,
-        statusMessage: error.message,
-      })
-    }
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'Unable to load conversations right now',
-    })
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error
+    if (error instanceof UserError)
+      throw createError({ statusCode: error.status, statusMessage: error.message })
+    logger.logError('[GET /api/chat/conversations]', error, { requestId: event.context?.requestId })
+    throw createError({ statusCode: 500, statusMessage: 'Unable to load conversations right now' })
   }
 })

@@ -46,10 +46,10 @@ export default defineEventHandler(async (event) => {
       })
     }
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
-    logger.error('[posts] createPost error:', error)
+    logger.logError('[POST /api/posts]', error, { requestId: event.context?.requestId })
     throw createError({
       statusCode: 500,
-      statusMessage: error?.message || 'Internal server error',
+      statusMessage: 'Internal server error',
     })
   }
 })

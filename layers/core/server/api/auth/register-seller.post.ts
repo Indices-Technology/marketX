@@ -189,7 +189,7 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: error.statusCode, statusMessage: error.message })
     if (error instanceof SellerError)
       throw createError({ statusCode: error.statusCode || 400, statusMessage: error.message })
-    logger.error('Seller registration failed', { error: error instanceof Error ? error.message : String(error) })
+    logger.logError('[POST /api/auth/register-seller]', error, { requestId: event.context?.requestId })
     throw createError({ statusCode: 500, statusMessage: 'Registration failed. Please try again.' })
   }
 })

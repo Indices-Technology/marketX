@@ -92,7 +92,7 @@ export default defineEventHandler(async (event) => {
     if (error && typeof error === 'object' && 'statusCode' in error) {
       throw error
     }
-    logger.error('[Login API] Error:', error)
+    logger.logError('[POST /api/auth/login]', error, { requestId: event.context?.requestId })
     throw createError({
       statusCode: 500,
       statusMessage: 'Login failed. Please try again.',

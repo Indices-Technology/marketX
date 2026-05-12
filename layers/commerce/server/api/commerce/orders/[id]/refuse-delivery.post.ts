@@ -3,7 +3,7 @@
 // Order → RETURNED. Shipping fee stays with seller (non-refundable commitment).
 // Product stock is restored.
 
-import { z } from 'zod'
+import { z, ZodError } from 'zod'
 import { notificationQueue } from '~~/server/queues/notification.queue'
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
@@ -106,8 +106,12 @@ export default defineEventHandler(async (event) => {
       data: { message: 'Order marked as returned. Stock restored.' },
     }
   } catch (error: any) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error
+    if (error instanceof ZodError)
+      throw createError({ statusCode: 400, statusMessage: 'Invalid request body' })
     if (error instanceof UserError)
       throw createError({ statusCode: error.status, statusMessage: error.message })
-    throw createError({ statusCode: 500, statusMessage: error.message || 'Internal server error' })
+    logger.logError('[orders/refuse-delivery]', error)
+    throw createError({ statusCode: 500, statusMessage: 'Internal server error' })
   }
 })

@@ -4,7 +4,7 @@
 // The product amount is collected in cash on delivery.
 // Returns a Paystack authorization URL for the shipping fee payment.
 
-import { z } from 'zod'
+import { z, ZodError } from 'zod'
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
 import { getClientIP } from '~~/server/layers/shared/utils/security'
@@ -150,11 +150,12 @@ export default defineEventHandler(async (event) => {
       },
     }
   } catch (error: any) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error
+    if (error instanceof ZodError)
+      throw createError({ statusCode: 400, statusMessage: 'Invalid request body' })
     if (error instanceof UserError)
       throw createError({ statusCode: error.status, statusMessage: error.message })
-    throw createError({
-      statusCode: 500,
-      statusMessage: error.message || 'POD initialization failed',
-    })
+    logger.logError('[POST /api/commerce/payments/pod-initialize]', error, { requestId: event.context?.requestId })
+    throw createError({ statusCode: 500, statusMessage: 'POD initialization failed' })
   }
 })

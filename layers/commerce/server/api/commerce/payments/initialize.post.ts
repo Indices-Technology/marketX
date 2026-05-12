@@ -1,7 +1,7 @@
 // POST /api/commerce/payments/initialize
 // Creates an order in PENDING state, then initializes a Paystack transaction.
 // The client redirects the user to the Paystack payment page.
-import { z } from 'zod'
+import { z, ZodError } from 'zod'
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
 import { getClientIP } from '~~/server/layers/shared/utils/security'
@@ -70,14 +70,12 @@ export default defineEventHandler(async (event) => {
       },
     }
   } catch (error: any) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error
+    if (error instanceof ZodError)
+      throw createError({ statusCode: 400, statusMessage: 'Invalid request body' })
     if (error instanceof UserError)
-      throw createError({
-        statusCode: error.status,
-        statusMessage: error.message,
-      })
-    throw createError({
-      statusCode: 500,
-      statusMessage: error.message || 'Payment initialization failed',
-    })
+      throw createError({ statusCode: error.status, statusMessage: error.message })
+    logger.logError('[POST /api/commerce/payments/initialize]', error, { requestId: event.context?.requestId })
+    throw createError({ statusCode: 500, statusMessage: 'Payment initialization failed' })
   }
 })

@@ -69,15 +69,10 @@ export default defineEventHandler(async (event) => {
       data: { ...result, breakdown: { gross, net, platformFee, transferFee } },
     }
   } catch (error: unknown) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error
     if (error instanceof UserError)
-      throw createError({
-        statusCode: error.status,
-        statusMessage: error.message,
-      })
-    throw createError({
-      statusCode: 500,
-      statusMessage:
-        error instanceof Error ? error.message : 'Internal server error',
-    })
+      throw createError({ statusCode: error.status, statusMessage: error.message })
+    logger.logError('[POST /api/commerce/wallet/withdraw]', error, { requestId: event.context?.requestId })
+    throw createError({ statusCode: 500, statusMessage: 'Internal server error' })
   }
 })

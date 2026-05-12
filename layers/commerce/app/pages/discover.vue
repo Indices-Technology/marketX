@@ -27,6 +27,7 @@
             />
             <button
               v-if="searchInput"
+              aria-label="Clear input"
               @click="searchInput = ''"
               class="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-gray-400 hover:text-gray-700 dark:hover:text-neutral-200"
             >

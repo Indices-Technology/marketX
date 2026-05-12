@@ -12,15 +12,11 @@ export default defineEventHandler(async (event) => {
     if (story.expiresAt < new Date())
       throw new UserError('EXPIRED', 'Story has expired', 410)
     return { success: true, data: story }
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof UserError)
-      throw createError({
-        statusCode: error.status,
-        statusMessage: error.message,
-      })
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'Internal server error',
-    })
+      throw createError({ statusCode: error.status, statusMessage: error.message })
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error
+    logger.logError('[GET /api/stories/:id]', error, { requestId: event.context?.requestId })
+    throw createError({ statusCode: 500, statusMessage: 'Internal server error' })
   }
 })

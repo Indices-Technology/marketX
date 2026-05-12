@@ -9,8 +9,10 @@ export default defineEventHandler(async (event) => {
     const data = await affiliateService.enroll(user.id)
     return { success: true, data }
   } catch (error: unknown) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error
     if (error instanceof UserError)
       throw createError({ statusCode: error.status, statusMessage: error.message })
+    logger.logError('[POST /api/commerce/affiliate/enroll]', error, { requestId: event.context?.requestId })
     throw createError({ statusCode: 500, statusMessage: 'Internal server error' })
   }
 })

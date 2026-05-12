@@ -103,7 +103,7 @@ export default defineEventHandler(async (event) => {
     )
     return result
   } catch (error: unknown) {
-    logger.error('[GET /api/seller/featured]', error)
+    logger.logError('[GET /api/seller/featured]', error, { requestId: event.context?.requestId })
     throw createError({ statusCode: 500, statusMessage: 'Failed to fetch featured sellers' })
   }
 })

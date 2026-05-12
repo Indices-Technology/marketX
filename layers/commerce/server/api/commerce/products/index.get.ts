@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
         statusCode: error.status,
         statusMessage: error.message,
       })
-    logger.error('[GET /api/commerce/products]', error)
+    logger.logError('[GET /api/commerce/products]', error, { requestId: event.context?.requestId })
     throw createError({
       statusCode: 500,
       statusMessage: 'Internal server error',

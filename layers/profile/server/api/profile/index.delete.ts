@@ -55,12 +55,7 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    if (error instanceof UserError && error.message.includes('Unauthorized')) {
-      throw createError({
-        statusCode: 401,
-        statusMessage: error.message,
-      })
-    }
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error
 
     throw createError({
       statusCode: 500,

@@ -19,11 +19,8 @@ export default defineEventHandler(async (event) => {
       data: suggestions,
     }
   } catch (error: unknown) {
-    logger.error('Get suggestions error:', error)
-
-    throw createError({
-      statusCode: error.statusCode || 500,
-      message: error.message || 'Failed to fetch suggestions',
-    })
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error
+    logger.logError('[GET /api/profile/suggestions]', error, { requestId: event.context?.requestId })
+    throw createError({ statusCode: 500, statusMessage: 'Failed to fetch suggestions' })
   }
 })

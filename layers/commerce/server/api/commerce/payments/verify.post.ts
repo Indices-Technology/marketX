@@ -1,6 +1,6 @@
 // POST /api/commerce/payments/verify
 // Called by the client after Paystack redirect to confirm payment.
-import { z } from 'zod'
+import { z, ZodError } from 'zod'
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
 import { notificationQueue } from '~~/server/queues/notification.queue'
@@ -80,9 +80,13 @@ export default defineEventHandler(async (event) => {
     await orderRepository.updatePaymentStatus(order.id, 'FAILED')
     return { success: true, data: { status: result.data.status, orderId: order.id } }
   } catch (error: unknown) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error
+    if (error instanceof ZodError)
+      throw createError({ statusCode: 400, statusMessage: 'Invalid request body' })
     if (error instanceof UserError)
       throw createError({ statusCode: error.status, statusMessage: error.message })
-    const msg = error instanceof Error ? error.message : 'Payment verification failed'
+    logger.logError('[POST /api/commerce/payments/verify]', error, { requestId: event.context?.requestId })
+    const msg = error instanceof Error ? (error as Error).message : 'Payment verification failed'
     throw createError({ statusCode: 500, statusMessage: msg })
   }
 })

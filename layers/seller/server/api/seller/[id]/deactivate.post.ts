@@ -30,6 +30,7 @@ export default defineEventHandler(async (event) => {
       data: seller,
     }
   } catch (error: any) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error
     if (error.name === 'SellerError') {
       throw createError({
         statusCode: error.statusCode || 400,
@@ -44,6 +45,7 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    logger.logError('[seller/deactivate]', error)
     throw createError({
       statusCode: 500,
       statusMessage: 'Failed to deactivate seller profile',

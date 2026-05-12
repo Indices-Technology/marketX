@@ -1,5 +1,5 @@
 // POST /api/commerce/shipping/calculate — returns shipping cost for a country
-import { z } from 'zod'
+import { z, ZodError } from 'zod'
 
 
 const schema = z.object({
@@ -8,8 +8,17 @@ const schema = z.object({
 })
 
 export default defineEventHandler(async (event) => {
-  const body = await readBody(event)
-  const { countryCode, weightKg } = schema.parse(body)
+  let countryCode: string, weightKg: number
+  try {
+    const body = await readBody(event)
+    const parsed = schema.parse(body)
+    countryCode = parsed.countryCode
+    weightKg = parsed.weightKg
+  } catch (err) {
+    if (err instanceof ZodError)
+      throw createError({ statusCode: 400, statusMessage: 'Invalid request body' })
+    throw err
+  }
 
   const zones = await prisma.globalShippingZone.findMany({
     where: { isActive: true },

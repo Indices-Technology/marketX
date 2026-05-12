@@ -91,10 +91,11 @@ Return ONLY this JSON structure:
       err?.data?.message ||
       err?.message ||
       'Unknown error'
-    logger.error(
-      `[POST /api/ai/generate-listing] ${status}: ${detail}`,
-      err?.data || '',
-    )
+    logger.logError('[POST /api/ai/generate-listing]', err, {
+      requestId: event.context?.requestId,
+      status,
+      detail,
+    })
     throw createError({
       statusCode: status,
       statusMessage: `AI generation failed: ${detail}`,

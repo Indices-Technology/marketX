@@ -62,7 +62,7 @@ export default defineEventHandler(async (event) => {
     // Re-throw H3 errors (createError above) as-is
     if (err.statusCode) throw err
 
-    logger.error('[music/search] fetch error:', err?.message)
+    logger.logError('[GET /api/music/search]', err, { requestId: event.context?.requestId })
     throw createError({
       statusCode: 502,
       statusMessage: 'Failed to reach music provider',

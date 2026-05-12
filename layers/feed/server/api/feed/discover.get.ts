@@ -126,9 +126,8 @@ export default defineEventHandler(async (event): Promise<IFeedResponse> => {
 
     return result
   } catch (error) {
-    throw createError({
-      statusCode: 500,
-      message: 'Failed to fetch discover feed',
-    })
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error
+    logger.logError('[GET /api/feed/discover]', error, { requestId: event.context?.requestId })
+    throw createError({ statusCode: 500, statusMessage: 'Failed to fetch discover feed' })
   }
 })

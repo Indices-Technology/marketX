@@ -31,7 +31,7 @@ export default defineEventHandler(async (event) => {
       })
     }
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
-    logger.error('[PATCH /api/posts/:id]', error)
+    logger.logError('[PATCH /api/posts/:id]', error, { requestId: event.context?.requestId })
     throw createError({ statusCode: 500, statusMessage: 'Server error' })
   }
 })

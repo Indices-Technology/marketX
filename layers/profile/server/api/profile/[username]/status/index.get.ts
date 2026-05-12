@@ -37,12 +37,9 @@ export default defineEventHandler(async (event) => {
       success: true,
       data: status,
     }
-  } catch (error: any) {
-    logger.error('Get follow status error:', error)
-
-    throw createError({
-      statusCode: error.statusCode || 500,
-      message: error.message || 'Failed to check follow status',
-    })
+  } catch (error: unknown) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error
+    logger.logError('[GET /api/profile/:username/status]', error, { requestId: event.context?.requestId })
+    throw createError({ statusCode: 500, statusMessage: 'Failed to check follow status' })
   }
 })

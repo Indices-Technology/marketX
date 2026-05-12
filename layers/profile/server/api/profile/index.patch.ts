@@ -51,16 +51,11 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    if (error instanceof Error && error.message.includes('Unauthorized')) {
-      throw createError({
-        statusCode: 401,
-        statusMessage: error.message + error, // TODO: remove in production
-      })
-    }
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error
 
     throw createError({
       statusCode: 500,
-      statusMessage: 'Internal server error' + error, // TODO: remove in production
+      statusMessage: 'Internal server error',
     })
   }
 })

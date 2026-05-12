@@ -6,7 +6,7 @@ export const BASE = 'http://localhost:3000'
 export const TEST_USER = {
   email: 'ada@peppr.test',
   password: 'test1234',
-  username: 'ada',
+  username: 'ada_styles',
 }
 
 export const TEST_SELLER = {
@@ -41,16 +41,58 @@ export async function apiLogin(
 /**
  * Login via the UI login form.
  * Returns after the redirect to / completes.
+ *
+ * NOTE: The redirect to / takes 15-30s on a cold server because
+ * syncUserToProfile opens SSE/WS connections before the setTimeout fires.
+ * Prefer pageLogin() for e2e tests — it seeds localStorage directly.
  */
 export async function uiLogin(
   page: Page,
   credentials = TEST_USER,
 ) {
   await page.goto('/user-login')
-  await page.fill('[name=email]', credentials.email)
-  await page.fill('[name=password]', credentials.password)
-  await page.click('[type=submit]')
-  await page.waitForURL('/', { timeout: 10000 })
+  await page.fill('input[type="email"]', credentials.email)
+  await page.fill('input[type="password"]', credentials.password)
+  await page.click('button[type=submit]')
+  await page.waitForURL('/', { timeout: 30000 })
+}
+
+/**
+ * Fast browser login: seeds localStorage with API tokens then navigates to /.
+ * The auth-init plugin reads the tokens and hydrates the profile store.
+ * Much faster than uiLogin — avoids the syncUserToProfile + setTimeout delay.
+ */
+export async function pageLogin(
+  page: Page,
+  request: APIRequestContext,
+  credentials = TEST_USER,
+) {
+  const res = await request.post('/api/auth/login', {
+    data: { email: credentials.email, password: credentials.password },
+  })
+  const body = await res.json()
+  const accessToken: string = body.accessToken
+  const refreshToken: string = body.refreshToken
+
+  // Navigate to the app to get access to the origin's localStorage
+  await page.goto('/')
+  await page.evaluate(
+    ({ at, rt }) => {
+      localStorage.setItem('accessToken', at)
+      if (rt) localStorage.setItem('refreshToken', rt)
+    },
+    { at: accessToken, rt: refreshToken ?? '' },
+  )
+
+  // Reload and wait for auth-init to fetch /api/profile (proves hydration complete).
+  // Cannot use 'networkidle' — SSE connections keep the network permanently active.
+  await Promise.all([
+    page.waitForResponse(
+      (r) => r.url().includes('/api/profile') && r.request().method() === 'GET',
+      { timeout: 15000 },
+    ),
+    page.reload({ waitUntil: 'load' }),
+  ])
 }
 
 /**

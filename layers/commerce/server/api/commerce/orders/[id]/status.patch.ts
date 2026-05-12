@@ -1,5 +1,5 @@
 // PATCH /api/commerce/orders/[id]/status — seller updates order status
-import { z } from 'zod'
+import { z, ZodError } from 'zod'
 import { walletService } from '~~/layers/commerce/server/services/wallet.service'
 import { notificationService } from '~~/layers/profile/server/services/notification.service'
 import { UserError } from '~~/layers/profile/server/types/user.types'
@@ -68,23 +68,27 @@ export default defineEventHandler(async (event) => {
           actorId: user.id,
           message: `Your order #${id} has been shipped${body.trackingNumber ? ` · Tracking: ${body.trackingNumber}` : ''}. Funds will be released to the seller in 7 days if not confirmed.`,
         })
-        .catch((e) => logger.error('[notify buyer shipped]', e))
+        .catch((e) => logger.logError('[notify buyer shipped]', e))
     }
 
     // Release held funds to seller available balance on delivery
     if (body.status === 'DELIVERED' && order.paymentStatus === 'PAID') {
       walletService
         .releaseFundsOnDelivery(id)
-        .catch((e) => logger.error('[wallet release]', e))
+        .catch((e) => logger.logError('[wallet release]', e))
     }
 
     return { success: true, data: updated }
   } catch (error: unknown) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error
+    if (error instanceof ZodError)
+      throw createError({ statusCode: 400, statusMessage: 'Invalid request body' })
     if (error instanceof UserError)
       throw createError({
         statusCode: error.status,
         statusMessage: error.message,
       })
+    logger.logError('[PATCH /api/commerce/orders/:id/status]', error)
     throw createError({
       statusCode: 500,
       statusMessage: 'Internal server error',

@@ -53,6 +53,8 @@ export default defineEventHandler(async (event) => {
       data: { promoters, total: promoters.length },
     }
   } catch (error: any) {
-    throw createError({ statusCode: 500, statusMessage: error.message || 'Server error' })
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error
+    logger.logError('[affiliate/promoters]', error)
+    throw createError({ statusCode: 500, statusMessage: 'Server error' })
   }
 })

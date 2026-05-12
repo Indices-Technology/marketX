@@ -90,7 +90,11 @@ Rules:
       err?.data?.message ||
       err?.message ||
       'Unknown error'
-    logger.error(`[POST /api/ai/enhance-description] ${status}: ${detail}`)
+    logger.logError('[POST /api/ai/enhance-description]', err, {
+      requestId: event.context?.requestId,
+      status,
+      detail,
+    })
     throw createError({
       statusCode: status,
       statusMessage: `AI enhancement failed: ${detail}`,

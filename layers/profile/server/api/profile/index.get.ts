@@ -18,17 +18,11 @@ export default defineEventHandler(async (event) => {
       data: profile,
     }
   } catch (error) {
-    if (error instanceof UserError && error.message.includes('UserError')) {
-      const userError = error as UserError
-      throw createError({
-        statusCode: userError.statusCode || 400,
-        statusMessage: error.message,
-      })
-    }
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error
 
     throw createError({
       statusCode: 500,
-      statusMessage: 'Internal server error' + error, //TODO: remove
+      statusMessage: 'Internal server error',
     })
   }
 })

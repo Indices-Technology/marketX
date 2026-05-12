@@ -23,12 +23,10 @@ export default defineEventHandler(async (event) => {
     )
     return { success: true, data: result }
   } catch (error: any) {
-    if (error instanceof UserError) {
-      throw createError({
-        statusCode: error.status,
-        statusMessage: error.message,
-      })
-    }
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error
+    if (error instanceof UserError)
+      throw createError({ statusCode: error.status, statusMessage: error.message })
+    logger.logError('[DELETE /api/chat/conversations/:id]', error, { requestId: event.context?.requestId })
     throw createError({ statusCode: 500, statusMessage: 'Server error' })
   }
 })

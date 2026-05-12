@@ -28,6 +28,7 @@ export default defineEventHandler(async (event) => {
       data: { likes, total, limit, offset, hasMore: offset + likes.length < total },
     }
   } catch (error: unknown) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error
     if (error instanceof UserError)
       throw createError({ statusCode: error.status, statusMessage: error.message })
     throw createError({ statusCode: 500, statusMessage: 'Server error' })
