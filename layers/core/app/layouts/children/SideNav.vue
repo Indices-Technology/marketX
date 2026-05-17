@@ -204,6 +204,16 @@
             <span>Settings</span>
           </NuxtLink>
 
+          <NuxtLink
+            v-if="profileStore.me?.role === 'admin' || profileStore.me?.role === 'moderator'"
+            to="/admin"
+            class="menu-item group text-rose-600 hover:bg-rose-50/80 dark:text-rose-400 dark:hover:bg-rose-950/30"
+            @click="menuOpen = false"
+          >
+            <Icon name="mdi:shield-crown-outline" size="20" />
+            <span>Admin Panel</span>
+          </NuxtLink>
+
           <div class="mx-4 my-1.5 h-px bg-gray-100 dark:bg-neutral-800" />
 
           <button

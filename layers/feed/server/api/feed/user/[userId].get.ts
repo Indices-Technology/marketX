@@ -16,7 +16,7 @@ export default defineEventHandler(async (event): Promise<IFeedResponse> => {
 
   try {
     const posts = await prisma.post.findMany({
-      where: { authorId: userId },
+      where: { authorId: userId, moderationStatus: 'ACTIVE' },
       take: limit,
       skip: offset,
       orderBy: { created_at: 'desc' },
@@ -34,7 +34,7 @@ export default defineEventHandler(async (event): Promise<IFeedResponse> => {
     })
 
     const items = posts.map(normalizePost)
-    const total = await prisma.post.count({ where: { authorId: userId } })
+    const total = await prisma.post.count({ where: { authorId: userId, moderationStatus: 'ACTIVE' } })
 
     return {
       items,

@@ -55,7 +55,14 @@ export default defineNuxtConfig({
     './layers/social',
     './layers/map',
     './layers/square',
+    './layers/admin',
   ],
+
+  icon: {
+    serverBundle: {
+      collections: ['mdi'],
+    },
+  },
 
   modules: [
     '@nuxt/icon',
@@ -212,9 +219,9 @@ export default defineNuxtConfig({
             "script-src 'self' 'unsafe-inline' https://js.paystack.co",
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
             "font-src 'self' https://fonts.gstatic.com",
-            "img-src 'self' data: blob: https://res.cloudinary.com",
+            "img-src 'self' data: blob: https://res.cloudinary.com https://picsum.photos https://fastly.picsum.photos https://*.googleusercontent.com https://graph.facebook.com https://*.fbsbx.com https://platform-lookaside.fbsbx.com",
             "media-src 'self' blob: https://res.cloudinary.com",
-            "connect-src 'self' https://api.paystack.co https://api.upstash.io wss: ws:",
+            "connect-src 'self' https://api.paystack.co https://api.upstash.io https://api.iconify.design wss: ws:",
             "frame-src https://checkout.paystack.com",
             "worker-src 'self' blob:",
           ].join('; '),

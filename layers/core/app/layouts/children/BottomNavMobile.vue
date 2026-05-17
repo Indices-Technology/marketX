@@ -100,6 +100,15 @@
                 <span>My Stores</span>
               </NuxtLink>
               <NuxtLink
+                v-if="profileStore.me?.role === 'admin' || profileStore.me?.role === 'moderator'"
+                to="/admin"
+                class="menu-item text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20"
+                @click="menuOpen = false"
+              >
+                <Icon name="mdi:shield-crown-outline" size="18" />
+                <span>Admin Panel</span>
+              </NuxtLink>
+              <NuxtLink
                 to="/settings"
                 class="menu-item"
                 @click="menuOpen = false"

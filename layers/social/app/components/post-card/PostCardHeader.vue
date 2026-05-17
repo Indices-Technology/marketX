@@ -44,6 +44,69 @@
         </div>
       </div>
     </div>
+    <!-- ─── Mod menu (admin / moderator only, any post) ─────── -->
+    <div v-if="isMod" class="relative ml-1 shrink-0" ref="modRoot">
+      <button
+        aria-label="Mod actions"
+        :disabled="!!moderating"
+        @click.stop="modOpen = !modOpen"
+        class="rounded-full p-1 text-rose-400 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-900/20 disabled:opacity-60 disabled:cursor-not-allowed"
+      >
+        <Icon v-if="!moderating" name="mdi:shield-half-full" size="18" />
+        <svg v-else class="animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" />
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+        </svg>
+      </button>
+      <Transition name="fade">
+        <div
+          v-if="modOpen"
+          class="absolute right-0 top-8 z-30 w-44 overflow-hidden rounded-xl border border-rose-100 bg-white shadow-lg dark:border-rose-900/30 dark:bg-neutral-900"
+          @click.stop
+        >
+          <p class="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-rose-400">
+            Mod Actions
+          </p>
+          <button
+            @click="onModerate('HIDDEN')"
+            :disabled="!!moderating"
+            class="flex w-full items-center gap-2 px-3 py-2.5 text-[13px] text-amber-600 transition-colors hover:bg-amber-50 dark:hover:bg-amber-900/20 disabled:opacity-50"
+          >
+            <Icon v-if="moderating !== 'HIDDEN'" name="mdi:eye-off-outline" size="15" />
+            <svg v-else class="animate-spin shrink-0" width="15" height="15" viewBox="0 0 24 24" fill="none">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" />
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+            </svg>
+            Hide post
+          </button>
+          <button
+            @click="onModerate('REMOVED')"
+            :disabled="!!moderating"
+            class="flex w-full items-center gap-2 px-3 py-2.5 text-[13px] text-red-600 transition-colors hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50"
+          >
+            <Icon v-if="moderating !== 'REMOVED'" name="mdi:delete-outline" size="15" />
+            <svg v-else class="animate-spin shrink-0" width="15" height="15" viewBox="0 0 24 24" fill="none">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" />
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+            </svg>
+            Remove post
+          </button>
+          <button
+            @click="onModerate('ACTIVE')"
+            :disabled="!!moderating"
+            class="flex w-full items-center gap-2 px-3 py-2.5 text-[13px] text-green-600 transition-colors hover:bg-green-50 dark:hover:bg-green-900/20 disabled:opacity-50"
+          >
+            <Icon v-if="moderating !== 'ACTIVE'" name="mdi:restore" size="15" />
+            <svg v-else class="animate-spin shrink-0" width="15" height="15" viewBox="0 0 24 24" fill="none">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" />
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+            </svg>
+            Restore
+          </button>
+        </div>
+      </Transition>
+    </div>
+
     <!-- ─── Owner actions menu ──────────────────────────────── -->
     <div v-if="isOwner" class="relative ml-1 shrink-0">
       <button
@@ -76,7 +139,7 @@
       </div>
     </div>
     <button
-      v-else
+      v-else-if="!isMod"
       aria-label="More options"
       class="ml-1 shrink-0 rounded-full p-1 text-gray-400 transition-colors hover:text-gray-700 dark:text-neutral-500 dark:hover:text-neutral-200"
     >
@@ -90,21 +153,26 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import FollowButton from '~~/layers/profile/app/components/FollowButton.vue'
 import Avatar from '~~/layers/profile/app/components/Avatar.vue'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
+import { useAdminApi } from '~~/layers/admin/app/services/admin.api'
 import type { IFeedItem } from '~~/layers/feed/app/types/feed.types'
 
 const props = defineProps<{
   post: IFeedItem
   isOwner: boolean
+  isMod: boolean
 }>()
 
 const emit = defineEmits<{
   (e: 'edit'): void
   (e: 'delete'): void
+  (e: 'moderate', status: string): void
 }>()
 
 const profileStore = useProfileStore()
 
 const menuOpen = ref(false)
+const modOpen = ref(false)
+const modRoot = ref<HTMLElement | null>(null)
 
 const onEdit = () => {
   menuOpen.value = false
@@ -116,8 +184,23 @@ const onDelete = () => {
   emit('delete')
 }
 
+const moderating = ref<string | null>(null)
+
+const onModerate = async (status: 'ACTIVE' | 'HIDDEN' | 'REMOVED') => {
+  if (moderating.value) return
+  modOpen.value = false
+  moderating.value = status
+  try {
+    await useAdminApi().moderateContent('POST', props.post.id, status)
+    emit('moderate', status)
+  } catch {
+    moderating.value = null
+  }
+}
+
 const closeMenu = () => {
   menuOpen.value = false
+  modOpen.value = false
 }
 onMounted(() => document.addEventListener('click', closeMenu))
 onUnmounted(() => document.removeEventListener('click', closeMenu))
@@ -168,3 +251,8 @@ const contentTypeLabel = computed(() =>
 const badgeIcon = computed(() => contentTypeDef.value.icon)
 const badgeClass = computed(() => contentTypeDef.value.badge)
 </script>
+
+<style scoped>
+.fade-enter-active, .fade-leave-active { transition: opacity 0.15s, transform 0.15s; }
+.fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(-4px); }
+</style>

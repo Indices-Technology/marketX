@@ -44,7 +44,21 @@
             v-if="error"
             class="rounded-xl border border-red-200/80 bg-red-50/70 p-4 text-sm text-red-700 dark:border-red-800/40 dark:bg-red-950/25 dark:text-red-300"
           >
-            {{ error }}
+            <p>{{ error }}</p>
+            <button
+              v-if="isVerificationError"
+              type="button"
+              :disabled="resendCooldown > 0 || resendLoading"
+              class="mt-2.5 flex items-center gap-1.5 rounded-lg bg-red-100 px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-200 disabled:opacity-60 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50"
+              @click="resendVerification"
+            >
+              <svg v-if="resendLoading" class="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+              </svg>
+              <Icon v-else name="mdi:email-sync-outline" size="13" />
+              {{ resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend verification email' }}
+            </button>
           </div>
           <div
             v-if="localMessage"
@@ -246,6 +260,38 @@ const errors = reactive({
 const isLoading = computed(() => authLoading.value)
 const error = computed(() => authError.value)
 const isBusy = computed(() => authLoading.value || isSocialLoading.value)
+
+const isVerificationError = computed(() =>
+  !!error.value && /verify your email/i.test(error.value),
+)
+
+const resendLoading = ref(false)
+const resendCooldown = ref(0)
+let cooldownTimer: ReturnType<typeof setInterval> | null = null
+
+const resendVerification = async () => {
+  if (!form.email || resendLoading.value || resendCooldown.value > 0) return
+  resendLoading.value = true
+  try {
+    await $fetch('/api/auth/send-verification-email', {
+      method: 'POST',
+      body: { email: form.email.trim() },
+    })
+    localMessage.value = 'Verification email sent — check your inbox.'
+    resendCooldown.value = 60
+    cooldownTimer = setInterval(() => {
+      resendCooldown.value--
+      if (resendCooldown.value <= 0 && cooldownTimer) {
+        clearInterval(cooldownTimer)
+        cooldownTimer = null
+      }
+    }, 1000)
+  } catch {
+    localMessage.value = 'Failed to send email. Please try again.'
+  } finally {
+    resendLoading.value = false
+  }
+}
 
 const validateForm = () => {
   errors.email = ''

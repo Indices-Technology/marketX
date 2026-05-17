@@ -62,7 +62,7 @@ export default defineEventHandler(async (event) => {
       const [posts, postTotal, products] = await Promise.all([
         postLimit > 0
           ? prisma.post.findMany({
-              where: { squareId: square.id },
+              where: { squareId: square.id, moderationStatus: 'ACTIVE' },
               select: {
                 id: true,
                 authorId: true,
@@ -95,7 +95,7 @@ export default defineEventHandler(async (event) => {
               skip: offset,
             })
           : [],
-        prisma.post.count({ where: { squareId: square.id } }),
+        prisma.post.count({ where: { squareId: square.id, moderationStatus: 'ACTIVE' } }),
         productSlots > 0
           ? prisma.products.findMany({
               where: {

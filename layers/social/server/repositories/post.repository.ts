@@ -195,7 +195,7 @@ export const postRepository = {
     return await prisma.post.findMany({
       take: options.take,
       skip: options.skip,
-      where: options.where,
+      where: { moderationStatus: 'ACTIVE', ...options.where },
       orderBy: options.orderBy,
       include: postInclude,
     })
@@ -203,7 +203,7 @@ export const postRepository = {
 
   async getPostsByAuthorIds(authorIds: string[], options: any) {
     return await prisma.post.findMany({
-      where: { authorId: { in: authorIds } },
+      where: { authorId: { in: authorIds }, moderationStatus: 'ACTIVE' },
       take: options.limit,
       skip: options.offset,
       orderBy: { created_at: 'desc' },
@@ -216,7 +216,7 @@ export const postRepository = {
   },
 
   async count() {
-    return await prisma.post.count()
+    return await prisma.post.count({ where: { moderationStatus: 'ACTIVE' } })
   },
 
   // ========== COMMENTS ==========

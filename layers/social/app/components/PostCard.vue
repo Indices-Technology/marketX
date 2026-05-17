@@ -10,8 +10,10 @@
     <PostCardHeader
       :post="post"
       :is-owner="isOwner"
+      :is-mod="isMod"
       @edit="openEdit"
       @delete="handleDelete"
+      @moderate="handleModerate"
     />
 
     <!-- ─── Text-only body ───────────────────────────────────────────── -->
@@ -187,6 +189,9 @@ const showLikes = ref(false)
 const isOwner = computed(
   () => !!profileStore.userId && profileStore.userId === props.post.author?.id,
 )
+const isMod = computed(
+  () => profileStore.me?.role === 'admin' || profileStore.me?.role === 'moderator',
+)
 const menuOpen = ref(false)
 const showEditModal = ref(false)
 
@@ -204,6 +209,16 @@ const handleDelete = async () => {
     notify({ type: 'success', text: t('post.deleted') })
   } catch {
     notify({ type: 'error', text: t('errors.failedDelete') })
+  }
+}
+
+const handleModerate = (status: string) => {
+  // Remove from local feed immediately for hide/remove; restore keeps it visible
+  if (status === 'HIDDEN' || status === 'REMOVED') {
+    emit('deleted', props.post.id)
+    notify({ type: 'success', text: status === 'HIDDEN' ? 'Post hidden' : 'Post removed' })
+  } else {
+    notify({ type: 'success', text: 'Post restored' })
   }
 }
 

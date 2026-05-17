@@ -22,6 +22,7 @@ export default defineEventHandler(async (event): Promise<IFeedResponse> => {
         prisma.post.findMany({
           take: Math.ceil(limit / 2),
           skip: offset,
+          where: { moderationStatus: 'ACTIVE' },
           orderBy: [{ viewCount: 'desc' }, { created_at: 'desc' }],
           include: {
             author: {
@@ -101,7 +102,7 @@ export default defineEventHandler(async (event): Promise<IFeedResponse> => {
         .slice(0, limit)
 
       const [postsCount, productsCount] = await Promise.all([
-        prisma.post.count(),
+        prisma.post.count({ where: { moderationStatus: 'ACTIVE' } }),
         prisma.products.count({ where: { status: 'PUBLISHED' } }),
       ])
 

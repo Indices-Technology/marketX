@@ -33,10 +33,10 @@ export default defineEventHandler(async (event) => {
     // to avoid user enumeration
     const profile = await prisma.profile.findUnique({
       where: { email },
-      select: { id: true, emailVerified: true },
+      select: { id: true, email_verified: true },
     })
 
-    if (profile && !profile.emailVerified) {
+    if (profile && !profile.email_verified) {
       await authService.sendVerificationEmail(profile.id, email)
     }
 
@@ -53,10 +53,11 @@ export default defineEventHandler(async (event) => {
       })
     }
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
+    const msg = error instanceof Error ? error.message : 'Failed to send verification email'
     logger.logError('[POST /api/auth/send-verification-email]', error, { requestId: event.context?.requestId })
     throw createError({
       statusCode: 500,
-      statusMessage: 'Failed to send verification email',
+      statusMessage: msg,
     })
   }
 })

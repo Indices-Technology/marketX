@@ -62,6 +62,16 @@ model Profile {
   squarePayoutRequests   SquarePayout[]       @relation("SquarePayoutRequests")
   squareAnnouncements    SquareAnnouncement[] @relation("AnnouncementAuthor")
   sellerReviews          SellerReview[]       @relation("SellerReviewAuthor")
+
+  // ── Moderation ────────────────────────────────────────────────────────────
+  isActive           Boolean          @default(true)
+  strikeCount        Int              @default(0)
+  bannedAt           DateTime?        @db.Timestamptz(6)
+  suspendedUntil     DateTime?        @db.Timestamptz(6)
+  reportsFiled       Report[]         @relation("ReportsFiled")
+  reportsModerated   Report[]         @relation("ReportsModerated")
+  suspensions        UserSuspension[] @relation("UserSuspensions")
+  suspensionsIssued  UserSuspension[] @relation("SuspensionsIssued")
 }
 
 model SellerProfile {
@@ -240,11 +250,15 @@ model Products {
   shares         Share[]             @relation("ProductShare")
   stories        Story[]
 
+  moderationStatus ModerationStatus @default(ACTIVE)
+  reportCount      Int              @default(0)
+
   @@index([sellerId])
   @@index([status, created_at(sort: Desc)])  // feed/shop queries: WHERE status='PUBLISHED' ORDER BY created_at DESC
   @@index([status, isDeal, created_at(sort: Desc)])  // shop-today deal filter
   @@index([status, showInFeed, created_at(sort: Desc)])  // home feed product injection
   @@index([status, isThrift, created_at(sort: Desc)])  // pre-loved feed
+  @@index([moderationStatus])
 }
 
 model ProductVariant {
@@ -473,9 +487,13 @@ model Post {
   hashtags       PostTags[]       @relation("PostHashtags")
   savedBy        SavedPost[]      @relation("PostSavedBy")
 
+  moderationStatus ModerationStatus @default(ACTIVE)
+  reportCount      Int              @default(0)
+
   @@index([authorId])
   @@index([created_at(sort: Desc)])  // feed ordering: ORDER BY created_at DESC
   @@index([visibility, created_at(sort: Desc)])  // filtered feed: WHERE visibility='PUBLIC' ORDER BY created_at DESC
+  @@index([moderationStatus])
 }
 
 model SavedPost {
@@ -509,6 +527,9 @@ model Comment {
   product       Products?      @relation(fields: [productId], references: [id], onDelete: Cascade)
   likes         CommentLike[]
   notifications Notification[] @relation("NotificationToComment")
+
+  moderationStatus ModerationStatus @default(ACTIVE)
+  reportCount      Int              @default(0)
 
   @@index([productId, parentId, created_at(sort: Desc)])
   @@index([postId, parentId, created_at(sort: Desc)])
@@ -1129,4 +1150,90 @@ enum VisibilityType {
   PUBLIC
   PRIVATE
   FOLLOWERS
+}
+
+// ==================== MODERATION ====================
+
+enum ModerationStatus {
+  ACTIVE
+  FLAGGED
+  UNDER_REVIEW
+  HIDDEN
+  REMOVED
+}
+
+enum ReportReason {
+  SPAM
+  INAPPROPRIATE
+  COUNTERFEIT
+  HARASSMENT
+  MISINFORMATION
+  VIOLENCE
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  UNDER_REVIEW
+  RESOLVED
+  DISMISSED
+}
+
+enum ContentType {
+  POST
+  PRODUCT
+  COMMENT
+  REVIEW
+  SELLER_REVIEW
+  USER
+  STORY
+}
+
+enum ModerationAction {
+  WARN
+  HIDE
+  REMOVE
+  SUSPEND
+  BAN
+  REINSTATE
+  DISMISS
+}
+
+model Report {
+  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  reporterId    String         @db.Uuid
+  contentType   ContentType
+  contentId     String
+  reason        ReportReason
+  note          String?
+  status        ReportStatus   @default(PENDING)
+  moderatorId   String?        @db.Uuid
+  moderatorNote String?
+  action        ModerationAction?
+  createdAt     DateTime       @default(now()) @db.Timestamptz(6)
+  resolvedAt    DateTime?      @db.Timestamptz(6)
+
+  reporter      Profile        @relation("ReportsFiled", fields: [reporterId], references: [id], onDelete: Cascade)
+  moderator     Profile?       @relation("ReportsModerated", fields: [moderatorId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt(sort: Desc)])
+  @@index([contentType, contentId])
+  @@index([reporterId])
+}
+
+model UserSuspension {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String    @db.Uuid
+  moderatorId String    @db.Uuid
+  reason      String
+  expiresAt   DateTime? @db.Timestamptz(6)  // null = permanent ban
+  liftedAt    DateTime? @db.Timestamptz(6)  // set when admin lifts early
+  liftedById  String?   @db.Uuid
+  createdAt   DateTime  @default(now()) @db.Timestamptz(6)
+
+  user        Profile   @relation("UserSuspensions", fields: [userId], references: [id], onDelete: Cascade)
+  moderator   Profile   @relation("SuspensionsIssued", fields: [moderatorId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
