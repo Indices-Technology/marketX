@@ -378,13 +378,14 @@ if (import.meta.client) {
 ### Usage
 
 ```typescript
-import { remember, forget } from '~~/server/utils/cache'
+import { remember, bust } from '~~/server/utils/cache'
 
 const data = await remember('cache:key', 120, async () => {
   return await prisma.something.findMany(...)
 })
 
-await forget('cache:key')  // invalidate
+await bust('cache:key')           // exact key
+await bust('feed:posts:page:*')   // glob pattern (scans + deletes)
 ```
 
 ### Cached Endpoints

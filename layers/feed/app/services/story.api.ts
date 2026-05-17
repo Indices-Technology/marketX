@@ -1,7 +1,7 @@
 import { BaseApiClient } from '~~/layers/core/app/services/base.api'
 
 export class StoryApiClient extends BaseApiClient {
-  async getStories(limit = 50) {
+  async getStories(limit = 20) {
     return this.request(`/api/stories?limit=${limit}`, { method: 'GET' })
   }
   async getStoryById(id: string) {

@@ -38,53 +38,32 @@ export default defineEventHandler(async (event) => {
     const cacheKey = (search || categorySlug) ? null : `feed:sellers:featured:page:${page}:limit:${limit}`
 
     const fetchFresh = async () => {
-      const [sellers, total] = await Promise.all([
-        prisma.sellerProfile.findMany({
-          where,
-          select: {
-            id: true,
-            store_name: true,
-            store_slug: true,
-            store_logo: true,
-            store_banner: true,
-            store_description: true,
-            is_verified: true,
-            followers_count: true,
-            _count: { select: { products: true } },
-          },
-          orderBy: { followers_count: 'desc' },
-          take: limit,
-          skip: offset,
-        }),
-        prisma.sellerProfile.count({ where }),
-      ])
+      // +1 trick: eliminates the COUNT query
+      const rows = await prisma.sellerProfile.findMany({
+        where,
+        select: {
+          id: true,
+          store_name: true,
+          store_slug: true,
+          store_logo: true,
+          store_banner: true,
+          store_description: true,
+          is_verified: true,
+          followers_count: true, // denormalized — no need for a follow.groupBy()
+          _count: { select: { products: true } },
+        },
+        orderBy: { followers_count: 'desc' },
+        take: limit + 1,
+        skip: offset,
+      })
 
-      // Compute real follow counts from the Follow table
-      const sellerIds = sellers.map((s) => s.id)
-      const followCounts = sellerIds.length
-        ? await prisma.follow.groupBy({
-            by: ['followingId'],
-            where: { followingId: { in: sellerIds }, followingType: 'SELLER' },
-            _count: { followerId: true },
-          })
-        : []
-
-      const countMap = new Map(followCounts.map((f) => [f.followingId, f._count.followerId]))
-
-      const sellersWithRealCounts = sellers.map((s) => ({
-        ...s,
-        followers_count: countMap.get(s.id) ?? s.followers_count,
-      }))
+      const hasMore = rows.length > limit
+      const sellers = hasMore ? rows.slice(0, limit) : rows
 
       return {
         success: true,
-        data: sellersWithRealCounts,
-        meta: {
-          total,
-          limit,
-          offset,
-          hasMore: offset + sellers.length < total,
-        },
+        data: sellers,
+        meta: { limit, offset, hasMore },
       }
     }
 

@@ -9,7 +9,7 @@ export const useStory = () => {
   const error = computed(() => store.error)
   const stories = computed(() => store.stories)
 
-  const fetchStories = async (limit = 50) => {
+  const fetchStories = async (limit = 20) => {
     store.setLoading(true)
     store.setError(null)
     try {

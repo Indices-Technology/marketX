@@ -1,6 +1,7 @@
 // PATCH /api/profile/settings — update one or more settings fields
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
 import { prisma } from '~~/server/utils/db'
+import { bust } from '~~/server/utils/cache'
 
 const ALLOWED = new Set([
   'email_notifications',
@@ -40,6 +41,9 @@ export default defineEventHandler(async (event) => {
     create: { user_id: user.id, ...data },
     update: data,
   })
+
+  // Bust settings cache so next GET returns updated values
+  bust(`profile:settings:${user.id}`).catch(() => {})
 
   return { success: true, data: settings }
 })

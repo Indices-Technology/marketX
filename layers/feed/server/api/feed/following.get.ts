@@ -26,47 +26,58 @@ export default defineEventHandler(async (event): Promise<IFeedResponse> => {
 
       const followingIds = follows.map((f) => f.followingId)
 
-      const [posts, total] = await Promise.all([
-        prisma.post.findMany({
-          where: { authorId: { in: followingIds } },
-          take: limit,
-          skip: offset,
-          orderBy: { created_at: 'desc' },
-          include: {
-            author: { select: { id: true, username: true, avatar: true, role: true } },
-            media: {
-              where: { isBgMusic: false },
-              select: { id: true, url: true, type: true, isBgMusic: true, altText: true,
-                musicTitle: true, musicArtist: true },
-              take: 4,
-            },
-            _count: { select: { likes: true, comments: true, shares: true } },
-            taggedProducts: {
-              include: {
-                product: {
-                  select: {
-                    id: true,
-                    title: true,
-                    price: true,
-                    discount: true,
-                    slug: true,
-                    media: {
-                      take: 1,
-                      where: { isBgMusic: false },
-                      select: { url: true, type: true },
-                    },
+      // +1 trick: eliminates the COUNT query
+      const postsPlusOne = await prisma.post.findMany({
+        where: { authorId: { in: followingIds } },
+        take: limit + 1,
+        skip: offset,
+        orderBy: { created_at: 'desc' },
+        select: {
+          id: true,
+          authorId: true,
+          caption: true,
+          content: true,
+          contentType: true,
+          created_at: true,
+          visibility: true,
+          isProductPost: true,
+          viewCount: true,
+          author: { select: { id: true, username: true, avatar: true, role: true } },
+          media: {
+            where: { isBgMusic: false },
+            select: { id: true, url: true, type: true, isBgMusic: true, altText: true,
+              musicTitle: true, musicArtist: true },
+            take: 4,
+            orderBy: { created_at: 'asc' },
+          },
+          _count: { select: { likes: true, comments: true, shares: true } },
+          taggedProducts: {
+            select: {
+              product: {
+                select: {
+                  id: true,
+                  title: true,
+                  price: true,
+                  discount: true,
+                  slug: true,
+                  media: {
+                    take: 1,
+                    where: { isBgMusic: false },
+                    select: { url: true, type: true },
                   },
                 },
               },
             },
           },
-        }),
-        prisma.post.count({ where: { authorId: { in: followingIds } } }),
-      ])
+        },
+      })
+
+      const hasMore = postsPlusOne.length > limit
+      const posts = hasMore ? postsPlusOne.slice(0, limit) : postsPlusOne
 
       return {
         items: posts.map(normalizePost),
-        meta: { total, limit, offset, hasMore: posts.length === limit },
+        meta: { limit, offset, hasMore },
       }
     })
   } catch (error) {

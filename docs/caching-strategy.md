@@ -162,16 +162,18 @@ Examples:
 ## The `remember` Helper
 
 ```ts
-// server/utils/cache.ts
-import { remember, forget } from '~~/server/utils/cache'
+import { remember, bust } from '~~/server/utils/cache'
 
 // Cache a result
 const data = await remember('cache:key', 120, async () => {
   return await prisma.something.findMany(...)
 })
 
-// Invalidate
-await forget('cache:key')
+// Invalidate exact key
+await bust('cache:key')
+
+// Invalidate by pattern (scans + deletes matching keys)
+await bust('feed:posts:page:*')
 ```
 
 `remember()` internally:

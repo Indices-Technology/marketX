@@ -8,27 +8,27 @@ import { getClientIP } from '~~/server/layers/shared/utils/security'
 import { updateProfileSchema } from '../../schemas/profile.schema'
 import { profileService } from '../../services/profile.service'
 import { UserError } from '../../types/user.types'
+import { bust } from '~~/server/utils/cache'
+
 export default defineEventHandler(async (event) => {
   try {
-    // Verify authentication
     const user = await requireAuth(event)
 
-    // Parse and validate request body
     const body = await readBody(event)
     const validatedData = updateProfileSchema.parse(body)
 
-    // Get client info
     const ipAddress = getClientIP(event)
     const userAgent = event.node.req.headers['user-agent'] || 'Unknown'
 
-    // Initialize service
-    // Update profile
     const updated = await profileService.updateProfile(
       user.id,
       validatedData,
       ipAddress,
       userAgent,
     )
+
+    // Bust own-profile cache so next GET reflects the change
+    bust(`profile:own:${user.id}`).catch(() => {})
 
     return {
       success: true,

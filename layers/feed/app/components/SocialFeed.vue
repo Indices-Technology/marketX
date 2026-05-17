@@ -708,16 +708,23 @@ onMounted(() => {
   } else {
     loadTabFeed()
   }
-  loadShopToday()
-  loadNearbyStores()
+
+  // Defer non-critical secondary requests so the main feed, profile, and
+  // settings queries can acquire Neon connections first.
+  setTimeout(() => {
+    loadShopToday()
+    loadNearbyStores()
+  }, 1500)
 
   if (profileStore.isLoggedIn) {
-    fetchAffiliate().catch(() => {})
+    setTimeout(() => {
+      fetchAffiliate().catch(() => {})
+    }, 800)
     setTimeout(() => {
       fetchStories()
         .catch(() => {})
         .then(() => nextTick(onStoriesScroll))
-    }, 1000)
+    }, 1200)
   }
 
   observer.value = new IntersectionObserver(
