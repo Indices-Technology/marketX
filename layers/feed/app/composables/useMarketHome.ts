@@ -5,6 +5,11 @@ import { getCachedLocation } from '~~/layers/map/app/composables/useMapSellers'
 import type { IMapSeller } from '~~/layers/map/app/types/map.types'
 import type { IFeedItem } from '../types/feed.types'
 
+// Module-level guards: if multiple MarketHome instances mount simultaneously,
+// they share one in-flight request rather than each firing their own.
+let _inflightDeals: Promise<any> | null = null
+let _inflightSquares: Promise<any> | null = null
+
 function observeOnce(el: HTMLElement, cb: () => void, rootMargin = '200px') {
   const obs = new IntersectionObserver(
     ([entry]) => {
@@ -26,7 +31,11 @@ export function useMarketHome() {
 
   async function loadDeals() {
     try {
-      const res: any = await feedApi.getDealsFeed({ limit: 20 })
+      if (!_inflightDeals) {
+        _inflightDeals = feedApi.getDealsFeed({ limit: 20 })
+        _inflightDeals.finally(() => { _inflightDeals = null })
+      }
+      const res: any = await _inflightDeals
       deals.value = res.data ?? []
     } catch {}
     finally { dealsLoading.value = false }
@@ -38,7 +47,11 @@ export function useMarketHome() {
 
   async function loadSquares() {
     try {
-      const res: any = await squareApi.listSquares({ limit: 8 })
+      if (!_inflightSquares) {
+        _inflightSquares = squareApi.listSquares({ limit: 8 })
+        _inflightSquares.finally(() => { _inflightSquares = null })
+      }
+      const res: any = await _inflightSquares
       squares.value = res.data ?? []
     } catch {}
     finally { squaresLoading.value = false }

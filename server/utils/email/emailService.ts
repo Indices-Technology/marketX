@@ -113,7 +113,7 @@ export async function sendVerificationEmail(
           </div>
           
           <div class="footer">
-            <p>&copy; 2024 ReelCart. All rights reserved.</p>
+            <p>&copy; ${new Date().getFullYear()} MarketX. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -135,7 +135,6 @@ export async function sendPasswordResetEmail(
   email: string,
   token: string,
   appUrl: string = 'http://localhost:3000',
-  appName?: string,
 ): Promise<{ id: string }> {
   const resetLink = `${appUrl}/reset-password?token=${token}`
 
@@ -177,7 +176,7 @@ export async function sendPasswordResetEmail(
           </div>
           
           <div class="footer">
-            <p>&copy; 2024 ReelCart. All rights reserved. ${{ appName }} </p>
+            <p>&copy; ${new Date().getFullYear()} MarketX. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -278,7 +277,7 @@ export function buildOrderStatusEmail(
         'The seller has cancelled your order. If you were charged, please contact support.',
     },
   }
-  const { emoji, headline, detail } = info[status] || info.CONFIRMED
+  const { emoji, headline, detail } = info[status] ?? info.CONFIRMED!
   const subject = `${emoji} Order #${orderId} — ${headline}`
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
 body{font-family:Arial,sans-serif;background:#f4f4f4;margin:0;padding:0}
@@ -424,7 +423,7 @@ export async function sendWelcomeEmail(
           </div>
           
           <div class="footer">
-            <p>&copy; 2024 ReelCart. All rights reserved.</p>
+            <p>&copy; ${new Date().getFullYear()} MarketX. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -433,8 +432,8 @@ export async function sendWelcomeEmail(
 
   return sendEmail({
     to: email,
-    subject: `Welcome to ReelCart, ${userName}!`,
+    subject: `Welcome to ${appName}, ${userName}!`,
     html,
-    text: `Welcome to ReelCart, ${userName}! Happy shopping!`,
+    text: `Welcome to ${appName}, ${userName}! Happy shopping!`,
   })
 }

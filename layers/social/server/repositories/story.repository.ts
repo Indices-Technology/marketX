@@ -33,11 +33,12 @@ export const storyRepository = {
     })
   },
 
-  async getActiveStoriesForUser(userId: string, limit = 50) {
-    // Single follow query for all types, then resolve seller profileIds in parallel
+  async getActiveStoriesForUser(userId: string, limit = 20) {
+    // Cap follow lookup — users following >500 people still get good story coverage
     const allFollows = await prisma.follow.findMany({
       where: { followerId: userId },
       select: { followingId: true, followingType: true },
+      take: 500,
     })
 
     const userFollowIds = allFollows

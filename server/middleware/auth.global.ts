@@ -7,7 +7,7 @@
  */
 
 import { H3Event, getHeader, parseCookies } from 'h3'
-import { jwtDecode } from '../utils/auth/auth'
+import { jwtVerify } from '../utils/auth/auth'
 
 export default defineEventHandler(async (event: H3Event) => {
   // Skip middleware for non-API routes
@@ -27,11 +27,14 @@ export default defineEventHandler(async (event: H3Event) => {
 
     if (token) {
       try {
-        // Verify token
-        const decoded = jwtDecode(token)
+        const decoded = jwtVerify(token)
 
         if (decoded) {
-          // Attach user info to event context for use in handlers
+          event.context.user = {
+            id: decoded.userId,
+            email: decoded.email,
+            role: decoded.role,
+          }
           event.context.auth = {
             user: {
               userId: decoded.userId,

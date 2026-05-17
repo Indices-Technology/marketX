@@ -1,19 +1,22 @@
 // server/utils/auth/otpStore.ts
-// In-memory OTP store for checkout authentication.
+// OTP store for checkout authentication — Redis-backed in production,
+// in-memory fallback for local dev (when Upstash is not configured).
 // Each entry expires after 10 minutes and is single-use.
+
+import { redis } from '../cache'
 
 interface OtpEntry {
   code: string
   expiresAt: number
-  // Temporary data for auto-registration (new users only)
   name?: string
   phone?: string
   isNewUser?: boolean
 }
 
+// ─── In-memory fallback (dev only) ───────────────────────────────────────────
+
 const _store = new Map<string, OtpEntry>()
 
-// Sweep expired entries every 5 minutes to avoid unbounded growth
 setInterval(
   () => {
     const now = Date.now()
@@ -24,36 +27,59 @@ setInterval(
   5 * 60 * 1000,
 )
 
+// ─── Redis helpers ────────────────────────────────────────────────────────────
+
+function otpKey(email: string) {
+  return `otp:checkout:${email.toLowerCase()}`
+}
+
+// ─── Public API ───────────────────────────────────────────────────────────────
+
 export const otpStore = {
-  set(email: string, data: Omit<OtpEntry, 'expiresAt'>) {
-    _store.set(email.toLowerCase(), {
-      ...data,
-      expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes
-    })
+  async set(email: string, data: Omit<OtpEntry, 'expiresAt'>) {
+    const key = email.toLowerCase()
+    const entry: OtpEntry = { ...data, expiresAt: Date.now() + 10 * 60 * 1000 }
+
+    if (redis) {
+      await redis.set(otpKey(email), JSON.stringify(entry), { ex: 600 })
+    } else {
+      _store.set(key, entry)
+    }
   },
 
-  /** Returns true and deletes the entry if code is valid and not expired */
-  verify(email: string, code: string): OtpEntry | null {
+  async verify(email: string, code: string): Promise<OtpEntry | null> {
+    if (redis) {
+      const raw = await redis.getdel(otpKey(email))
+      if (!raw) return null
+      const entry: OtpEntry = typeof raw === 'string' ? JSON.parse(raw) : (raw as OtpEntry)
+      if (Date.now() > entry.expiresAt) return null
+      if (entry.code !== code) return null
+      return entry
+    }
+
+    // In-memory fallback
     const key = email.toLowerCase()
     const entry = _store.get(key)
     if (!entry) return null
-    if (Date.now() > entry.expiresAt) {
-      _store.delete(key)
-      return null
-    }
+    if (Date.now() > entry.expiresAt) { _store.delete(key); return null }
     if (entry.code !== code) return null
-    _store.delete(key) // one-time use
+    _store.delete(key)
     return entry
   },
 
-  has(email: string): boolean {
+  async has(email: string): Promise<boolean> {
+    if (redis) {
+      const raw = await redis.get(otpKey(email))
+      if (!raw) return false
+      const entry: OtpEntry = typeof raw === 'string' ? JSON.parse(raw) : (raw as OtpEntry)
+      return Date.now() <= entry.expiresAt
+    }
+
+    // In-memory fallback
     const key = email.toLowerCase()
     const entry = _store.get(key)
     if (!entry) return false
-    if (Date.now() > entry.expiresAt) {
-      _store.delete(key)
-      return false
-    }
+    if (Date.now() > entry.expiresAt) { _store.delete(key); return false }
     return true
   },
 }

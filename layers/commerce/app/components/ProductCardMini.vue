@@ -45,7 +45,7 @@
       <!-- Overlays: Like Button (Top Right) -->
       <button
         @click.stop="handleLike"
-        class="absolute right-2 top-2 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 shadow-sm backdrop-blur-sm transition-transform hover:scale-110 active:scale-95 dark:bg-black/40"
+        class="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 shadow-sm backdrop-blur-sm transition-transform hover:scale-110 active:scale-95 dark:bg-black/40"
         aria-label="Like Product"
       >
         <Icon

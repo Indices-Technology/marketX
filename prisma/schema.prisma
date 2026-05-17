@@ -124,8 +124,9 @@ model SellerProfile {
   averageRating         Float?
   totalReviews          Int                    @default(0)
 
-  @@unique([profileId, store_slug]) // ← NEW: Composite unique (same user, different slug OK)
-  @@index([profileId]) // ← NEW: Index on profileId for faster lookups
+  @@unique([profileId, store_slug])
+  @@index([profileId])
+  @@index([is_active, followers_count(sort: Desc)])  // featured: WHERE is_active=true ORDER BY followers_count DESC
 }
 
 model Conversation {
@@ -508,6 +509,10 @@ model Comment {
   product       Products?      @relation(fields: [productId], references: [id], onDelete: Cascade)
   likes         CommentLike[]
   notifications Notification[] @relation("NotificationToComment")
+
+  @@index([productId, parentId, created_at(sort: Desc)])
+  @@index([postId, parentId, created_at(sort: Desc)])
+  @@index([authorId])
 }
 
 model Like {

@@ -18,6 +18,7 @@ export default defineTask({
     description: 'Restore stock and cancel orders unpaid after 30 minutes',
   },
   async run() {
+    logger.info('[task:releaseExpiredOrders] fired', { at: new Date().toISOString() })
     const cutoff = new Date(Date.now() - EXPIRY_MINUTES * 60 * 1000)
 
     const expiredOrders = await prisma.orders.findMany({

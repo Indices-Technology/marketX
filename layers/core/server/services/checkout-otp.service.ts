@@ -68,7 +68,7 @@ export async function sendCheckoutOtp(
   const isNewUser = !existing
 
   const code = String(Math.floor(100000 + Math.random() * 900000))
-  otpStore.set(email, { code, isNewUser, name, phone })
+  await otpStore.set(email, { code, isNewUser, name, phone })
 
   const config = useRuntimeConfig()
   const appName = (config.public.appName as string) || 'MarketX'
@@ -103,7 +103,7 @@ export async function verifyCheckoutOtp(
   userAgent: string,
 ): Promise<VerifyOtpResult> {
   // 1. Validate OTP (one-time use — consumed on verify)
-  const entry = otpStore.verify(email, code)
+  const entry = await otpStore.verify(email, code)
   if (!entry) {
     throw createError({ statusCode: 400, statusMessage: 'Invalid or expired verification code' })
   }

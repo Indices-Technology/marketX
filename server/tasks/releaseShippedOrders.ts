@@ -19,6 +19,7 @@ export default defineTask({
       'Auto-release seller funds for orders shipped 7+ days ago with no buyer confirmation',
   },
   async run() {
+    logger.info('[task:releaseShippedOrders] fired', { at: new Date().toISOString() })
     const cutoff = new Date()
     cutoff.setDate(cutoff.getDate() - AUTO_RELEASE_DAYS)
 

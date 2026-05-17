@@ -59,9 +59,9 @@
       <div class="flex shrink-0 items-center gap-2">
         <!-- Follow Button (if not own post) -->
         <FollowButton
-          v-if="profileStore.userId && profileStore.userId !== post.author?.id"
+          v-if="profileStore.userId && profileStore.userId !== post.author?.id && post.author?.username"
           :user-id="post.author!.id"
-          :username="post.author?.username || ''"
+          :username="post.author.username"
           size="sm"
         />
 
@@ -77,8 +77,8 @@
     </div>
 
     <!-- Scrollable Content: Caption + Comments -->
-    <div ref="commentsContainer" class="min-h-0 flex-1 overflow-y-auto">
-      <div class="space-y-6 p-4">
+    <div ref="commentsContainer" class="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+      <div class="space-y-4 p-4">
         <!-- Caption / Content -->
         <div v-if="cleanCaption || post.content" class="flex items-start gap-3">
           <NuxtLink :to="`/profile/${post.author?.username}`" class="shrink-0">
@@ -166,11 +166,20 @@
           />
         </div>
 
-        <!-- Divider -->
-        <div
-          v-if="comments.length || isLoadingComments"
-          class="border-t border-gray-100 dark:border-neutral-800"
-        />
+        <!-- Like count + date (inside scroll, above comments) -->
+        <div class="border-t border-gray-100 pt-2 dark:border-neutral-800">
+          <button
+            v-if="likeCount > 0"
+            class="text-sm font-semibold text-gray-900 transition-opacity hover:opacity-70 dark:text-white"
+            @click="showLikes = true"
+          >
+            {{ likeCount.toLocaleString() }}
+            {{ likeCount === 1 ? $t('post.like') : $t('post.likes') }}
+          </button>
+          <p class="mt-0.5 text-[11px] uppercase tracking-wide text-gray-400 dark:text-neutral-500">
+            {{ formatDate(post.created_at) }}
+          </p>
+        </div>
 
         <!-- Loading Comments -->
         <div v-if="isLoadingComments" class="flex justify-center py-6">
@@ -291,9 +300,11 @@
     </div>
 
     <!-- Bottom Action Bar + Comment Input -->
-    <div class="shrink-0 border-t border-gray-100 dark:border-neutral-800">
+    <div
+      class="shrink-0 border-t border-gray-100 bg-white dark:border-neutral-800 dark:bg-neutral-900"
+    >
       <!-- Actions: Like / Comment / Share / Bookmark -->
-      <div class="flex items-center justify-between px-3 py-2.5">
+      <div class="flex items-center justify-between px-3 py-1">
         <div class="flex items-center gap-0.5">
           <!-- Like -->
           <button
@@ -362,23 +373,6 @@
         </button>
       </div>
 
-      <!-- Like Count + Date -->
-      <div class="px-5 pb-2 text-sm">
-        <button
-          v-if="likeCount > 0"
-          class="font-semibold text-gray-900 transition-opacity hover:opacity-70 dark:text-white"
-          @click="showLikes = true"
-        >
-          {{ likeCount.toLocaleString() }}
-          {{ likeCount === 1 ? $t('post.like') : $t('post.likes') }}
-        </button>
-        <p
-          class="mt-1 text-xs uppercase tracking-wide text-gray-500 dark:text-neutral-500"
-        >
-          {{ formatDate(post.created_at) }}
-        </p>
-      </div>
-
       <LikesModal
         :is-open="showLikes"
         type="post"
@@ -408,10 +402,10 @@
 
       <!-- Comment Input -->
       <form
-        class="flex items-start gap-3 border-t border-gray-100 bg-white px-4 py-3 dark:border-neutral-800 dark:bg-neutral-900"
+        class="flex items-start gap-3 border-t border-gray-100 bg-gray-50/70 px-4 py-2.5 dark:border-neutral-800 dark:bg-neutral-950/50"
         style="
           padding-bottom: max(
-            0.75rem,
+            0.625rem,
             calc(env(safe-area-inset-bottom, 0px) + 0.5rem)
           );
         "
@@ -430,6 +424,8 @@
             v-model="commentText"
             :placeholder="$t('post.addComment')"
             :max-length="500"
+            :rows="1"
+            input-class="max-h-20 rounded-xl bg-white px-3 py-2 dark:bg-neutral-900"
             :submit-on-enter="true"
             @submit="addComment"
           />

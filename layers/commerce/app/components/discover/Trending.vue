@@ -135,7 +135,7 @@
 
     <!-- Trending main content -->
     <div v-if="trendingLoading" class="space-y-8">
-      <div class="flex gap-2 overflow-x-auto pb-1">
+      <div class="scrollbar-hide flex gap-2 overflow-x-auto pb-1">
         <div
           v-for="n in 10"
           :key="n"
@@ -330,7 +330,6 @@
 import { ref, onMounted, watch } from 'vue'
 import type { IProduct } from '~~/layers/commerce/app/types/commerce.types'
 import ProductCardMini from '~~/layers/commerce/app/components/ProductCardMini.vue'
-import { useProduct } from '~~/layers/commerce/app/composables/useProduct'
 import { useDiscoverFilters } from '~~/layers/commerce/app/composables/useDiscoverFilters'
 
 const emit = defineEmits<{
@@ -338,7 +337,6 @@ const emit = defineEmits<{
 }>()
 
 const { activeTab, filters: discoverFilters } = useDiscoverFilters()
-const { fetchProducts } = useProduct()
 
 const formatNum = (n: number) => {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
@@ -358,34 +356,24 @@ const stripsLoading = ref(false)
 
 const loadTrending = async () => {
   trendingLoading.value = true
+  stripsLoading.value = true
   try {
     const res = await $fetch<any>('/api/feed/trending')
     if (res?.data) {
       trendingProducts.value = res.data.trendingProducts ?? []
       trendingTags.value = res.data.trendingTags ?? []
       featuredSellers.value = res.data.featuredSellers ?? []
+      // Strips are now bundled in the same response — no extra round trips
+      freshStrip.value = res.data.strips?.fresh ?? []
+      dealStrip.value = res.data.strips?.deals ?? []
+      prelovedStrip.value = res.data.strips?.preloved ?? []
     }
   } catch {
     //
   } finally {
     trendingLoading.value = false
+    stripsLoading.value = false
   }
-}
-
-const loadStrips = async () => {
-  stripsLoading.value = true
-  const [fresh, deals, preloved] = await Promise.allSettled([
-    fetchProducts({ status: 'PUBLISHED', limit: 10, offset: 0 }),
-    fetchProducts({ status: 'PUBLISHED', limit: 10, offset: 0, minDiscount: 1 }),
-    fetchProducts({ status: 'PUBLISHED', limit: 10, offset: 0, isThrift: true }),
-  ])
-  freshStrip.value =
-    fresh.status === 'fulfilled' ? (fresh.value?.products ?? []) : []
-  dealStrip.value =
-    deals.status === 'fulfilled' ? (deals.value?.products ?? []) : []
-  prelovedStrip.value =
-    preloved.status === 'fulfilled' ? (preloved.value?.products ?? []) : []
-  stripsLoading.value = false
 }
 
 watch(
@@ -395,13 +383,22 @@ watch(
 
 onMounted(() => {
   loadTrending()
-  loadStrips()
 })
 </script>
 
 <style scoped>
 .scroll-strip-wrap {
   position: relative;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
 
 .scroll-fade-right {

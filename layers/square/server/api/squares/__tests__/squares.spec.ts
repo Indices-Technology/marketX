@@ -78,7 +78,7 @@ test.describe('squares — public endpoints', () => {
     expect(body.success).toBe(true)
     expect(Array.isArray(body.data)).toBe(true)
     expect(body.meta).toBeTruthy()
-    expect(typeof body.meta.total).toBe('number')
+    expect(typeof body.meta.hasMore).toBe('boolean')
   })
 
   test('GET /api/squares?type=GEOGRAPHIC filters by type', async ({

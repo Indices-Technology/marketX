@@ -71,15 +71,10 @@ export default defineEventHandler(async (event) => {
 
       const countMap = new Map(followCounts.map((f) => [f.followingId, f._count.followerId]))
 
-      const sellersWithRealCounts = sellers.map((s) => {
-        const realCount = countMap.get(s.id) ?? 0
-        if (s.followers_count !== realCount) {
-          prisma.sellerProfile
-            .update({ where: { id: s.id }, data: { followers_count: realCount } })
-            .catch(() => {})
-        }
-        return { ...s, followers_count: realCount }
-      })
+      const sellersWithRealCounts = sellers.map((s) => ({
+        ...s,
+        followers_count: countMap.get(s.id) ?? s.followers_count,
+      }))
 
       return {
         success: true,

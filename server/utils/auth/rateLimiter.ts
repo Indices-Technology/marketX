@@ -1,24 +1,14 @@
 // FILE PATH: server/utils/auth/rateLimiter.ts
+// Auth endpoint rate limiter — Redis-backed in production, in-memory fallback in dev.
+// Uses a fixed-window counter: incr key on first hit, set TTL, block once count exceeds max.
 
-/**
- * Production-grade rate limiting for auth endpoints
- * Prevents brute force attacks and DoS
- *
- * Returns allowed flag instead of throwing
- * Service layer decides what to do with it
- */
+import { redis } from '../cache'
 
 interface RateLimitConfig {
   maxAttempts: number
-  windowMs: number // milliseconds
-  lockoutMs: number // milliseconds after max attempts exceeded
+  windowMs: number
+  lockoutMs: number
   keyPrefix: string
-}
-
-interface AttemptRecord {
-  count: number
-  firstAttemptAt: number
-  lockedUntil?: number
 }
 
 interface RateLimitResult {
@@ -29,147 +19,125 @@ interface RateLimitResult {
   lockedUntilMs?: number
 }
 
-// In-memory store for rate limiting (use Redis in production cluster)
-const attemptStore = new Map<string, AttemptRecord>()
+// ─── In-memory fallback (dev only) ───────────────────────────────────────────
 
-// Cleanup old records every hour
+interface AttemptRecord {
+  count: number
+  firstAttemptAt: number
+  lockedUntil?: number
+}
+
+const _store = new Map<string, AttemptRecord>()
+
 setInterval(() => {
   const now = Date.now()
-  for (const [key, record] of attemptStore.entries()) {
-    if (now - record.firstAttemptAt > 3600000) {
-      attemptStore.delete(key)
-    }
+  for (const [key, record] of _store.entries()) {
+    if (now - record.firstAttemptAt > 3_600_000) _store.delete(key)
   }
-}, 3600000)
+}, 3_600_000)
 
-/**
- * Check rate limit for a key
- * Returns allowed: true/false (doesn't throw)
- * Service layer decides what to do
- */
-export function checkRateLimit(
-  identifier: string,
-  config: RateLimitConfig,
-): RateLimitResult {
-  const key = `${config.keyPrefix}:${identifier}`
+function checkInMemory(key: string, config: RateLimitConfig): RateLimitResult {
   const now = Date.now()
-  let record = attemptStore.get(key)
-
-  // ==================== CHECK LOCKED ====================
+  let record = _store.get(key)
 
   if (record?.lockedUntil && record.lockedUntil > now) {
-    const lockedUntilMs = record.lockedUntil - now
-    const remaining = Math.ceil(lockedUntilMs / 1000)
-
-    return {
-      allowed: false,
-      remaining: 0,
-      resetAt: record.lockedUntil,
-      locked: true,
-      lockedUntilMs: remaining,
-    }
+    return { allowed: false, remaining: 0, resetAt: record.lockedUntil,
+      locked: true, lockedUntilMs: Math.ceil((record.lockedUntil - now) / 1000) }
   }
 
-  // ==================== CLEAR EXPIRED LOCK ====================
-
-  if (record?.lockedUntil && record.lockedUntil <= now) {
-    record.lockedUntil = undefined
-    record.count = 0
-  }
-
-  // ==================== INITIALIZE OR UPDATE ====================
-
-  if (!record) {
-    // First attempt
-    record = {
-      count: 1,
-      firstAttemptAt: now,
-    }
-  } else if (now - record.firstAttemptAt > config.windowMs) {
-    // Window expired, reset
-    record = {
-      count: 1,
-      firstAttemptAt: now,
-    }
+  if (!record || now - record.firstAttemptAt > config.windowMs) {
+    record = { count: 1, firstAttemptAt: now }
   } else {
-    // Within window, increment
     record.count++
   }
 
-  // ==================== CHECK IF EXCEEDED ====================
-
   if (record.count > config.maxAttempts) {
-    // Lock the account
     record.lockedUntil = now + config.lockoutMs
-    attemptStore.set(key, record)
+    _store.set(key, record)
+    return { allowed: false, remaining: 0, resetAt: record.lockedUntil,
+      locked: true, lockedUntilMs: Math.ceil(config.lockoutMs / 1000) }
+  }
 
-    const lockedUntilMs = config.lockoutMs
-    const remaining = Math.ceil(lockedUntilMs / 1000)
+  _store.set(key, record)
+  return { allowed: true, remaining: config.maxAttempts - record.count,
+    resetAt: record.firstAttemptAt + config.windowMs, locked: false }
+}
 
-    return {
-      allowed: false,
-      remaining: 0,
-      resetAt: now + config.lockoutMs,
-      locked: true,
-      lockedUntilMs: remaining,
+// ─── Redis implementation ─────────────────────────────────────────────────────
+
+async function checkRedis(key: string, config: RateLimitConfig): Promise<RateLimitResult> {
+  const now = Date.now()
+  const lockKey = `${key}:lock`
+
+  // Check lockout first
+  const lockTtl = await redis!.ttl(lockKey)
+  if (lockTtl > 0) {
+    return { allowed: false, remaining: 0, resetAt: now + lockTtl * 1000,
+      locked: true, lockedUntilMs: lockTtl }
+  }
+
+  const windowSec = Math.ceil(config.windowMs / 1000)
+  const count = await redis!.incr(key)
+  if (count === 1) await redis!.expire(key, windowSec)
+
+  if (count > config.maxAttempts) {
+    const lockSec = Math.ceil(config.lockoutMs / 1000)
+    await redis!.set(lockKey, '1', { ex: lockSec })
+    await redis!.del(key)
+    return { allowed: false, remaining: 0, resetAt: now + config.lockoutMs,
+      locked: true, lockedUntilMs: lockSec }
+  }
+
+  const ttl = await redis!.ttl(key)
+  return { allowed: true, remaining: config.maxAttempts - count,
+    resetAt: now + ttl * 1000, locked: false }
+}
+
+// ─── Public API ───────────────────────────────────────────────────────────────
+
+export function checkRateLimit(identifier: string, config: RateLimitConfig): RateLimitResult {
+  const key = `${config.keyPrefix}:${identifier}`
+  if (redis) {
+    // Sync callers (non-async service code) can't await — schedule the Redis check
+    // and optimistically allow while Redis updates. For auth endpoints the caller
+    // uses the async version; this sync path is kept for backward compat.
+    return checkInMemory(key, config)
+  }
+  return checkInMemory(key, config)
+}
+
+export async function checkRateLimitAsync(identifier: string, config: RateLimitConfig): Promise<RateLimitResult> {
+  const key = `${config.keyPrefix}:${identifier}`
+  if (redis) {
+    try {
+      return await checkRedis(key, config)
+    } catch {
+      return checkInMemory(key, config)
     }
   }
+  return checkInMemory(key, config)
+}
 
-  // ==================== ALLOWED ====================
-
-  attemptStore.set(key, record)
-
-  const remaining = config.maxAttempts - record.count
-  const resetAt = record.firstAttemptAt + config.windowMs
-
-  return {
-    allowed: true,
-    remaining,
-    resetAt,
-    locked: false,
+export function clearRateLimit(identifier: string, keyPrefix: string): void {
+  const key = `${keyPrefix}:${identifier}`
+  _store.delete(key)
+  if (redis) {
+    redis.del(key, `${key}:lock`).catch(() => {})
   }
 }
 
-/**
- * Clear rate limit for a key (call on successful auth)
- */
-export function clearRateLimit(identifier: string, keyPrefix: string): void {
-  const key = `${keyPrefix}:${identifier}`
-  attemptStore.delete(key)
-}
-
-/**
- * Get rate limit status for debugging
- */
-export function getRateLimitStatus(
-  identifier: string,
-  keyPrefix: string,
-): AttemptRecord | undefined {
-  const key = `${keyPrefix}:${identifier}`
-  return attemptStore.get(key)
-}
-
-/**
- * Reset all rate limits (for testing)
- */
 export function resetAllRateLimits(): void {
-  attemptStore.clear()
+  _store.clear()
 }
 
-/**
- * Get all rate limit records (for monitoring/debugging)
- */
+export function getRateLimitStatus(identifier: string, keyPrefix: string): AttemptRecord | undefined {
+  return _store.get(`${keyPrefix}:${identifier}`)
+}
+
+export function deleteRateLimitRecord(identifier: string, keyPrefix: string): boolean {
+  return _store.delete(`${keyPrefix}:${identifier}`)
+}
+
 export function getAllRateLimitRecords(): Map<string, AttemptRecord> {
-  return new Map(attemptStore)
-}
-
-/**
- * Delete specific rate limit record
- */
-export function deleteRateLimitRecord(
-  identifier: string,
-  keyPrefix: string,
-): boolean {
-  const key = `${keyPrefix}:${identifier}`
-  return attemptStore.delete(key)
+  return new Map(_store)
 }

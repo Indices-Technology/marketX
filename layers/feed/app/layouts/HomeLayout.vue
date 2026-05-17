@@ -75,7 +75,7 @@
         <!-- Main feed / page content -->
         <div
           ref="mainScrollRef"
-          class="main-scroll scrollbar-hide h-[100dvh] min-w-0 flex-1 overflow-y-auto px-2 py-6 transition-all duration-200 sm:px-4"
+          class="main-scroll scrollbar-hide h-[100dvh] min-w-0 flex-1 overflow-y-auto px-2 transition-all duration-200 sm:px-4"
           :class="[
             mainContentClasses,
             hasScrolled
@@ -309,12 +309,12 @@ onMounted(() => {
 })
 
 const mainContentClasses = computed(() => {
-  if (props.customPadding) return ''
+  if (props.customPadding) return 'py-0'
   // After mount, add extra top padding when the Feed/Reels tab bar is visible
   // (header 3.5rem + tab bar 2.5rem = 6rem → pt-24).
   if (hasMounted.value && showFeedReelsTabs.value)
-    return 'pt-24 md:pt-6 lg:px-4'
-  return 'pt-16 md:pt-6 lg:px-4'
+    return 'pb-6 pt-24 md:pt-6 lg:px-4'
+  return 'pb-6 pt-16 md:pt-6 lg:px-4'
 })
 
 // ─── Scroll / Nav-hide Behavior ─────────────────────────────────────────────

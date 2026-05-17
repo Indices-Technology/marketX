@@ -1,5 +1,5 @@
 {
-  "name": "reelshop",
+  "name": "marketx",
   "type": "module",
   "private": true,
   "scripts": {
@@ -26,7 +26,6 @@
     "@nuxt/image": "^2.0.0",
     "@nuxtjs/color-mode": "^4.0.0",
     "@nuxtjs/i18n": "^10.2.3",
-    "@nuxtjs/supabase": "^2.0.3",
     "@nuxtjs/tailwindcss": "^6.14.0",
     "@pinia/nuxt": "^0.11.3",
     "@prisma/adapter-neon": "^7.5.0",

@@ -118,7 +118,8 @@ export const usePost = () => {
     postStore.setLoading(true)
     postStore.setError(null)
     try {
-      const result = await postApi.getPostById(id)
+      const response = await postApi.getPostById(id)
+      const result = (response as any)?.data ?? response
       postStore.addPosts([result])
       return result
     } catch (error: any) {

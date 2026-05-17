@@ -45,6 +45,20 @@ const SQUARE_PUBLIC_SELECT = {
   created_at: true,
 } as const
 
+// Minimal fields for card/shelf rendering — subset of SQUARE_PUBLIC_SELECT
+const SQUARE_CARD_SELECT = {
+  id: true,
+  name: true,
+  slug: true,
+  bannerUrl: true,
+  iconUrl: true,
+  accentColor: true,
+  memberCount: true,
+  city: true,
+  state: true,
+  type: true,
+} as const
+
 const OFFICER_SELECT = {
   id: true,
   role: true,
@@ -83,18 +97,18 @@ export const squareService = {
       }),
     }
 
-    const [squares, total] = await Promise.all([
-      prisma.square.findMany({
-        where,
-        select: SQUARE_PUBLIC_SELECT,
-        orderBy: [{ type: 'asc' }, { memberCount: 'desc' }],
-        take: limit,
-        skip: offset,
-      }),
-      prisma.square.count({ where }),
-    ])
+    const rows = await prisma.square.findMany({
+      where,
+      select: SQUARE_CARD_SELECT,
+      orderBy: [{ type: 'asc' }, { memberCount: 'desc' }],
+      take: limit + 1,
+      skip: offset,
+    })
 
-    return { squares, total, limit, offset }
+    const hasMore = rows.length > limit
+    const squares = hasMore ? rows.slice(0, limit) : rows
+
+    return { squares, hasMore, limit, offset }
   },
 
   async getSquareBySlug(slug: string, userId?: string) {

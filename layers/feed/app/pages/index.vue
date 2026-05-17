@@ -9,9 +9,9 @@
         <SocialFeed v-if="profileStore.isLoggedIn" key="social" />
         <MarketHome v-else key="market" @sign-in="router.push('/user-login')" />
       </Transition>
-      <!-- SSR always shows the guest/market view — no mismatch -->
+      <!-- Fallback shown during SSR/hydration — lightweight to avoid duplicate onMounted -->
       <template #fallback>
-        <MarketHome @sign-in="router.push('/user-login')" />
+        <div class="min-h-screen" />
       </template>
     </ClientOnly>
 

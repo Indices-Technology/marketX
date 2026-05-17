@@ -15,7 +15,6 @@ const PRODUCT_SELECT = {
   price: true,
   discount: true,
   slug: true,
-  description: true,
   isThrift: true,
   isDeal: true,
   dealEndsAt: true,
@@ -26,14 +25,14 @@ const PRODUCT_SELECT = {
   media: {
     where: { isBgMusic: false },
     select: { id: true, url: true, type: true, isBgMusic: true, altText: true },
-    take: 4,
+    take: 2,
   },
   seller: {
     select: { id: true, store_name: true, store_slug: true, store_logo: true },
   },
   variants: {
     select: { id: true, size: true, stock: true, price: true },
-    take: 5,
+    take: 3,
   },
   _count: { select: { likes: true, comments: true } },
 } as const
@@ -78,6 +77,7 @@ export default defineEventHandler(async (event) => {
                 media: {
                   select: { id: true, url: true, type: true, isBgMusic: true, altText: true,
                     musicTitle: true, musicArtist: true },
+                  take: 4,
                 },
                 taggedProducts: {
                   select: {
@@ -86,6 +86,7 @@ export default defineEventHandler(async (event) => {
                         media: { take: 1, select: { url: true, type: true } } },
                     },
                   },
+                  take: 4,
                 },
                 _count: { select: { likes: true, comments: true, shares: true } },
               },

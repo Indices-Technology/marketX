@@ -33,8 +33,13 @@ export default defineEventHandler(async (event): Promise<IFeedResponse> => {
           skip: offset,
           orderBy: { created_at: 'desc' },
           include: {
-            author: true,
-            media: true,
+            author: { select: { id: true, username: true, avatar: true, role: true } },
+            media: {
+              where: { isBgMusic: false },
+              select: { id: true, url: true, type: true, isBgMusic: true, altText: true,
+                musicTitle: true, musicArtist: true },
+              take: 4,
+            },
             _count: { select: { likes: true, comments: true, shares: true } },
             taggedProducts: {
               include: {

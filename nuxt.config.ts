@@ -18,11 +18,8 @@ export default defineNuxtConfig({
         { name: 'format-detection', content: 'telephone=no' },
       ],
       link: [
-        {
-          rel: 'apple-touch-icon',
-          sizes: '192x192',
-          href: '/icons/icon-192.svg',
-        },
+        { rel: 'apple-touch-icon', sizes: '180x180', href: '/icons/icon-180.png' },
+        { rel: 'icon', type: 'image/png', sizes: '192x192', href: '/icons/icon-192.png' },
         { rel: 'icon', type: 'image/svg+xml', href: '/icons/icon-512.svg' },
         { rel: 'manifest', href: '/manifest.webmanifest' },
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
@@ -89,24 +86,13 @@ export default defineNuxtConfig({
       id: '/',
       categories: ['shopping', 'business', 'social'],
       icons: [
-        {
-          src: '/icons/icon-192.svg',
-          sizes: '192x192',
-          type: 'image/svg+xml',
-          purpose: 'any',
-        },
-        {
-          src: '/icons/icon-512.svg',
-          sizes: '512x512',
-          type: 'image/svg+xml',
-          purpose: 'any',
-        },
-        {
-          src: '/icons/icon-maskable-512.svg',
-          sizes: '512x512',
-          type: 'image/svg+xml',
-          purpose: 'maskable',
-        },
+        // PNG — required for iOS home screen (Safari ignores SVG icons)
+        { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+        { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+        { src: '/icons/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+        // SVG fallback for browsers that support it
+        { src: '/icons/icon-192.svg', sizes: '192x192', type: 'image/svg+xml', purpose: 'any' },
+        { src: '/icons/icon-512.svg', sizes: '512x512', type: 'image/svg+xml', purpose: 'any' },
       ],
       shortcuts: [
         {
@@ -194,7 +180,7 @@ export default defineNuxtConfig({
   image: {
     provider: 'cloudinary',
     cloudinary: {
-      baseURL: 'https://res.cloudinary.com/dcci05bzj',
+      baseURL: `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}`,
     },
   },
 
@@ -218,10 +204,20 @@ export default defineNuxtConfig({
           'X-Frame-Options': 'SAMEORIGIN',
           'X-Content-Type-Options': 'nosniff',
           'Referrer-Policy': 'strict-origin-when-cross-origin',
-          'Strict-Transport-Security':
-            'max-age=31536000; includeSubDomains; preload',
+          'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
           'Permissions-Policy': 'geolocation=(self), camera=(), microphone=()',
           'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+          'Content-Security-Policy': [
+            "default-src 'self'",
+            "script-src 'self' 'unsafe-inline' https://js.paystack.co",
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+            "font-src 'self' https://fonts.gstatic.com",
+            "img-src 'self' data: blob: https://res.cloudinary.com",
+            "media-src 'self' blob: https://res.cloudinary.com",
+            "connect-src 'self' https://api.paystack.co https://api.upstash.io wss: ws:",
+            "frame-src https://checkout.paystack.com",
+            "worker-src 'self' blob:",
+          ].join('; '),
         },
       },
       // Long-lived cache for hashed static assets

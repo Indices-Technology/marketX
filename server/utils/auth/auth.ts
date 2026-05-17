@@ -3,10 +3,17 @@
 import { hash, verify } from 'argon2'
 import jwt from 'jsonwebtoken'
 
-const JWT_SECRET =
-  process.env.JWT_SECRET || 'your-secret-key-change-in-production'
-const JWT_REFRESH_SECRET =
-  process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-change-in-production'
+const getJwtSecret = () => {
+  const secret = process.env.JWT_SECRET
+  if (!secret) throw new Error('[auth] JWT_SECRET is not set')
+  return secret
+}
+
+const getJwtRefreshSecret = () => {
+  const secret = process.env.JWT_REFRESH_SECRET
+  if (!secret) throw new Error('[auth] JWT_REFRESH_SECRET is not set')
+  return secret
+}
 
 // ==================== PASSWORD HASHING ====================
 
@@ -42,7 +49,9 @@ export interface TokenPayload {
 }
 
 export function generateRefreshToken(userId: string): string {
-  return jwt.sign({ userId, jti: crypto.randomUUID() }, JWT_REFRESH_SECRET, { expiresIn: '7d' })
+  return jwt.sign({ userId, jti: crypto.randomUUID() }, getJwtRefreshSecret(), {
+    expiresIn: '7d',
+  })
 }
 
 export function generateTokens(
@@ -53,8 +62,8 @@ export function generateTokens(
 ) {
   const accessToken = jwt.sign(
     { userId, email, role, ...(sessionId ? { sessionId } : {}) },
-    JWT_SECRET,
-    { expiresIn: '24h' },
+    getJwtSecret(),
+    { expiresIn: '1h' },
   )
 
   const refreshToken = generateRefreshToken(userId)
@@ -64,7 +73,7 @@ export function generateTokens(
 
 export function jwtVerify(token: string): TokenPayload {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as TokenPayload
+    const decoded = jwt.verify(token, getJwtSecret()) as TokenPayload
     return decoded
   } catch (error) {
     throw new Error('Invalid or expired token')
@@ -73,7 +82,7 @@ export function jwtVerify(token: string): TokenPayload {
 
 export function jwtVerifyRefresh(token: string): { userId: string } {
   try {
-    const decoded = jwt.verify(token, JWT_REFRESH_SECRET) as { userId: string }
+    const decoded = jwt.verify(token, getJwtRefreshSecret()) as { userId: string }
     return decoded
   } catch (error) {
     throw new Error('Invalid or expired refresh token')

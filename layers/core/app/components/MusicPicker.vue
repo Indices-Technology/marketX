@@ -576,7 +576,7 @@ interface SelectedTrack {
 }
 
 // ── Props / emits ──────────────────────────────────────────────────────────────
-defineProps<{ isOpen: boolean }>()
+const props = defineProps<{ isOpen: boolean }>()
 const emit = defineEmits<{
   close: []
   select: [music: MusicSelection]
@@ -984,12 +984,19 @@ const formatDuration = (seconds: number) => {
 }
 
 // ── Lifecycle ──────────────────────────────────────────────────────────────────
+// Only load tracks when the picker is opened — never on every mount
+watch(
+  () => props.isOpen,
+  (open) => {
+    if (open && activeTab.value === 'discover' && tracks.value.length === 0) loadTracks()
+  },
+)
+
 watch(
   () => activeTab.value,
   (tab) => {
     if (tab === 'discover' && tracks.value.length === 0) loadTracks()
   },
-  { immediate: true },
 )
 
 onUnmounted(() => {

@@ -1,7 +1,7 @@
-# ReelShop — Architecture & Engineering Reference
+# MarketX — Architecture & Engineering Reference
 
-A full-stack social commerce platform built with **Nuxt 3**, **Prisma**, **PostgreSQL (Neon)**, and **Redis**.
-Users post content, tag products, follow sellers, and buy directly from the feed.
+A full-stack social commerce platform built with **Nuxt 4**, **Prisma**, **PostgreSQL (Neon)**, and **Redis**.
+Users post content, tag products, follow sellers, buy directly from the feed, and join localised market Squares.
 
 ---
 
@@ -34,67 +34,76 @@ Users post content, tag products, follow sellers, and buy directly from the feed
 
 | Layer | Technology |
 |---|---|
-| Framework | Nuxt 3 (Vue 3, Vite, Nitro) |
+| Framework | Nuxt 4 (Vue 3, Vite, Nitro) |
 | Database | PostgreSQL via Neon (serverless) |
 | ORM | Prisma 7 with `@prisma/adapter-pg` |
 | Cache | Upstash Redis (REST/HTTP) |
-| Job Queue | BullMQ + standard Redis TCP (Redis Cloud) |
+| Job Queue | BullMQ + standard Redis TCP |
 | Auth | JWT (access + refresh tokens) + Argon2 password hashing |
 | Media | Cloudinary (images, video, audio) |
 | Email | Resend |
 | Payments | Paystack (primary), PayPal (stub) |
-| Shipping | Shippo, SendBox |
+| Shipping | Shippo (international), SendBox (Nigeria domestic) |
 | Real-time | Soketi (self-hosted Pusher-compatible) |
 | CSS | TailwindCSS |
 | State | Pinia + pinia-plugin-persistedstate |
 | Validation | Zod |
 | i18n | @nuxtjs/i18n v10 (7 languages) |
+| PWA | @vite-pwa/nuxt (service worker, offline, install prompt) |
 
 ---
 
 ## 2. Project Structure
 
 ```
-reelshop/
-├── app/                        # App-level pages, layouts, components
-│   ├── components/             # Shared UI components
-│   ├── composables/            # App-level composables
-│   ├── layouts/                # HomeLayout, StoreLayout + children
-│   ├── pages/                  # App-level routes
-│   ├── types/                  # Shared TypeScript types
-│   └── utils/                  # Client utilities
+marketX/
 ├── layers/                     # Feature layers (Nuxt extends)
-│   ├── AI/                     # AI chat integration
-│   ├── base/                   # Auth, core services, base API client
-│   ├── commerce/               # Products, cart, orders, wallet, shipping
-│   ├── feed/                   # Feed algorithm, stories
-│   ├── post/                   # Posts, comments, likes, shares
-│   ├── profile/                # Profiles, chat, follow, notifications
+│   ├── ai/                     # AI listing generation (Anthropic, OpenAI)
+│   ├── core/                   # Auth, base API client, layouts, notifications
+│   ├── feed/                   # Feed algorithm, stories, MarketHome
 │   ├── seller/                 # Seller dashboard, store management
-│   └── post/                   # Post CRUD, modals, PostCard
-├── server/                     # Nitro backend
-│   ├── api/                    # HTTP route handlers (file-based)
-│   ├── layers/                 # Server-side domain logic
-│   │   ├── auth/               # Auth service + repository
-│   │   ├── commerce/           # Product, cart, order, wallet
-│   │   ├── feed/               # Feed service + utils
-│   │   ├── posts/              # Post, story repositories & services
-│   │   ├── profile/            # Profile, social, chat, notification
-│   │   ├── seller/             # Store service + repository
-│   │   └── shared/             # Audit, requireAuth middleware, helpers
-│   ├── middleware/             # Global Nitro middleware
-│   ├── plugins/                # Nitro plugins (run on boot)
-│   ├── queues/                 # BullMQ queue producers + workers
+│   ├── profile/                # User profiles, chat, follow, notifications
+│   ├── commerce/               # Products, cart, orders, wallet, shipping, discover
+│   ├── social/                 # Posts, comments, likes, shares, stories
+│   ├── map/                    # Map view, geolocation, nearby sellers
+│   └── square/                 # Market Squares (communities of sellers)
+├── server/                     # Root-level Nitro backend
+│   ├── api/                    # health.get.ts and root-level routes
+│   ├── middleware/              # Global Nitro middleware (auth, rate-limit)
+│   ├── plugins/                # monitoring.ts, workers.ts (boot-time)
 │   ├── tasks/                  # Nitro scheduled tasks (cron)
-│   └── utils/                  # Server utilities (db, cache, queue, auth)
+│   │   ├── processQueues.ts
+│   │   ├── releaseShippedOrders.ts
+│   │   └── releaseExpiredOrders.ts
+│   └── utils/                  # db.ts, cache.ts, queue.ts, auth/, email/
 ├── prisma/
-│   ├── schema.prisma           # Database schema (40+ models)
+│   ├── schema.prisma           # Database schema (50+ models)
 │   └── seed.ts                 # Demo data seeder
-├── i18n/locales/               # Translation files (7 languages)
-├── scripts/                    # Utility scripts (seed-shipping, etc.)
+├── locales/                    # i18n translation files (7 languages)
+├── public/icons/               # PWA icons (PNG + SVG)
 ├── nuxt.config.ts              # Nuxt configuration
 ├── tailwind.config.ts          # TailwindCSS theme
 └── .env                        # Environment variables
+```
+
+Each layer follows this internal layout:
+
+```
+layers/<name>/
+  app/
+    components/      # Vue components (auto-imported)
+    composables/     # useXxx() composables (auto-imported)
+    pages/           # Routes (merged into file-based router)
+    services/        # Client-side API wrappers (*.api.ts)
+    stores/          # Pinia stores (*.store.ts)
+    types/           # TypeScript interfaces
+    layouts/         # Layout components (layer-specific)
+  server/
+    api/             # HTTP route handlers (file-based, *.method.ts)
+    services/        # Server-side business logic (*.service.ts)
+    repositories/    # Raw Prisma queries (*.repository.ts)
+    schemas/         # Zod validation schemas (*.schema.ts)
+  nuxt.config.ts     # Layer-specific config (rarely needed)
 ```
 
 ---
@@ -148,45 +157,33 @@ GET    /api/posts/:id/comments         → nested list
 
 ## 4. Layered Architecture
 
-Nuxt 3 **extends** lets each feature be a self-contained layer with its own pages, components, composables, stores, and services. The main `nuxt.config.ts` merges them all.
+Nuxt 4 **extends** lets each feature be a self-contained layer with its own pages, components, composables, stores, and services. The main `nuxt.config.ts` merges them all.
 
 ### Layer Load Order
 
 ```typescript
 // nuxt.config.ts
 extends: [
-  './layers/AI',       // AI chat
-  './layers/base',     // Auth, core API client, media upload
-  './layers/feed',     // Feed algorithm, stories
+  './layers/ai',       // AI listing generation
+  './layers/core',     // Auth, base API client, layouts, notifications
+  './layers/feed',     // Feed algorithm, stories, MarketHome
   './layers/seller',   // Seller dashboard, store management
   './layers/profile',  // User profiles, chat, follow, notifications
-  './layers/commerce', // Cart, orders, wallet, shipping, products
-  './layers/post',     // Posts, comments, likes, modals
+  './layers/commerce', // Cart, orders, wallet, shipping, products, discover
+  './layers/social',   // Posts, comments, likes, shares, stories
+  './layers/map',      // Map view, geolocation, nearby sellers
+  './layers/square',   // Market Squares
 ]
 ```
 
-Later layers override earlier ones when file paths collide. Place shared/foundational code in `base`.
-
-### What Each Layer Contains
-
-```
-layers/<name>/
-  app/
-    components/      # Vue components auto-imported
-    composables/     # useXxx() composables auto-imported
-    pages/           # Routes (merged with file-based router)
-    services/        # Client-side API wrappers
-    stores/          # Pinia stores
-    types/           # TypeScript interfaces
-  nuxt.config.ts     # Layer-specific config (rarely needed)
-```
+Later layers override earlier ones when file paths collide.
 
 ### Layer Dependency Rules
 
-- `base` has no dependencies on other layers
-- All other layers may depend on `base`
-- Layers should NOT import from each other (use events or stores instead)
-- Server-side layers (`server/layers/`) mirror the same domain separation
+- `core` has no dependencies on other layers
+- All other layers may depend on `core`
+- Layers should NOT import from each other horizontally (use shared types or stores)
+- Server-side layer structure mirrors the app layer structure
 
 ---
 
@@ -196,11 +193,14 @@ layers/<name>/
 
 ```
 HTTP Request
-  → server/middleware/auth.global.ts   (attaches user to event.context)
-  → server/api/[domain]/file.method.ts (route handler)
+  → server/middleware/rate-limit.ts    (Redis-backed rate limiting)
+  → server/middleware/auth.global.ts   (attaches user to event.context — passive)
+  → layers/[domain]/server/api/file.method.ts  (route handler)
       → requireAuth(event)             (throws 401 if needed)
-      → server/layers/[domain]/services/[name].service.ts
-          → server/layers/[domain]/repositories/[name].repository.ts
+      → Zod validation
+      → remember(cacheKey, ttl, () => service.method())
+      → [domain].service.ts
+          → [domain].repository.ts
               → Prisma (PostgreSQL)
           → auditQueue.enqueue(...)    (fire-and-forget)
           → notificationQueue.enqueue(...) (fire-and-forget)
@@ -209,7 +209,7 @@ HTTP Request
 
 ### Auth Middleware — PASSIVE
 
-`server/middleware/auth.global.ts` runs on every request but **never blocks**. It only decodes the JWT and attaches:
+`server/middleware/auth.global.ts` runs on every request but **never blocks**. It only verifies the JWT and attaches:
 
 ```typescript
 event.context.auth = { user: { userId: string } }
@@ -218,59 +218,36 @@ event.context.auth = { user: { userId: string } }
 To protect a route, explicitly call `requireAuth(event)` at the top of the handler:
 
 ```typescript
-// server/layers/shared/middleware/requireAuth.ts
 export function requireAuth(event: H3Event) {
   const user = event.context.auth?.user
   if (!user?.userId) throw createError({ statusCode: 401, message: 'Unauthorized' })
-  return user  // returns { id: string } — NOTE: field is `id`, not `userId`
+  return user
 }
 ```
+
+### Rate Limiting
+
+`server/middleware/rate-limit.ts` — Redis-backed (Upstash), falls back to in-memory for dev:
+
+- Strategy: `redis.incr(key)` + `redis.expire(key, windowSec)` — atomic
+- Lock key `${key}:lock` applied on limit breach for lockout duration
+- Applied per route pattern with configurable limits and windows
 
 ### Service / Repository Pattern
 
-Every domain follows this separation:
-
 ```
 Route handler    → validates input (Zod), calls service, returns HTTP response
-Service          → business logic, orchestration, throws UserError
+Service          → business logic, orchestration, throws H3 errors
 Repository       → raw Prisma queries, no business logic
-```
-
-```typescript
-// Route handler
-export default defineEventHandler(async (event) => {
-  const user = requireAuth(event)
-  const data = await readBody(event)
-  const result = await contentService.createPost(user.id, data, ...)
-  return { success: true, data: result }
-})
-
-// Service
-async createPost(userId, data, ipAddress, userAgent) {
-  const validated = createPostSchema.parse(data)  // throws ZodError → 400
-  const post = await postRepository.createPost(userId, validated)
-  auditQueue.enqueue({ ... })  // fire-and-forget
-  return post
-}
-
-// Repository
-async createPost(userId, data) {
-  return prisma.post.create({
-    data: { authorId: userId, ...data, media: { create: data.mediaData } }
-  })
-}
 ```
 
 ### Error Types
 
 ```typescript
-// UserError — domain errors (404, 403, 400)
-throw new UserError('POST_NOT_FOUND', 'Post not found', 404)
+// H3 HTTP errors (most common)
+throw createError({ statusCode: 404, statusMessage: 'Not found' })
 
-// createError — Nitro/H3 HTTP errors
-throw createError({ statusCode: 401, message: 'Unauthorized' })
-
-// ZodError — automatically caught and returns 400
+// ZodError → automatically caught and returns 400
 ```
 
 ---
@@ -282,13 +259,13 @@ throw createError({ statusCode: 401, message: 'Unauthorized' })
 | Model | Purpose |
 |---|---|
 | `Profile` | User account (auth, avatar, bio) |
-| `SellerProfile` | Store/seller (slug, logo, ship-from address) |
-| `Products` | Sellable items (price, status, variants) |
+| `SellerProfile` | Store/seller (slug, logo, ship-from address, primarySquareId) |
+| `Products` | Sellable items (price, status, variants, squareId) |
 | `ProductVariant` | Size/color/SKU variants (stock, price) |
 | `Orders` | Customer purchases (payment, shipping, status) |
 | `OrderItem` | Line items (variant, qty, price at time of order) |
 | `CartItem` | Shopping cart (userId + variantId unique) |
-| `Post` | Social posts (caption, visibility, media) |
+| `Post` | Social posts (caption, visibility, media, squareId) |
 | `Media` | Files (url, type, isBgMusic flag) |
 | `Comment` | Threaded comments (parentId for replies) |
 | `PostLike` | Post reactions (composite PK: userId + postId) |
@@ -301,16 +278,28 @@ throw createError({ statusCode: 401, message: 'Unauthorized' })
 | `GlobalShippingZone` | Platform-level shipping rates |
 | `AuditLog` | Security audit trail |
 | `Session` | Auth sessions (refreshToken, device, IP) |
+| `Square` | Market Square (community of sellers; GEOGRAPHIC or CATEGORY type) |
+| `SquareMembership` | Seller ↔ Square relationship (PENDING/ACTIVE/SUSPENDED, isPrimary) |
+| `SquareOfficer` | Square officer roles (CHAIRMAN, SECRETARY, TREASURER) |
+| `SquareWallet` | Square association treasury |
+| `SquareTransaction` | Association cut per order |
+| `UserSquareFollow` | User follows a Square |
+| `SquareAnnouncement` | Pinned announcements within a Square |
 
 ### Enums
 
 ```prisma
-enum ProductStatus  { DRAFT PUBLISHED ARCHIVED }
-enum MediaType      { IMAGE VIDEO AUDIO }
-enum OrderStatus    { PENDING CONFIRMED COMPLETED CANCELLED PAID SHIPPED DELIVERED RETURNED }
-enum PaymentStatus  { UNPAID PENDING PAID FAILED REFUNDED }
-enum NotificationType { ORDER REVIEW PRODUCT GENERAL NEW_COMMENT COMMENT_LIKE REPLY PRODUCT_SHARE NEW_FOLLOWER NEW_POST POST_LIKE }
-enum VisibilityType { PUBLIC PRIVATE FOLLOWERS }
+enum ProductStatus    { DRAFT PUBLISHED ARCHIVED }
+enum MediaType        { IMAGE VIDEO AUDIO }
+enum OrderStatus      { PENDING CONFIRMED COMPLETED CANCELLED PAID SHIPPED DELIVERED RETURNED }
+enum PaymentStatus    { UNPAID PENDING PAID FAILED REFUNDED }
+enum SquareType       { GEOGRAPHIC CATEGORY }
+enum SquareStatus     { PENDING ACTIVE SUSPENDED }
+enum MembershipStatus { PENDING ACTIVE SUSPENDED }
+enum OfficerRole      { CHAIRMAN SECRETARY TREASURER }
+enum NotificationType { ORDER REVIEW PRODUCT GENERAL NEW_COMMENT COMMENT_LIKE REPLY
+                        PRODUCT_SHARE NEW_FOLLOWER NEW_POST POST_LIKE
+                        SQUARE_MEMBERSHIP_APPROVED SQUARE_MEMBERSHIP_REJECTED }
 ```
 
 ### DB Client Setup
@@ -327,12 +316,10 @@ const pool = new Pool({
   keepAliveInitialDelayMillis: 10_000,
 })
 
-// Required: prevents uncaughtException when Neon auto-suspends idle connections
 pool.on('error', (err) => console.warn('[db] pg pool error:', err.message))
 ```
 
-> **Why `pg.Pool` and not Neon serverless driver?**
-> Neon's `@neondatabase/serverless` uses HTTP/WebSocket and doesn't read `DATABASE_URL` in the same way during Nitro's module loading phase. `pg.Pool` + `keepAlive` is reliable with Neon's free tier auto-suspend behavior.
+> **Why `pg.Pool` over Neon serverless driver?** Neon's HTTP/WebSocket driver doesn't read `DATABASE_URL` the same way during Nitro's module loading phase. `pg.Pool` + `keepAlive` is reliable with Neon's free-tier auto-suspend.
 
 ---
 
@@ -364,20 +351,17 @@ accessToken expires → client calls /api/auth/refresh-token
 - `FailedLoginAttempt` table — brute force protection with lockout
 - `PasswordResetToken` — single-use, expires in 1 hour
 
-### Session Management
+### OTP for Guest Checkout
 
-`Session` model tracks all active sessions:
-
-```typescript
-{ refreshToken, ip, userAgent, device, country, expiresAt, lastUsedAt, revokedAt }
-```
-
-Logout revokes the session. `revokedAt` is set, future refresh attempts fail.
+Redis-backed OTP store (`server/utils/auth/otpStore.ts`):
+- Key: `otp:checkout:{email}` — expires in 600s
+- `verify()` uses `redis.getdel()` — atomic single-use consumption
+- Falls back to in-memory Map when Redis is unavailable (dev)
 
 ### Client-Side Auth Header
 
 ```typescript
-// layers/base/app/services/base.api.ts
+// layers/core/app/services/base.api.ts
 // Only inject on client — never on server (would cause SSR → server hang)
 if (import.meta.client) {
   const token = authStore.accessToken || localStorage.getItem('accessToken')
@@ -389,41 +373,44 @@ if (import.meta.client) {
 
 ## 8. Caching Layer
 
-`server/utils/cache.ts` uses **Upstash Redis** (REST-based, works in serverless).
+`server/utils/cache.ts` uses **Upstash Redis** (REST-based, works serverless).
 
 ### Usage
 
 ```typescript
-import { remember, forget } from '~/server/utils/cache'
+import { remember, forget } from '~~/server/utils/cache'
 
-// Cache for 60 seconds
-const data = await remember('cache:key', 60, async () => {
-  return await expensiveQuery()
+const data = await remember('cache:key', 120, async () => {
+  return await prisma.something.findMany(...)
 })
 
-// Invalidate
-await forget('cache:key')
+await forget('cache:key')  // invalidate
 ```
 
-### What Is Cached
+### Cached Endpoints
 
-| Endpoint | TTL | Stale-While-Revalidate |
-|---|---|---|
-| `/api/feed/home` | 60s | 120s |
-| `/api/feed/discover` | 60s | 120s |
-| `/api/commerce/categories` | 600s | 3600s |
-| `/api/seller/featured` | 120s | 300s |
+| Endpoint | Cache Key | Redis TTL | HTTP max-age |
+|---|---|---|---|
+| `GET /api/feed/home` | `feed:home:offset:{n}:limit:{n}` | 120s | 60s |
+| `GET /api/feed/discover` | `feed:discover:page:{n}:limit:{n}` | 120s | 60s |
+| `GET /api/feed/trending` | `feed:trending:v2` | 300s | 180s |
+| `GET /api/feed/following` | `feed:following:user:{id}:page:{n}` | 120s | private |
+| `GET /api/feed/deals` | `feed:deals:offset:{n}:limit:{n}` | 120s | 60s |
+| `GET /api/feed/fresh-drops` | `feed:fresh-drops:offset:{n}:limit:{n}` | 120s | 60s |
+| `GET /api/feed/pre-loved` | `feed:pre-loved:offset:{n}:limit:{n}[:cond:{v}]` | 120s | 60s |
+| `GET /api/feed/reels` | `feed:reels:offset:{n}:limit:{n}` | 120s | 60s |
+| `GET /api/feed/shop-today` | `feed:shop-today` | 180s | — |
+| `GET /api/feed/squares/[slug]` | `feed:square:{slug}:offset:{n}:limit:{n}:type:{v}` | 90s | 60s |
+| `GET /api/stories` (auth) | `feed:stories:user:{id}:limit:{n}` | 60s | private 30s |
+| `GET /api/stories` (anon) | `feed:stories:public:limit:{n}` | 120s | private 30s |
+| `GET /api/commerce/categories` | `data:categories` | 3600s | 600s |
+| `GET /api/seller/featured` | `feed:sellers:featured:page:{n}:limit:{n}` | 300s | 120s |
+| `GET /api/squares` | `squares:list:{limit}:{offset}:{type}:{city}:{state}:{search}` | 300s | 300s |
+| `GET /api/map/sellers` | `map:geo-sellers:all` or `map:geo-sellers:{category}` | 300s | — |
 
-### Cache Key Format
+> **Creator bypass:** after publishing content, a 30s `creator:bypass:{userId}` key causes the next home/discover request to skip the cache so the creator sees their own content immediately.
 
-```
-feed:home:page:{page}:limit:{limit}
-feed:discover:page:{page}:limit:{limit}
-data:categories
-feed:sellers:featured:page:{page}:limit:{limit}
-```
-
-> Creators (authenticated users posting) bypass the feed cache so their own content appears immediately.
+Full details: see [caching-strategy.md](./caching-strategy.md).
 
 ---
 
@@ -433,8 +420,6 @@ Three BullMQ queues, each with its own Redis-backed queue and in-process worker.
 
 ### Why BullMQ (not inline)
 
-Inline `await service.doSomething()` inside a route adds latency the user waits for. Queued jobs run after the response is sent:
-
 - Audit logging: was 20ms per request → now 1ms
 - Notifications: was 30ms per request → now 1ms
 - Emails: was 200ms+ per request → now 1ms
@@ -442,57 +427,37 @@ Inline `await service.doSomething()` inside a route adds latency the user waits 
 ### Architecture
 
 ```
-server/utils/queue.ts          → exports queueConnection (ConnectionOptions | null)
-server/queues/audit.queue.ts   → auditQueue.enqueue() + startAuditWorker()
+server/utils/queue.ts              → exports queueConnection (ioredis | null)
+server/queues/audit.queue.ts       → auditQueue.enqueue() + startAuditWorker()
 server/queues/notification.queue.ts → notificationQueue.enqueue() + startNotificationWorker()
-server/queues/email.queue.ts   → emailQueue.enqueue() + startEmailWorker()
-server/plugins/workers.ts      → starts all workers on Nitro boot
+server/queues/email.queue.ts       → emailQueue.enqueue() + startEmailWorker()
+server/plugins/workers.ts          → starts all workers on Nitro boot
 ```
 
-### Producer (call from any service)
+### Worker Configuration
 
-```typescript
-// Fire-and-forget — NEVER await
-auditQueue.enqueue({
-  userId,
-  action: 'POST_CREATED',
-  resource: 'Post',
-  resourceId: post.id,
-  ipAddress,
-  userAgent,
-})
-```
+| Queue | Concurrency | Backoff |
+|---|---|---|
+| audit | 10 | exponential 2s |
+| notification | 20 | exponential 2s |
+| email | 5 | exponential 5s |
 
 ### Two Redis Instances
 
 | Instance | Library | Purpose |
 |---|---|---|
 | Upstash Redis | `@upstash/redis` (REST/HTTP) | Caching (`remember()`) |
-| Redis Cloud / Railway | `ioredis` (TCP) | BullMQ job queues |
+| Redis Cloud / Railway | `ioredis` (TCP) | BullMQ queues |
 
-> BullMQ requires a **standard TCP Redis connection** (ioredis). Upstash only exposes a REST API — BullMQ cannot use it.
+BullMQ requires a standard TCP connection — Upstash REST API is incompatible with BullMQ.
 
-### Worker Configuration
+### Fallback (no `QUEUE_REDIS_URL`)
 
-| Queue | Concurrency | Backoff | Use |
-|---|---|---|---|
-| audit | 10 | exponential 2s | DB writes (fast) |
-| notification | 20 | exponential 2s | DB writes (very fast) |
-| email | 5 | exponential 5s | Resend API (rate limited) |
-
-### Fallback (no QUEUE_REDIS_URL)
-
-If `QUEUE_REDIS_URL` is not set, jobs run inline synchronously. No jobs are lost — behavior is identical, just slower:
-
-```typescript
-} else {
-  auditService.logUserAction(data).catch((e) => console.error(...))
-}
-```
+Jobs run inline synchronously. No work is lost — behaviour is identical, just slower.
 
 ### Eviction Policy
 
-BullMQ requires Redis eviction policy set to **`noeviction`**. With `volatile-lru`, Redis can evict queued jobs under memory pressure. Set this in your Redis provider dashboard.
+Set BullMQ's Redis instance to **`noeviction`**. `volatile-lru` can evict queued jobs under memory pressure.
 
 ---
 
@@ -500,11 +465,10 @@ BullMQ requires Redis eviction policy set to **`noeviction`**. With `volatile-lr
 
 **Soketi** — self-hosted Pusher-compatible WebSocket server.
 
-### Server-side (emit events)
+### Server-side (emit)
 
 ```typescript
-import { pusher } from '~/server/utils/pusher'
-
+import { pusher } from '~~/server/utils/pusher'
 await pusher.trigger(`user-${userId}`, 'new-message', { message })
 ```
 
@@ -536,79 +500,42 @@ POST /api/commerce/payments/initialize
 User pays on Paystack hosted page
   → Paystack redirects to /success?reference=xxx
   → POST /api/commerce/payments/verify
-      → paystack.verifyTransaction(reference)
       → if paid: update Order.paymentStatus = PAID
-               update seller wallet
-               create notifications
-               enqueue confirmation email
+               credit seller wallet
+               credit Square association wallet (if seller is in a Square)
+               enqueue confirmation email + notifications
 ```
 
-### Webhook (backup verification)
+### Webhook (backup)
 
-`POST /api/commerce/payments/webhook` — Paystack posts events here. Handles `charge.success` to mark orders paid in case the redirect fails.
+`POST /api/commerce/payments/webhook` — handles `charge.success` if the redirect fails.
+
+### Commission Flow
+
+`server/utils/fees.ts` computes platform cut. After payment:
+1. `walletService.creditSellersOnPayment(orderId)` — credits seller wallets
+2. `squareService.creditAssociationsForOrder(orderId)` — credits Square wallets with `associationCutPercent`
 
 ### Shipping
-
-Two providers integrated:
 
 | Provider | Use |
 |---|---|
 | **Shippo** | International + US domestic |
 | **SendBox** | Nigeria domestic |
 
-`server/utils/shipping/index.ts` orchestrates both — routes to the correct provider based on destination.
-
 `GlobalShippingZone` table stores platform-level rates (8 zones seeded via `scripts/seed-shipping.mjs`).
-
-### Commission
-
-`server/utils/fees.ts` calculates the platform cut and affiliate cut per order. `PLATFORM_COMMISSION_RATE` is set in `.env`.
 
 ---
 
 ## 12. Media Uploads
 
-All media goes through Cloudinary. The flow is:
-
 ```
 Client → POST /api/media/upload (multipart form)
   → server streams to Cloudinary (signed upload)
   → returns { url, public_id, type }
-
-Client stores url + public_id, attaches to post/product creation payload
 ```
 
-### Media Model
-
-```prisma
-model Media {
-  id         String    @id @default(uuid())
-  url        String
-  type       MediaType  // IMAGE | VIDEO | AUDIO
-  public_id  String
-  isBgMusic  Boolean   @default(false)  // distinguishes background music from content
-  postId     String?
-  productId  Int?
-  authorId   String?
-  sellerId   String?
-}
-```
-
-### Multiple Media on Posts
-
-Posts support up to 10 images/videos plus optional background music:
-
-```typescript
-interface ICreatePostData {
-  caption?: string
-  contentType: string
-  visibility: string
-  mediaData: Array<{ url: string; public_id: string; type: string }>
-  musicData?: { url: string; public_id: string; type: string }
-}
-```
-
-`isBgMusic = true` distinguishes the audio track from content files.
+`isBgMusic = true` on `Media` distinguishes background audio tracks from content files.
 
 ---
 
@@ -616,42 +543,28 @@ interface ICreatePostData {
 
 ### Response Format
 
-All endpoints return:
-
 ```typescript
 // Single resource
 { success: true, data: T }
 
 // Paginated list
-{ success: true, data: T[], meta: { total, limit, offset, hasMore } }
+{ success: true, data: T[], meta: { limit, offset, hasMore } }
 
 // Error
 { statusCode: number, message: string }
 ```
 
+> Note: most paginated endpoints use the **+1 trick** (fetch `limit+1`, slice to `limit`, set `hasMore = rows.length > limit`) — no separate `COUNT(*)` query. The `total` field is absent on these endpoints.
+
 ### Pagination
 
-```typescript
-// Query params: ?limit=20&offset=0
-// Response meta:
-{ total: number, limit: number, offset: number, hasMore: boolean }
 ```
-
-### Client — BaseApiClient
-
-`layers/base/app/services/base.api.ts`
-
-```typescript
-const result = await BaseApiClient.request<{ data: Post[] }>('/api/posts')
-// result is the raw JSON — caller must extract .data
-const posts = result.data
+?limit=20&offset=0  →  { data[], meta: { limit, offset, hasMore } }
 ```
-
-Auth header is injected automatically on client-side (`import.meta.client` guard prevents SSR hangs).
 
 ### Cache-Control Headers
 
-Added manually on cacheable endpoints:
+Set explicitly on cacheable endpoints:
 
 ```typescript
 setHeader(event, 'Cache-Control', 'public, max-age=60, stale-while-revalidate=120')
@@ -661,16 +574,11 @@ setHeader(event, 'Cache-Control', 'public, max-age=60, stale-while-revalidate=12
 
 ## 14. State Management
 
-All state lives in **Pinia** stores, organized by domain.
-
-### Store Locations
+All state lives in **Pinia** stores, organised by domain.
 
 | Domain | Store | Persisted |
 |---|---|---|
-| Auth | `layers/base/app/stores/auth.store.ts` | Yes (token) |
-| Post | `layers/post/app/store/post.store.ts` | No |
-| Comment | `layers/post/app/store/comment.store.ts` | No |
-| Feed | `layers/feed/app/stores/feed.stores.ts` | No |
+| Auth | `layers/core/app/stores/auth.store.ts` | Yes (token) |
 | Profile | `layers/profile/app/stores/profile.store.ts` | No |
 | Follow | `layers/profile/app/stores/follow.store.ts` | No |
 | Chat | `layers/profile/app/stores/chat.store.ts` | No |
@@ -679,26 +587,9 @@ All state lives in **Pinia** stores, organized by domain.
 | Product | `layers/commerce/app/stores/product.store.ts` | No |
 | Seller | `layers/seller/app/store/seller.store.ts` | No |
 
-### Key Post Store State
-
-```typescript
-likedPostIds: Set<string>    // Set for O(1) lookup
-savedPostIds: string[]       // Bookmarked posts
-userPosts: Map<string, Post[]>  // Keyed by userId
-```
-
-### Follow Store
-
-```typescript
-// followStatus keyed by userId OR username (batch check populates both)
-followStatus: Record<string, boolean>
-```
-
 ---
 
 ## 15. SSR Safety Rules
-
-Nuxt renders pages on the server first, then hydrates on the client. Certain patterns break SSR:
 
 ### DO NOT
 
@@ -710,8 +601,7 @@ watch(someRef, fetchData, { immediate: true })
 const width = window.innerWidth
 
 // ❌ Auth header injection during SSR causes server loops
-const token = authStore.accessToken
-headers['Authorization'] = `Bearer ${token}`
+headers['Authorization'] = `Bearer ${authStore.accessToken}`
 ```
 
 ### DO
@@ -720,19 +610,23 @@ headers['Authorization'] = `Bearer ${token}`
 // ✅ Only runs on client
 onMounted(() => { fetchData() })
 
-// ✅ Client-only composable
+// ✅ Client-only guard
 if (import.meta.client) { ... }
 
 // ✅ useLazyAsyncData with server: false
 const { data } = useLazyAsyncData('key', () => fetchData(), {
   server: false,
-  dedupe: 'defer',  // prevents duplicate calls from cancelling each other
+  dedupe: 'defer',
 })
 ```
 
 ### `dedupe: 'defer'` Rule
 
-When multiple components call the same `useLazyAsyncData` key simultaneously, the default `dedupe: 'cancel'` cancels and restarts each time — causing 3-5× duplicate API calls. Use `dedupe: 'defer'` so the first call completes and subsequent callers wait for it.
+The default `dedupe: 'cancel'` cancels in-flight requests when a new caller appears — causing repeated fetches when 3+ components share a key. `defer` queues additional callers to wait for the existing request.
+
+### `ClientOnly` Fallback Rule
+
+Never use a data-fetching component as a `ClientOnly` `#fallback`. The fallback is hydrated on the client before `ClientOnly` switches to the real slot — causing `onMounted` to fire twice and doubling all API calls. Use a lightweight skeleton or empty placeholder instead.
 
 ---
 
@@ -740,15 +634,12 @@ When multiple components call the same `useLazyAsyncData` key simultaneously, th
 
 7 languages supported via `@nuxtjs/i18n` v10.
 
-### Config
-
 ```typescript
-// nuxt.config.ts
 i18n: {
   defaultLocale: 'en',
-  langDir: 'i18n/locales/',
-  lazy: true,          // Only load the user's locale (not all 7)
-  strategy: 'no_prefix', // URLs don't change — locale in cookie
+  langDir: 'locales/',
+  lazy: true,
+  strategy: 'no_prefix',
   locales: [
     { code: 'en', file: 'en.json' },
     { code: 'fr', file: 'fr.json' },
@@ -761,23 +652,6 @@ i18n: {
 }
 ```
 
-### Usage
-
-```vue
-<script setup>
-const { t } = useI18n()
-</script>
-
-<template>
-  <span>{{ $t('nav.home') }}</span>
-  <span>{{ t('post.like') }}</span>
-</template>
-```
-
-### Locale Switcher
-
-`app/components/LanguageSwitcher.vue` — dropdown in the right sidebar footer.
-
 ---
 
 ## 17. Performance Optimizations
@@ -786,62 +660,49 @@ const { t } = useI18n()
 
 - `nitro.compressPublicAssets: true` — gzip static assets
 - `nitro.minify: true` — minify server output
-- `vite.build.rollupOptions.manualChunks` — separate vendor bundles:
-  - `vendor-vue`: vue, vue-router, pinia
-  - `vendor-ui`: @vueuse/core
+- `vite.build.rollupOptions.manualChunks` — `vendor-vue` (vue, vue-router, pinia) + `vendor-ui` (@vueuse/core)
 
-### Code Splitting
+### Slim Prisma Selects
 
-All modals are lazy-loaded with `defineAsyncComponent` — they only download when opened:
+Two patterns used throughout:
+
+1. **Card select** — minimal fields for listing cards (e.g. `SQUARE_CARD_SELECT` — 10 fields vs 19 in full select)
+2. **Feed select** — one media item, one variant, no password/financial fields
+
+### +1 Trick for `hasMore`
+
+All feed and listing endpoints use `take: limit + 1`, slice to `limit`, derive `hasMore = rows.length > limit` — eliminates one `COUNT(*)` query per request.
+
+### In-Flight Guards
+
+Module-level Promise guards in composables prevent duplicate HTTP requests when multiple component instances mount simultaneously:
 
 ```typescript
-const CreateModal = defineAsyncComponent(() =>
-  import('~/components/modals/CreateModal.vue')
-)
-```
+let _inflightSquares: Promise<any> | null = null
 
-### API Response Size
-
-`productFeedInclude` (slim Prisma select for feed cards) vs `productInclude` (full for detail pages):
-
-```typescript
-// Feed cards — minimal data
-const productFeedInclude = {
-  media: { take: 1, select: { url: true, type: true } },
-  variants: { take: 1, select: { id: true, size: true, stock: true, price: true } },
-}
-
-// Detail pages — full data
-const productInclude = {
-  media: true, variants: true, categories: true, tags: true, offers: true, ...
+async function loadSquares() {
+  if (!_inflightSquares) {
+    _inflightSquares = squareApi.listSquares({ limit: 8 })
+    _inflightSquares.finally(() => { _inflightSquares = null })
+  }
+  squares.value = (await _inflightSquares).data ?? []
 }
 ```
-
-### Feed Caching
-
-Home and discover feeds are cached in Upstash Redis:
-- First request: ~800ms (DB query)
-- Cached requests: ~50ms (Redis read)
 
 ### Batch Follow Status
 
-Instead of each `FollowButton` making its own API call on mount:
+After a feed loads, all author follow statuses are checked in one request rather than one per card:
 
 ```typescript
-// After feed loads, batch check all author follow statuses in one request
 const authorIds = feedItems.map(item => item.author.id)
 await checkFollowingBatch(authorIds, 'USER', idToUsernameMap)
 ```
 
-### IntersectionObserver for Infinite Scroll
+### PWA
 
-```typescript
-// Observer target is inside v-else — not in DOM at onMounted
-// Use watch instead of direct observe call
-watch(loadMoreTrigger, (el) => {
-  if (el) observer.value?.observe(el)
-})
-```
+Service worker (Workbox via `@vite-pwa/nuxt`):
+- Cloudinary images: `CacheFirst`, 30-day TTL, max 200 entries
+- API responses: `NetworkFirst`, 5-min TTL, 10s timeout
 
 ---
 
@@ -849,7 +710,7 @@ watch(loadMoreTrigger, (el) => {
 
 ```bash
 # Database
-DATABASE_URL=postgresql://user:pass@host/db?sslmode=require
+DATABASE_URL=postgresql://user:pass@host/db?sslmode=require&channel_binding=require
 
 # Cache (Upstash Redis — REST/HTTP)
 UPSTASH_REDIS_REST_URL=https://xxx.upstash.io
@@ -868,22 +729,23 @@ JWT_REFRESH_EXPIRES_IN=7d
 CLOUDINARY_CLOUD_NAME=xxx
 CLOUDINARY_API_KEY=xxx
 CLOUDINARY_API_SECRET=xxx
-CLOUDINARY_UPLOAD_PRESET=xxx
+CLOUDINARY_UPLOAD_PRESET=xxx   # Must be a restricted preset, not ml_default
 
 # Email
 RESEND_API_KEY=re_xxx
-SENDER_EMAIL=noreply@reelshop.com
+SENDER_EMAIL=noreply@marketx.app
 
 # Payments
-PAYSTACK_SECRET_KEY=sk_xxx
-PAYSTACK_PUBLIC_KEY=pk_xxx
+PAYSTACK_SECRET_KEY=sk_live_xxx   # sk_test_ for dev
+PAYSTACK_PUBLIC_KEY=pk_live_xxx   # pk_test_ for dev
 PAYPAL_CLIENT_ID=xxx
 PAYPAL_CLIENT_SECRET=xxx
 
 # Shipping
-SHIPPO_API_KEY=xxx
+SHIPPO_API_KEY=shippo_live_xxx
 SHIPPO_WEBHOOK_SECRET=xxx
-SENDBOX_API_KEY=xxx
+SENDBOX_ACCESS_TOKEN=xxx
+SENDBOX_CLIENT_SECRET=xxx
 SENDBOX_WEBHOOK_SECRET=xxx
 
 # Real-time (Soketi)
@@ -902,33 +764,41 @@ GOOGLE_API_KEY=xxx
 
 # Platform
 PLATFORM_COMMISSION_RATE=0.10
-NUXT_PUBLIC_SITE_NAME=ReelShop
-NUXT_PUBLIC_BASE_URL=https://reelshop.com
+NUXT_PUBLIC_SITE_NAME=MarketX
+NUXT_PUBLIC_BRAND_DOMAIN=marketx.app
+NUXT_PUBLIC_BASE_URL=https://marketx.app
+NODE_ENV=production
 ```
 
 ---
 
 ## 19. Scheduled Tasks
 
-Nitro tasks (configured in `nuxt.config.ts`):
+Nitro tasks run server-side on a cron schedule (require always-on server — not compatible with Vercel/Netlify serverless):
 
 ```typescript
+// nuxt.config.ts
 nitro: {
   experimental: { tasks: true },
   scheduledTasks: {
-    '* * * * *':   ['processQueues'],        // Every minute
-    '0 */6 * * *': ['releaseShippedOrders'], // Every 6 hours
+    '* * * * *':    ['processQueues'],        // Every minute
+    '0 */6 * * *':  ['releaseShippedOrders'], // Every 6 hours
+    '*/15 * * * *': ['releaseExpiredOrders'], // Every 15 minutes
   }
 }
 ```
 
-### processQueues (`server/tasks/processQueues.ts`)
+### `processQueues`
 
 Health-check stub. BullMQ workers (started via `server/plugins/workers.ts`) process jobs in real-time — no manual draining needed.
 
-### releaseShippedOrders (`server/tasks/releaseShippedOrders.ts`)
+### `releaseShippedOrders`
 
-Auto-releases held funds to seller wallets for orders that have been in `SHIPPED` status for 7+ days without a dispute.
+Marks orders `DELIVERED` and releases held funds to seller wallets for orders that have been `SHIPPED` for 7+ days without buyer confirmation. Notifies both buyer and seller.
+
+### `releaseExpiredOrders`
+
+Cancels `PENDING/UNPAID` orders older than 30 minutes and restores stock for each line item. Notifies buyer.
 
 ---
 
@@ -936,33 +806,37 @@ Auto-releases held funds to seller wallets for orders that have been in `SHIPPED
 
 ### Why Layered Architecture?
 
-Features are large enough to warrant isolation. A `post` page shouldn't import from `commerce` internals. Layers enforce domain boundaries and let teams work independently.
+Features are large enough to warrant isolation. `commerce` shouldn't import from `social` internals. Layers enforce domain boundaries and let features be developed independently.
 
 ### Why `pg.Pool` over Neon Serverless Driver?
 
-Neon's `@neondatabase/serverless` driver reads the connection string differently during Nitro's server module loading phase — caused "user not found" errors defaulting to the OS username. `pg.Pool` with `keepAlive` is reliable with Neon's TCP endpoint.
+Neon's `@neondatabase/serverless` driver caused "user not found" errors defaulting to the OS username during Nitro's server module loading phase. `pg.Pool` + `keepAlive` is reliable with Neon's TCP endpoint.
 
 ### Why Two Redis Instances?
 
-- **Upstash** (REST/HTTP) — works in serverless/edge, no persistent TCP connection. Only for caching.
+- **Upstash** (REST/HTTP) — works serverless, no persistent TCP connection. Only for caching.
 - **Redis Cloud** (TCP) — BullMQ requires ioredis which needs a persistent TCP connection. Upstash REST API is incompatible with BullMQ.
 
-### Why BullMQ over a Simple In-Memory Queue?
+### Why BullMQ over In-Memory Queue?
 
-In-memory queues lose jobs on server restart. BullMQ persists jobs in Redis with retries, stalled job recovery, and a dead-letter set. Critical for audit trails and transactional emails.
+In-memory queues lose jobs on server restart. BullMQ persists jobs in Redis with retries, stalled job recovery, and dead-letter sets. Critical for audit trails and transactional emails.
 
 ### Why Passive Auth Middleware?
 
-Blocking all unauthenticated requests in middleware would prevent public pages (feed, product detail, store profiles) from loading. Passive middleware lets public routes work while protected routes explicitly call `requireAuth(event)`.
+Blocking all unauthenticated requests in middleware would break public pages (feed, product detail, store profiles). Passive middleware lets public routes work while protected routes explicitly call `requireAuth(event)`.
 
-### Why `dedupe: 'defer'` in useLazyAsyncData?
+### Why `dedupe: 'defer'` in `useLazyAsyncData`?
 
-The default `dedupe: 'cancel'` cancels in-flight requests when a new caller appears, which triggers a fresh fetch — causing exponential duplicate calls when 3+ components share a key. `defer` queues additional callers to wait for the existing request to resolve.
+The default `dedupe: 'cancel'` cancels in-flight requests when a new caller appears, triggering a fresh fetch — causing exponential duplicate calls when 3+ components share a key. `defer` queues additional callers to wait for the existing request.
 
 ### Why Fire-and-Forget for Audit/Notifications?
 
-`await auditService.logUserAction()` added 20-50ms to every mutating request. Audit logs are non-critical for the HTTP response. `notificationQueue.enqueue()` drops latency to 1ms and makes the notification system failure-isolated from the main request.
+`await auditService.logUserAction()` added 20-50ms to every mutating request. Audit logs are non-critical for the HTTP response. Queuing drops latency to 1ms and isolates audit/notification failures from the main request path.
+
+### Why Squares?
+
+Nigerian physical markets (Computer Village, Balogun, Bodija) are clusters of sellers operating under a shared identity. Squares model this digitally — sellers apply to join, officers govern membership, and a percentage of each transaction is credited to the Square's association wallet.
 
 ---
 
-*Last updated: March 2026*
+*Last updated: May 2026*

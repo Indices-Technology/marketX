@@ -230,7 +230,7 @@ const search = ref('')
 const limit = 30
 const offset = ref(0)
 const allSquares = ref<any[]>([])
-const total = ref(0)
+const apiHasMore = ref(false)
 const loadingMore = ref(false)
 
 const queryParams = computed(() => ({
@@ -245,7 +245,7 @@ const { data, pending, error, refresh } = await useFetch('/api/squares', {
   watch: [queryParams],
   onResponse({ response }) {
     allSquares.value = response._data?.data ?? []
-    total.value = response._data?.meta?.total ?? 0
+    apiHasMore.value = response._data?.meta?.hasMore ?? false
     offset.value = allSquares.value.length
   },
 })
@@ -256,14 +256,14 @@ watch(
   (d: any) => {
     if (d?.data) {
       allSquares.value = d.data
-      total.value = d.meta?.total ?? 0
+      apiHasMore.value = d.meta?.hasMore ?? false
       offset.value = allSquares.value.length
     }
   },
   { immediate: true },
 )
 
-const hasMore = computed(() => allSquares.value.length < total.value)
+const hasMore = computed(() => apiHasMore.value)
 
 const loadMore = async () => {
   if (loadingMore.value || !hasMore.value) return
@@ -274,7 +274,7 @@ const loadMore = async () => {
       offset: offset.value,
     })
     allSquares.value = [...allSquares.value, ...(res.data ?? [])]
-    total.value = res.meta?.total ?? total.value
+    apiHasMore.value = res.meta?.hasMore ?? false
     offset.value = allSquares.value.length
   } finally {
     loadingMore.value = false

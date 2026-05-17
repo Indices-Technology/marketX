@@ -1,6 +1,6 @@
-# marketX — API Reference
+# MarketX — API Reference
 
-> Auto-derived from `layers/*/server/api/` — last updated 2026-04-22.
+> Derived from `layers/*/server/api/` — last updated 2026-05-17.
 > Base URL: `/api`
 
 ---
@@ -443,7 +443,8 @@ Both endpoints stream responses and require seller authentication.
 | Convention | Detail |
 |---|---|
 | Auth header | `Authorization: Bearer <token>` on protected routes |
-| Pagination | `?limit=20&offset=0` → `{ data[], meta: { total, limit, offset, hasMore } }` |
+| Pagination | `?limit=20&offset=0` → `{ data[], meta: { limit, offset, hasMore } }` |
+| `hasMore` | Derived via the +1 trick (fetch `limit+1`, slice to `limit`) — no `COUNT(*)`. `total` is absent on most list endpoints |
 | Errors | `{ statusCode, message }` — H3 standard error shape |
 | Timestamps | ISO 8601 UTC strings |
 | Currency | Amounts in **kobo** (NGN × 100) unless noted |

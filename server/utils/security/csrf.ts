@@ -10,7 +10,7 @@ import crypto from 'crypto'
 const CSRF_TOKEN_COOKIE_NAME = '__csrf_token'
 const CSRF_HEADER_NAME = 'x-csrf-token'
 const CSRF_COOKIE_OPTIONS = {
-  httpOnly: true,
+  httpOnly: false,
   secure: process.env.NODE_ENV === 'production',
   sameSite: 'strict' as const,
   maxAge: 3600, // 1 hour

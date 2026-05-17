@@ -22,7 +22,7 @@ export default defineEventHandler(async (event): Promise<IFeedResponse> => {
         prisma.post.findMany({
           take: Math.ceil(limit / 2),
           skip: offset,
-          orderBy: { likes: { _count: 'desc' } },
+          orderBy: [{ viewCount: 'desc' }, { created_at: 'desc' }],
           include: {
             author: {
               select: { id: true, username: true, avatar: true, role: true },
