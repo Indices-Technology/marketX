@@ -53,6 +53,25 @@ export const contentService = {
       }
     }
 
+    // Notify followers of the new post — fire-and-forget
+    prisma.follow
+      .findMany({
+        where: { followingId: userId, followingType: 'USER' },
+        select: { followerId: true },
+      })
+      .then((followers) => {
+        for (const f of followers) {
+          notificationQueue.enqueue({
+            userId: f.followerId,
+            type: 'POST_CREATED',
+            actorId: userId,
+            postId: post.id,
+            message: 'Someone you follow shared a new post',
+          })
+        }
+      })
+      .catch(() => {})
+
     return post
   },
 
@@ -216,9 +235,10 @@ export const contentService = {
     const post = await postRepository.getPostById(postId)
     if (!post) throw new UserError('POST_NOT_FOUND', 'Post not found', 404)
 
+    let parentComment: { id: string; authorId: string } | null = null
     if (data.parentId) {
-      const parent = await postRepository.getCommentById(data.parentId)
-      if (!parent)
+      parentComment = await postRepository.getCommentById(data.parentId)
+      if (!parentComment)
         throw new UserError(
           'COMMENT_NOT_FOUND',
           'Parent comment not found',
@@ -238,13 +258,31 @@ export const contentService = {
       userAgent,
     })
 
-    notificationQueue.enqueue({
-      userId: post.authorId,
-      type: 'POST_COMMENT',
-      actorId: userId,
-      postId: postId,
-      message: `Someone commented on your post`,
-    })
+    if (parentComment) {
+      // Reply — notify the comment author (not the post author again)
+      if (parentComment.authorId !== userId) {
+        notificationQueue.enqueue({
+          userId: parentComment.authorId,
+          type: 'COMMENT_REPLY',
+          actorId: userId,
+          postId: postId,
+          commentId: comment.id,
+          message: 'Someone replied to your comment',
+        })
+      }
+    } else {
+      // Top-level comment — notify post author
+      if (post.authorId !== userId) {
+        notificationQueue.enqueue({
+          userId: post.authorId,
+          type: 'POST_COMMENT',
+          actorId: userId,
+          postId: postId,
+          commentId: comment.id,
+          message: `Someone commented on your post`,
+        })
+      }
+    }
 
     return comment
   },
@@ -346,13 +384,15 @@ export const contentService = {
       userAgent,
     })
 
-    notificationQueue.enqueue({
-      userId: post.authorId,
-      type: 'POST_LIKE',
-      actorId: userId,
-      postId: postId,
-      message: `Someone liked your post`,
-    })
+    if (post.authorId !== userId) {
+      notificationQueue.enqueue({
+        userId: post.authorId,
+        type: 'POST_LIKE',
+        actorId: userId,
+        postId: postId,
+        message: `Someone liked your post`,
+      })
+    }
 
     return like
   },
@@ -421,13 +461,15 @@ export const contentService = {
       userAgent,
     })
 
-    notificationQueue.enqueue({
-      userId: comment.authorId,
-      type: 'COMMENT_LIKE',
-      actorId: userId,
-      commentId: commentId,
-      message: `Someone liked your comment`,
-    })
+    if (comment.authorId !== userId) {
+      notificationQueue.enqueue({
+        userId: comment.authorId,
+        type: 'COMMENT_LIKE',
+        actorId: userId,
+        commentId: commentId,
+        message: `Someone liked your comment`,
+      })
+    }
 
     return like
   },

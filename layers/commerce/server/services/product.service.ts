@@ -81,6 +81,27 @@ export const productService = {
       })
     }
 
+    // Notify seller's followers of the new listing — fire-and-forget
+    if (validated.status === 'ACTIVE') {
+      prisma.follow
+        .findMany({
+          where: { followingId: sellerId, followingType: 'SELLER' },
+          select: { followerId: true },
+        })
+        .then((followers) => {
+          for (const f of followers) {
+            notificationQueue.enqueue({
+              userId: f.followerId,
+              type: 'PRODUCT',
+              actorId: authorId,
+              productId: product.id,
+              message: `A store you follow listed a new product: "${validated.title}"`,
+            })
+          }
+        })
+        .catch(() => {})
+    }
+
     return product
   },
 
@@ -166,6 +187,15 @@ export const productService = {
       )
 
     const validated = updateProductSchema.parse(data)
+
+    // Snapshot current variant stocks before update (only when variants are changing)
+    const stocksBefore = validated.variants?.length
+      ? await prisma.productVariant.findMany({
+          where: { productId: id },
+          select: { size: true, stock: true },
+        })
+      : []
+
     const updated = await productRepository.updateProduct(
       id,
       validated,
@@ -183,6 +213,52 @@ export const productService = {
         ipAddress,
         userAgent,
       })
+
+    // Back-in-stock and low-stock alerts
+    if (validated.variants?.length && stocksBefore.length) {
+      const beforeBySize = new Map(stocksBefore.map((v) => [v.size, v.stock]))
+      const stocksAfter = await prisma.productVariant.findMany({
+        where: { productId: id },
+        select: { size: true, stock: true },
+      })
+
+      let backInStock = false
+      for (const v of stocksAfter) {
+        const oldStock = beforeBySize.get(v.size) ?? 0
+        if (oldStock === 0 && v.stock > 0) backInStock = true
+        // Low stock: only fire when stock drops into the danger zone from above
+        if (v.stock > 0 && v.stock <= 3 && oldStock > 3) {
+          notificationQueue.enqueue({
+            userId,
+            type: 'PRODUCT',
+            actorId: userId,
+            productId: id,
+            message: `Low stock alert: "${v.size}" has only ${v.stock} unit${v.stock !== 1 ? 's' : ''} left`,
+          })
+        }
+      }
+
+      if (backInStock) {
+        // Notify all users who liked this product — fire-and-forget
+        prisma.like
+          .findMany({
+            where: { productId: id },
+            select: { userId: true },
+          })
+          .then((likes) => {
+            for (const like of likes) {
+              notificationQueue.enqueue({
+                userId: like.userId,
+                type: 'PRODUCT',
+                actorId: userId,
+                productId: id,
+                message: 'A product you liked is back in stock!',
+              })
+            }
+          })
+          .catch(() => {})
+      }
+    }
 
     return updated
   },

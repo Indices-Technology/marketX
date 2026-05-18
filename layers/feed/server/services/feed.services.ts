@@ -9,6 +9,7 @@ import { socialRepository } from '~~/layers/profile/server/repositories/social.r
 import { postRepository } from '~~/layers/social/server/repositories/post.repository'
 import type { IFeedOptions } from '../../../../layers/feed/app/types/feed.types'
 import { normalizePost, normalizeProduct } from '../utils/feed.utils'
+import { rankFeedItems } from '../utils/feedAlgorithm'
 
 const PRODUCT_SELECT = {
   id: true,
@@ -51,9 +52,15 @@ export const feedService = {
     const postLimit = limit - productSlots
     const productOffset = Math.floor(offset / 4)
 
+    // Over-fetch posts so the algorithm has candidates to rank within the page window.
+    // CANDIDATE_FACTOR × postLimit posts are fetched, scored, and trimmed to postLimit
+    // before interleaving.  This surfaces the most engaging posts in each time slice
+    // without breaking offset-based pagination.
+    const CANDIDATE_FACTOR = 3
+
     const [posts, postTotal, products] = await Promise.all([
       postRepository.getPosts({
-        take: postLimit,
+        take: postLimit * CANDIDATE_FACTOR,
         skip: offset,
         orderBy: { created_at: 'desc' },
       }),
@@ -71,7 +78,10 @@ export const feedService = {
       }),
     ])
 
-    const postItems = posts.map(normalizePost)
+    // Re-rank the candidate posts, then trim to the actual page size
+    const rankedPosts = rankFeedItems(posts as any[], 'home').slice(0, postLimit)
+
+    const postItems = rankedPosts.map(normalizePost)
     const productItems = products.map((p: any) => normalizeProduct(p))
 
     // Interleave: after every 4 posts, inject 1 product card
@@ -121,13 +131,16 @@ export const feedService = {
     // 2. Extract strictly the IDs for the query
     const followingIds = follows.map((f) => f.id)
 
-    // 3. Fetch posts from those specific IDs
-    // Note: We prioritize Posts for the following feed to keep it social
+    // 3. Fetch posts — over-fetch so ranking has candidates to work with
     const posts = await postRepository.getPostsByAuthorIds(followingIds, {
-      take: limit,
+      take: limit * 2,
       skip: offset,
     })
-    const items = posts.map(normalizePost)
+
+    // Re-rank within the fetched window: fresher posts get a boost, but highly
+    // engaged posts from followed authors don't get buried by a newer quiet post
+    const rankedPosts = rankFeedItems(posts as any[], 'following').slice(0, limit)
+    const items = rankedPosts.map(normalizePost)
 
     return {
       items,

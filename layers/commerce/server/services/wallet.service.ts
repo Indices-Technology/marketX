@@ -1,6 +1,9 @@
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { auditQueue } from '~~/server/queues/audit.queue'
 import { walletRepository } from '../repositories/wallet.repository'
+import { notificationQueue } from '~~/server/queues/notification.queue'
+import { emailQueue } from '~~/server/queues/email.queue'
+import { buildFundsReleasedEmail } from '~~/server/utils/email/emailService'
 
 export const walletService = {
   /**
@@ -111,6 +114,46 @@ export const walletService = {
       })
     }
 
+    // Notify each seller that funds are available — fire-and-forget
+    const totalReleased = [...byWallet.values()].reduce((sum, { total }) => sum + total, 0)
+    prisma.orders.findUnique({
+      where: { id: orderId },
+      select: {
+        orderItem: {
+          take: 1,
+          include: {
+            variant: {
+              include: {
+                product: {
+                  select: {
+                    seller: {
+                      select: {
+                        profileId: true,
+                        profile: { select: { email: true } },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    }).then((ord) => {
+      const seller = ord?.orderItem[0]?.variant.product.seller
+      if (!seller?.profileId) return
+      notificationQueue.enqueue({
+        userId: seller.profileId,
+        type: 'ORDER',
+        message: `₦${(totalReleased / 100).toLocaleString('en-NG')} from Order #${orderId} has been released to your wallet.`,
+        orderId,
+      })
+      if (seller.profile?.email) {
+        const { subject, html, text } = buildFundsReleasedEmail(orderId, totalReleased)
+        emailQueue.enqueue({ to: seller.profile.email, subject, html, text, type: 'GENERAL' })
+      }
+    }).catch(() => {})
+
     // Credit affiliate wallet if this order had a referral
     const order = await prisma.orders.findUnique({
       where: { id: orderId },
@@ -138,6 +181,12 @@ export const walletService = {
             amount: order.affiliateCut,
             type: 'AFFILIATE_CREDIT',
             description: `Affiliate commission — Order #${orderId}`,
+            orderId,
+          })
+          notificationQueue.enqueue({
+            userId: order.affiliateUserId,
+            type: 'ORDER',
+            message: `You earned ₦${(order.affiliateCut / 100).toLocaleString('en-NG')} affiliate commission from Order #${orderId}`,
             orderId,
           })
         }

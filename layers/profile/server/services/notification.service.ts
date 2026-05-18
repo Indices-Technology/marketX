@@ -13,7 +13,7 @@ import { sseConnections } from '~~/server/utils/connections'
 export interface CreateNotificationArgs {
   userId: string
   type: string
-  actorId: string
+  actorId?: string
   message: string
   postId?: string
   commentId?: string
@@ -26,17 +26,21 @@ export interface CreateNotificationArgs {
 const typeMap: Record<string, string> = {
   POST_CREATED: 'NEW_POST',
   POST_LIKE: 'POST_LIKE',
+  POST_SHARE: 'PRODUCT_SHARE',
   POST_COMMENT: 'NEW_COMMENT',
   COMMENT_LIKE: 'COMMENT_LIKE',
   COMMENT_REPLY: 'REPLY',
   FOLLOW: 'NEW_FOLLOWER',
   MESSAGE: 'GENERAL',
+  PRODUCT: 'PRODUCT',
   PRODUCT_SHARE: 'PRODUCT_SHARE',
   PRODUCT_REVIEW: 'REVIEW',
   PRODUCT_COMMENT: 'NEW_COMMENT',
   ORDER: 'ORDER',
   MENTION: 'MENTION',
   SQUARE_ANNOUNCEMENT: 'SQUARE_ANNOUNCEMENT',
+  SQUARE_MEMBERSHIP_APPROVED: 'SQUARE_MEMBERSHIP_APPROVED',
+  SQUARE_MEMBERSHIP_REJECTED: 'SQUARE_MEMBERSHIP_REJECTED',
 }
 
 export const notificationService = {

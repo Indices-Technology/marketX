@@ -15,6 +15,6 @@ export default defineEventHandler(async (event) => {
   }
 
   const body = await readValidatedBody(event, schema.parse)
-  const result = await adminService.setUserRole(id, body.role)
+  const result = await adminService.setUserRole(id, body.role, actor.id)
   return { data: result }
 })

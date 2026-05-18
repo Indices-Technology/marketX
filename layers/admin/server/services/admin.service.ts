@@ -1,6 +1,15 @@
 import type { ContentType, ModerationAction, ModerationStatus, ReportReason, ReportStatus } from '@prisma/client'
 import { adminRepository } from '~~/layers/admin/server/repositories/admin.repository'
 import { bust } from '~~/server/utils/cache'
+import { notificationQueue } from '~~/server/queues/notification.queue'
+import { emailQueue } from '~~/server/queues/email.queue'
+import {
+  buildSellerVerificationEmail,
+  buildAccountStatusEmail,
+  buildContentModerationEmail,
+  buildRoleChangeEmail,
+  buildSuspensionLiftedEmail,
+} from '~~/server/utils/email/emailService'
 
 const REPORT_THRESHOLD = 3 // auto-flag at this many reports
 
@@ -67,10 +76,53 @@ export const adminService = {
       await adminService.moderateContent(report.contentType, report.contentId, status)
     }
 
-    // Add strike on WARN, HIDE, REMOVE
+    // Add strike + notify content author on WARN, HIDE, REMOVE
     if (action !== 'DISMISS' && action !== 'REINSTATE') {
       const authorId = await getContentAuthorId(report.contentType, report.contentId)
-      if (authorId) await adminRepository.addStrike(authorId)
+      if (authorId) {
+        await adminRepository.addStrike(authorId)
+
+        const actionMap = {
+          WARN: 'WARNED',
+          HIDE: 'HIDDEN',
+          REMOVE: 'REMOVED',
+        } as const
+        const modAction = actionMap[action as keyof typeof actionMap]
+        if (modAction) {
+          const contentLabel = report.contentType.toLowerCase()
+          const suffix = note ? `: ${note}` : ''
+          const modMessage =
+            modAction === 'WARNED'
+              ? `Your ${contentLabel} has received a warning${suffix}`
+              : modAction === 'HIDDEN'
+                ? `Your ${contentLabel} has been hidden from public view${suffix}`
+                : `Your ${contentLabel} has been removed for violating community guidelines${suffix}`
+          notificationQueue.enqueue({
+            userId: authorId,
+            type: 'GENERAL',
+            actorId: moderatorId,
+            message: modMessage,
+          })
+          prisma.profile
+            .findUnique({ where: { id: authorId }, select: { email: true } })
+            .then((p) => {
+              if (!p?.email) return
+              const { subject, html, text } = buildContentModerationEmail(
+                modAction,
+                report.contentType,
+                note,
+              )
+              emailQueue.enqueue({
+                to: p.email,
+                subject,
+                html,
+                text,
+                type: 'GENERAL',
+              })
+            })
+            .catch(() => {})
+        }
+      }
     }
 
     return resolved
@@ -113,15 +165,114 @@ export const adminService = {
     const expiresAt = durationDays
       ? new Date(Date.now() + durationDays * 86_400_000)
       : null // null = permanent ban
-    return adminRepository.suspendUser(userId, moderatorId, reason, expiresAt)
+    const result = await adminRepository.suspendUser(
+      userId,
+      moderatorId,
+      reason,
+      expiresAt,
+    )
+
+    // Notify user — fire-and-forget
+    const action = durationDays ? 'SUSPENDED' : 'BANNED'
+    const message = durationDays
+      ? `Your account has been suspended for ${durationDays} day${durationDays !== 1 ? 's' : ''}: ${reason}`
+      : `Your account has been permanently banned: ${reason}`
+    notificationQueue.enqueue({ userId, type: 'GENERAL', message })
+    prisma.profile
+      .findUnique({ where: { id: userId }, select: { email: true } })
+      .then((p) => {
+        if (!p?.email) return
+        const { subject, html, text } = buildAccountStatusEmail(
+          action,
+          reason,
+          durationDays,
+        )
+        emailQueue.enqueue({ to: p.email, subject, html, text, type: 'GENERAL' })
+      })
+      .catch(() => {})
+
+    return result
   },
 
-  liftSuspension: adminRepository.liftSuspension,
+  async liftSuspension(userId: string, liftedById: string) {
+    const result = await adminRepository.liftSuspension(userId, liftedById)
 
-  setUserRole: adminRepository.setUserRole,
+    notificationQueue.enqueue({
+      userId,
+      type: 'GENERAL',
+      actorId: liftedById,
+      message: 'Your account suspension has been lifted. Welcome back!',
+    })
+    prisma.profile
+      .findUnique({ where: { id: userId }, select: { email: true } })
+      .then((p) => {
+        if (!p?.email) return
+        const { subject, html, text } = buildSuspensionLiftedEmail()
+        emailQueue.enqueue({
+          to: p.email,
+          subject,
+          html,
+          text,
+          type: 'GENERAL',
+        })
+      })
+      .catch(() => {})
 
-  toggleUserActive(userId: string, isActive: boolean) {
-    return adminRepository.setUserActive(userId, isActive)
+    return result
+  },
+
+  async setUserRole(userId: string, role: string, moderatorId?: string) {
+    const result = await adminRepository.setUserRole(userId, role)
+
+    const roleLabel =
+      role === 'moderator' ? 'Moderator' : role === 'admin' ? 'Admin' : 'User'
+    const message =
+      role === 'moderator' || role === 'admin'
+        ? `You have been granted ${roleLabel} access on MarketX`
+        : `Your account role has been updated to ${roleLabel}`
+    notificationQueue.enqueue({
+      userId,
+      type: 'GENERAL',
+      actorId: moderatorId,
+      message,
+    })
+    prisma.profile
+      .findUnique({ where: { id: userId }, select: { email: true } })
+      .then((p) => {
+        if (!p?.email) return
+        const { subject, html, text } = buildRoleChangeEmail(role)
+        emailQueue.enqueue({
+          to: p.email,
+          subject,
+          html,
+          text,
+          type: 'GENERAL',
+        })
+      })
+      .catch(() => {})
+
+    return result
+  },
+
+  async toggleUserActive(userId: string, isActive: boolean) {
+    const result = await adminRepository.setUserActive(userId, isActive)
+
+    // Notify user — fire-and-forget
+    const action = isActive ? 'ENABLED' : 'DISABLED'
+    const message = isActive
+      ? 'Your account has been re-enabled. Welcome back!'
+      : 'Your account has been disabled by an administrator. Contact support if you believe this is an error.'
+    notificationQueue.enqueue({ userId, type: 'GENERAL', message })
+    prisma.profile
+      .findUnique({ where: { id: userId }, select: { email: true } })
+      .then((p) => {
+        if (!p?.email) return
+        const { subject, html, text } = buildAccountStatusEmail(action)
+        emailQueue.enqueue({ to: p.email, subject, html, text, type: 'GENERAL' })
+      })
+      .catch(() => {})
+
+    return result
   },
 
   // ── Sellers ──────────────────────────────────────────────────────────────
@@ -135,7 +286,54 @@ export const adminService = {
     }
   },
 
-  verifySeller: adminRepository.updateSellerVerification,
+  async verifySeller(
+    id: string,
+    status: 'VERIFIED' | 'REJECTED',
+    reason?: string,
+  ) {
+    const sellerProfile = await prisma.sellerProfile.findUnique({
+      where: { id },
+      select: {
+        profileId: true,
+        store_name: true,
+        profile: { select: { email: true } },
+      },
+    })
+
+    const result = await adminRepository.updateSellerVerification(
+      id,
+      status,
+      reason,
+    )
+
+    if (sellerProfile?.profileId) {
+      const isVerified = status === 'VERIFIED'
+      const message = isVerified
+        ? `Your store "${sellerProfile.store_name}" has been verified! You can now sell on MarketX.`
+        : `Your store verification was not approved${reason ? `: ${reason}` : '.'}`
+      notificationQueue.enqueue({
+        userId: sellerProfile.profileId,
+        type: 'GENERAL',
+        message,
+      })
+      if (sellerProfile.profile?.email) {
+        const { subject, html, text } = buildSellerVerificationEmail(
+          sellerProfile.store_name ?? '',
+          status,
+          reason,
+        )
+        emailQueue.enqueue({
+          to: sellerProfile.profile.email,
+          subject,
+          html,
+          text,
+          type: 'GENERAL',
+        })
+      }
+    }
+
+    return result
+  },
 
   // ── Stats ─────────────────────────────────────────────────────────────────
 

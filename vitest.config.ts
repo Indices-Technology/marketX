@@ -45,8 +45,11 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./tests/setup-vitest.ts'],
-    // Only run Vue component/page tests — Playwright handles server API tests
-    include: ['layers/**/app/**/__tests__/**/*.spec.ts'],
+    // Vue component tests (app layer) + pure server utility unit tests
+    include: [
+      'layers/**/app/**/__tests__/**/*.spec.ts',
+      'layers/**/server/utils/__tests__/**/*.spec.ts',
+    ],
   },
   resolve: {
     alias: {

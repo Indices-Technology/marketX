@@ -244,6 +244,149 @@ export async function sendOtpEmail(
 // ─── Notification email builders ─────────────────────────────────────────────
 // These return { subject, html, text } ready to pass to emailQueue.enqueue().
 
+export function buildNewOrderSellerEmail(
+  orderId: number,
+  itemCount: number,
+  totalKobo: number,
+  storeName: string,
+  appName = 'MarketX',
+): { subject: string; html: string; text: string } {
+  const amount = `₦${(totalKobo / 100).toLocaleString('en-NG')}`
+  const subject = `🛍️ New order #${orderId} — ${storeName}`
+  const detail = `You have a new order (#${orderId}) for ${itemCount} item${itemCount !== 1 ? 's' : ''} totalling ${amount}. Log in to confirm and prepare it for shipment.`
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+body{font-family:Arial,sans-serif;background:#f4f4f4;margin:0;padding:0}
+.wrap{max-width:480px;margin:40px auto;background:#fff;border-radius:12px;overflow:hidden}
+.hd{background:#e31837;padding:28px 32px;text-align:center}
+.hd h1{color:#fff;margin:0;font-size:20px}
+.bd{padding:32px}
+.badge{display:inline-block;font-size:13px;background:#dcfce7;color:#166534;padding:4px 10px;border-radius:20px;margin-bottom:16px}
+.amt{font-size:28px;font-weight:800;color:#e31837;margin:12px 0}
+p{font-size:15px;color:#333;line-height:1.6;margin:0 0 12px}
+.ft{text-align:center;padding:16px;font-size:12px;color:#aaa}
+</style></head><body>
+<div class="wrap"><div class="hd"><h1>${appName}</h1></div>
+<div class="bd"><span class="badge">New Order #${orderId}</span>
+<div class="amt">${amount}</div>
+<p>${detail}</p>
+<p style="color:#888;font-size:13px">Log in to your seller dashboard to confirm the order.</p>
+</div><div class="ft">&copy; ${new Date().getFullYear()} ${appName}. All rights reserved.</div></div>
+</body></html>`
+  return { subject, html, text: `New Order #${orderId}\n\n${detail}` }
+}
+
+export function buildFundsReleasedEmail(
+  orderId: number,
+  amountKobo: number,
+  appName = 'MarketX',
+): { subject: string; html: string; text: string } {
+  const amount = `₦${(amountKobo / 100).toLocaleString('en-NG')}`
+  const subject = `💰 Funds released — Order #${orderId}`
+  const detail = `${amount} from Order #${orderId} has been released to your wallet balance and is now available for withdrawal.`
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+body{font-family:Arial,sans-serif;background:#f4f4f4;margin:0;padding:0}
+.wrap{max-width:480px;margin:40px auto;background:#fff;border-radius:12px;overflow:hidden}
+.hd{background:#e31837;padding:28px 32px;text-align:center}
+.hd h1{color:#fff;margin:0;font-size:20px}
+.bd{padding:32px}
+.badge{display:inline-block;font-size:13px;background:#dcfce7;color:#166534;padding:4px 10px;border-radius:20px;margin-bottom:16px}
+.amt{font-size:28px;font-weight:800;color:#16a34a;margin:12px 0}
+p{font-size:15px;color:#333;line-height:1.6;margin:0 0 12px}
+.ft{text-align:center;padding:16px;font-size:12px;color:#aaa}
+</style></head><body>
+<div class="wrap"><div class="hd"><h1>${appName}</h1></div>
+<div class="bd"><span class="badge">💰 Funds Released</span>
+<div class="amt">${amount}</div>
+<p>${detail}</p>
+<p style="color:#888;font-size:13px">Visit your wallet to withdraw or track your earnings.</p>
+</div><div class="ft">&copy; ${new Date().getFullYear()} ${appName}. All rights reserved.</div></div>
+</body></html>`
+  return { subject, html, text: `Funds Released\n\n${detail}` }
+}
+
+export function buildSellerVerificationEmail(
+  storeName: string,
+  status: 'VERIFIED' | 'REJECTED',
+  reason?: string,
+  appName = 'MarketX',
+): { subject: string; html: string; text: string } {
+  const isVerified = status === 'VERIFIED'
+  const subject = isVerified
+    ? `✅ Your store "${storeName}" is verified!`
+    : `❌ Store verification update — ${storeName}`
+  const detail = isVerified
+    ? `Congratulations! Your store "${storeName}" has been verified on ${appName}. You can now sell to customers across the platform.`
+    : `Your store "${storeName}" verification was not approved${reason ? `: ${reason}` : '. Please review your store details and reapply.'}`
+  const color = isVerified ? '#16a34a' : '#dc2626'
+  const bg = isVerified ? '#dcfce7' : '#fee2e2'
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+body{font-family:Arial,sans-serif;background:#f4f4f4;margin:0;padding:0}
+.wrap{max-width:480px;margin:40px auto;background:#fff;border-radius:12px;overflow:hidden}
+.hd{background:#e31837;padding:28px 32px;text-align:center}
+.hd h1{color:#fff;margin:0;font-size:20px}
+.bd{padding:32px}
+.badge{display:inline-block;font-size:13px;background:${bg};color:${color};padding:4px 10px;border-radius:20px;margin-bottom:16px;font-weight:600}
+p{font-size:15px;color:#333;line-height:1.6;margin:0 0 12px}
+.ft{text-align:center;padding:16px;font-size:12px;color:#aaa}
+</style></head><body>
+<div class="wrap"><div class="hd"><h1>${appName}</h1></div>
+<div class="bd"><span class="badge">${isVerified ? '✅ Verified' : '❌ Not Approved'}</span>
+<p><strong>${storeName}</strong></p>
+<p>${detail}</p>
+${!isVerified && reason ? `<p style="color:#888;font-size:13px">Reason: ${reason}</p>` : ''}
+</div><div class="ft">&copy; ${new Date().getFullYear()} ${appName}. All rights reserved.</div></div>
+</body></html>`
+  return { subject, html, text: `Store Verification Update\n\n${detail}` }
+}
+
+export function buildAccountStatusEmail(
+  action: 'SUSPENDED' | 'BANNED' | 'DISABLED' | 'ENABLED',
+  reason?: string,
+  durationDays?: number,
+  appName = 'MarketX',
+): { subject: string; html: string; text: string } {
+  const messages: Record<string, { subject: string; detail: string; color: string; bg: string }> = {
+    SUSPENDED: {
+      subject: `⚠️ Your ${appName} account has been suspended`,
+      detail: `Your account has been suspended for ${durationDays} day${durationDays !== 1 ? 's' : ''}${reason ? ` — ${reason}` : ''}. It will be automatically restored after this period.`,
+      color: '#92400e', bg: '#fef3c7',
+    },
+    BANNED: {
+      subject: `🚫 Your ${appName} account has been banned`,
+      detail: `Your account has been permanently banned${reason ? `: ${reason}` : '. If you believe this is an error, please contact support.'}`,
+      color: '#991b1b', bg: '#fee2e2',
+    },
+    DISABLED: {
+      subject: `⚠️ Your ${appName} account has been disabled`,
+      detail: `Your account has been disabled by an administrator${reason ? `: ${reason}` : '. Contact support if you believe this is an error.'}`,
+      color: '#92400e', bg: '#fef3c7',
+    },
+    ENABLED: {
+      subject: `✅ Your ${appName} account has been restored`,
+      detail: `Your account has been re-enabled. You can now log in and access all features.`,
+      color: '#166534', bg: '#dcfce7',
+    },
+  }
+  const { subject, detail, color, bg } = messages[action]!
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+body{font-family:Arial,sans-serif;background:#f4f4f4;margin:0;padding:0}
+.wrap{max-width:480px;margin:40px auto;background:#fff;border-radius:12px;overflow:hidden}
+.hd{background:#e31837;padding:28px 32px;text-align:center}
+.hd h1{color:#fff;margin:0;font-size:20px}
+.bd{padding:32px}
+.badge{display:inline-block;font-size:13px;background:${bg};color:${color};padding:4px 10px;border-radius:20px;margin-bottom:16px;font-weight:600}
+p{font-size:15px;color:#333;line-height:1.6;margin:0 0 12px}
+.ft{text-align:center;padding:16px;font-size:12px;color:#aaa}
+</style></head><body>
+<div class="wrap"><div class="hd"><h1>${appName}</h1></div>
+<div class="bd"><span class="badge">Account ${action.charAt(0) + action.slice(1).toLowerCase()}</span>
+<p>${detail}</p>
+<p style="color:#888;font-size:13px">Questions? Contact our support team.</p>
+</div><div class="ft">&copy; ${new Date().getFullYear()} ${appName}. All rights reserved.</div></div>
+</body></html>`
+  return { subject, html, text: `Account Update\n\n${detail}` }
+}
+
 export function buildOrderStatusEmail(
   orderId: number,
   status: 'CONFIRMED' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED',
@@ -375,6 +518,106 @@ p{font-size:15px;color:#333;line-height:1.6;margin:0}
 <div class="ft">&copy; ${new Date().getFullYear()} ${appName}. All rights reserved.</div></div>
 </body></html>`
   return { subject, html, text: `New message from ${senderName}\n\n${detail}` }
+}
+
+export function buildContentModerationEmail(
+  action: 'WARNED' | 'HIDDEN' | 'REMOVED',
+  contentType: 'POST' | 'PRODUCT' | 'COMMENT',
+  reason?: string,
+  appName = 'MarketX',
+): { subject: string; html: string; text: string } {
+  const label = contentType.charAt(0) + contentType.slice(1).toLowerCase()
+  const info = {
+    WARNED: {
+      subject: `⚠️ Your ${label} has received a warning`,
+      detail: `Your ${label.toLowerCase()} has received a warning from our moderation team${reason ? `: ${reason}` : '. Please review our community guidelines.'}`,
+      color: '#92400e', bg: '#fef3c7', badge: '⚠️ Warning',
+    },
+    HIDDEN: {
+      subject: `👁 Your ${label} has been hidden`,
+      detail: `Your ${label.toLowerCase()} has been hidden from public view${reason ? `: ${reason}` : '. It will not be visible to other users.'}`,
+      color: '#1e40af', bg: '#dbeafe', badge: '👁 Hidden',
+    },
+    REMOVED: {
+      subject: `🚫 Your ${label} has been removed`,
+      detail: `Your ${label.toLowerCase()} has been removed for violating our community guidelines${reason ? `: ${reason}` : '.'}`,
+      color: '#991b1b', bg: '#fee2e2', badge: '🚫 Removed',
+    },
+  }
+  const { subject, detail, color, bg, badge } = info[action]
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+body{font-family:Arial,sans-serif;background:#f4f4f4;margin:0;padding:0}
+.wrap{max-width:480px;margin:40px auto;background:#fff;border-radius:12px;overflow:hidden}
+.hd{background:#e31837;padding:28px 32px;text-align:center}
+.hd h1{color:#fff;margin:0;font-size:20px}
+.bd{padding:32px}
+.badge{display:inline-block;font-size:13px;background:${bg};color:${color};padding:4px 10px;border-radius:20px;margin-bottom:16px;font-weight:600}
+p{font-size:15px;color:#333;line-height:1.6;margin:0 0 12px}
+.ft{text-align:center;padding:16px;font-size:12px;color:#aaa}
+</style></head><body>
+<div class="wrap"><div class="hd"><h1>${appName}</h1></div>
+<div class="bd"><span class="badge">${badge}</span>
+<p>${detail}</p>
+<p style="color:#888;font-size:13px">If you believe this was a mistake, please contact our support team.</p>
+</div><div class="ft">&copy; ${new Date().getFullYear()} ${appName}. All rights reserved.</div></div>
+</body></html>`
+  return { subject, html, text: `Content Moderation Notice\n\n${detail}` }
+}
+
+export function buildRoleChangeEmail(
+  role: string,
+  appName = 'MarketX',
+): { subject: string; html: string; text: string } {
+  const isPromotion = role === 'moderator' || role === 'admin'
+  const roleLabel = role === 'moderator' ? 'Moderator' : role === 'admin' ? 'Admin' : 'User'
+  const subject = isPromotion
+    ? `🎉 You've been granted ${roleLabel} access on ${appName}`
+    : `Your ${appName} role has been updated`
+  const detail = isPromotion
+    ? `Congratulations! You have been granted ${roleLabel} access on ${appName}. You now have access to additional tools and responsibilities to help keep our community safe and thriving.`
+    : `Your account role has been updated to ${roleLabel}. If you have questions about this change, please contact support.`
+  const color = isPromotion ? '#166534' : '#92400e'
+  const bg = isPromotion ? '#dcfce7' : '#fef3c7'
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+body{font-family:Arial,sans-serif;background:#f4f4f4;margin:0;padding:0}
+.wrap{max-width:480px;margin:40px auto;background:#fff;border-radius:12px;overflow:hidden}
+.hd{background:#e31837;padding:28px 32px;text-align:center}
+.hd h1{color:#fff;margin:0;font-size:20px}
+.bd{padding:32px}
+.badge{display:inline-block;font-size:13px;background:${bg};color:${color};padding:4px 10px;border-radius:20px;margin-bottom:16px;font-weight:600}
+p{font-size:15px;color:#333;line-height:1.6;margin:0 0 12px}
+.ft{text-align:center;padding:16px;font-size:12px;color:#aaa}
+</style></head><body>
+<div class="wrap"><div class="hd"><h1>${appName}</h1></div>
+<div class="bd"><span class="badge">${isPromotion ? '🎉' : '🔄'} ${roleLabel}</span>
+<p>${detail}</p>
+</div><div class="ft">&copy; ${new Date().getFullYear()} ${appName}. All rights reserved.</div></div>
+</body></html>`
+  return { subject, html, text: `Role Update\n\n${detail}` }
+}
+
+export function buildSuspensionLiftedEmail(
+  appName = 'MarketX',
+): { subject: string; html: string; text: string } {
+  const subject = `✅ Your ${appName} suspension has been lifted`
+  const detail = `Your account suspension has been lifted and your account is now fully restored. Welcome back!`
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+body{font-family:Arial,sans-serif;background:#f4f4f4;margin:0;padding:0}
+.wrap{max-width:480px;margin:40px auto;background:#fff;border-radius:12px;overflow:hidden}
+.hd{background:#e31837;padding:28px 32px;text-align:center}
+.hd h1{color:#fff;margin:0;font-size:20px}
+.bd{padding:32px}
+.badge{display:inline-block;font-size:13px;background:#dcfce7;color:#166534;padding:4px 10px;border-radius:20px;margin-bottom:16px;font-weight:600}
+p{font-size:15px;color:#333;line-height:1.6;margin:0 0 12px}
+.ft{text-align:center;padding:16px;font-size:12px;color:#aaa}
+</style></head><body>
+<div class="wrap"><div class="hd"><h1>${appName}</h1></div>
+<div class="bd"><span class="badge">✅ Suspension Lifted</span>
+<p>${detail}</p>
+<p style="color:#888;font-size:13px">Please remember to follow our community guidelines going forward.</p>
+</div><div class="ft">&copy; ${new Date().getFullYear()} ${appName}. All rights reserved.</div></div>
+</body></html>`
+  return { subject, html, text: `Account Restored\n\n${detail}` }
 }
 
 /**

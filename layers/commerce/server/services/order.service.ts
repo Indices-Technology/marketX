@@ -1,8 +1,14 @@
-import { orderRepository, type CreateOrderData } from '../repositories/order.repository'
+import {
+  orderRepository,
+  type CreateOrderData,
+} from '../repositories/order.repository'
 import { cartRepository } from '../repositories/cart.repository'
 import { affiliateRepository } from '../repositories/affiliate.repository'
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { auditQueue } from '~~/server/queues/audit.queue'
+import { notificationQueue } from '~~/server/queues/notification.queue'
+import { emailQueue } from '~~/server/queues/email.queue'
+import { buildNewOrderSellerEmail } from '~~/server/utils/email/emailService'
 
 export interface PlaceOrderInput {
   items: Array<{ variantId: number; quantity: number }>
@@ -22,16 +28,30 @@ export const orderService = {
     ipAddress: string,
     userAgent: string,
   ) {
-    const { items, name, address, zipcode, county, country, paymentMethod, affiliateCode } = data
+    const {
+      items,
+      name,
+      address,
+      zipcode,
+      county,
+      country,
+      paymentMethod,
+      affiliateCode,
+    } = data
 
     if (!items || !Array.isArray(items) || items.length === 0) {
-      throw new UserError('INVALID_ORDER', 'Order must have at least one item', 400)
+      throw new UserError(
+        'INVALID_ORDER',
+        'Order must have at least one item',
+        400,
+      )
     }
 
     // Resolve affiliate code → profileId (ignore self-referral)
     let affiliateUserId: string | undefined
     if (affiliateCode) {
-      const affiliateProfile = await affiliateRepository.findByCode(affiliateCode)
+      const affiliateProfile =
+        await affiliateRepository.findByCode(affiliateCode)
       if (affiliateProfile && affiliateProfile.id !== userId) {
         affiliateUserId = affiliateProfile.id
       }
@@ -46,7 +66,10 @@ export const orderService = {
           include: {
             product: {
               include: {
-                offers: { where: { isActive: true }, orderBy: { minQuantity: 'desc' } },
+                offers: {
+                  where: { isActive: true },
+                  orderBy: { minQuantity: 'desc' },
+                },
                 seller: { select: { id: true } },
               },
             },
@@ -54,11 +77,6 @@ export const orderService = {
         }),
       ),
     )
-
-    const sellerIds = new Set(variantRows.map((v) => v?.product.seller?.id).filter(Boolean))
-    if (sellerIds.size > 1) {
-      throw new UserError('MULTI_SELLER_ORDER', 'All items must be from the same store', 400)
-    }
 
     let totalAmount = 0
     let totalAffiliateCut = 0
@@ -68,10 +86,18 @@ export const orderService = {
       const item = items[i]!
       const variant = variantRows[i]
       if (!variant) {
-        throw new UserError('VARIANT_NOT_FOUND', `Variant ${item.variantId} not found`, 404)
+        throw new UserError(
+          'VARIANT_NOT_FOUND',
+          `Variant ${item.variantId} not found`,
+          404,
+        )
       }
       if (variant.stock < item.quantity) {
-        throw new UserError('INSUFFICIENT_STOCK', `Not enough stock for variant ${item.variantId}`, 400)
+        throw new UserError(
+          'INSUFFICIENT_STOCK',
+          `Not enough stock for variant ${item.variantId}`,
+          400,
+        )
       }
 
       const basePrice = variant.price ?? variant.product.price
@@ -111,7 +137,11 @@ export const orderService = {
           select: { stock: true },
         })
         if (!locked || locked.stock < item.quantity) {
-          throw new UserError('INSUFFICIENT_STOCK', `Stock changed for variant ${item.variantId}`, 400)
+          throw new UserError(
+            'INSUFFICIENT_STOCK',
+            `Stock changed for variant ${item.variantId}`,
+            400,
+          )
         }
       }
 
@@ -151,8 +181,19 @@ export const orderService = {
                       title: true,
                       slug: true,
                       price: true,
-                      seller: { select: { store_slug: true, store_name: true } },
-                      media: { take: 1, where: { isBgMusic: false }, select: { id: true, url: true, type: true } },
+                      seller: {
+                        select: {
+                          id: true,
+                          profileId: true,
+                          store_slug: true,
+                          store_name: true,
+                        },
+                      },
+                      media: {
+                        take: 1,
+                        where: { isBgMusic: false },
+                        select: { id: true, url: true, type: true },
+                      },
                     },
                   },
                 },
@@ -184,10 +225,70 @@ export const orderService = {
       resource: 'Orders',
       resourceId: String(order.id),
       reason: 'Placed new order',
-      changes: { totalAmount, itemCount: enrichedItems.length, affiliateUserId },
+      changes: {
+        totalAmount,
+        itemCount: enrichedItems.length,
+        affiliateUserId,
+      },
       ipAddress,
       userAgent,
     })
+
+    // Notify each seller of their portion of the order — fire-and-forget
+    type SellerInfo = {
+      profileId: string
+      storeName: string
+      itemCount: number
+      subtotal: number
+    }
+    const sellerMap = new Map<string, SellerInfo>()
+    for (let i = 0; i < variantRows.length; i++) {
+      const seller = variantRows[i]?.product.seller as any
+      if (!seller?.profileId) continue
+      const profileId = seller.profileId as string
+      const existing = sellerMap.get(profileId)
+      const lineTotal = enrichedItems[i]?.price ?? 0
+      const qty = enrichedItems[i]?.quantity ?? 1
+      if (existing) {
+        existing.itemCount += qty
+        existing.subtotal += lineTotal
+      } else {
+        sellerMap.set(profileId, {
+          profileId,
+          storeName: seller.store_name ?? 'Your Store',
+          itemCount: qty,
+          subtotal: lineTotal,
+        })
+      }
+    }
+
+    for (const s of sellerMap.values()) {
+      notificationQueue.enqueue({
+        userId: s.profileId,
+        type: 'ORDER',
+        message: `New order #${order.id} received — ${s.itemCount} item${s.itemCount !== 1 ? 's' : ''}, ₦${(s.subtotal / 100).toLocaleString('en-NG')}`,
+        orderId: order.id,
+      })
+      prisma.profile
+        .findUnique({ where: { id: s.profileId }, select: { email: true } })
+        .then((profile) => {
+          if (!profile?.email) return
+          const { subject, html, text } = buildNewOrderSellerEmail(
+            order.id,
+            s.itemCount,
+            s.subtotal,
+            s.storeName,
+          )
+          emailQueue.enqueue({
+            to: profile.email,
+            subject,
+            html,
+            text,
+            type: 'ORDER_CONFIRMATION',
+          })
+        })
+        .catch(() => {})
+    }
 
     return order
   },

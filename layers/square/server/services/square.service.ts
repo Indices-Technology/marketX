@@ -14,6 +14,7 @@
  */
 
 import { prisma } from '~~/server/utils/db'
+import { notificationQueue } from '~~/server/queues/notification.queue'
 import type {
   CreateSquareInput,
   UpdateSquareInput,
@@ -323,40 +324,33 @@ export const squareService = {
           })
         }
 
-        // Notify the seller
-        const sellerProfile = await tx.sellerProfile.findUnique({
-          where: { id: sellerId },
-          select: { profileId: true },
-        })
-        if (sellerProfile) {
-          await tx.notification.create({
-            data: {
-              userId: sellerProfile.profileId,
-              type: 'SQUARE_MEMBERSHIP_APPROVED',
-              message: `Your application to join ${square.name} has been approved.`,
-            },
-          })
-        }
-      }
-
-      if (input.action === 'REJECT') {
-        const sellerProfile = await tx.sellerProfile.findUnique({
-          where: { id: sellerId },
-          select: { profileId: true },
-        })
-        if (sellerProfile) {
-          await tx.notification.create({
-            data: {
-              userId: sellerProfile.profileId,
-              type: 'SQUARE_MEMBERSHIP_REJECTED',
-              message: `Your application to join ${square.name} was not approved.${input.reason ? ` Reason: ${input.reason}` : ''}`,
-            },
-          })
-        }
       }
 
       return [updated]
     })
+
+    // Notify seller after the transaction so SSE push fires correctly
+    const sellerProfile = await prisma.sellerProfile.findUnique({
+      where: { id: sellerId },
+      select: { profileId: true },
+    })
+    if (sellerProfile) {
+      if (input.action === 'APPROVE') {
+        notificationQueue.enqueue({
+          userId: sellerProfile.profileId,
+          type: 'SQUARE_MEMBERSHIP_APPROVED',
+          actorId: officerProfileId,
+          message: `Your application to join ${square.name} has been approved.`,
+        })
+      } else if (input.action === 'REJECT') {
+        notificationQueue.enqueue({
+          userId: sellerProfile.profileId,
+          type: 'SQUARE_MEMBERSHIP_REJECTED',
+          actorId: officerProfileId,
+          message: `Your application to join ${square.name} was not approved.${input.reason ? ` Reason: ${input.reason}` : ''}`,
+        })
+      }
+    }
 
     return updated
   },
