@@ -80,6 +80,7 @@
 <script setup lang="ts">
 import type { IMessage } from '../types/profile.types'
 import { useProfileStore } from '../stores/profile.store'
+import Avatar from './Avatar.vue'
 
 const props = defineProps<{
   message: IMessage

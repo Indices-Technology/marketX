@@ -35,6 +35,8 @@
 </template>
 
 <script setup lang="ts">
+import Avatar from './Avatar.vue'
+
 defineProps<{ user: any; isCreating?: boolean }>()
 defineEmits(['select'])
 </script>

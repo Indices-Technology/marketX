@@ -36,7 +36,7 @@
 <script setup lang="ts">
 import { useProfileStore } from '~/stores/profile.store'
 import type { IProfile } from '~/layers/profile/app/types/profile.types'
-import { formatAvatarUrl } from '~~/shared/utils/formatters'
+import Avatar from './Avatar.vue'
 import FollowButton from './FollowButton.vue'
 
 defineProps<{

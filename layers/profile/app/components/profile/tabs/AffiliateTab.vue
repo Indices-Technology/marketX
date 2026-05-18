@@ -252,7 +252,7 @@
               class="flex items-center justify-between p-4"
             >
               <div class="flex items-center gap-3">
-                <img :src="product.imageUrl || ''" class="h-12 w-12 rounded-lg bg-gray-100 object-cover dark:bg-neutral-800" />
+                <img :src="imgThumb(product.imageUrl)" class="h-12 w-12 rounded-lg bg-gray-100 object-cover dark:bg-neutral-800" />
                 <div>
                   <p class="text-sm font-medium text-gray-900 dark:text-neutral-100">{{ product.title }}</p>
                   <p class="text-xs text-gray-400 dark:text-neutral-500">
@@ -305,7 +305,7 @@
             >
               <div class="flex items-center gap-3">
                 <img
-                  :src="promoter.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${promoter.username}`"
+                  :src="promoter.avatar ? imgAvatar(promoter.avatar) : `https://api.dicebear.com/7.x/avataaars/svg?seed=${promoter.username}`"
                   class="h-10 w-10 rounded-full bg-gray-100 object-cover dark:bg-neutral-800"
                 />
                 <div>
@@ -359,7 +359,7 @@
                 class="flex items-center gap-3 p-4"
               >
                 <img
-                  :src="product.media?.[0]?.url || ''"
+                  :src="imgThumb(product.media?.[0]?.url)"
                   class="h-12 w-12 shrink-0 rounded-xl bg-gray-100 object-cover dark:bg-neutral-800"
                 />
                 <div class="min-w-0 flex-1">
@@ -406,6 +406,7 @@ import { useCurrency } from '~~/layers/core/app/composables/useCurrency'
 import { useAffiliateApi } from '~~/layers/commerce/app/services/affiliate.api'
 import { computed, onMounted, ref } from 'vue'
 import type { Promoter, Referral } from '~~/layers/commerce/app/types/affiliate'
+import { imgThumb, imgAvatar } from '~~/layers/core/app/utils/cloudinary'
 
 const toast = useToast()
 const sellerStore = useSellerStore()

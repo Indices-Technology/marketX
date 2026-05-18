@@ -34,7 +34,7 @@
             @mousedown.prevent="pick(item)"
           >
             <div class="mention-avatar">
-              <img v-if="item.avatar" :src="item.avatar" class="mention-img" />
+              <img v-if="item.avatar" :src="imgAvatar(item.avatar)" class="mention-img" />
               <span v-else class="mention-initials">{{ item.displayName.slice(0, 2).toUpperCase() }}</span>
             </div>
             <div class="mention-meta">
@@ -55,6 +55,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { imgAvatar } from '~~/layers/core/app/utils/cloudinary'
 
 export interface MentionData {
   type: 'user' | 'seller'

@@ -55,7 +55,7 @@
             />
             <img
               v-else
-              :src="mediaItems[currentIndex]?.url"
+              :src="imgDetail(mediaItems[currentIndex]?.url)"
               :alt="product.title"
               class="h-full w-full object-contain"
             />
@@ -109,7 +109,7 @@
               "
             >
               <img
-                :src="item.type === 'VIDEO' ? videoThumb(item.url) : item.url"
+                :src="item.type === 'VIDEO' ? videoThumb(item.url) : imgThumb(item.url)"
                 :alt="`${product.title} ${i + 1}`"
                 class="h-full w-full object-cover"
               />
@@ -132,7 +132,7 @@
           >
             <img
               v-if="product.seller?.store_logo"
-              :src="product.seller.store_logo"
+              :src="imgAvatar(product.seller.store_logo)"
               class="h-5 w-5 rounded-full object-cover"
             />
             <Icon
@@ -349,7 +349,7 @@ import ProductReviews from '~~/layers/commerce/app/components/ProductReviews.vue
 import { useCart } from '~~/layers/commerce/app/composables/useCart'
 import { useAffiliate } from '~~/layers/commerce/app/composables/useAffiliate'
 import { formatProductPrice } from '~~/shared/utils/currency'
-import { videoThumb } from '~~/layers/core/app/utils/cloudinary'
+import { videoThumb, imgDetail, imgThumb, imgAvatar } from '~~/layers/core/app/utils/cloudinary'
 import { notify } from '@kyvg/vue3-notification'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 
