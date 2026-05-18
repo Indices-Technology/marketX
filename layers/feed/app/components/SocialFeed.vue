@@ -20,9 +20,7 @@
           />
         </div>
         <div>
-          <p
-            class="text-lg font-semibold text-gray-800 dark:text-neutral-200"
-          >
+          <p class="text-lg font-semibold text-gray-800 dark:text-neutral-200">
             {{ $t('feed.loadError') }}
           </p>
           <p class="mt-2 text-sm text-gray-500 dark:text-neutral-400">
@@ -275,14 +273,21 @@
               size="18"
               class="animate-spin text-brand"
             />
-            <Icon v-else name="mdi:crosshairs-gps" size="18" class="text-brand" />
+            <Icon
+              v-else
+              name="mdi:crosshairs-gps"
+              size="18"
+              class="text-brand"
+            />
           </div>
           <div class="min-w-0">
             <p
               class="text-[13px] font-semibold text-gray-800 dark:text-neutral-200"
             >
               {{
-                nearbyRequesting ? 'Getting your location…' : 'See stores near you'
+                nearbyRequesting
+                  ? 'Getting your location…'
+                  : 'See stores near you'
               }}
             </p>
             <p class="text-[11px] text-gray-400 dark:text-neutral-500">
@@ -362,6 +367,36 @@
       </template>
     </section>
 
+    <!-- Empty following feed — shown only when user has no follows yet -->
+    <div
+      v-if="
+        activeTab === 'following' &&
+        !feedStore.isLoading &&
+        mainFeed.length === 0
+      "
+      class="flex flex-col items-center gap-4 py-16 text-center"
+    >
+      <Icon
+        name="mdi:account-group-outline"
+        size="48"
+        class="text-gray-300 dark:text-neutral-600"
+      />
+      <div>
+        <p class="text-base font-semibold text-gray-700 dark:text-neutral-200">
+          Your following feed is empty
+        </p>
+        <p class="mt-1 text-sm text-gray-400 dark:text-neutral-500">
+          Follow users or stores to see their posts here
+        </p>
+      </div>
+      <button
+        class="mt-2 rounded-full bg-brand px-6 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+        @click="setTab('for-you')"
+      >
+        Explore For You
+      </button>
+    </div>
+
     <!-- Infinite Scroll Trigger -->
     <div ref="loadMoreTrigger" class="h-16" />
 
@@ -380,7 +415,9 @@
 
     <!-- End of Feed -->
     <div
-      v-if="!feedStore.canLoadMore && mainFeed.length > 0 && !feedStore.isLoading"
+      v-if="
+        !feedStore.canLoadMore && mainFeed.length > 0 && !feedStore.isLoading
+      "
       class="py-12 text-center text-sm text-gray-500 dark:text-neutral-400"
     >
       You've reached the end ✨ Keep exploring!
@@ -635,7 +672,10 @@ const loadNearbyStores = async () => {
   nearbyLoading.value = true
   const getPos = (): Promise<GeolocationPosition | null> =>
     new Promise((resolve) => {
-      if (!navigator.geolocation) { resolve(null); return }
+      if (!navigator.geolocation) {
+        resolve(null)
+        return
+      }
       navigator.geolocation.getCurrentPosition(
         (pos) => resolve(pos),
         () => resolve(null),
@@ -643,11 +683,17 @@ const loadNearbyStores = async () => {
       )
     })
   try {
-    const perm = await navigator.permissions?.query({ name: 'geolocation' }).catch(() => null)
-    if (!perm || perm.state === 'denied') { nearbyLoading.value = false; return }
+    const perm = await navigator.permissions
+      ?.query({ name: 'geolocation' })
+      .catch(() => null)
+    if (!perm || perm.state === 'denied') {
+      nearbyLoading.value = false
+      return
+    }
     if (perm.state === 'granted') {
       const pos = await getPos()
-      if (pos) await fetchNearbyWithCoords(pos.coords.latitude, pos.coords.longitude)
+      if (pos)
+        await fetchNearbyWithCoords(pos.coords.latitude, pos.coords.longitude)
       else nearbyLoading.value = false
     } else {
       nearbyLoading.value = false
@@ -665,7 +711,9 @@ const requestNearbyLocation = () => {
       nearbyRequesting.value = false
       fetchNearbyWithCoords(pos.coords.latitude, pos.coords.longitude)
     },
-    () => { nearbyRequesting.value = false },
+    () => {
+      nearbyRequesting.value = false
+    },
     { enableHighAccuracy: false, timeout: 12000 },
   )
 }
@@ -699,10 +747,16 @@ const hasMounted = ref(false)
 onMounted(() => {
   hasMounted.value = true
 
-  // Default logged-in users to their Following feed.
-  // setTab() triggers the activeTab watcher which calls loadTabFeed(),
-  // so only call it directly when the tab is already correct.
-  if (profileStore.isLoggedIn && activeTab.value === 'for-you') {
+  // Default logged-in users with follows to the Following feed.
+  // New users with 0 follows stay on For You so they don't see a blank feed.
+  const myFollowingCount = profileStore.me?.username
+    ? profileStore.getProfileStats(profileStore.me.username).followingCount
+    : 0
+  if (
+    profileStore.isLoggedIn &&
+    activeTab.value === 'for-you' &&
+    myFollowingCount > 0
+  ) {
     setTab('following')
     // watcher will call loadTabFeed() — skip the explicit call below
   } else {
@@ -739,9 +793,15 @@ watch(loadMoreTrigger, (el) => {
 
 onUnmounted(() => observer.value?.disconnect())
 
-const openPostCommentsModal = (post: IFeedItem) => { selectedPost.value = post }
-const openPostModal = (post: IFeedItem) => { selectedPost.value = post }
-const removeFromFeed = (postId: string) => { feedStore.removeItem(postId) }
+const openPostCommentsModal = (post: IFeedItem) => {
+  selectedPost.value = post
+}
+const openPostModal = (post: IFeedItem) => {
+  selectedPost.value = post
+}
+const removeFromFeed = (postId: string) => {
+  feedStore.removeItem(postId)
+}
 const handleStoryPosted = async () => {
   showUploadModal.value = false
   await Promise.all([refresh(), fetchStories().catch(() => {})])
@@ -772,7 +832,9 @@ const handleStoryPosted = async () => {
 }
 .splash-enter-active,
 .splash-leave-active {
-  transition: opacity 0.6s ease, transform 0.6s ease;
+  transition:
+    opacity 0.6s ease,
+    transform 0.6s ease;
 }
 .splash-enter-from,
 .splash-leave-to {

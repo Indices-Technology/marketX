@@ -234,7 +234,7 @@
         </FilterSection>
       </template>
 
-      <template v-else-if="activeTab === 'trending'">
+      <template v-else-if="activeTab === 'browse' || activeTab === 'trending'">
         <FilterSection label="Time range" icon="mdi:clock-outline">
           <div class="filter-option-list">
             <button

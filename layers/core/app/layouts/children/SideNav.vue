@@ -26,7 +26,7 @@
       </NuxtLink>
 
       <NuxtLink to="/discover" class="nav-button group" active-class="active">
-        <Icon name="mdi:magnify" size="24" />
+        <Icon name="mdi:store-search-outline" size="24" />
         <span class="nav-text">Discover</span>
       </NuxtLink>
 

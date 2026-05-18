@@ -16,7 +16,7 @@
         "
         @click="activeTab = 'discover'"
       >
-        <Icon name="mdi:compass-outline" size="18" />
+        <Icon name="mdi:store-search-outline" size="18" />
         <span>Discover</span>
       </button>
 

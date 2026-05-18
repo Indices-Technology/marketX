@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <header
     class="mobile-header border-b border-gray-200/60 bg-white/80 backdrop-blur-md dark:border-neutral-800/60 dark:bg-neutral-900/80"
   >
@@ -28,8 +28,8 @@
             >
           </div>
         </button>
-        <NuxtLink to="/discover" class="header-button" aria-label="Search">
-          <Icon name="mdi:magnify" size="24" />
+        <NuxtLink to="/discover" class="header-button" aria-label="Discover">
+          <Icon name="mdi:store-search-outline" size="24" />
         </NuxtLink>
 
         <ClientOnly>

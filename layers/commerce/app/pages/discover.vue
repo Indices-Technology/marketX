@@ -62,7 +62,7 @@
 
       <!-- ─── TAB PANELS ────────────────────────────────────────────────── -->
       <DiscoverTrending
-        v-if="activeTab === 'trending'"
+        v-if="activeTab === 'browse' || activeTab === 'trending'"
         @open-detail="openDetail"
       />
       <DiscoverSquares
@@ -174,23 +174,24 @@ const categories = computed<Category[]>(
 const selectedCategory = ref<string | null>(null)
 
 const TABS = [
-  { key: 'trending', label: 'Trending', icon: 'mdi:fire' },
-  { key: 'squares', label: 'Squares', icon: 'mdi:store-marker-outline' },
-  { key: 'fresh', label: 'Fresh Drops', icon: 'mdi:lightning-bolt' },
-  { key: 'deals', label: 'Deals', icon: 'mdi:tag-heart-outline' },
-  { key: 'preloved', label: 'Pre-loved', icon: 'mdi:recycle' },
-  { key: 'products', label: 'Products', icon: 'mdi:shopping-outline' },
-  { key: 'sellers', label: 'Sellers', icon: 'mdi:storefront-outline' },
-  { key: 'people', label: 'People', icon: 'mdi:account-group-outline' },
-  { key: 'tags', label: 'Tags', icon: 'mdi:tag-outline' },
+  { key: 'browse',   label: 'Browse',      icon: 'mdi:compass-outline' },
+  { key: 'products', label: 'Products',    icon: 'mdi:shopping-outline' },
+  { key: 'fresh',    label: 'Fresh Drops', icon: 'mdi:lightning-bolt' },
+  { key: 'deals',    label: 'Deals',       icon: 'mdi:tag-heart-outline' },
+  { key: 'preloved', label: 'Pre-loved',   icon: 'mdi:recycle' },
+  { key: 'sellers',  label: 'Sellers',     icon: 'mdi:storefront-outline' },
+  { key: 'squares',  label: 'Squares',     icon: 'mdi:store-marker-outline' },
+  { key: 'people',   label: 'People',      icon: 'mdi:account-group-outline' },
+  { key: 'tags',     label: 'Tags',        icon: 'mdi:tag-outline' },
 ] as const
 
-const { activeTab } = useDiscoverFilters()
+const { activeTab, selectedCategoryId } = useDiscoverFilters()
 const searchInput = ref('')
 const pendingTagName = ref<string | null>(null)
 
 const searchPlaceholder = computed(() => {
   const map: Record<string, string> = {
+    browse: 'Search products, stores and more…',
     trending: 'Search trending…',
     squares: 'Search squares…',
     fresh: 'Search fresh drops…',
@@ -204,9 +205,15 @@ const searchPlaceholder = computed(() => {
   return map[activeTab.value] ?? 'Search…'
 })
 
+// When CategoryGrid picks a category, sync it into the local selectedCategory prop
+watch(selectedCategoryId, (id) => {
+  if (id !== null) selectedCategory.value = id
+})
+
 watch(activeTab, () => {
   searchInput.value = ''
   selectedCategory.value = null
+  selectedCategoryId.value = null
 })
 
 const {
@@ -238,6 +245,7 @@ onMounted(() => {
   }
 
   const validTabs = [
+    'browse',
     'trending',
     'squares',
     'fresh',
@@ -249,7 +257,10 @@ onMounted(() => {
     'tags',
   ] as const
   const tab = route.query.tab as string | undefined
-  if (tab && (validTabs as readonly string[]).includes(tab)) {
+  if (tab === 'trending') {
+    // old deep-links to trending land on browse (same content + category grid)
+    activeTab.value = 'browse'
+  } else if (tab && (validTabs as readonly string[]).includes(tab)) {
     activeTab.value = tab as typeof activeTab.value
   }
 })

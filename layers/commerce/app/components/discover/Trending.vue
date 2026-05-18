@@ -1,5 +1,7 @@
 <template>
   <div class="mt-5 space-y-8">
+    <!-- Category grid — only shown on the browse landing, not on standalone trending -->
+    <DiscoverCategoryGrid v-if="isBrowseTab" />
     <!-- Horizontal strips -->
     <section>
       <div class="mb-3 flex items-center justify-between">
@@ -327,9 +329,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import type { IProduct } from '~~/layers/commerce/app/types/commerce.types'
 import ProductCardMini from '~~/layers/commerce/app/components/ProductCardMini.vue'
+import DiscoverCategoryGrid from '~~/layers/commerce/app/components/discover/CategoryGrid.vue'
 import { useDiscoverFilters } from '~~/layers/commerce/app/composables/useDiscoverFilters'
 
 const emit = defineEmits<{
@@ -337,6 +340,8 @@ const emit = defineEmits<{
 }>()
 
 const { activeTab, filters: discoverFilters } = useDiscoverFilters()
+
+const isBrowseTab = computed(() => activeTab.value === 'browse')
 
 const formatNum = (n: number) => {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`

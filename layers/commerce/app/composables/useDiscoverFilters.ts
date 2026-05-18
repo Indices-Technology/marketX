@@ -1,14 +1,15 @@
 import { ref, reactive, computed } from 'vue'
 
 export type DiscoverTabKey =
-  | 'trending' | 'squares' | 'fresh' | 'deals'
+  | 'browse' | 'trending' | 'squares' | 'fresh' | 'deals'
   | 'preloved' | 'products' | 'sellers' | 'people' | 'tags'
 
 export type SortBy = 'newest' | 'price_asc' | 'price_desc' | 'popular'
 
 // ── Module-level singletons — one state shared across all components ──────────
 
-const activeTab = ref<DiscoverTabKey>('trending')
+const activeTab = ref<DiscoverTabKey>('browse')
+const selectedCategoryId = ref<string | null>(null)
 
 const filters = reactive({
   products: {
@@ -90,6 +91,7 @@ const hasActiveFilters = computed(() => {
 
 export const useDiscoverFilters = () => ({
   activeTab,
+  selectedCategoryId,
   filters,
   hasActiveFilters,
   resetFilters,

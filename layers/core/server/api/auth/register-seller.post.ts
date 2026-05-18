@@ -9,7 +9,7 @@ import { SellerError } from '~~/layers/seller/server/types/seller.types'
 import { sellerService } from '~~/layers/seller/server/services/seller.services'
 
 const RESERVED_SLUGS = new Set([
-  'discover', 'thrift', 'checkout', 'cart', 'sellers', 'seller',
+  'discover', 'market', 'thrift', 'checkout', 'cart', 'sellers', 'seller',
   'user-login', 'user-register', 'profile', 'map', 'reels', 'api',
   'offline', 'landing', 'about', 'help', 'privacy', 'terms',
   'forgot-password', 'reset-password', 'verify-email', 'resend-verification',
