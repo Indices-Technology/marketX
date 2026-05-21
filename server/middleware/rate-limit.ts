@@ -76,6 +76,7 @@ export default defineEventHandler(async (event) => {
 
     if (!path.startsWith('/api/')) return
     if (path.startsWith('/api/auth/')) return
+    if (path.startsWith('/api/oauth/')) return
     if (path.startsWith('/api/commerce/payments/webhook')) return
 
     const ip =
@@ -85,11 +86,8 @@ export default defineEventHandler(async (event) => {
 
     if (path.startsWith('/api/upload')) {
       if (!(await check(`rl:upload:${ip}`, 10, 60_000))) {
-        throw createError({
-          statusCode: 429,
-          statusMessage: 'Too many uploads. Please wait a moment.',
-          headers: { 'Retry-After': '60' },
-        })
+        setResponseHeader(event, 'Retry-After', 60)
+        throw createError({ statusCode: 429, statusMessage: 'Too many uploads. Please wait a moment.' })
       }
       return
     }
@@ -97,21 +95,15 @@ export default defineEventHandler(async (event) => {
     const userId = event.context?.user?.id
     if (userId) {
       if (!(await check(`rl:user:${userId}`, 300, 60_000))) {
-        throw createError({
-          statusCode: 429,
-          statusMessage: 'Too many requests. Please slow down.',
-          headers: { 'Retry-After': '60' },
-        })
+        setResponseHeader(event, 'Retry-After', 60)
+        throw createError({ statusCode: 429, statusMessage: 'Too many requests. Please slow down.' })
       }
       return
     }
 
     if (!(await check(`rl:ip:${ip}`, 120, 60_000))) {
-      throw createError({
-        statusCode: 429,
-        statusMessage: 'Too many requests. Please slow down.',
-        headers: { 'Retry-After': '60' },
-      })
+      setResponseHeader(event, 'Retry-After', 60)
+      throw createError({ statusCode: 429, statusMessage: 'Too many requests. Please slow down.' })
     }
   } catch (err) {
     if ((err as any)?.statusCode === 429) throw err
