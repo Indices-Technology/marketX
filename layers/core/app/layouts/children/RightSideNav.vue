@@ -44,10 +44,13 @@
       </button>
     </div>
 
-    <!-- Scrollable Content -->
-    <div class="custom-scrollbar flex-1 overflow-y-auto p-3">
+    <!-- Scrollable Content — discover tab owns its own scroll; AI tab fills height -->
+    <div
+      v-show="activeTab === 'discover'"
+      class="custom-scrollbar flex-1 overflow-y-auto p-3"
+    >
       <!-- DISCOVER TAB -->
-      <div v-show="activeTab === 'discover'" class="space-y-5 pb-6">
+      <div class="space-y-5 pb-6">
         <!-- Welcome / Personalized Card -->
         <ClientOnly>
           <div
@@ -322,47 +325,27 @@
           </p>
         </div>
       </div>
+    </div>
 
-      <!-- AI TAB -->
-      <div
-        v-show="activeTab === 'ai'"
-        class="flex h-full flex-col items-center justify-center px-4 pb-6 pt-8"
-      >
+    <!-- AI TAB — fills remaining height, DassaChat owns scroll + input -->
+    <div
+      v-show="activeTab === 'ai'"
+      class="flex flex-1 flex-col overflow-hidden"
+    >
+      <ClientOnly>
+        <DassaChat
+          v-if="authStore.accessToken"
+          :token="authStore.accessToken"
+          :default-mode="profileStore.me?.role === 'SELLER' ? 'seller' : 'buyer'"
+          class="flex-1"
+        />
         <div
-          class="relative overflow-hidden rounded-3xl border border-brand/20 bg-gradient-to-br from-brand/10 via-purple-500/10 to-transparent p-8 text-center shadow-sm dark:border-brand/30 dark:from-brand/15 dark:via-purple-500/15"
+          v-else
+          class="flex flex-1 items-center justify-center text-sm text-gray-400 dark:text-neutral-500"
         >
-          <div
-            class="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-brand/10 blur-3xl"
-          />
-          <div
-            class="pointer-events-none absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-purple-500/10 blur-2xl"
-          />
-          <div class="relative z-10 flex flex-col items-center">
-            <div
-              class="mb-5 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-brand to-purple-600 shadow-xl shadow-brand/30"
-            >
-              <Icon name="mdi:robot-happy" size="40" class="text-white" />
-            </div>
-            <h3
-              class="mb-2 text-xl font-extrabold text-gray-900 dark:text-white"
-            >
-              Dasah
-            </h3>
-            <p
-              class="mb-6 max-w-[220px] text-sm leading-relaxed text-gray-500 dark:text-neutral-400"
-            >
-              Your Dasah AI shopping assistant — search smarter, discover
-              faster.
-            </p>
-            <span
-              class="inline-flex items-center gap-1.5 rounded-full border border-brand/30 bg-brand/10 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-brand dark:border-brand/40 dark:bg-brand/20"
-            >
-              <Icon name="mdi:clock-fast" size="14" />
-              Launching soon
-            </span>
-          </div>
+          Sign in to use DassaAI
         </div>
-      </div>
+      </ClientOnly>
     </div>
   </div>
 </template>
@@ -371,14 +354,17 @@
 import { ref, computed, onMounted } from 'vue'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import { useSellerStore } from '~~/layers/seller/app/store/seller.store'
+import { useAuthStore } from '~~/layers/core/app/stores/auth.store'
 import { useLayoutData } from '~~/layers/core/app/composables/useLayoutData'
 import { useSocialApi } from '~~/layers/profile/app/services/social.api'
 import Avatar from '~~/layers/profile/app/components/Avatar.vue'
 import StoreAvatar from '~~/layers/profile/app/components/StoreAvatar.vue'
+import DassaChat from '~~/layers/ai/components/dassa/Chat.vue'
 import type { Seller } from '~~/shared/types/seller'
 
 const profileStore = useProfileStore()
 const sellerStore = useSellerStore()
+const authStore = useAuthStore()
 const { data } = useLayoutData()
 
 const activeTab = ref<'discover' | 'ai'>('discover')

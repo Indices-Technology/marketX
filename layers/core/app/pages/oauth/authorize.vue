@@ -133,9 +133,11 @@ const authStore = useAuthStore()
 const profileStore = useProfileStore()
 
 // ─── Query params ──────────────────────────────────────────────────────────────
-const clientId = computed(() => route.query.client_id as string ?? '')
-const redirectUri = computed(() => route.query.redirect_uri as string ?? '')
-const state = computed(() => route.query.state as string | undefined)
+// route.query is empty after Nuxt hydration on server-side redirects;
+// window.location.search is the reliable source on the client.
+const clientId = ref((route.query.client_id as string) ?? '')
+const redirectUri = ref((route.query.redirect_uri as string) ?? '')
+const state = ref(route.query.state as string | undefined)
 
 // ─── State ─────────────────────────────────────────────────────────────────────
 const isLoggedIn = computed(() => !!authStore.accessToken)
@@ -160,6 +162,11 @@ const permissions = [
 
 // ─── Validate params on mount ─────────────────────────────────────────────────
 onMounted(() => {
+  const params = new URLSearchParams(window.location.search)
+  if (!clientId.value && params.get('client_id')) clientId.value = params.get('client_id')!
+  if (!redirectUri.value && params.get('redirect_uri')) redirectUri.value = params.get('redirect_uri')!
+  if (!state.value && params.get('state')) state.value = params.get('state')!
+
   if (!clientId.value || !redirectUri.value) {
     errorMsg.value = 'Invalid authorization request. Missing required parameters.'
   }

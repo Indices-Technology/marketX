@@ -52,6 +52,7 @@ model Profile {
   password_reset     PasswordResetToken[]
   audit_logs         AuditLog[]
   user_settings      UserSettings?
+  aiConfig           UserAIConfig?
   affiliateOrders    Orders[]       @relation("AffiliateOrders")
   reviews            Review[]       @relation("UserReviews")
 
@@ -1236,4 +1237,19 @@ model UserSuspension {
 
   @@index([userId])
   @@index([expiresAt])
+}
+
+// ── AI Model Configuration (BYOM — Bring Your Own Model) ─────────────────────
+
+model UserAIConfig {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  profileId String   @unique @db.Uuid
+  profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  provider  String   // 'anthropic' | 'openai'
+  model     String   // e.g. 'claude-sonnet-4-6', 'gpt-4o'
+  apiKey    String   // AES-256-GCM encrypted — never returned to clients
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  @@map("user_ai_config")
 }

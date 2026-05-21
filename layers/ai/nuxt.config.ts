@@ -3,6 +3,12 @@ export default defineNuxtConfig({
     {
       path: '~/components',
       pathPrefix: false,
+      ignore: ['**/dassa/**'],
+    },
+    {
+      path: '~/components/dassa',
+      prefix: 'Dassa',
+      pathPrefix: false,
     },
   ],
   modules: ['@pinia/nuxt'],

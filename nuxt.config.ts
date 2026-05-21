@@ -294,6 +294,7 @@ export default defineNuxtConfig({
         process.env.NUXT_PUBLIC_PRIVACY_EMAIL || 'privacy@marketx.app',
       legalEmail: process.env.NUXT_PUBLIC_LEGAL_EMAIL || 'legal@marketx.app',
       baseURL: process.env.NUXT_PUBLIC_BASE_URL || 'http://localhost:3000',
+      dassaSocketUrl: process.env.NUXT_PUBLIC_DASSA_SOCKET_URL || 'http://localhost:4000',
       // Payments
       paystackPk: process.env.PAYSTACK_PUBLIC_KEY,
       // Cloudinary

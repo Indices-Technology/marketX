@@ -170,20 +170,20 @@
           </div>
 
           <!-- ── AI tab ───────────────────────────────────────────────────── -->
-          <div
-            v-else
-            class="flex flex-1 items-center justify-center text-gray-400 dark:text-neutral-500"
-          >
-            <div class="text-center">
-              <div
-                class="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-purple-500 to-pink-500"
-              >
-                <Icon name="mdi:robot-outline" size="40" class="text-white" />
-              </div>
-              <p class="font-semibold text-gray-900 dark:text-neutral-100">
-                Dasah
-              </p>
-              <p class="mt-1 text-sm">Coming soon</p>
+          <div v-else class="flex flex-1 flex-col overflow-hidden">
+            <DassaChat
+              v-if="authStore.accessToken"
+              :token="authStore.accessToken"
+              :default-mode="
+                profileStore.me?.role === 'SELLER' ? 'seller' : 'buyer'
+              "
+              class="flex-1"
+            />
+            <div
+              v-else
+              class="flex flex-1 items-center justify-center text-sm text-gray-400 dark:text-neutral-500"
+            >
+              Sign in to use DassaAI
             </div>
           </div>
         </div>
@@ -195,6 +195,9 @@
 <script setup lang="ts">
 import { useNotificationStore } from '~~/layers/profile/app/stores/notification.store'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
+import { useAuthStore } from '~~/layers/core/app/stores/auth.store'
+
+import DassaChat from '~~/layers/ai/components/dassa/Chat.vue'
 
 import { ref, computed } from 'vue'
 import { useChat } from '~~/layers/profile/app/composables/useChat'
@@ -204,6 +207,7 @@ const emit = defineEmits(['open', 'close'])
 
 const profileStore = useProfileStore()
 const notificationStore = useNotificationStore()
+const authStore = useAuthStore()
 const { fetchConversations, isLoading, conversations } = useChat()
 
 const activeTab = ref<'messages' | 'ai'>('messages')
