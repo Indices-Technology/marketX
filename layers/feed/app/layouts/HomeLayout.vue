@@ -260,7 +260,7 @@ const ShareModal = defineAsyncComponent(
   () => import('~~/layers/social/app/components/modals/ShareModal.vue'),
 )
 const MobileAIChatButton = defineAsyncComponent(
-  () => import('~~/layers/ai/chat/MobileAIChat.vue'),
+  () => import('~~/layers/ai/app/components/MobileAIChat.vue'),
 )
 
 import { useLayoutData } from '~~/layers/core/app/composables/useLayoutData'

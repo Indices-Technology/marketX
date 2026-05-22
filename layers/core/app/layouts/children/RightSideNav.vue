@@ -359,7 +359,7 @@ import { useLayoutData } from '~~/layers/core/app/composables/useLayoutData'
 import { useSocialApi } from '~~/layers/profile/app/services/social.api'
 import Avatar from '~~/layers/profile/app/components/Avatar.vue'
 import StoreAvatar from '~~/layers/profile/app/components/StoreAvatar.vue'
-import DassaChat from '~~/layers/ai/components/dassa/Chat.vue'
+import DassaChat from '~~/layers/ai/app/components/dassa/Chat.vue'
 import type { Seller } from '~~/shared/types/seller'
 
 const profileStore = useProfileStore()

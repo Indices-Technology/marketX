@@ -78,6 +78,11 @@ export default defineEventHandler(async (event) => {
     if (path.startsWith('/api/auth/')) return
     if (path.startsWith('/api/oauth/')) return
     if (path.startsWith('/api/commerce/payments/webhook')) return
+    // Internal Dassah endpoints — authenticated by X-Dassah-Internal key, not rate-limited
+    if (path.startsWith('/api/ai/context/')) return
+    if (path.startsWith('/api/ai/embeddings/')) return
+    if (path.startsWith('/api/ai/profile/')) return
+    if (path.startsWith('/api/ai/logs/')) return
 
     const ip =
       getHeader(event, 'x-forwarded-for')?.split(',')[0]?.trim() ||

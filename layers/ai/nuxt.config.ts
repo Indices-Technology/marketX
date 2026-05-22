@@ -1,12 +1,12 @@
 export default defineNuxtConfig({
   components: [
     {
-      path: '~/components',
+      path: '~/app/components',
       pathPrefix: false,
       ignore: ['**/dassa/**'],
     },
     {
-      path: '~/components/dassa',
+      path: '~/app/components/dassa',
       prefix: 'Dassa',
       pathPrefix: false,
     },

@@ -181,6 +181,11 @@ const requiredVars: RequiredEnvVar[] = [
     required: false,
     description: 'OpenAI API key',
   },
+  {
+    name: 'DASSAH_INTERNAL_KEY',
+    required: false,
+    description: 'Shared secret for Dassah → MarketX internal API calls (RAG context endpoints). Generate with: openssl rand -hex 32',
+  },
 
   // â”€â”€â”€ OAuth (optional) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   {

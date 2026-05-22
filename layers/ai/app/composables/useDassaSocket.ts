@@ -14,7 +14,8 @@ export const useDassaSocket = () => {
     socket.value?.disconnect()
     socket.value = null
 
-    const url = (config.public.dassaSocketUrl as string) || 'http://localhost:4000'
+    const url =
+      (config.public.dassaSocketUrl as string) || 'http://localhost:4000'
 
     socket.value = io(url, {
       auth: { token },

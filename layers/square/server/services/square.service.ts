@@ -15,6 +15,7 @@
 
 import { prisma } from '~~/server/utils/db'
 import { notificationQueue } from '~~/server/queues/notification.queue'
+import { entityEmbedder } from '~~/layers/ai/server/services/entity-embedder.service'
 import type {
   CreateSquareInput,
   UpdateSquareInput,
@@ -168,6 +169,8 @@ export const squareService = {
       select: SQUARE_PUBLIC_SELECT,
     })
 
+    entityEmbedder.embedSquare(square.id)
+
     return square
   },
 
@@ -183,11 +186,15 @@ export const squareService = {
     const square = await prisma.square.findUnique({ where: { slug } })
     if (!square) throw createError({ statusCode: 404, statusMessage: 'Square not found' })
 
-    return prisma.square.update({
+    const updated = await prisma.square.update({
       where: { slug },
       data,
       select: SQUARE_PUBLIC_SELECT,
     })
+
+    entityEmbedder.embedSquare(updated.id)
+
+    return updated
   },
 
   // ── Seller membership ───────────────────────────────────────────────────────

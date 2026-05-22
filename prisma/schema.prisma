@@ -1,12 +1,13 @@
 
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
-  // extensions = [uuid_ossp(map: "uuid-ossp", schema: "extensions"), vector]
+  provider   = "postgresql"
+  extensions = [vector]
 }
 
 model Profile {
@@ -53,6 +54,7 @@ model Profile {
   audit_logs         AuditLog[]
   user_settings      UserSettings?
   aiConfig           UserAIConfig?
+  aiProfile          UserAIProfile?
   affiliateOrders    Orders[]       @relation("AffiliateOrders")
   reviews            Review[]       @relation("UserReviews")
 
@@ -1252,4 +1254,85 @@ model UserAIConfig {
   updatedAt DateTime @updatedAt @db.Timestamptz(6)
 
   @@map("user_ai_config")
+}
+
+// ── AI / RAG ──────────────────────────────────────────────────────────────────
+
+/// Vector embedding for every indexed entity (PRODUCT | SELLER | SQUARE).
+/// The `embedding vector(1536)` column is added via custom SQL migration —
+/// pgvector is not a native Prisma type. All vector reads/writes use $queryRaw / $executeRaw.
+/// All other columns are managed by Prisma normally.
+model Embedding {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  entityType  String   // PRODUCT | SELLER | SQUARE
+  entityId    String   // source PK cast to string
+  /// Denormalised snapshot used at query time: name, imageUrl, price, slug, location, …
+  metadata    Json
+  /// SHA-256 of the source text — indexer skips re-embedding when unchanged
+  contentHash String
+  indexedAt   DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(6)
+
+  @@unique([entityType, entityId])
+  @@index([entityType])
+  @@index([updatedAt])
+}
+
+/// Persistent AI profile for each user.
+/// Built from explicit preferences ("I'm size 43") and inferred signals (purchase history).
+/// Injected into every Dassah turn so the model knows the user before they say anything.
+model UserAIProfile {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId       String   @unique @db.Uuid
+  /// { height, weight, shoeSize, clothingSize, waist, chest }
+  measurements Json?
+  /// { style, budget, brands, colors, occasions, preferredSellers }
+  preferences  Json?
+  /// { topCategories, priceRange, preferredLocations, lastSearches }
+  signals      Json?
+  rawContext   String?  @db.Text
+  createdAt    DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @db.Timestamptz(6)
+
+  profile      Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+/// Every Dassah AI conversation turn — powers intent analytics, token cost, p95 latency.
+/// userId is a plain string (no FK) so logs survive user deletion.
+model AiTurnLog {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId            String   @db.Uuid
+  sessionId         String
+  channel           String   // dassai-web | dassai-seller-web
+  intent            String?
+  userMessage       String   @db.Text
+  assistantResponse String   @db.Text
+  toolsCalled       String[]
+  ragHits           Int      @default(0)
+  tokensPrompt      Int      @default(0)
+  tokensCompletion  Int      @default(0)
+  latencyMs         Int      @default(0)
+  modelUsed         String?
+  guardBlocked      Boolean  @default(false)
+  createdAt         DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([channel, createdAt])
+  @@index([intent, createdAt])
+}
+
+/// Every guard rail trigger — prompt injections, PII, unauthorised tool calls, rate limits.
+/// userId is a plain string (no FK) so events survive user deletion.
+model GuardRailEvent {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String   @db.Uuid
+  type          String   // PROMPT_INJECTION | PII_DETECTED | UNAUTHORIZED_TOOL | RATE_LIMIT
+  inputFragment String?  @db.Text
+  createdAt     DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([userId])
+  @@index([type, createdAt])
 }

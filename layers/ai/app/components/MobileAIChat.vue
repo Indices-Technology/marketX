@@ -183,7 +183,7 @@
               v-else
               class="flex flex-1 items-center justify-center text-sm text-gray-400 dark:text-neutral-500"
             >
-              Sign in to use DassaAI
+              Sign in to use Dasah
             </div>
           </div>
         </div>
@@ -197,7 +197,7 @@ import { useNotificationStore } from '~~/layers/profile/app/stores/notification.
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import { useAuthStore } from '~~/layers/core/app/stores/auth.store'
 
-import DassaChat from '~~/layers/ai/components/dassa/Chat.vue'
+import DassaChat from '~~/layers/ai/app/components/dassa/Chat.vue'
 
 import { ref, computed } from 'vue'
 import { useChat } from '~~/layers/profile/app/composables/useChat'

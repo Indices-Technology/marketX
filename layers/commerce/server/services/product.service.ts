@@ -7,6 +7,7 @@ import { buildReviewReceivedEmail } from '~~/server/utils/email/emailService'
 import { auditService } from '~~/server/layers/shared/audit/audit.service'
 import { productRepository } from '../repositories/product.repository'
 import { prisma } from '~~/server/utils/db'
+import { entityEmbedder } from '~~/layers/ai/server/services/entity-embedder.service'
 import {
   createProductSchema,
   updateProductSchema,
@@ -101,6 +102,8 @@ export const productService = {
         })
         .catch(() => {})
     }
+
+    entityEmbedder.embedProduct(product.id)
 
     return product
   },
@@ -259,6 +262,8 @@ export const productService = {
           .catch(() => {})
       }
     }
+
+    entityEmbedder.embedProduct(updated.id)
 
     return updated
   },

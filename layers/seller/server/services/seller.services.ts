@@ -7,6 +7,7 @@ import {
   VerifySellerProfileRequest,
 } from '../schemas/seller.schema'
 import { sellerRepository } from '../repositories/seller.repository'
+import { entityEmbedder } from '~~/layers/ai/server/services/entity-embedder.service'
 
 /**
  * Seller Service
@@ -78,6 +79,8 @@ export const sellerService = {
         where: { id: userId },
         data: { role: 'seller' },
       })
+
+      entityEmbedder.embedSeller(seller.id)
 
       return seller
     } catch (error: any) {
@@ -151,6 +154,8 @@ export const sellerService = {
         userId,
         data,
       )
+
+      entityEmbedder.embedSeller(updated.id)
 
       return updated
     } catch (error: any) {

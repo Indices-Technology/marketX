@@ -56,7 +56,7 @@
           <span class="text-xl font-black tracking-tight text-white">DA</span>
         </div>
         <p class="text-[15px] font-bold text-gray-900 dark:text-neutral-100">
-          DassaAI
+          Dasah
         </p>
         <p
           class="mt-1 max-w-[200px] text-[12px] text-gray-400 dark:text-neutral-500"
