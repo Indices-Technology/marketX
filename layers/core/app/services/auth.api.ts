@@ -110,7 +110,7 @@ export class AuthApiClient extends BaseApiClient {
   ): Promise<{ success: boolean; message: string }> {
     return this.request('/api/auth/reset-password', {
       method: 'POST',
-      body: { token, newPassword },
+      body: { token, password: newPassword, confirmPassword: newPassword },
     })
   }
 
