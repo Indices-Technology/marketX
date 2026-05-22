@@ -29,14 +29,20 @@ export interface DassaMessage {
   createdAt: Date
 }
 
+// Module-level state — survives component remounts (bottom sheet open/close)
+const messages      = ref<DassaMessage[]>([])
+const isTyping      = ref(false)
+const isInitialized = ref(false)
+
 export const useDassaChat = () => {
   const { socket, isConnected, connect, disconnect } = useDassaSocket()
-  const messages = ref<DassaMessage[]>([])
-  const isTyping = ref(false)
-  const isInitialized = ref(false)
 
   const init = (token: string, sessionType: 'buyer' | 'seller' = 'buyer') => {
-    if (isInitialized.value) return
+    if (isInitialized.value) {
+      // Already connected — re-emit session type in case it changed
+      socket.value?.emit('session:type', sessionType)
+      return
+    }
 
     connect(token, () => {
       socket.value?.emit('session:type', sessionType)
