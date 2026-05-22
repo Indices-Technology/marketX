@@ -6,11 +6,12 @@
     <!-- Banner -->
     <div class="relative h-24 overflow-hidden">
       <img
-        v-if="square.bannerUrl"
-        :src="square.bannerUrl"
+        v-if="!bannerError"
+        :src="square.bannerUrl || fallbackBannerUrl"
         :alt="square.name"
         class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         loading="lazy"
+        @error="bannerError = true"
       />
       <div
         v-else
@@ -100,7 +101,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 
 const props = defineProps<{
   square: {
@@ -126,4 +127,10 @@ defineEmits<{
 }>()
 
 const accent = computed(() => props.square.accentColor || '#f59e0b')
+const bannerError = ref(false)
+
+// picsum.photos — free, no API key, deterministic per seed
+const fallbackBannerUrl = computed(() =>
+  `https://picsum.photos/seed/${encodeURIComponent(props.square.slug)}/800/300`,
+)
 </script>

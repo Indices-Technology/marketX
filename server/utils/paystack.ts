@@ -50,30 +50,36 @@ export const paystack = {
    */
   async initializeTransaction(params: {
     email: string
-    amount: number // in cents
+    amount: number // in kobo
     reference: string
     currency?: string
     metadata?: Record<string, any>
     callback_url?: string
   }): Promise<PaystackInitResponse> {
-    const res = await $fetch<PaystackInitResponse>(
-      `${PAYSTACK_BASE}/transaction/initialize`,
-      {
-        method: 'POST',
-        headers: paystackHeaders(),
-        body: {
-          email: params.email,
-          amount: params.amount,
-          reference: params.reference,
-          currency: params.currency || 'NGN',
-          metadata: params.metadata || {},
-          callback_url: params.callback_url,
-        },
-      },
-    )
-    if (!res.status)
-      throw new Error(res.message || 'Paystack initialization failed')
-    return res
+    if (!params.amount || params.amount < 100) {
+      throw new Error(`Paystack: amount must be at least 100 kobo (got ${params.amount})`)
+    }
+    const body: Record<string, unknown> = {
+      email:     params.email,
+      amount:    params.amount,
+      reference: params.reference,
+      currency:  params.currency || 'NGN',
+      metadata:  params.metadata || {},
+    }
+    if (params.callback_url) body.callback_url = params.callback_url
+
+    try {
+      const res = await $fetch<PaystackInitResponse>(
+        `${PAYSTACK_BASE}/transaction/initialize`,
+        { method: 'POST', headers: paystackHeaders(), body },
+      )
+      if (!res.status) throw new Error(res.message || 'Paystack initialization failed')
+      return res
+    } catch (err: any) {
+      // Surface the actual Paystack error message from the response body
+      const msg = err?.data?.message || err?.message || 'Paystack initialization failed'
+      throw new Error(`Paystack: ${msg}`)
+    }
   },
 
   /**

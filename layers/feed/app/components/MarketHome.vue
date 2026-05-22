@@ -88,17 +88,9 @@
           :to="`/squares/${sq.slug}`"
           class="group w-36 shrink-0 overflow-hidden rounded-2xl border border-gray-100 bg-white transition hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900"
         >
-          <div
-            class="relative h-14 overflow-hidden"
-            :style="
-              sq.bannerUrl
-                ? ''
-                : `background: linear-gradient(135deg, ${sq.accentColor || '#f59e0b'}33, ${sq.accentColor || '#f59e0b'}08)`
-            "
-          >
+          <div class="relative h-14 overflow-hidden">
             <img
-              v-if="sq.bannerUrl"
-              :src="sqBanner(sq.bannerUrl)"
+              :src="sq.bannerUrl ? sqBanner(sq.bannerUrl) : `https://picsum.photos/seed/${encodeURIComponent(sq.slug)}/144/56`"
               :alt="sq.name"
               width="144"
               height="56"

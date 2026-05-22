@@ -14,6 +14,7 @@ const schema = z.object({
     .array(z.object({ variantId: z.number(), quantity: z.number().positive() }))
     .min(1),
   name: z.string().min(1),
+  email: z.string().email().optional(),
   address: z.string().min(1),
   zipcode: z.string().min(1),
   county: z.string().optional().default(''),
@@ -50,8 +51,18 @@ export default defineEventHandler(async (event) => {
     await orderRepository.setPaymentRef(order.id, reference)
 
     // 3. Initialize Paystack transaction
+    // Priority: email from checkout form → account email (if real TLD) → generated placeholder
+    const FAKE_TLDS = new Set(['test', 'demo', 'local', 'example', 'invalid', 'localhost'])
+    const isRealEmail = (e: string | null | undefined): e is string => {
+      if (!e) return false
+      const tld = e.split('.').pop()?.toLowerCase() ?? ''
+      return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e) && !FAKE_TLDS.has(tld)
+    }
+    const email = isRealEmail(body.email) ? body.email
+      : isRealEmail(user.email) ? user.email
+      : `user_${user.id}@checkout.marketx.app`
     const ps = await paystack.initializeTransaction({
-      email: user.email,
+      email,
       amount: order.totalAmount + body.shippingCost,
       reference,
       currency: body.currency,
@@ -74,6 +85,12 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 400, statusMessage: 'Invalid request body' })
     if (error instanceof UserError)
       throw createError({ statusCode: error.status, statusMessage: error.message })
+    // Surface Paystack-specific errors so the client can show the real reason
+    const msg: string = error?.message || ''
+    if (msg.startsWith('Paystack:')) {
+      logger.logError('[POST /api/commerce/payments/initialize] Paystack error', error, { requestId: event.context?.requestId })
+      throw createError({ statusCode: 502, statusMessage: msg })
+    }
     logger.logError('[POST /api/commerce/payments/initialize]', error, { requestId: event.context?.requestId })
     throw createError({ statusCode: 500, statusMessage: 'Payment initialization failed' })
   }

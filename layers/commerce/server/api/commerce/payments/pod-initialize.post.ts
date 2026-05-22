@@ -125,8 +125,15 @@ export default defineEventHandler(async (event) => {
     await orderRepository.setPaymentRef(order.id, reference)
 
     // 4. Initialize Paystack for shipping fee only
+    const FAKE_TLDS = new Set(['test', 'demo', 'local', 'example', 'invalid', 'localhost'])
+    const isPaystackEmail = (e: string | null | undefined): e is string => {
+      if (!e) return false
+      const tld = e.split('.').pop()?.toLowerCase() ?? ''
+      return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e) && !FAKE_TLDS.has(tld)
+    }
+    const email = isPaystackEmail(user.email) ? user.email : `user_${user.id}@checkout.marketx.app`
     const ps = await paystack.initializeTransaction({
-      email: user.email,
+      email,
       amount: body.shippingCost, // shipping fee only — in kobo
       reference,
       currency: 'NGN',

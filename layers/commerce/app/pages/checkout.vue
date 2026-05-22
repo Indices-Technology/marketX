@@ -340,6 +340,18 @@
               <div class="col-span-2">
                 <label
                   class="mb-1 block text-xs font-medium text-gray-500 dark:text-neutral-400"
+                  >Email <span class="text-gray-400">(for payment receipt)</span></label
+                >
+                <input
+                  v-model="form.email"
+                  type="email"
+                  placeholder="you@example.com"
+                  class="input-field"
+                />
+              </div>
+              <div class="col-span-2">
+                <label
+                  class="mb-1 block text-xs font-medium text-gray-500 dark:text-neutral-400"
                   >Delivery Address</label
                 >
                 <input
@@ -925,6 +937,7 @@ const selectedAddressId = ref<number | null>(null)
 
 const form = reactive({
   name: '',
+  email: '',
   address: '',
   county: '',
   state: '',
@@ -1116,6 +1129,7 @@ const handleCheckout = async () => {
       quantity: i.quantity,
     })),
     name: form.name,
+    email: form.email || undefined,
     address: form.address,
     county: form.county,
     zipcode: form.zipcode,
@@ -1164,8 +1178,13 @@ const handleCheckout = async () => {
 onMounted(async () => {
   captureAffiliateRef()
   await fetchCart()
-  // Only load saved addresses when already authenticated
   if (profileStore.isLoggedIn) {
+    // Pre-fill email from profile (skip fake TLDs from demo accounts)
+    const profileEmail = profileStore.me?.email
+    const FAKE_TLDS = new Set(['test', 'demo', 'local', 'example', 'invalid'])
+    const tld = profileEmail?.split('.').pop()?.toLowerCase() ?? ''
+    if (profileEmail && !FAKE_TLDS.has(tld)) form.email = profileEmail
+
     try {
       const result = await addressApi.getAddresses()
       savedAddresses.value = result.data

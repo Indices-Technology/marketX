@@ -34,15 +34,10 @@
       >
         <div class="relative h-24 overflow-hidden">
           <img
-            v-if="sq.bannerUrl"
-            :src="sq.bannerUrl"
+            :src="sq.bannerUrl || squareBannerUrl(sq)"
             :alt="sq.name"
-            class="h-full w-full object-cover opacity-80"
-          />
-          <div
-            v-else
-            class="h-full w-full"
-            :style="`background: linear-gradient(135deg, ${sq.accentColor || '#f59e0b'}33, ${sq.accentColor || '#f59e0b'}11)`"
+            class="h-full w-full object-cover opacity-90 transition-transform duration-500 group-hover:scale-105"
+            loading="lazy"
           />
           <span
             class="absolute right-2 top-2 rounded-full bg-black/50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white/80 backdrop-blur-sm"
@@ -138,6 +133,10 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useDiscoverFilters } from '~~/layers/commerce/app/composables/useDiscoverFilters'
+
+function squareBannerUrl(sq: { slug: string }): string {
+  return `https://picsum.photos/seed/${encodeURIComponent(sq.slug)}/800/300`
+}
 
 const props = defineProps<{
   searchInput: string

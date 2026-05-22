@@ -33,15 +33,9 @@
         <!-- ── Banner ─────────────────────────────────────────────────────── -->
         <div class="relative h-44 overflow-hidden rounded-2xl">
           <img
-            v-if="square.bannerUrl"
-            :src="square.bannerUrl"
+            :src="square.bannerUrl || `https://picsum.photos/seed/${encodeURIComponent(square.slug)}/1200/176`"
             :alt="square.name"
             class="h-full w-full object-cover"
-          />
-          <div
-            v-else
-            class="h-full w-full"
-            :style="`background: linear-gradient(135deg, ${square.accentColor || '#f59e0b'}55, ${square.accentColor || '#f59e0b'}11)`"
           />
           <!-- Back button — mobile only, floats over banner -->
           <button
@@ -67,18 +61,10 @@
               :style="`border-color: ${square.accentColor || '#f59e0b'}66`"
             >
               <img
-                v-if="square.iconUrl"
-                :src="square.iconUrl"
+                :src="square.iconUrl || `https://picsum.photos/seed/${encodeURIComponent(square.slug)}-icon/56/56`"
                 :alt="square.name"
                 class="h-full w-full rounded-xl object-cover"
               />
-              <span
-                v-else
-                class="text-xl font-black"
-                :style="`color: ${square.accentColor || '#f59e0b'}`"
-              >
-                {{ square.name.slice(0, 2).toUpperCase() }}
-              </span>
             </div>
 
             <!-- Actions -->
