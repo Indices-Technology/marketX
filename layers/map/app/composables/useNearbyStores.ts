@@ -1,4 +1,6 @@
 import { ref, readonly } from 'vue'
+import { useFeedApi } from '~~/layers/feed/app/services/feed.api'
+import { extractErrorMessage } from '~~/layers/core/app/utils/errors'
 import type { INearbyStore } from '../types/map.types'
 
 export function useNearbyStores() {
@@ -23,9 +25,7 @@ export function useNearbyStores() {
     const offset = opts?.offset ?? 0
 
     try {
-      const data: any = await $fetch('/api/feed/nearby-stores', {
-        query: { lat, lng, radius: r, limit, offset },
-      })
+      const data: any = await useFeedApi().getNearbyStores({ lat, lng, radius: r, limit, offset })
       if (offset === 0) {
         stores.value = data.data
       } else {
@@ -33,8 +33,8 @@ export function useNearbyStores() {
       }
       total.value = data.meta.total
       hasMore.value = data.meta.hasMore
-    } catch (e: any) {
-      error.value = e?.data?.statusMessage || 'Could not load nearby stores'
+    } catch (e: unknown) {
+      error.value = extractErrorMessage(e, 'Could not load nearby stores')
     } finally {
       loading.value = false
     }

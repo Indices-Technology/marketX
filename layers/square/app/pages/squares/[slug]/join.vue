@@ -271,12 +271,12 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted } from '#imports'
-import { $fetch } from 'ofetch'
-import { notify } from '@kyvg/vue3-notification'
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import { useSellerStore } from '~~/layers/seller/app/store/seller.store'
 import { useSellerManagement } from '~~/layers/seller/app/composables/useSellerManagement'
+import { useSquareApi } from '~~/layers/square/app/services/square.api'
+import { extractErrorMessage } from '~~/layers/core/app/utils/errors'
 
 const route = useRoute()
 const slug = computed(() => route.params.slug as string)
@@ -330,22 +330,10 @@ const applyToJoin = async () => {
   joining.value = true
   apiError.value = null
   try {
-    // Use $fetch directly — token read from localStorage so auth is guaranteed
-    // regardless of whether the auth store has been hydrated yet.
-    const token = localStorage.getItem('accessToken')
-    await $fetch(`/api/squares/${square.value.slug}/join`, {
-      method: 'POST',
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    })
+    await useSquareApi().joinSquare(square.value.slug)
     applied.value = true
-  } catch (e: any) {
-    const msg =
-      e?.data?.statusMessage ??
-      e?.data?.message ??
-      e?.message ??
-      'Something went wrong. Please try again.'
-    apiError.value = msg
-    notify({ type: 'error', text: msg })
+  } catch (e: unknown) {
+    apiError.value = extractErrorMessage(e, 'Something went wrong. Please try again.')
   } finally {
     joining.value = false
   }

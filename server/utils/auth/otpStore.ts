@@ -28,7 +28,7 @@ setInterval(
 )
 
 // ─── Redis helpers ────────────────────────────────────────────────────────────
-
+// TODO confirm that Redis JSON parsing is consistent across Upstash and ioredis
 function otpKey(email: string) {
   return `otp:checkout:${email.toLowerCase()}`
 }
@@ -51,7 +51,8 @@ export const otpStore = {
     if (redis) {
       const raw = await redis.getdel(otpKey(email))
       if (!raw) return null
-      const entry: OtpEntry = typeof raw === 'string' ? JSON.parse(raw) : (raw as OtpEntry)
+      const entry: OtpEntry =
+        typeof raw === 'string' ? JSON.parse(raw) : (raw as OtpEntry)
       if (Date.now() > entry.expiresAt) return null
       if (entry.code !== code) return null
       return entry
@@ -61,7 +62,10 @@ export const otpStore = {
     const key = email.toLowerCase()
     const entry = _store.get(key)
     if (!entry) return null
-    if (Date.now() > entry.expiresAt) { _store.delete(key); return null }
+    if (Date.now() > entry.expiresAt) {
+      _store.delete(key)
+      return null
+    }
     if (entry.code !== code) return null
     _store.delete(key)
     return entry
@@ -71,7 +75,8 @@ export const otpStore = {
     if (redis) {
       const raw = await redis.get(otpKey(email))
       if (!raw) return false
-      const entry: OtpEntry = typeof raw === 'string' ? JSON.parse(raw) : (raw as OtpEntry)
+      const entry: OtpEntry =
+        typeof raw === 'string' ? JSON.parse(raw) : (raw as OtpEntry)
       return Date.now() <= entry.expiresAt
     }
 
@@ -79,7 +84,10 @@ export const otpStore = {
     const key = email.toLowerCase()
     const entry = _store.get(key)
     if (!entry) return false
-    if (Date.now() > entry.expiresAt) { _store.delete(key); return false }
+    if (Date.now() > entry.expiresAt) {
+      _store.delete(key)
+      return false
+    }
     return true
   },
 }

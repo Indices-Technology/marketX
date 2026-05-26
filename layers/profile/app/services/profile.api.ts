@@ -100,6 +100,12 @@ export class ProfileApiClient extends BaseApiClient {
       body: { password },
     })
   }
+
+  async getMedia(limit = 20, offset = 0, type?: string): Promise<any> {
+    const q = new URLSearchParams({ limit: String(limit), offset: String(offset) })
+    if (type) q.append('type', type)
+    return this.request(`/api/profile/media?${q}`, { method: 'GET' })
+  }
 }
 
 /**

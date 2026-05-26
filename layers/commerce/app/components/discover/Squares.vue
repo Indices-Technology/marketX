@@ -133,6 +133,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useDiscoverFilters } from '~~/layers/commerce/app/composables/useDiscoverFilters'
+import { useSquareApi } from '~~/layers/square/app/services/square.api'
 
 function squareBannerUrl(sq: { slug: string }): string {
   return `https://picsum.photos/seed/${encodeURIComponent(sq.slug)}/800/300`
@@ -171,13 +172,10 @@ const loadData = async (reset = false) => {
   squaresLoading.value = true
   const gen = squaresGen
   try {
-    const res = await $fetch<any>('/api/squares', {
-      params: {
-        limit: 20,
-        offset: squares.value.length,
-        search: props.searchInput.trim() || undefined,
-        minMembers: discoverFilters.squares.minMembers ?? undefined,
-      },
+    const res = await useSquareApi().listSquares({
+      limit: 20,
+      offset: squares.value.length,
+      search: props.searchInput.trim() || undefined,
     })
     if (gen !== squaresGen) return
     squares.value.push(...(res?.data ?? []))
@@ -194,14 +192,15 @@ const toggleFollow = async (square: any) => {
   squareFollowLoading.value = new Set([...squareFollowLoading.value, square.id])
   const isFollowing = squareFollowing.value.has(square.id)
   try {
+    const api = useSquareApi()
     if (isFollowing) {
-      await $fetch(`/api/squares/${square.slug}/follow`, { method: 'DELETE' })
+      await api.unfollowSquare(square.slug)
       const next = new Set(squareFollowing.value)
       next.delete(square.id)
       squareFollowing.value = next
       square.followerCount = Math.max(0, (square.followerCount ?? 0) - 1)
     } else {
-      await $fetch(`/api/squares/${square.slug}/follow`, { method: 'POST' })
+      await api.followSquare(square.slug)
       squareFollowing.value = new Set([...squareFollowing.value, square.id])
       square.followerCount = (square.followerCount ?? 0) + 1
     }

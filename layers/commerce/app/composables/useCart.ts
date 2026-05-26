@@ -1,4 +1,3 @@
-import { notify } from '@kyvg/vue3-notification'
 import { useCartApi } from '../services/cart.api'
 import { useCartStore } from '../stores/cart.store'
 import { extractErrorMessage } from '~~/layers/core/app/utils/errors'
@@ -73,9 +72,7 @@ export const useCart = () => {
       store.addItem(result.data as ICartItem)
       return result.data
     } catch (e: unknown) {
-      const message = extractErrorMessage(e, 'Failed to add to cart')
-      store.setError(message)
-      notify({ type: 'error', text: message })
+      store.setError(extractErrorMessage(e, 'Failed to add to cart'))
       throw e
     } finally {
       store.setLoading(false)
@@ -92,9 +89,7 @@ export const useCart = () => {
       return result.data
     } catch (e: unknown) {
       await fetchCart()
-      const message = extractErrorMessage(e, 'Failed to update cart')
-      store.setError(message)
-      notify({ type: 'error', text: message })
+      store.setError(extractErrorMessage(e, 'Failed to update cart'))
       throw e
     }
   }
@@ -108,9 +103,7 @@ export const useCart = () => {
       await api.removeFromCart(variantId)
     } catch (e: unknown) {
       await fetchCart()
-      const message = extractErrorMessage(e, 'Failed to remove from cart')
-      store.setError(message)
-      notify({ type: 'error', text: message })
+      store.setError(extractErrorMessage(e, 'Failed to remove from cart'))
       throw e
     }
   }

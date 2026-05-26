@@ -107,6 +107,13 @@ export class MediaApiClient extends BaseApiClient {
       method: 'DELETE',
     })
   }
+
+  async searchMusic(params: { limit?: number; q?: string; genre?: string } = {}): Promise<any> {
+    const q = new URLSearchParams({ limit: String(params.limit ?? 20) })
+    if (params.q) q.append('q', params.q)
+    if (params.genre) q.append('genre', params.genre)
+    return this.request(`/api/music/search?${q}`, { method: 'GET', skipAuth: true })
+  }
 }
 
 let instance: MediaApiClient | null = null

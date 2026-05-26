@@ -1,5 +1,6 @@
 import { useStoryApi } from '../services/story.api'
 import { useStoryStore } from '../stores/story.store'
+import { extractErrorMessage } from '~~/layers/core/app/utils/errors'
 
 export const useStory = () => {
   const api = useStoryApi()
@@ -17,7 +18,7 @@ export const useStory = () => {
       store.setStories(result.data || [])
       return result.data
     } catch (e: any) {
-      store.setError(e.message || 'Failed to fetch stories')
+      store.setError(extractErrorMessage(e, 'Failed to fetch stories'))
       throw e
     } finally {
       store.setLoading(false)
@@ -37,7 +38,7 @@ export const useStory = () => {
       store.addStory(result.data)
       return result.data
     } catch (e: any) {
-      store.setError(e.message || 'Failed to create story')
+      store.setError(extractErrorMessage(e, 'Failed to create story'))
       throw e
     } finally {
       store.setLoading(false)
@@ -49,7 +50,7 @@ export const useStory = () => {
       await api.deleteStory(id)
       store.removeStory(id)
     } catch (e: any) {
-      store.setError(e.message || 'Failed to delete story')
+      store.setError(extractErrorMessage(e, 'Failed to delete story'))
       throw e
     }
   }

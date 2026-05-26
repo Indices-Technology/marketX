@@ -229,6 +229,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { definePageMeta, useRoute } from '#imports'
 import { useAuth } from '~~/layers/core/app/composables/useAuth'
+import { useAuthApi } from '~~/layers/core/app/services/auth.api'
 
 definePageMeta({
   layout: false,
@@ -273,10 +274,7 @@ const resendVerification = async () => {
   if (!form.email || resendLoading.value || resendCooldown.value > 0) return
   resendLoading.value = true
   try {
-    await $fetch('/api/auth/send-verification-email', {
-      method: 'POST',
-      body: { email: form.email.trim() },
-    })
+    await useAuthApi().resendVerificationEmail(form.email.trim())
     localMessage.value = 'Verification email sent — check your inbox.'
     resendCooldown.value = 60
     cooldownTimer = setInterval(() => {

@@ -493,10 +493,16 @@ model Post {
   moderationStatus ModerationStatus @default(ACTIVE)
   reportCount      Int              @default(0)
 
+  /// Wall target — when set this post is a shoutout on another profile's wall.
+  /// wallTargetType: "USER" or "STORE"; wallTargetSlug: username or store_slug.
+  wallTargetType   String?
+  wallTargetSlug   String?
+
   @@index([authorId])
   @@index([created_at(sort: Desc)])  // feed ordering: ORDER BY created_at DESC
   @@index([visibility, created_at(sort: Desc)])  // filtered feed: WHERE visibility='PUBLIC' ORDER BY created_at DESC
   @@index([moderationStatus])
+  @@index([wallTargetType, wallTargetSlug, created_at(sort: Desc)])  // wall feed
 }
 
 model SavedPost {
@@ -1259,19 +1265,20 @@ model UserAIConfig {
 // ── AI / RAG ──────────────────────────────────────────────────────────────────
 
 /// Vector embedding for every indexed entity (PRODUCT | SELLER | SQUARE).
-/// The `embedding vector(1536)` column is added via custom SQL migration —
-/// pgvector is not a native Prisma type. All vector reads/writes use $queryRaw / $executeRaw.
-/// All other columns are managed by Prisma normally.
+/// `embedding` uses Prisma's Unsupported type so Prisma tracks the column without
+/// trying to serialize/deserialize it. All vector reads/writes use $queryRaw / $executeRaw.
 model Embedding {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  entityType  String   // PRODUCT | SELLER | SQUARE
-  entityId    String   // source PK cast to string
+  id          String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  entityType  String                      // PRODUCT | SELLER | SQUARE
+  entityId    String                      // source PK cast to string
   /// Denormalised snapshot used at query time: name, imageUrl, price, slug, location, …
   metadata    Json
   /// SHA-256 of the source text — indexer skips re-embedding when unchanged
   contentHash String
-  indexedAt   DateTime @default(now()) @db.Timestamptz(6)
-  updatedAt   DateTime @updatedAt @db.Timestamptz(6)
+  /// pgvector column — read/write via $queryRaw / $executeRaw only
+  embedding   Unsupported("vector(1536)")?
+  indexedAt   DateTime                    @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime                    @updatedAt @db.Timestamptz(6)
 
   @@unique([entityType, entityId])
   @@index([entityType])

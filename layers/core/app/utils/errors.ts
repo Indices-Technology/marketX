@@ -7,7 +7,7 @@ type ErrorLike = {
   }
 }
 
-const OPAQUE_MESSAGES = new Set([
+export const OPAQUE_MESSAGES = new Set([
   'internal server error',
   'server error',
   'bad request',

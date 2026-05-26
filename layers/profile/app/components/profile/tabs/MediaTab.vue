@@ -168,6 +168,8 @@
 </template>
 
 <script setup lang="ts">
+import { useProfileApi } from '~~/layers/profile/app/services/profile.api'
+
 interface MediaItem {
   id: string
   url: string
@@ -207,7 +209,7 @@ const fetchMedia = async (reset = false) => {
     const params: Record<string, string | number> = { limit: LIMIT, offset: offset.value }
     if (activeFilter.value !== 'ALL') params.type = activeFilter.value
 
-    const res: any = await $fetch('/api/profile/media', { params })
+    const res: any = await useProfileApi().getMedia(LIMIT, offset.value, activeFilter.value !== 'ALL' ? activeFilter.value : undefined)
     if (reset) {
       items.value = res.data
     } else {

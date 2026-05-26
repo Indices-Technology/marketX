@@ -55,6 +55,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { useSearchApi } from '~~/layers/core/app/services/search.api'
 import { imgAvatar } from '~~/layers/core/app/utils/cloudinary'
 
 export interface MentionData {
@@ -127,7 +128,7 @@ function debouncedSearch(q: string) {
   searching.value = true
   searchTimer = setTimeout(async () => {
     try {
-      const res: any = await $fetch('/api/mentions/search', { query: { q } })
+      const res: any = await useSearchApi().searchMentions(q)
       suggestions.value = res.data ?? []
       activeIdx.value = 0
     } catch {

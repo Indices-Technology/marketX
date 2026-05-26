@@ -91,6 +91,17 @@ export class PostApiClient extends BaseApiClient {
     )
   }
 
+  async getByStore(
+    storeSlug: string,
+    limit: number = 12,
+    offset: number = 0,
+  ): Promise<IPaginatedResponse<IPost>> {
+    return this.request(
+      `/api/posts/by-store?storeSlug=${encodeURIComponent(storeSlug)}&limit=${limit}&offset=${offset}`,
+      { method: 'GET', skipAuth: true },
+    )
+  }
+
   async deletePost(id: string): Promise<any> {
     return this.request(`/api/posts/${id}`, { method: 'DELETE' })
   }

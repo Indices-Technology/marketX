@@ -11,23 +11,24 @@
 2. [Profile](#profile)
 3. [Social — Posts](#social--posts)
 4. [Social — Mentions](#social--mentions)
-5. [Stories](#stories)
-6. [Feed](#feed)
-7. [Commerce — Products](#commerce--products)
-8. [Commerce — Cart](#commerce--cart)
-9. [Commerce — Orders](#commerce--orders)
-10. [Commerce — Payments](#commerce--payments)
-11. [Commerce — Shipping](#commerce--shipping)
-12. [Commerce — Wallet](#commerce--wallet)
-13. [Commerce — Affiliate](#commerce--affiliate)
-14. [Commerce — Reviews & Tags](#commerce--reviews--tags)
-15. [Seller](#seller)
-16. [Squares](#squares)
-17. [Map](#map)
-18. [Notifications](#notifications)
-19. [Chat](#chat)
-20. [Media & Search](#media--search)
-21. [AI](#ai)
+5. [Social — Wall](#social--wall)
+6. [Stories](#stories)
+7. [Feed](#feed)
+8. [Commerce — Products](#commerce--products)
+9. [Commerce — Cart](#commerce--cart)
+10. [Commerce — Orders](#commerce--orders)
+11. [Commerce — Payments](#commerce--payments)
+12. [Commerce — Shipping](#commerce--shipping)
+13. [Commerce — Wallet](#commerce--wallet)
+14. [Commerce — Affiliate](#commerce--affiliate)
+15. [Commerce — Reviews & Tags](#commerce--reviews--tags)
+16. [Seller](#seller)
+17. [Squares](#squares)
+18. [Map](#map)
+19. [Notifications](#notifications)
+20. [Chat](#chat)
+21. [Media & Search](#media--search)
+22. [AI](#ai)
 
 ---
 
@@ -155,6 +156,20 @@
 
 Returns `{ data: [{ type, id, handle, displayName, avatar }] }`.
 Both user `profileId` and seller owner's `profileId` are returned as `id` so notifications route uniformly.
+
+---
+
+## Social — Wall
+
+A Facebook-style wall attached to every user profile and store page. The wall IS the profile page — wall posts (`wallTargetType` set) and the profile owner's own posts both appear in the "All" feed. Filter pills (All · Products · Reviews · About) are rendered client-side above the wall feed; the API accepts a `filter` query param for server-side filtering.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET    | `/wall/[type]/[slug]` | Wall timeline. `type`: `user` or `store`. Query: `filter` (`all`\|`posts`\|`shoutouts`), `limit`, `offset`. Public — optionalAuth. |
+| POST   | `/wall/[type]/[slug]` | Post a shoutout on a wall. Auth required. Body: `{ body: string (1–1000 chars) }`. Notifies wall owner via `WALL_SHOUTOUT`. Cannot post on own `user` wall. |
+| DELETE | `/wall/[type]/[slug]/[postId]` | Delete a wall post. Authorised if requester is the post author **or** the wall owner. |
+
+**Response shape for GET** — same `{ data: IWallPost[], meta: { limit, offset, hasMore } }` as other feed endpoints. Each `IWallPost` extends the standard post shape with `contentType: 'WALL_SHOUTOUT' | 'POST' | 'COMMERCE'`.
 
 ---
 

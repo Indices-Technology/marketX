@@ -144,6 +144,13 @@ export class SellerApiClient extends BaseApiClient {
   ping(): Promise<any> {
     return this.request('/api/seller/ping', { method: 'POST', silent: true })
   }
+
+  async getSellerProfileBySlug(slug: string): Promise<any> {
+    return this.request(`/api/seller/by-slug/${slug}`, {
+      method: 'GET',
+      skipAuth: true,
+    })
+  }
 }
 
 /**

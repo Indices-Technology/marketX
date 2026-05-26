@@ -100,6 +100,31 @@ export class FeedApiClient extends BaseApiClient {
       skipAuth: true,
     })
   }
+
+  async getPreLoved(options: { limit?: number; offset?: number; condition?: string } = {}): Promise<any> {
+    const { limit = 20, offset = 0, condition } = options
+    const q = new URLSearchParams({ limit: String(limit), offset: String(offset) })
+    if (condition) q.append('condition', condition)
+    return this.request(`/api/feed/pre-loved?${q}`, { method: 'GET', skipAuth: true })
+  }
+
+  async getShopToday(): Promise<any> {
+    return this.request('/api/feed/shop-today', { method: 'GET', skipAuth: true })
+  }
+
+  async getNearbyStores(params: {
+    lat: number
+    lng: number
+    radius?: number
+    limit?: number
+    offset?: number
+  }): Promise<any> {
+    return this.request('/api/feed/nearby-stores', {
+      method: 'GET',
+      params: params as any,
+      skipAuth: true,
+    })
+  }
 }
 
 // Singleton instance

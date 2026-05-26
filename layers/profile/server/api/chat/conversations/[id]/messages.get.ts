@@ -1,4 +1,4 @@
-// GET /api/posts/chat/conversations/[id]/messages - Get messages
+// GET /api/chat/conversations/[id]/messages - Get messages
 import { chatService } from '~~/layers/profile/server/services/chat.service'
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'

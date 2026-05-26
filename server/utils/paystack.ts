@@ -57,14 +57,16 @@ export const paystack = {
     callback_url?: string
   }): Promise<PaystackInitResponse> {
     if (!params.amount || params.amount < 100) {
-      throw new Error(`Paystack: amount must be at least 100 kobo (got ${params.amount})`)
+      throw new Error(
+        `Paystack: amount must be at least 100 kobo (got ${params.amount})`,
+      )
     }
     const body: Record<string, unknown> = {
-      email:     params.email,
-      amount:    params.amount,
+      email: params.email,
+      amount: params.amount,
       reference: params.reference,
-      currency:  params.currency || 'NGN',
-      metadata:  params.metadata || {},
+      currency: params.currency || 'NGN',
+      metadata: params.metadata || {},
     }
     if (params.callback_url) body.callback_url = params.callback_url
 
@@ -73,11 +75,13 @@ export const paystack = {
         `${PAYSTACK_BASE}/transaction/initialize`,
         { method: 'POST', headers: paystackHeaders(), body },
       )
-      if (!res.status) throw new Error(res.message || 'Paystack initialization failed')
+      if (!res.status)
+        throw new Error(res.message || 'Paystack initialization failed')
       return res
     } catch (err: any) {
       // Surface the actual Paystack error message from the response body
-      const msg = err?.data?.message || err?.message || 'Paystack initialization failed'
+      const msg =
+        err?.data?.message || err?.message || 'Paystack initialization failed'
       throw new Error(`Paystack: ${msg}`)
     }
   },

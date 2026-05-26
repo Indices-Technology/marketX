@@ -36,8 +36,10 @@ let _flushTimer: ReturnType<typeof setTimeout> | null = null
 const _flush = () => {
   _flushTimer = null
   const batch = _queue.splice(0)
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('accessToken') : null
+  const headers = token ? { Authorization: `Bearer ${token}` } : {}
   for (const { url } of batch) {
-    $fetch(url, { method: 'POST' }).catch(() => {})
+    $fetch(url, { method: 'POST', headers }).catch(() => {})
   }
 }
 

@@ -1,0 +1,45 @@
+import { BaseApiClient } from '~~/layers/core/app/services/base.api'
+
+export class MapApiClient extends BaseApiClient {
+  async getSellers(params: {
+    lat: number
+    lng: number
+    radius?: number
+    limit?: number
+    offset?: number
+    filter?: string
+    search?: string
+    category?: string
+  }): Promise<any> {
+    return this.request('/api/map/sellers', {
+      method: 'GET',
+      params: params as any,
+      skipAuth: true,
+    })
+  }
+
+  async getSellerPreview(
+    storeSlug: string,
+    lat: number,
+    lng: number,
+  ): Promise<any> {
+    return this.request(`/api/map/sellers/${storeSlug}/preview`, {
+      method: 'GET',
+      params: { lat, lng } as any,
+      skipAuth: true,
+    })
+  }
+
+  async getCategories(): Promise<any> {
+    return this.request('/api/commerce/categories', {
+      method: 'GET',
+      skipAuth: true,
+    })
+  }
+}
+
+let instance: MapApiClient | null = null
+export const useMapApi = () => {
+  if (!instance) instance = new MapApiClient()
+  return instance
+}

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <HomeLayout :narrow-feed="false" :hide-right-sidebar="false">
     <div
       class="pb-[max(5rem,_calc(1.5rem_+_env(safe-area-inset-bottom)))] md:pb-6"
@@ -71,7 +71,13 @@
         <div class="group relative -mx-4 h-44 overflow-hidden sm:-mx-6 sm:h-56">
           <img
             v-if="seller.store_banner"
-            :src="cloudinaryUrl(seller.store_banner, { width: 1200, height: 400, crop: 'fill' })"
+            :src="
+              cloudinaryUrl(seller.store_banner, {
+                width: 1200,
+                height: 400,
+                crop: 'fill',
+              })
+            "
             :alt="`${seller.store_name} banner`"
             class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
           />
@@ -139,10 +145,15 @@
               <button
                 v-if="profileStore.isLoggedIn && !isOwnStore"
                 :disabled="messageLoading"
-                @click="messageStore"
                 class="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-60 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                @click="messageStore"
               >
-                <Icon v-if="messageLoading" name="eos-icons:loading" size="15" class="animate-spin" />
+                <Icon
+                  v-if="messageLoading"
+                  name="eos-icons:loading"
+                  size="15"
+                  class="animate-spin"
+                />
                 <Icon v-else name="mdi:message-outline" size="15" />
                 Message
               </button>
@@ -230,20 +241,32 @@
               class="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-neutral-500"
             >
               <NuxtLink
-                v-if="seller.store_location && (seller as any).latitude && (seller as any).longitude"
+                v-if="
+                  seller.store_location &&
+                  (seller as any).latitude &&
+                  (seller as any).longitude
+                "
                 :to="`/map?store=${seller.store_slug}`"
                 class="flex items-center gap-1 text-brand hover:underline"
                 title="View on map"
               >
                 <Icon name="mdi:map-marker" size="13" class="text-brand" />
                 {{ seller.store_location }}
-                <Icon name="mdi:map-search-outline" size="11" class="opacity-60" />
+                <Icon
+                  name="mdi:map-search-outline"
+                  size="11"
+                  class="opacity-60"
+                />
               </NuxtLink>
               <span
                 v-else-if="seller.store_location"
                 class="flex items-center gap-1"
               >
-                <Icon name="mdi:map-marker-outline" size="13" class="text-brand" />
+                <Icon
+                  name="mdi:map-marker-outline"
+                  size="13"
+                  class="text-brand"
+                />
                 {{ seller.store_location }}
               </span>
               <span class="flex items-center gap-1">
@@ -304,7 +327,11 @@
                 <p
                   class="text-xl font-black text-gray-900 sm:text-2xl dark:text-neutral-100"
                 >
-                  {{ (seller as any).averageRating ? (seller as any).averageRating.toFixed(1) : '—' }}
+                  {{
+                    (seller as any).averageRating
+                      ? (seller as any).averageRating.toFixed(1)
+                      : '—'
+                  }}
                 </p>
                 <Icon
                   v-if="(seller as any).averageRating"
@@ -316,7 +343,11 @@
               <p
                 class="mt-0.5 text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-neutral-500"
               >
-                {{ (seller as any).totalReviews ? `${(seller as any).totalReviews} Reviews` : 'Rating' }}
+                {{
+                  (seller as any).totalReviews
+                    ? `${(seller as any).totalReviews} Reviews`
+                    : 'Rating'
+                }}
               </p>
             </div>
           </div>
@@ -330,7 +361,12 @@
               :disabled="messageLoading"
               @click="messageStore"
             >
-              <Icon v-if="messageLoading" name="eos-icons:loading" size="15" class="animate-spin" />
+              <Icon
+                v-if="messageLoading"
+                name="eos-icons:loading"
+                size="15"
+                class="animate-spin"
+              />
               <Icon v-else name="mdi:message-outline" size="15" />
               Message
             </button>
@@ -365,32 +401,120 @@
               <Icon name="mdi:share-variant-outline" size="18" />
             </button>
           </div>
-
-          <!-- Tabs -->
-          <div
-            class="sticky top-0 z-30 -mx-3 mt-5 border-b border-gray-100 bg-white/90 px-3 pb-0 pt-2 backdrop-blur-md sm:-mx-5 sm:px-5 dark:border-neutral-800 dark:bg-neutral-950/90"
-          >
-            <div class="scrollbar-hide flex gap-0 overflow-x-auto">
-              <button
-                v-for="tab in tabs"
-                :key="tab.key"
-                class="-mb-px flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-3 text-xs font-black uppercase tracking-widest transition-all sm:px-5"
-                :class="
-                  activeTab === tab.key
-                    ? 'border-brand text-brand'
-                    : 'border-transparent text-gray-400 hover:text-gray-700 dark:hover:text-neutral-200'
-                "
-                @click="activeTab = tab.key"
-              >
-                <Icon :name="tab.icon" size="15" />
-                {{ tab.label }}
-              </button>
-            </div>
-          </div>
         </div>
 
-        <!-- ── TAB CONTENT ───────────────────────────────────────────────── -->
+        <!-- ── WALL CONTENT ──────────────────────────────────────────────── -->
         <div class="px-3 pt-5 sm:px-5">
+          <!-- Filter pills -->
+          <div class="scrollbar-hide mb-4 flex gap-2 overflow-x-auto pb-1">
+            <button
+              v-for="tab in tabs"
+              :key="tab.key"
+              class="flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold transition-all"
+              :class="
+                activeTab === tab.key
+                  ? 'bg-brand text-white shadow-sm shadow-brand/30'
+                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700'
+              "
+              @click="activeTab = tab.key"
+            >
+              <Icon :name="tab.icon" size="13" />
+              {{ tab.label }}
+            </button>
+          </div>
+
+          <!-- WALL (default) ───────────────────────────────────────────────── -->
+          <div v-show="activeTab === 'wall'" class="max-w-2xl space-y-3">
+            <!-- Composer — visible for logged-in non-owners -->
+            <WallShoutoutComposer
+              v-if="profileStore.isLoggedIn && !isOwnStore"
+              type="STORE"
+              :slug="storeSlug"
+              placeholder="Leave a shoutout on this store's wall…"
+              @posted="onShoutoutPosted"
+            />
+
+            <!-- Skeleton -->
+            <div v-if="wallLoading && !wallPosts.length" class="space-y-3">
+              <div
+                v-for="i in 3"
+                :key="i"
+                class="animate-pulse rounded-2xl border border-gray-100 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"
+              >
+                <div class="flex items-center gap-3">
+                  <div
+                    class="h-9 w-9 rounded-xl bg-gray-100 dark:bg-neutral-800"
+                  />
+                  <div class="flex-1 space-y-1.5">
+                    <div
+                      class="h-3 w-28 rounded bg-gray-100 dark:bg-neutral-800"
+                    />
+                    <div
+                      class="h-2.5 w-16 rounded bg-gray-100 dark:bg-neutral-800"
+                    />
+                  </div>
+                </div>
+                <div
+                  class="mt-3 h-12 rounded-lg bg-gray-50 dark:bg-neutral-800"
+                />
+              </div>
+            </div>
+
+            <!-- Empty state -->
+            <div
+              v-else-if="!wallLoading && !wallPosts.length"
+              class="flex flex-col items-center justify-center gap-3 py-20 text-center"
+            >
+              <div
+                class="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100 dark:bg-neutral-800"
+              >
+                <Icon
+                  name="mdi:bulletin-board"
+                  size="30"
+                  class="text-gray-300 dark:text-neutral-600"
+                />
+              </div>
+              <p class="text-sm font-bold text-gray-500 dark:text-neutral-400">
+                No posts yet
+              </p>
+              <p
+                v-if="!isOwnStore && profileStore.isLoggedIn"
+                class="text-xs text-gray-400 dark:text-neutral-500"
+              >
+                Be the first to leave a shoutout!
+              </p>
+            </div>
+
+            <!-- Wall posts -->
+            <WallPostCard
+              v-for="post in wallPosts"
+              :key="post.id"
+              :post="post"
+              wall-type="STORE"
+              :wall-slug="storeSlug"
+              :is-wall-owner="isOwnStore"
+              @deleted="onWallPostDeleted"
+            />
+
+            <!-- Infinite scroll sentinel -->
+            <div ref="wallTrigger" class="h-8" />
+
+            <!-- Loading more -->
+            <div
+              v-if="wallLoading && wallPosts.length"
+              class="flex items-center justify-center gap-2 py-4"
+            >
+              <Icon
+                name="eos-icons:loading"
+                size="18"
+                class="animate-spin text-brand"
+              />
+              <span class="text-sm text-gray-400 dark:text-neutral-500"
+                >Loading more…</span
+              >
+            </div>
+          </div>
+
           <!-- PRODUCTS ──────────────────────────────────────────────────── -->
           <div v-show="activeTab === 'products'">
             <!-- Product skeleton -->
@@ -465,122 +589,6 @@
               <span class="text-sm text-gray-400 dark:text-neutral-500"
                 >Loading more…</span
               >
-            </div>
-          </div>
-
-          <!-- POSTS ──────────────────────────────────────────────────────── -->
-          <div v-show="activeTab === 'posts'">
-            <div
-              v-if="storePostsLoading && !storePosts.length"
-              class="grid grid-cols-3 gap-0.5"
-            >
-              <div
-                v-for="i in 9"
-                :key="i"
-                class="aspect-square animate-pulse rounded-sm bg-gray-100 dark:bg-neutral-800"
-              />
-            </div>
-
-            <div
-              v-else-if="!storePostsLoading && !storePosts.length"
-              class="flex flex-col items-center justify-center gap-3 py-20 text-center"
-            >
-              <div
-                class="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100 dark:bg-neutral-800"
-              >
-                <Icon
-                  name="mdi:image-off-outline"
-                  size="28"
-                  class="text-gray-300 dark:text-neutral-600"
-                />
-              </div>
-              <p class="text-sm font-bold text-gray-500 dark:text-neutral-400">
-                No posts yet
-              </p>
-            </div>
-
-            <div v-else class="grid grid-cols-3 gap-0.5">
-              <button
-                v-for="post in storePosts"
-                :key="post.id"
-                @click="selectedPost = post"
-                class="group relative aspect-square overflow-hidden rounded-sm bg-gray-100 dark:bg-neutral-800"
-              >
-                <img
-                  v-if="firstPostMedia(post)?.type === 'IMAGE'"
-                  :src="imgThumb(firstPostMedia(post)!.url)"
-                  :alt="post.caption || 'Post'"
-                  class="h-full w-full object-cover"
-                  loading="lazy"
-                />
-                <img
-                  v-else-if="firstPostMedia(post)?.type === 'VIDEO'"
-                  :src="videoThumb(firstPostMedia(post)!.url)"
-                  :alt="post.caption || 'Post'"
-                  class="h-full w-full object-cover"
-                  loading="lazy"
-                />
-                <div
-                  v-else
-                  class="flex h-full w-full items-center justify-center bg-gradient-to-br from-brand to-purple-700 p-3"
-                >
-                  <p
-                    class="line-clamp-4 text-center text-[11px] font-medium leading-relaxed text-white"
-                  >
-                    {{ post.caption || post.content || '…' }}
-                  </p>
-                </div>
-
-                <!-- Hover overlay -->
-                <div
-                  class="absolute inset-0 flex items-center justify-center gap-4 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100"
-                >
-                  <div class="flex items-center gap-1 text-white drop-shadow">
-                    <Icon name="mdi:heart" size="18" />
-                    <span class="text-[12px] font-semibold">{{
-                      formatPostNum(post._count?.likes || 0)
-                    }}</span>
-                  </div>
-                  <div class="flex items-center gap-1 text-white drop-shadow">
-                    <Icon name="mdi:comment" size="18" />
-                    <span class="text-[12px] font-semibold">{{
-                      formatPostNum(post._count?.comments || 0)
-                    }}</span>
-                  </div>
-                </div>
-
-                <div
-                  class="pointer-events-none absolute right-1.5 top-1.5 flex flex-col items-end gap-1"
-                >
-                  <Icon
-                    v-if="firstPostMedia(post)?.type === 'VIDEO'"
-                    name="mdi:play-circle"
-                    size="16"
-                    class="text-white drop-shadow-lg"
-                  />
-                  <Icon
-                    v-if="(post.mediaItems?.length || 0) > 1"
-                    name="mdi:layers"
-                    size="16"
-                    class="text-white drop-shadow-lg"
-                  />
-                </div>
-              </button>
-            </div>
-
-            <div v-if="storePostsHasMore" class="mt-4 flex justify-center">
-              <button
-                @click="
-                  () => {
-                    storePostsOffset.value += POSTS_LIMIT
-                    loadStorePosts()
-                  }
-                "
-                :disabled="storePostsLoading"
-                class="rounded-xl px-6 py-2 text-[13px] font-semibold text-brand hover:bg-gray-50 disabled:opacity-50 dark:hover:bg-neutral-800"
-              >
-                {{ storePostsLoading ? 'Loading…' : 'Load more' }}
-              </button>
             </div>
           </div>
 
@@ -765,10 +773,7 @@
 
           <!-- REVIEWS ────────────────────────────────────────────────────── -->
           <div v-show="activeTab === 'reviews'" class="max-w-2xl">
-            <SellerReviews
-              :store-slug="storeSlug"
-              :is-own-store="isOwnStore"
-            />
+            <SellerReviews :store-slug="storeSlug" :is-own-store="isOwnStore" />
           </div>
         </div>
       </div>
@@ -784,24 +789,17 @@
       :product="marketProduct"
       @close="marketProduct = null"
     />
-    <PostDetailModal
-      v-if="selectedPost"
-      :post="normalizePost(selectedPost)"
-      @close="selectedPost = null"
-    />
   </HomeLayout>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import ProductCardMini from '~~/layers/commerce/app/components/ProductCardMini.vue'
 import ProductDetailModal from '~~/layers/commerce/app/components/modals/ProductDetailModal.vue'
-import { imgAvatar, imgThumb, cloudinaryUrl } from '~~/layers/core/app/utils/cloudinary'
+import { imgAvatar, cloudinaryUrl } from '~~/layers/core/app/utils/cloudinary'
 import ProductMarketModal from '~~/layers/commerce/app/components/modals/ProductMarketModal.vue'
-import PostDetailModal from '~~/layers/social/app/components/modals/PostDetailModal.vue'
-import { normalizePost } from '~~/layers/social/app/composables/usePost'
 import { useSellerManagement } from '~~/layers/seller/app/composables/useSellerManagement'
 import { useProduct } from '~~/layers/commerce/app/composables/useProduct'
 import { useAffiliate } from '~~/layers/commerce/app/composables/useAffiliate'
@@ -811,6 +809,11 @@ import { useCart } from '~~/layers/commerce/app/composables/useCart'
 import { notify } from '@kyvg/vue3-notification'
 import type { IProduct } from '~~/layers/commerce/app/types/commerce.types'
 import { useSellerStore } from '~~/layers/seller/app/store/seller.store'
+import { useChatApi } from '~~/layers/profile/app/services/chat.api'
+import { useWallApi } from '~~/layers/social/app/services/wall.api'
+import type { IWallPost } from '~~/layers/social/app/services/wall.api'
+import WallShoutoutComposer from '~~/layers/social/app/components/wall/WallShoutoutComposer.vue'
+import WallPostCard from '~~/layers/social/app/components/wall/WallPostCard.vue'
 
 const route = useRoute()
 const storeSlug =
@@ -829,7 +832,7 @@ const { addToCart } = useCart()
 
 const pageLoading = ref(true)
 const loadError = ref(false)
-const activeTab = ref('products')
+const activeTab = ref('wall')
 const seller = computed(() => currentSeller.value)
 
 const isFollowing = ref(false)
@@ -855,43 +858,51 @@ const trigger = ref<HTMLElement | null>(null)
 let observer: IntersectionObserver | null = null
 
 const tabs = [
+  { key: 'wall', label: 'All', icon: 'mdi:view-dashboard-outline' },
   { key: 'products', label: 'Products', icon: 'mdi:grid' },
-  { key: 'posts', label: 'Posts', icon: 'mdi:image-multiple-outline' },
-  { key: 'about', label: 'About', icon: 'mdi:information-outline' },
   { key: 'reviews', label: 'Reviews', icon: 'mdi:star-outline' },
+  { key: 'about', label: 'About', icon: 'mdi:information-outline' },
 ]
 
-// ── Store posts ──────────────────────────────────────────────────────────────
-const storePosts = ref<any[]>([])
-const storePostsLoading = ref(false)
-const storePostsHasMore = ref(false)
-const storePostsOffset = ref(0)
-const POSTS_LIMIT = 12
-const selectedPost = ref<any | null>(null)
+// ── Wall ─────────────────────────────────────────────────────────────────────
+const wallPosts = ref<IWallPost[]>([])
+const wallLoading = ref(false)
+const wallHasMore = ref(false)
+const wallOffset = ref(0)
+const WALL_LIMIT = 20
+let wallTrigger = ref<HTMLElement | null>(null)
+let wallObserver: IntersectionObserver | null = null
 
-const loadStorePosts = async () => {
-  storePostsLoading.value = true
+const loadWall = async (reset = false) => {
+  if (wallLoading.value) return
+  if (reset) {
+    wallPosts.value = []
+    wallOffset.value = 0
+  }
+  wallLoading.value = true
   try {
-    const res: any = await $fetch('/api/posts/by-store', {
-      params: { storeSlug, limit: POSTS_LIMIT, offset: storePostsOffset.value },
+    const res = await useWallApi().getWall('STORE', storeSlug, {
+      filter: 'all',
+      limit: WALL_LIMIT,
+      offset: wallOffset.value,
     })
-    storePosts.value.push(...(res?.data ?? []))
-    storePostsHasMore.value = res?.meta?.hasMore ?? false
+    wallPosts.value.push(...(res.data ?? []))
+    wallHasMore.value = res.meta?.hasMore ?? false
+    wallOffset.value += res.data?.length ?? 0
   } catch {
     /* silent */
   } finally {
-    storePostsLoading.value = false
+    wallLoading.value = false
   }
 }
 
-const firstPostMedia = (post: any) => {
-  if (post.mediaItems?.length) return post.mediaItems[0]
-  if (Array.isArray(post.media)) return post.media[0] ?? null
-  return post.media ?? null
+const onShoutoutPosted = (post: IWallPost) => {
+  wallPosts.value.unshift(post)
 }
 
-const formatPostNum = (n: number) =>
-  n >= 1_000 ? `${(n / 1_000).toFixed(1)}k` : String(n)
+const onWallPostDeleted = (postId: string) => {
+  wallPosts.value = wallPosts.value.filter((p) => p.id !== postId)
+}
 
 const loadProducts = async (reset = false) => {
   if (reset) {
@@ -918,10 +929,7 @@ const messageStore = async () => {
   if (!seller.value?.id) return
   messageLoading.value = true
   try {
-    const res = await $fetch<any>('/api/posts/chat/conversations', {
-      method: 'POST',
-      body: { storeId: seller.value.id },
-    })
+    const res = await useChatApi().createStoreConversation(seller.value.id)
     const conversationId = res?.data?.id
     if (conversationId) {
       await navigateTo(`/messages/${conversationId}`)
@@ -1023,7 +1031,7 @@ onMounted(async () => {
         isFollowing.value = s
       })
     }
-    await loadProducts()
+    await Promise.all([loadProducts(), loadWall()])
     observer = new IntersectionObserver(
       ([entry]) => {
         if (entry?.isIntersecting && hasMore.value && !productsLoading.value)
@@ -1032,15 +1040,19 @@ onMounted(async () => {
       { rootMargin: '400px' },
     )
     if (trigger.value) observer.observe(trigger.value)
+    wallObserver = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting && wallHasMore.value && !wallLoading.value)
+          loadWall()
+      },
+      { rootMargin: '400px' },
+    )
+    if (wallTrigger.value) wallObserver.observe(wallTrigger.value)
   }
 })
 
 onUnmounted(() => {
   observer?.disconnect()
-})
-
-// Lazy-load posts only when the tab is first opened
-watch(activeTab, (tab) => {
-  if (tab === 'posts' && storePosts.value.length === 0) loadStorePosts()
+  wallObserver?.disconnect()
 })
 </script>

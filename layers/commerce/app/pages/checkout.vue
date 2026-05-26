@@ -801,6 +801,7 @@ import { useCart } from '~~/layers/commerce/app/composables/useCart'
 import { useShipping } from '~~/layers/commerce/app/composables/useShipping'
 import { useRuntimeConfig } from '#app'
 import { useOrderApi } from '~~/layers/commerce/app/services/order.api'
+import { useAuthApi } from '~~/layers/core/app/services/auth.api'
 import { useAffiliate } from '~~/layers/commerce/app/composables/useAffiliate'
 import { useSeo } from '~~/app/composables/useSeo'
 import type {
@@ -841,10 +842,7 @@ const handleSendOtp = async () => {
   if (!authForm.email) { authError.value = 'Please enter your email'; return }
   authLoading.value = true
   try {
-    const res: any = await $fetch('/api/auth/checkout-otp/send', {
-      method: 'POST',
-      body: { email: authForm.email, name: authForm.name, phone: authForm.phone },
-    })
+    const res: any = await useAuthApi().sendCheckoutOtp({ email: authForm.email, name: authForm.name, phone: authForm.phone })
     otpIsNewUser.value = res.isNewUser
     otpSent.value = true
   } catch (e: any) {
@@ -861,10 +859,7 @@ const handleVerifyOtp = async () => {
   if (otpCode.value.length !== 6) { authError.value = 'Enter the 6-digit code'; return }
   authLoading.value = true
   try {
-    const res: any = await $fetch('/api/auth/checkout-otp/verify', {
-      method: 'POST',
-      body: { email: authForm.email, code: otpCode.value, name: authForm.name, phone: authForm.phone },
-    })
+    const res: any = await useAuthApi().verifyCheckoutOtp({ email: authForm.email, code: otpCode.value, name: authForm.name, phone: authForm.phone })
     // Persist tokens then sync profile (same as regular login)
     authStore.setAccessToken(res.accessToken)
     authStore.setRefreshToken(res.refreshToken)

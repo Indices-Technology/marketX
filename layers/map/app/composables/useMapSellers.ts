@@ -1,4 +1,6 @@
 import { ref, readonly } from 'vue'
+import { useMapApi } from '../services/map.api'
+import { extractErrorMessage } from '~~/layers/core/app/utils/errors'
 import type {
   IMapSeller,
   IMapSellerPreview,
@@ -95,23 +97,21 @@ export function useMapSellers() {
     const cat = opts?.category ?? categorySlug.value
 
     try {
-      const data: any = await $fetch('/api/map/sellers', {
-        query: {
-          lat,
-          lng,
-          radius: opts?.radius ?? radiusKm.value,
-          limit: 100,
-          offset,
-          filter: filter === 'all' ? undefined : filter,
-          search: q || undefined,
-          category: cat || undefined,
-        },
+      const data: any = await useMapApi().getSellers({
+        lat,
+        lng,
+        radius: opts?.radius ?? radiusKm.value,
+        limit: 100,
+        offset,
+        filter: filter === 'all' ? undefined : filter,
+        search: q || undefined,
+        category: cat || undefined,
       })
       sellers.value = append ? [...sellers.value, ...data.data] : data.data
       total.value = data.meta.total
       hasMore.value = data.meta.hasMore
-    } catch (e: any) {
-      error.value = e?.data?.statusMessage || 'Could not load nearby stores'
+    } catch (e: unknown) {
+      error.value = extractErrorMessage(e, 'Could not load nearby stores')
     } finally {
       loading.value = false
     }
@@ -123,9 +123,7 @@ export function useMapSellers() {
   ): Promise<IMapSellerPreview | null> => {
     if (userLat.value === null || userLng.value === null) return null
     try {
-      const data: any = await $fetch(`/api/map/sellers/${storeSlug}/preview`, {
-        query: { lat: userLat.value, lng: userLng.value },
-      })
+      const data: any = await useMapApi().getSellerPreview(storeSlug, userLat.value, userLng.value)
       return data.data
     } catch {
       return null

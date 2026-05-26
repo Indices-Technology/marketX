@@ -485,6 +485,7 @@ import type { IMapSeller } from '~~/layers/map/app/types/map.types'
 import { useFeedTab } from '~~/layers/feed/app/composables/useFeedTab'
 import { useSettings } from '~~/layers/profile/app/composables/useSettings'
 import { useFeedApi } from '~~/layers/feed/app/services/feed.api'
+import { useMapApi } from '~~/layers/map/app/services/map.api'
 import { useProductDetail } from '~~/layers/commerce/app/composables/useProductDetail'
 import { useFeedStore } from '~~/layers/feed/app/stores/feed.stores'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
@@ -628,7 +629,7 @@ const feedChunks = computed(() => {
 const shopTodayItems = ref<any[]>([])
 const loadShopToday = async () => {
   try {
-    const res: any = await $fetch('/api/feed/shop-today')
+    const res: any = await useFeedApi().getShopToday()
     shopTodayItems.value = res.data ?? []
   } catch {}
 }
@@ -652,9 +653,7 @@ const nearbyRequesting = ref(false)
 const fetchNearbyWithCoords = async (lat: number, lng: number) => {
   nearbyLoading.value = true
   try {
-    const data: any = await $fetch('/api/map/sellers', {
-      query: { lat, lng, radius: 20000, limit: 12 },
-    })
+    const data: any = await useMapApi().getSellers({ lat, lng, radius: 20000, limit: 12 })
     nearbyStores.value = data.data ?? []
   } catch {
   } finally {

@@ -121,6 +121,33 @@ export class AuthApiClient extends BaseApiClient {
       method: 'POST',
     })
   }
+
+  async sendCheckoutOtp(data: {
+    email: string
+    name?: string
+    phone?: string
+  }): Promise<{ isNewUser: boolean }> {
+    return this.request('/api/auth/checkout-otp/send', {
+      method: 'POST',
+      body: data,
+      skipAuth: true,
+      silent: true,
+    })
+  }
+
+  async verifyCheckoutOtp(data: {
+    email: string
+    code: string
+    name?: string
+    phone?: string
+  }): Promise<any> {
+    return this.request('/api/auth/checkout-otp/verify', {
+      method: 'POST',
+      body: data,
+      skipAuth: true,
+      silent: true,
+    })
+  }
 }
 
 /**

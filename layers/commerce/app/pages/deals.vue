@@ -89,6 +89,7 @@
 import { ref } from 'vue'
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import DealCountdown from '~~/layers/commerce/app/components/DealCountdown.vue'
+import { useFeedApi } from '~~/layers/feed/app/services/feed.api'
 
 useSeoMeta({
   title: 'Deals',
@@ -109,7 +110,7 @@ const effectivePrice = (p: any) =>
 const fetchDeals = async () => {
   pending.value = true
   try {
-    const res: any = await $fetch('/api/feed/deals', { query: { limit: 20, offset } })
+    const res: any = await useFeedApi().getDealsFeed({ limit: 20, offset })
     if (offset === 0) {
       products.value = res.data
     } else {

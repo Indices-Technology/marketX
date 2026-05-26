@@ -1,6 +1,7 @@
 import { usePostApi } from '../services/post.api'
 import { usePostStore } from '../store/post.store'
 import { useProfileStore } from '../../../profile/app/stores/profile.store'
+import { extractErrorMessage } from '~~/layers/core/app/utils/errors'
 import type { ICreatePostData, IPost } from '../types/post.types'
 import type { IFeedItem } from '../../../feed/app/types/feed.types'
 
@@ -73,9 +74,9 @@ export const usePost = () => {
       postStore.addPosts([result])
       profileStore.addMyPost(result)
       return result
-    } catch (error: any) {
-      postStore.setError(error.message || 'Failed to create post')
-      throw error
+    } catch (e: unknown) {
+      postStore.setError(extractErrorMessage(e, 'Failed to create post'))
+      throw e
     } finally {
       postStore.setLoading(false)
     }
@@ -88,9 +89,9 @@ export const usePost = () => {
       const result = await postApi.getUserFeed(limit, offset)
       postStore.addPosts(result.data)
       return result
-    } catch (error: any) {
-      postStore.setError(error.message || 'Failed to fetch feed')
-      throw error
+    } catch (e: unknown) {
+      postStore.setError(extractErrorMessage(e, 'Failed to fetch feed'))
+      throw e
     } finally {
       postStore.setLoading(false)
     }
@@ -99,15 +100,11 @@ export const usePost = () => {
   const fetchUserPosts = async (username: string, limit = 9, offset = 0) => {
     postStore.setLoading(true)
     try {
-      // Use the specific endpoint for user profile posts
       const result = await postApi.getUserPosts(username, limit, offset)
-
-      // We pass username so the store knows which Map key to update
       postStore.addPosts(result.data, username)
-
       return result
-    } catch (e: any) {
-      postStore.setError(e.message)
+    } catch (e: unknown) {
+      postStore.setError(extractErrorMessage(e, 'Failed to fetch posts'))
       throw e
     } finally {
       postStore.setLoading(false)
@@ -122,9 +119,9 @@ export const usePost = () => {
       const result = (response as any)?.data ?? response
       postStore.addPosts([result])
       return result
-    } catch (error: any) {
-      postStore.setError(error.message || 'Post not found')
-      throw error
+    } catch (e: unknown) {
+      postStore.setError(extractErrorMessage(e, 'Post not found'))
+      throw e
     } finally {
       postStore.setLoading(false)
     }
@@ -135,10 +132,10 @@ export const usePost = () => {
       postStore.addLikedPost(id)
       await postApi.likePost(id)
       return true
-    } catch (error: any) {
+    } catch (e: unknown) {
       postStore.removeLikedPost(id)
-      postStore.setError(error.message || 'Failed to like post')
-      throw error
+      postStore.setError(extractErrorMessage(e, 'Failed to like post'))
+      throw e
     }
   }
 
@@ -147,10 +144,10 @@ export const usePost = () => {
       postStore.removeLikedPost(id)
       await postApi.unlikePost(id)
       return true
-    } catch (error: any) {
+    } catch (e: unknown) {
       postStore.addLikedPost(id)
-      postStore.setError(error.message || 'Failed to unlike post')
-      throw error
+      postStore.setError(extractErrorMessage(e, 'Failed to unlike post'))
+      throw e
     }
   }
 
@@ -159,9 +156,9 @@ export const usePost = () => {
       await postApi.savePost(id)
       postStore.addSavedPosts([{ id }])
       return true
-    } catch (error: any) {
-      postStore.setError(error.message || 'Failed to save post')
-      throw error
+    } catch (e: unknown) {
+      postStore.setError(extractErrorMessage(e, 'Failed to save post'))
+      throw e
     }
   }
 
@@ -171,8 +168,8 @@ export const usePost = () => {
       const result = await postApi.getSavedPosts(limit, offset)
       postStore.addSavedPosts(result.data)
       return result
-    } catch (e: any) {
-      postStore.setError(e.message)
+    } catch (e: unknown) {
+      postStore.setError(extractErrorMessage(e, 'Failed to fetch saved posts'))
     } finally {
       postStore.setLoading(false)
     }
@@ -182,8 +179,8 @@ export const usePost = () => {
     try {
       await postApi.unsavePost(postId)
       postStore.removeSavedPost(postId)
-    } catch (e: any) {
-      postStore.setError(e.message)
+    } catch (e: unknown) {
+      postStore.setError(extractErrorMessage(e, 'Failed to unsave post'))
     }
   }
 
@@ -197,8 +194,8 @@ export const usePost = () => {
       const result = await postApi.getUserLikedPosts(username, limit, offset)
       postStore.addLikedPostsByUser(result.data, username)
       return result
-    } catch (e: any) {
-      postStore.setError(e.message)
+    } catch (e: unknown) {
+      postStore.setError(extractErrorMessage(e, 'Failed to fetch liked posts'))
       throw e
     } finally {
       postStore.setLoading(false)
@@ -210,9 +207,9 @@ export const usePost = () => {
       await postApi.deletePost(id)
       postStore.deletePost(id)
       profileStore.removeMyPost(id)
-    } catch (error: any) {
-      postStore.setError(error.message || 'Failed to delete post')
-      throw error
+    } catch (e: unknown) {
+      postStore.setError(extractErrorMessage(e, 'Failed to delete post'))
+      throw e
     }
   }
 
@@ -229,9 +226,9 @@ export const usePost = () => {
       const updated = await postApi.updatePost(id, data)
       postStore.updatePost(id, updated)
       return updated
-    } catch (error: any) {
-      postStore.setError(error.message || 'Failed to update post')
-      throw error
+    } catch (e: unknown) {
+      postStore.setError(extractErrorMessage(e, 'Failed to update post'))
+      throw e
     }
   }
 

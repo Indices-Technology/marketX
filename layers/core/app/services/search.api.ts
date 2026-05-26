@@ -29,6 +29,13 @@ export class SearchApiClient extends BaseApiClient {
     })
     return this.request(`/api/search?${params.toString()}`, { method: 'GET' })
   }
+
+  async searchMentions(q: string): Promise<any> {
+    return this.request(`/api/mentions/search?q=${encodeURIComponent(q)}`, {
+      method: 'GET',
+      skipAuth: true,
+    })
+  }
 }
 
 let instance: SearchApiClient | null = null

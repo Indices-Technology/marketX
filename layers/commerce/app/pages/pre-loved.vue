@@ -106,6 +106,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
+import { useFeedApi } from '~~/layers/feed/app/services/feed.api'
 
 useSeoMeta({
   title: 'Pre-loved',
@@ -144,9 +145,11 @@ const fetchProducts = async (reset = false) => {
   if (reset) { offset = 0; products.value = [] }
   pending.value = true
   try {
-    const query: any = { limit: 20, offset }
-    if (selectedCondition.value) query.condition = selectedCondition.value
-    const res: any = await $fetch('/api/feed/pre-loved', { query })
+    const res: any = await useFeedApi().getPreLoved({
+      limit: 20,
+      offset,
+      condition: selectedCondition.value || undefined,
+    })
     products.value = offset === 0 ? res.data : [...products.value, ...res.data]
     hasMore.value = res.meta.hasMore
   } catch {

@@ -1,4 +1,4 @@
-// DELETE /api/posts/chat/conversations/[id] - Delete conversation
+// DELETE /api/chat/conversations/[id] - Delete conversation
 
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
 import { getClientIP } from '~~/server/layers/shared/utils/security'

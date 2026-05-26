@@ -226,7 +226,7 @@
 import { ref, onMounted } from 'vue'
 import { notify } from '@kyvg/vue3-notification'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
-import { extractErrorMessage } from '~~/layers/core/app/utils/errors'
+import { useReviewApi } from '~~/layers/commerce/app/services/review.api'
 import StarRating from './StarRating.vue'
 
 const props = defineProps<{ productId: number }>()
@@ -275,9 +275,7 @@ const fetchReviews = async (reset = false) => {
   if (reset) { offset = 0; reviews.value = [] }
   loading.value = true
   try {
-    const res: any = await $fetch(`/api/products/${props.productId}/reviews`, {
-      query: { limit: 10, offset },
-    })
+    const res: any = await useReviewApi().getProductReviews(props.productId, 10, offset)
     reviews.value = offset === 0 ? res.data : [...reviews.value, ...res.data]
     meta.value = res.meta
     hasMore.value = res.meta.hasMore
@@ -297,7 +295,7 @@ const fetchReviews = async (reset = false) => {
 const checkEligibility = async () => {
   if (!profileStore.isLoggedIn) return
   try {
-    const res: any = await $fetch(`/api/products/${props.productId}/reviews/eligibility`)
+    const res: any = await useReviewApi().getProductReviewEligibility(props.productId)
     canReview.value = res.data?.canReview ?? false
     if (res.data?.existingReview) userReview.value = res.data.existingReview
   } catch {
@@ -314,17 +312,16 @@ const submitReview = async () => {
   if (draftRating.value === 0) return
   submitting.value = true
   try {
-    const res: any = await $fetch(`/api/products/${props.productId}/reviews`, {
-      method: 'POST',
-      body: { rating: draftRating.value, body: draftBody.value || undefined },
+    const res: any = await useReviewApi().submitProductReview(props.productId, {
+      rating: draftRating.value,
+      body: draftBody.value || undefined,
     })
     notify({ type: 'success', text: 'Review posted!' })
     userReview.value = res.data
     draftRating.value = 0
     draftBody.value = ''
     await fetchReviews(true)
-  } catch (e: any) {
-    notify({ type: 'error', text: extractErrorMessage(e, 'Failed to post review') })
+  } catch {
   } finally {
     submitting.value = false
   }

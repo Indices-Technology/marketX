@@ -305,6 +305,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useProduct } from '~~/layers/commerce/app/composables/useProduct'
 import { useMediaUpload } from '~~/layers/core/app/composables/useMediaUpload'
 import { useAiApi } from '~~/layers/core/app/services/ai.api'
+import { useSellerApi } from '~~/layers/seller/app/services/seller.services'
 import { notify } from '@kyvg/vue3-notification'
 import MusicPicker from '~~/layers/core/app/components/MusicPicker.vue'
 import type { MusicSelection } from '~~/layers/core/app/components/MusicPicker.vue'
@@ -334,7 +335,7 @@ const isOnboarding = computed(() => route.query.onboarding === '1')
 const isPremiumSeller = ref(false)
 onMounted(async () => {
   try {
-    const res: any = await $fetch(`/api/seller/by-slug/${storeSlug.value}`)
+    const res: any = await useSellerApi().getSellerProfileBySlug(storeSlug.value)
     isPremiumSeller.value = res?.data?.isPremium ?? false
   } catch {
     // non-critical — defaults to false

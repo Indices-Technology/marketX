@@ -265,7 +265,7 @@ throw createError({ statusCode: 404, statusMessage: 'Not found' })
 | `Orders` | Customer purchases (payment, shipping, status) |
 | `OrderItem` | Line items (variant, qty, price at time of order) |
 | `CartItem` | Shopping cart (userId + variantId unique) |
-| `Post` | Social posts (caption, visibility, media, squareId) |
+| `Post` | Social posts (caption, visibility, media, squareId, wallTargetType, wallTargetSlug) |
 | `Media` | Files (url, type, isBgMusic flag) |
 | `Comment` | Threaded comments (parentId for replies) |
 | `PostLike` | Post reactions (composite PK: userId + postId) |
@@ -298,8 +298,9 @@ enum SquareStatus     { PENDING ACTIVE SUSPENDED }
 enum MembershipStatus { PENDING ACTIVE SUSPENDED }
 enum OfficerRole      { CHAIRMAN SECRETARY TREASURER }
 enum NotificationType { ORDER REVIEW PRODUCT GENERAL NEW_COMMENT COMMENT_LIKE REPLY
-                        PRODUCT_SHARE NEW_FOLLOWER NEW_POST POST_LIKE
-                        SQUARE_MEMBERSHIP_APPROVED SQUARE_MEMBERSHIP_REJECTED }
+                        PRODUCT_SHARE NEW_FOLLOWER NEW_POST POST_LIKE MENTION
+                        SQUARE_ANNOUNCEMENT SQUARE_MEMBERSHIP_APPROVED SQUARE_MEMBERSHIP_REJECTED
+                        WALL_SHOUTOUT }
 ```
 
 ### DB Client Setup
@@ -837,6 +838,18 @@ The default `dedupe: 'cancel'` cancels in-flight requests when a new caller appe
 ### Why Squares?
 
 Nigerian physical markets (Computer Village, Balogun, Bodija) are clusters of sellers operating under a shared identity. Squares model this digitally — sellers apply to join, officers govern membership, and a percentage of each transaction is credited to the Square's association wallet.
+
+### Wall Feature — Post Model Extension vs New Table
+
+The wall reuses the existing `Post` model with two nullable columns (`wallTargetType: USER | STORE`, `wallTargetSlug: string`). When both are null, the post is a normal social/commerce post. When set, the post is a wall shoutout on another user's or store's wall.
+
+**Why not a separate table?** Reusing `Post` means all existing infrastructure — likes, comments, notifications, media attachments, the `postInclude` select shape — works on wall posts without duplication.
+
+**Critical filter:** Every post-feed repository query (`getPosts`, `getPostsByAuthorIds`, `getPostsByUserId`, `count`) must include `wallTargetType: null` in the where clause. Without it, wall shoutouts leak into the home feed, following feed, and profile tab. This filter lives at the repository layer so all callers benefit automatically.
+
+### `Unsupported("vector(1536)")` for pgvector
+
+The `Embedding.embedding` column is `vector(1536)` — a pgvector type Prisma cannot natively serialize. It is declared as `Unsupported("vector(1536)")?` in `schema.prisma` so that `prisma db push` and `prisma migrate dev` know the column exists and will not drop it. All reads and writes to this column must use `prisma.$queryRaw` / `prisma.$executeRaw`. Never run `prisma db push --accept-data-loss` on this project.
 
 ---
 

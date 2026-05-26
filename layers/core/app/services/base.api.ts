@@ -8,6 +8,7 @@ import { type H3Event, getHeader } from 'h3'
 import { useRequestEvent, useRuntimeConfig, navigateTo } from 'nuxt/app'
 import { notify } from '@kyvg/vue3-notification'
 import { ApiError } from './api.error'
+import { OPAQUE_MESSAGES } from '../utils/errors'
 import { useAuthStore } from '../stores/auth.store'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 
@@ -286,20 +287,8 @@ export class BaseApiClient {
     statusCode: number,
     originalMessage: string,
   ): string {
-    // Generic/internal messages that should be replaced with friendlier text
-    const OPAQUE = new Set([
-      'internal server error',
-      'server error',
-      'bad request',
-      'unknown error',
-      'an unexpected error occurred.',
-      'an error occurred',
-      'error',
-      '',
-    ])
-
     // If the server sent a specific, useful message — show it as-is
-    if (originalMessage && !OPAQUE.has(originalMessage.toLowerCase())) {
+    if (originalMessage && !OPAQUE_MESSAGES.has(originalMessage.toLowerCase())) {
       return originalMessage
     }
 

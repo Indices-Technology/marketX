@@ -332,6 +332,7 @@
 
 <script setup lang="ts">
 import { ref, watch, nextTick, onMounted } from 'vue'
+import { useMapApi } from '../services/map.api'
 import type { IMapSeller, IMapSellerPreview, MapFilter } from '../types/map.types'
 
 const props = defineProps<{
@@ -359,7 +360,7 @@ const { formatPrice } = useCurrency()
 const categories = ref<Array<{ id: string; name: string; slug: string; thumbnailCatUrl?: string }>>([])
 onMounted(async () => {
   try {
-    const res: any = await $fetch('/api/commerce/categories')
+    const res: any = await useMapApi().getCategories()
     categories.value = res.data ?? []
   } catch {}
 })

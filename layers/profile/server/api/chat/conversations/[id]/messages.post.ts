@@ -1,4 +1,4 @@
-// POST /api/posts/chat/conversations/[id]/messages - Send message
+// POST /api/chat/conversations/[id]/messages - Send message
 import { chatService } from '~~/layers/profile/server/services/chat.service'
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'

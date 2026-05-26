@@ -541,6 +541,8 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onUnmounted, nextTick } from 'vue'
+import { useMediaApi } from '~~/layers/core/app/services/media.api'
+import { extractErrorMessage } from '~~/layers/core/app/utils/errors'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface JamendoTrack {
@@ -645,14 +647,14 @@ const loadTracks = async () => {
   discoverLoading.value = true
   discoverError.value = null
   try {
-    const params: Record<string, any> = { limit: 20 }
-    if (searchQuery.value) params.q = searchQuery.value
-    if (activeGenre.value !== 'all') params.genre = activeGenre.value
-    const res: any = await $fetch('/api/music/search', { query: params })
+    const res: any = await useMediaApi().searchMusic({
+      limit: 20,
+      q: searchQuery.value || undefined,
+      genre: activeGenre.value !== 'all' ? activeGenre.value : undefined,
+    })
     tracks.value = res.data ?? []
-  } catch (e: any) {
-    discoverError.value =
-      e?.data?.statusMessage ?? 'Could not load tracks. Check your internet connection.'
+  } catch (e: unknown) {
+    discoverError.value = extractErrorMessage(e, 'Could not load tracks. Check your internet connection.')
   } finally {
     discoverLoading.value = false
   }

@@ -140,7 +140,7 @@ export const postRepository = {
     visibilityFilter?: any,
   ) {
     return await prisma.post.findMany({
-      where: { authorId: userId, ...visibilityFilter },
+      where: { authorId: userId, wallTargetType: null, ...visibilityFilter },
       include: postInclude,
       take: limit,
       skip: offset,
@@ -150,7 +150,7 @@ export const postRepository = {
 
   async getPostCountByUserId(userId: string, visibilityFilter?: any) {
     return await prisma.post.count({
-      where: { authorId: userId, ...visibilityFilter },
+      where: { authorId: userId, wallTargetType: null, ...visibilityFilter },
     })
   },
 
@@ -195,7 +195,7 @@ export const postRepository = {
     return await prisma.post.findMany({
       take: options.take,
       skip: options.skip,
-      where: { moderationStatus: 'ACTIVE', ...options.where },
+      where: { moderationStatus: 'ACTIVE', wallTargetType: null, ...options.where },
       orderBy: options.orderBy,
       include: postInclude,
     })
@@ -203,7 +203,7 @@ export const postRepository = {
 
   async getPostsByAuthorIds(authorIds: string[], options: any) {
     return await prisma.post.findMany({
-      where: { authorId: { in: authorIds }, moderationStatus: 'ACTIVE' },
+      where: { authorId: { in: authorIds }, moderationStatus: 'ACTIVE', wallTargetType: null },
       take: options.limit,
       skip: options.offset,
       orderBy: { created_at: 'desc' },
@@ -216,7 +216,7 @@ export const postRepository = {
   },
 
   async count() {
-    return await prisma.post.count({ where: { moderationStatus: 'ACTIVE' } })
+    return await prisma.post.count({ where: { moderationStatus: 'ACTIVE', wallTargetType: null } })
   },
 
   // ========== COMMENTS ==========

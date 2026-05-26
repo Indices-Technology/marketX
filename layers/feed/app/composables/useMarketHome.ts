@@ -67,9 +67,7 @@ export function useMarketHome() {
   async function fetchSellersWithCoords(lat: number, lng: number) {
     sellersLoading.value = true
     try {
-      const data: any = await $fetch('/api/map/sellers', {
-        query: { lat, lng, radius: 20000, limit: 12 },
-      })
+      const data: any = await useMapApi().getSellers({ lat, lng, radius: 20000, limit: 12 })
       const all: IMapSeller[] = data.data ?? []
       onlineSellers.value = all.filter((s) => s.isOpenNow).length
         ? all.filter((s) => s.isOpenNow)
