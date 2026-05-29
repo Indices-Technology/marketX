@@ -57,6 +57,99 @@ test.describe('POST /api/commerce/cart — validation', () => {
   })
 })
 
+// ─── Extended validation ─────────────────────────────────────────────────────
+
+test.describe('POST /api/commerce/cart — quantity bounds', () => {
+  let token: string
+  let variantId: number
+
+  test.beforeAll(async ({ request }) => {
+    const login = await apiLogin(request, TEST_USER)
+    token = login.token
+    variantId = await getFirstVariantId(request)
+  })
+
+  test('rejects quantity 0', async ({ request }) => {
+    const res = await request.post(CART, {
+      data: { variantId, quantity: 0 },
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    expect(res.status()).toBe(400)
+  })
+
+  test('rejects negative quantity', async ({ request }) => {
+    const res = await request.post(CART, {
+      data: { variantId, quantity: -1 },
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    expect(res.status()).toBe(400)
+  })
+
+  test('rejects non-numeric variantId', async ({ request }) => {
+    const res = await request.post(CART, {
+      data: { variantId: 'abc', quantity: 1 },
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    expect(res.status()).toBe(400)
+  })
+
+  test('rejects quantity exceeding available stock', async ({ request }) => {
+    const res = await request.post(CART, {
+      data: { variantId, quantity: 999999 },
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    expect(res.status()).toBe(400)
+    const body = await res.json()
+    expect(body.statusMessage ?? body.message).toMatch(/stock/i)
+  })
+})
+
+test.describe('PATCH /api/commerce/cart/:id — validation', () => {
+  let token: string
+  let variantId: number
+
+  test.beforeAll(async ({ request }) => {
+    const login = await apiLogin(request, TEST_USER)
+    token = login.token
+    variantId = await getFirstVariantId(request)
+  })
+
+  test('rejects non-numeric variantId in URL', async ({ request }) => {
+    const res = await request.patch(`/api/commerce/cart/abc`, {
+      data: { quantity: 1 },
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    expect(res.status()).toBe(400)
+  })
+
+  test('rejects quantity 0', async ({ request }) => {
+    const res = await request.patch(CART_ITEM(variantId), {
+      data: { quantity: 0 },
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    expect(res.status()).toBe(400)
+  })
+
+  test('rejects quantity exceeding available stock', async ({ request }) => {
+    // Seed the item first so the row exists, then try to bump quantity above stock
+    await request.post(CART, {
+      data: { variantId, quantity: 1 },
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    const res = await request.patch(CART_ITEM(variantId), {
+      data: { quantity: 999999 },
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    expect(res.status()).toBe(400)
+    const body = await res.json()
+    expect(body.statusMessage ?? body.message).toMatch(/stock/i)
+    // Cleanup
+    await request.delete(CART_ITEM(variantId), {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+  })
+})
+
 // ─── CRUD flow ────────────────────────────────────────────────────────────────
 
 test.describe('Cart — full CRUD flow', () => {

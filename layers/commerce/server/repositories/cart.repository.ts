@@ -12,7 +12,9 @@ const cartInclude = {
           slug: true,
           price: true,
           discount: true,
-          seller: { select: { store_slug: true, store_name: true, pod_enabled: true } },
+          seller: {
+            select: { store_slug: true, store_name: true, pod_enabled: true },
+          },
           media: {
             take: 1,
             where: { isBgMusic: false },
@@ -43,7 +45,12 @@ export const cartRepository = {
     })
   },
 
-  async addToCart(userId: string, variantId: number, quantity: number, priceAtAdd?: number) {
+  async addToCart(
+    userId: string,
+    variantId: number,
+    quantity: number,
+    priceAtAdd?: number,
+  ) {
     return prisma.cartItem.upsert({
       where: { userId_variantId: { userId, variantId } },
       update: { quantity: { increment: quantity } },

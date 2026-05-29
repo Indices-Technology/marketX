@@ -11,6 +11,8 @@ export default defineEventHandler(async (event) => {
     const { variantId, quantity = 1 } = body
     if (!variantId)
       throw new UserError('INVALID_INPUT', 'variantId is required', 400)
+    if (isNaN(Number(variantId)))
+      throw new UserError('INVALID_INPUT', 'variantId must be a number', 400)
     const result = await cartService.addToCart(
       user.id,
       Number(variantId),
@@ -19,9 +21,15 @@ export default defineEventHandler(async (event) => {
     return { success: true, data: result }
   } catch (error: unknown) {
     if (error instanceof UserError)
-      throw createError({ statusCode: error.status, statusMessage: error.message })
+      throw createError({
+        statusCode: error.status,
+        statusMessage: error.message,
+      })
     // Pass through H3 errors (including 401 from requireAuth)
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
-    throw createError({ statusCode: 500, statusMessage: 'Internal server error' })
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Internal server error',
+    })
   }
 })

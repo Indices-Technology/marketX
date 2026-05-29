@@ -4,14 +4,17 @@
     <div class="flex items-start justify-between gap-3">
       <div class="flex items-center gap-3">
         <!-- Avatar -->
-        <NuxtLink :to="`/profile/${post.author.username}`" class="shrink-0">
+        <NuxtLink
+          :to="post.author.role === 'seller' ? `/sellers/profile/${post.author.username}` : `/profile/${post.author.username}`"
+          class="shrink-0"
+        >
           <div
             class="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-brand/10 to-violet-100 text-sm font-black text-brand dark:from-brand/20 dark:to-violet-900/30"
           >
             <img
-              v-if="post.author.avatar"
-              :src="imgAvatar(post.author.avatar)"
-              class="h-full w-full rounded-xl object-cover"
+              v-if="resolvedAvatar"
+              :src="imgAvatar(resolvedAvatar)"
+              class="h-full w-full object-cover"
             />
             <span v-else>{{ post.author.username?.[0]?.toUpperCase() ?? 'U' }}</span>
           </div>
@@ -66,7 +69,7 @@
         <img
           v-for="(m, i) in post.media.slice(0, 4)"
           :key="m.id"
-          :src="m.url"
+          :src="m.type === 'VIDEO' ? videoThumb(m.url) : imgFeed(m.url)"
           :alt="m.altText ?? ''"
           class="aspect-square w-full object-cover"
           :class="post.media.length === 1 ? 'max-h-80 rounded-xl' : ''"
@@ -109,7 +112,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from '#imports'
-import { imgAvatar } from '~~/layers/core/app/utils/cloudinary'
+import { imgAvatar, imgFeed, videoThumb } from '~~/layers/core/app/utils/cloudinary'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import { useWallApi, type WallType } from '~~/layers/social/app/services/wall.api'
 import { usePostApi } from '~~/layers/social/app/services/post.api'
@@ -120,6 +123,7 @@ const props = defineProps<{
   wallType: WallType
   wallSlug: string
   isWallOwner?: boolean
+  ownerAvatar?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -132,6 +136,10 @@ const deleting = ref(false)
 
 const localLiked = ref(props.post.viewerLiked)
 const localLikes = ref(props.post._count.likes)
+
+const resolvedAvatar = computed(() =>
+  props.post.author.avatar || props.ownerAvatar || null
+)
 
 const canDelete = computed(
   () => profileStore.isLoggedIn && (

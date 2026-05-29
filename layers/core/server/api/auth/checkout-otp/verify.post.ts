@@ -19,11 +19,15 @@ export default defineEventHandler(async (event) => {
     if (!parsed.success) {
       const first = parsed.error.errors[0]
       const field = first?.path?.[0] ? `${first.path[0]}: ` : ''
-      throw createError({ statusCode: 400, statusMessage: `${field}${first?.message ?? 'Invalid input'}` })
+      throw createError({
+        statusCode: 400,
+        statusMessage: `${field}${first?.message ?? 'Invalid input'}`,
+      })
     }
 
     const body = parsed.data
-    const ipAddress = getRequestIP(event, { xForwardedFor: true }) || '127.0.0.1'
+    const ipAddress =
+      getRequestIP(event, { xForwardedFor: true }) || '127.0.0.1'
     const userAgent = getRequestHeader(event, 'user-agent') || 'Unknown'
 
     const result = await verifyCheckoutOtp(
@@ -36,15 +40,24 @@ export default defineEventHandler(async (event) => {
 
     const isProd = process.env.NODE_ENV === 'production'
     setCookie(event, 'accessToken', result.accessToken, {
-      httpOnly: true, secure: isProd, sameSite: 'strict', maxAge: 24 * 60 * 60,
+      httpOnly: true,
+      secure: isProd,
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60,
     })
     setCookie(event, 'refreshToken', result.refreshToken, {
-      httpOnly: true, secure: isProd, sameSite: 'strict', maxAge: 7 * 24 * 60 * 60,
+      httpOnly: true,
+      secure: isProd,
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60,
     })
 
     return { success: true, ...result }
   } catch (error: unknown) {
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
-    throw createError({ statusCode: 500, statusMessage: 'Verification failed. Please try again.' })
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Verification failed. Please try again.',
+    })
   }
 })

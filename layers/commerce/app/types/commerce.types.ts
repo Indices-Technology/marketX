@@ -48,6 +48,30 @@ export interface ICartItem extends CartItem {
   }
 }
 
+export interface GuestCartVariant {
+  id: number
+  size: string
+  price: number | null
+  stock: number
+  productId: number
+  product: {
+    id: number
+    title: string
+    slug: string
+    price: number
+    discount: number | null
+    seller: { store_slug: string; store_name: string }
+    media: Array<{ url: string; type: string }>
+    offers: Array<{
+      id: number
+      minQuantity: number
+      discount: number
+      label: string | null
+      isActive: boolean
+    }>
+  } | null
+}
+
 export interface IOrder extends Orders {
   orderItem?: IOrderItem[]
 }

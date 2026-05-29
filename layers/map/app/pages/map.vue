@@ -19,28 +19,35 @@
             @update:category="onCategoryChange"
             @update:search="onSearchChange"
             @update:radius="onRadiusChange"
+            @update:location="onLocationChange"
             @recenter="handleAllowLocation"
           />
           <div
             v-else
-            class="flex h-full flex-col items-center justify-center gap-4 p-6 text-center"
+            class="flex h-full flex-col items-center justify-center gap-5 p-6 text-center"
             style="background: rgba(10, 15, 30, 0.96)"
           >
-            <div
-              class="flex h-14 w-14 items-center justify-center rounded-full bg-white/5"
-            >
-              <Icon
-                name="mdi:map-marker-radius-outline"
-                size="28"
-                class="text-brand"
-              />
+            <div class="relative flex h-16 w-16 items-center justify-center">
+              <div class="absolute inset-0 animate-ping rounded-full bg-brand/20" />
+              <div class="relative z-10 flex h-full w-full items-center justify-center rounded-full bg-brand/10 ring-1 ring-brand/30">
+                <Icon name="mdi:map-marker-radius-outline" size="30" class="text-brand" />
+              </div>
             </div>
             <div>
               <p class="text-sm font-bold text-white">Near Me</p>
               <p class="mt-1 text-xs text-white/40">
-                Allow location to see stores
+                Allow location to see stores nearby
               </p>
             </div>
+            <button
+              class="flex items-center gap-2 rounded-2xl bg-brand px-6 py-3 text-sm font-bold text-white shadow-xl shadow-brand/30 transition active:scale-95 disabled:opacity-60"
+              :disabled="loading"
+              @click="handleAllowLocation"
+            >
+              <Icon v-if="loading" name="mdi:loading" size="16" class="animate-spin" />
+              <Icon v-else name="mdi:crosshairs-gps" size="16" />
+              {{ loading ? 'Finding…' : 'Allow Location' }}
+            </button>
           </div>
         </ClientOnly>
       </div>
@@ -50,17 +57,18 @@
         <!-- Map canvas -->
         <ClientOnly>
           <MapView
-            v-if="locationGranted"
             :sellers="sellers as any"
             :squares="mapSquares"
             :user-lat="userLat"
             :user-lng="userLng"
             :selected-slug="selectedSeller?.store_slug ?? null"
             :radius-km="radiusKm"
+            :view-mode="viewMode"
             class="map-fill"
             @select-seller="onSelectSeller"
             @select-square="onSelectSquare"
             @deselect="selectedSeller = null"
+            @update:view-mode="viewMode = $event"
           />
           <template #fallback>
             <div class="map-fill flex items-center justify-center bg-[#1a1a2e]">
@@ -73,50 +81,36 @@
           </template>
         </ClientOnly>
 
-        <!-- Location gate -->
+        <!-- Location gate — compact floating card so map tiles load immediately -->
         <Transition name="fade">
           <div
             v-if="!locationGranted"
-            class="map-fill flex flex-col items-center justify-center gap-6 bg-[#0f172a] p-8 text-center"
+            class="pointer-events-none absolute inset-x-0 bottom-10 z-20 flex justify-center px-4"
           >
-            <div class="relative flex h-24 w-24 items-center justify-center">
-              <div
-                class="absolute inset-0 animate-ping rounded-full bg-brand/20"
-              />
-              <div
-                class="relative z-10 flex h-20 w-20 items-center justify-center rounded-full bg-brand/10 ring-1 ring-brand/30"
-              >
-                <Icon
-                  name="mdi:map-marker-radius-outline"
-                  size="40"
-                  class="text-brand"
-                />
+            <div class="pointer-events-auto w-full max-w-xs rounded-3xl border border-white/10 bg-[#0f172a]/95 p-5 shadow-2xl backdrop-blur-xl">
+              <div class="mb-4 flex items-center gap-3">
+                <div class="relative flex h-12 w-12 shrink-0 items-center justify-center">
+                  <div class="absolute inset-0 animate-ping rounded-full bg-brand/20" />
+                  <div class="relative z-10 flex h-full w-full items-center justify-center rounded-full bg-brand/10 ring-1 ring-brand/30">
+                    <Icon name="mdi:map-marker-radius-outline" size="22" class="text-brand" />
+                  </div>
+                </div>
+                <div>
+                  <p class="font-bold leading-tight text-white">Discover stores near you</p>
+                  <p class="mt-0.5 text-[11px] text-white/40">Allow location to see sellers &amp; deals</p>
+                </div>
               </div>
+              <button
+                class="flex w-full items-center justify-center gap-2 rounded-2xl bg-brand py-3 text-sm font-bold text-white shadow-lg shadow-brand/30 transition active:scale-95 disabled:opacity-60"
+                :disabled="loading"
+                @click="handleAllowLocation"
+              >
+                <Icon v-if="loading" name="mdi:loading" size="16" class="animate-spin" />
+                <Icon v-else name="mdi:crosshairs-gps" size="16" />
+                {{ loading ? 'Getting location…' : 'Allow Location' }}
+              </button>
+              <p v-if="error" class="mt-2 text-center text-xs text-red-400">{{ error }}</p>
             </div>
-            <div>
-              <h2 class="text-xl font-black text-white">
-                Discover stores near you
-              </h2>
-              <p class="mt-2 max-w-xs text-sm text-white/50">
-                Allow location access to find sellers, deals, and products
-                around you.
-              </p>
-            </div>
-            <button
-              class="flex items-center gap-2 rounded-2xl bg-brand px-8 py-4 text-sm font-bold text-white shadow-xl shadow-brand/30 transition active:scale-95"
-              :disabled="loading"
-              @click="handleAllowLocation"
-            >
-              <Icon
-                v-if="loading"
-                name="mdi:loading"
-                size="18"
-                class="animate-spin"
-              />
-              <Icon v-else name="mdi:crosshairs-gps" size="18" />
-              {{ loading ? 'Getting location…' : 'Allow Location' }}
-            </button>
-            <p v-if="error" class="text-sm text-red-400">{{ error }}</p>
           </div>
         </Transition>
 
@@ -215,6 +209,7 @@
           <MapBottomSheet
             :seller="selectedSeller as any"
             :fetch-preview="fetchPreview as any"
+            :start-expanded="deepLinkAutoExpand"
             @close="selectedSeller = null"
           />
         </div>
@@ -248,6 +243,7 @@ import {
   getCachedLocation,
 } from '~~/layers/map/app/composables/useMapSellers'
 import type { IMapSeller, IMapSquare, MapFilter } from '~~/layers/map/app/types/map.types'
+import type { ViewMode } from '~~/layers/map/app/components/MapView.vue'
 
 definePageMeta({ layout: false })
 
@@ -274,11 +270,14 @@ const {
   setSearch,
   setCategorySlug,
   setLocation,
+  injectSeller,
 } = useMapSellers()
 
 const locationGranted = ref(false)
 const selectedSeller = ref<IMapSeller | null>(null)
 const mobileSearch = ref('')
+const deepLinkAutoExpand = ref(false)
+const viewMode = ref<ViewMode>('both')
 
 // Deep-link: ?store=slug — auto-select the seller once data loads
 const deepLinkSlug = route.query.store as string | undefined
@@ -319,6 +318,7 @@ const handleAllowLocation = async () => {
 
 // ── Event handlers ────────────────────────────────────────────────────────────
 const onSelectSeller = (seller: IMapSeller) => {
+  deepLinkAutoExpand.value = false
   selectedSeller.value = seller
 }
 
@@ -343,6 +343,13 @@ const onRadiusChange = (km: number) => {
   fetchSellers({ radius: km })
 }
 
+const onLocationChange = async (loc: { lat: number; lng: number }) => {
+  setLocation(loc.lat, loc.lng)
+  locationGranted.value = true
+  await fetchSellers({ lat: loc.lat, lng: loc.lng })
+  tryAutoSelect()
+}
+
 // Mobile search — debounced
 let mobileSearchTimer: ReturnType<typeof setTimeout> | null = null
 const onMobileSearchInput = () => {
@@ -358,7 +365,7 @@ const clearMobileSearch = () => {
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
-onMounted(() => {
+onMounted(async () => {
   if (!import.meta.client) return
 
   fetchSquares()
@@ -368,7 +375,18 @@ onMounted(() => {
     const { lat, lng } = cached
     setLocation(lat, lng)
     locationGranted.value = true
-    fetchSellers({ lat, lng }).then(tryAutoSelect)
+    fetchSellers({ lat, lng }).then(async () => {
+      if (deepLinkSlug && !sellers.value.find((s: any) => s.store_slug === deepLinkSlug)) {
+        const preview = await fetchPreview(deepLinkSlug)
+        if (preview) {
+          injectSeller(preview as unknown as IMapSeller)
+          selectedSeller.value = preview as unknown as IMapSeller
+          deepLinkAutoExpand.value = true
+          return
+        }
+      }
+      tryAutoSelect()
+    })
     navigator.permissions
       ?.query({ name: 'geolocation' })
       .then((r) => {
@@ -376,6 +394,25 @@ onMounted(() => {
       })
       .catch(() => {})
     return
+  }
+
+  // Deep-link with no cached location — fetch the target seller's own coordinates
+  // and use them to bootstrap the map so the store is immediately visible.
+  if (deepLinkSlug) {
+    try {
+      const preview = await fetchPreview(deepLinkSlug)
+      if (preview?.latitude && preview?.longitude) {
+        setLocation(preview.latitude, preview.longitude)
+        locationGranted.value = true
+        await fetchSellers({ lat: preview.latitude, lng: preview.longitude })
+        // Ensure the store pin appears even if it has hideLocation/is_active=false in DB
+        injectSeller(preview as unknown as IMapSeller)
+        // Select it directly from preview data (IMapSellerPreview extends IMapSeller)
+        selectedSeller.value = preview as unknown as IMapSeller
+        deepLinkAutoExpand.value = true
+        return
+      }
+    } catch {}
   }
 
   navigator.permissions

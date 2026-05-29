@@ -43,16 +43,24 @@ export const cartService = {
     const discount = variant.product?.discount ?? 0
     const priceAtAdd = Math.round(basePrice * (1 - discount / 100))
 
-    const item = await cartRepository.addToCart(userId, variantId, quantity, priceAtAdd)
+    // TODO: send notification if priceAtAdd is significantly different from current price
+    const item = await cartRepository.addToCart(
+      userId,
+      variantId,
+      quantity,
+      priceAtAdd,
+    )
     auditService
       .logUserAction({
         userId,
         action: 'CART_ITEM_ADDED',
         resource: 'CartItem',
         resourceId: String(variantId),
-        reason: `Added variant ${variantId} x${quantity}`,
+        reason: `Added variant ${variantId} x ${quantity}`,
       })
-      .catch((e: Error) => logger.warn('Audit log failed', { action: 'cart', error: e.message }))
+      .catch((e: Error) =>
+        logger.warn('Audit log failed', { action: 'cart', error: e.message }),
+      )
     return item
   },
 
@@ -93,7 +101,9 @@ export const cartService = {
         resourceId: String(variantId),
         reason: `Updated variant ${variantId} to qty ${quantity}`,
       })
-      .catch((e: Error) => logger.warn('Audit log failed', { action: 'cart', error: e.message }))
+      .catch((e: Error) =>
+        logger.warn('Audit log failed', { action: 'cart', error: e.message }),
+      )
     return item
   },
 
@@ -110,7 +120,9 @@ export const cartService = {
         resourceId: String(variantId),
         reason: `Removed variant ${variantId}`,
       })
-      .catch((e: Error) => logger.warn('Audit log failed', { action: 'cart', error: e.message }))
+      .catch((e: Error) =>
+        logger.warn('Audit log failed', { action: 'cart', error: e.message }),
+      )
     return result
   },
 
@@ -124,7 +136,9 @@ export const cartService = {
         resourceId: userId,
         reason: 'Cart cleared',
       })
-      .catch((e: Error) => logger.warn('Audit log failed', { action: 'cart', error: e.message }))
+      .catch((e: Error) =>
+        logger.warn('Audit log failed', { action: 'cart', error: e.message }),
+      )
     return result
   },
 }

@@ -8,15 +8,22 @@
       class="sheet-container"
       :class="{ expanded: isExpanded }"
     >
-      <!-- Drag handle -->
-      <div class="sheet-handle-area" @click="isExpanded = !isExpanded">
+      <!-- Drag handle + close button -->
+      <div class="relative flex items-center justify-center py-3" @click="isExpanded = !isExpanded">
         <div class="sheet-handle" />
+        <button
+          class="absolute right-4 flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white/60 transition hover:bg-white/20 hover:text-white"
+          aria-label="Close"
+          @click.stop="$emit('close')"
+        >
+          <Icon name="mdi:close" size="15" />
+        </button>
       </div>
 
       <!-- ── Peek view (always shown) ─────────────────────────────────── -->
-      <div class="px-4 pb-3">
-        <div class="flex items-center gap-3">
-          <!-- Logo -->
+      <div class="px-4 pb-4">
+        <!-- Row 1: logo + name/meta -->
+        <div class="flex items-center gap-3 mb-3">
           <div class="store-avatar">
             <img
               v-if="seller.store_logo"
@@ -29,7 +36,6 @@
             </span>
           </div>
 
-          <!-- Name + meta -->
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-1.5">
               <p class="truncate text-[15px] font-bold text-white">
@@ -61,7 +67,6 @@
                 class="text-[10px] text-white/30"
               >· {{ seller.lastSeenLabel }}</span>
             </p>
-            <!-- Square badge -->
             <NuxtLink
               v-if="seller.square"
               :to="`/squares/${seller.square.slug}`"
@@ -75,23 +80,32 @@
               {{ seller.square.name }}
             </NuxtLink>
           </div>
+        </div>
 
-          <!-- CTA buttons -->
-          <div class="flex shrink-0 gap-2">
-            <NuxtLink
-              :to="`/messages?seller=${seller.store_slug}`"
-              class="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
-              aria-label="Message seller"
-            >
-              <Icon name="mdi:message-outline" size="18" />
-            </NuxtLink>
-            <NuxtLink
-              :to="`/sellers/profile/${seller.store_slug}`"
-              class="flex h-9 items-center justify-center rounded-full bg-brand px-4 text-[12px] font-bold text-white shadow-lg shadow-brand/30 transition hover:bg-brand/90"
-            >
-              Visit
-            </NuxtLink>
-          </div>
+        <!-- Row 2: action buttons -->
+        <div class="flex items-center gap-2">
+          <NuxtLink
+            :to="`/messages?seller=${seller.store_slug}`"
+            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-white transition active:scale-95"
+            aria-label="Message seller"
+            @click.stop
+          >
+            <Icon name="mdi:message-outline" size="18" />
+          </NuxtLink>
+          <button
+            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-white transition active:scale-95"
+            aria-label="Get directions"
+            @click.stop="openDirections(seller.latitude, seller.longitude)"
+          >
+            <Icon name="mdi:navigation" size="18" />
+          </button>
+          <NuxtLink
+            :to="`/sellers/profile/${seller.store_slug}`"
+            class="flex h-10 flex-1 items-center justify-center rounded-full bg-brand text-[13px] font-bold text-white shadow-lg shadow-brand/30 transition active:scale-95"
+            @click.stop
+          >
+            Visit Store
+          </NuxtLink>
         </div>
       </div>
 
@@ -107,25 +121,41 @@
           <!-- Stats row -->
           <div class="mx-4 mb-4 flex gap-3">
             <div class="stat-chip">
-              <p class="stat-value">{{ preview.followerCount }}</p>
+              <p class="stat-value">{{ formatNum(sheetFollowerCount) }}</p>
               <p class="stat-label">Followers</p>
             </div>
             <div class="stat-chip">
               <p class="stat-value">{{ preview.productCount }}</p>
               <p class="stat-label">Products</p>
             </div>
-            <div v-if="preview.avgRating" class="stat-chip">
-              <p class="stat-value flex items-center gap-1">
-                <Icon name="mdi:star" size="12" class="text-amber-400" />
-                {{ preview.avgRating.toFixed(1) }}
-              </p>
-              <p class="stat-label">Rating</p>
+            <div v-if="preview.isOpenNow" class="stat-chip" style="border-color:rgba(34,197,94,0.25);background:rgba(34,197,94,0.08)">
+              <p class="stat-value" style="color:#4ade80">Open</p>
+              <p class="stat-label" style="color:rgba(74,222,128,0.6)">{{ preview.closesAt ? `til ${preview.closesAt}` : 'Now' }}</p>
             </div>
-            <div v-if="preview.hasActiveDeal" class="stat-chip border-brand/30 bg-brand/10">
+            <div v-else-if="preview.hasActiveDeal" class="stat-chip border-brand/30 bg-brand/10">
               <p class="stat-value text-brand">Active</p>
               <p class="stat-label text-brand/70">Deal</p>
             </div>
           </div>
+
+          <!-- Follow button -->
+          <ClientOnly>
+            <div v-if="profileStore.isLoggedIn" class="mx-4 mb-3">
+              <button
+                class="flex w-full items-center justify-center gap-1.5 rounded-xl border py-2.5 text-[13px] font-bold transition"
+                :class="sheetIsFollowing
+                  ? 'border-white/10 bg-white/8 text-white/60 hover:bg-white/12'
+                  : 'border-brand/30 bg-brand/15 text-brand hover:bg-brand/25'"
+                :disabled="sheetFollowLoading"
+                @click.stop="toggleSheetFollow"
+              >
+                <Icon v-if="sheetFollowLoading" name="mdi:loading" size="14" class="animate-spin" />
+                <Icon v-else-if="sheetIsFollowing" name="mdi:check" size="14" />
+                <Icon v-else name="mdi:plus" size="14" />
+                {{ sheetFollowLoading ? 'Updating…' : sheetIsFollowing ? 'Following' : 'Follow Store' }}
+              </button>
+            </div>
+          </ClientOnly>
 
           <!-- Square badge -->
           <div v-if="(preview as any).square" class="mx-4 mb-3">
@@ -146,6 +176,24 @@
             v-if="preview.description"
             class="mx-4 mb-4 text-[13px] leading-relaxed text-white/60"
           >{{ preview.description }}</p>
+
+          <!-- Opening hours -->
+          <div v-if="preview.businessHours && Object.keys(preview.businessHours).length" class="mx-4 mb-4">
+            <p class="mb-2 text-[10px] font-bold uppercase tracking-wider text-white/35">Opening Hours</p>
+            <div class="space-y-0.5">
+              <div
+                v-for="(hours, day) in orderedHours(preview.businessHours)"
+                :key="day"
+                class="flex items-center justify-between rounded-md px-2 py-1 text-[12px]"
+                :class="isToday(String(day)) ? 'bg-white/6 font-bold text-white' : 'text-white/40'"
+              >
+                <span class="w-10 capitalize">{{ String(day).slice(0, 3) }}</span>
+                <span v-if="(hours as any).closed" class="text-white/20">Closed</span>
+                <span v-else-if="(hours as any).open && (hours as any).close">{{ (hours as any).open }} – {{ (hours as any).close }}</span>
+                <span v-else class="text-white/20">—</span>
+              </div>
+            </div>
+          </div>
 
           <!-- Top products -->
           <div v-if="preview.topProducts.length" class="mb-4">
@@ -189,35 +237,105 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import type { IMapSeller, IMapSellerPreview } from '../types/map.types'
+import { openDirections } from '../utils/directions'
+import { useSocialApi } from '~~/layers/profile/app/services/social.api'
+import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 
 const props = defineProps<{
   seller: IMapSeller | null
   fetchPreview: (slug: string) => Promise<IMapSellerPreview | null>
+  startExpanded?: boolean
 }>()
 
 const emit = defineEmits<{ close: [] }>()
 
-const isExpanded = ref(false)
+const profileStore = useProfileStore()
+const socialApi = useSocialApi()
+const { formatPrice } = useCurrency()
+
+const isExpanded = ref(props.startExpanded ?? false)
 const preview = ref<IMapSellerPreview | null>(null)
 const loadingPreview = ref(false)
 
-const { formatPrice } = useCurrency()
+// ── Follow state ──────────────────────────────────────────────────────────────
+const followedIds = ref(new Set<string>())
+const followerOverride = ref<number | null>(null)
+const sheetFollowLoading = ref(false)
 
-// Fetch preview when expanded
-watch(isExpanded, async (expanded) => {
-  if (expanded && props.seller && !preview.value) {
-    loadingPreview.value = true
-    preview.value = await props.fetchPreview(props.seller.store_slug)
-    loadingPreview.value = false
+const sheetIsFollowing = computed(() =>
+  props.seller ? followedIds.value.has(props.seller.id) : false,
+)
+const sheetFollowerCount = computed(() =>
+  followerOverride.value ?? preview.value?.followerCount ?? 0,
+)
+
+onMounted(async () => {
+  if (profileStore.isLoggedIn) {
+    try {
+      const res = await socialApi.getFollowedSellerIds()
+      followedIds.value = new Set(res.data ?? [])
+    } catch {}
   }
+  // If sheet mounts already expanded (deep-link), load preview immediately
+  if (isExpanded.value) loadPreview()
 })
 
-// Reset when seller changes
+const toggleSheetFollow = async () => {
+  if (!props.seller) return
+  const { id, store_slug } = props.seller
+  const wasFollowing = followedIds.value.has(id)
+  const current = followerOverride.value ?? preview.value?.followerCount ?? 0
+
+  followedIds.value = new Set(wasFollowing
+    ? [...followedIds.value].filter(x => x !== id)
+    : [...followedIds.value, id])
+  followerOverride.value = wasFollowing ? Math.max(0, current - 1) : current + 1
+  sheetFollowLoading.value = true
+
+  try {
+    if (wasFollowing) await socialApi.unfollowSeller(store_slug)
+    else await socialApi.followSeller(store_slug)
+  } catch {
+    followedIds.value = new Set(wasFollowing
+      ? [...followedIds.value, id]
+      : [...followedIds.value].filter(x => x !== id))
+    followerOverride.value = current
+  } finally {
+    sheetFollowLoading.value = false
+  }
+}
+
+// ── Opening hours helpers ─────────────────────────────────────────────────────
+const DAY_ORDER = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
+const TODAY_KEY = DAY_ORDER[(new Date().getDay() + 6) % 7]
+const isToday = (day: string) => day === TODAY_KEY
+const orderedHours = (hours: Record<string, any>) =>
+  Object.fromEntries(DAY_ORDER.filter(d => d in hours).map(d => [d, hours[d]]))
+
+const formatNum = (n: number) => {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`
+  return n.toString()
+}
+
+// ── Preview fetch ─────────────────────────────────────────────────────────────
+const loadPreview = async () => {
+  if (!props.seller || preview.value) return
+  loadingPreview.value = true
+  preview.value = await props.fetchPreview(props.seller.store_slug)
+  loadingPreview.value = false
+}
+
+watch(isExpanded, (expanded) => { if (expanded) loadPreview() })
+
+// Reset when seller changes; auto-fetch preview if starting expanded
 watch(() => props.seller?.store_slug, () => {
-  isExpanded.value = false
+  isExpanded.value = props.startExpanded ?? false
   preview.value = null
+  followerOverride.value = null
+  if (props.startExpanded) loadPreview()
 })
 </script>
 
@@ -234,22 +352,18 @@ watch(() => props.seller?.store_slug, () => {
   border-radius: 24px 24px 0 0;
   border-top: 1px solid rgba(255,255,255,0.08);
   transition: all 0.35s cubic-bezier(0.34, 1.4, 0.64, 1);
-  max-height: 85dvh;
+  max-height: 88dvh;
   overflow: hidden;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 /* ── Drag handle ─────────────────────────────────────────────────────────── */
-.sheet-handle-area {
-  display: flex;
-  justify-content: center;
-  padding: 12px 0 8px;
-  cursor: pointer;
-}
 .sheet-handle {
   width: 36px;
   height: 4px;
   border-radius: 9999px;
   background: rgba(255,255,255,0.2);
+  cursor: pointer;
 }
 
 /* ── Store avatar ────────────────────────────────────────────────────────── */
@@ -300,6 +414,11 @@ watch(() => props.seller?.store_slug, () => {
 /* ── Scrollbar hide ──────────────────────────────────────────────────────── */
 .scrollbar-hide { scrollbar-width: none; }
 .scrollbar-hide::-webkit-scrollbar { display: none; }
+
+/* ── Non-standard Tailwind fractions ────────────────────────────────────── */
+.bg-white\/8  { background: rgba(255,255,255,0.08); }
+.bg-white\/12 { background: rgba(255,255,255,0.12); }
+.bg-white\/6  { background: rgba(255,255,255,0.06); }
 
 /* ── Transition ──────────────────────────────────────────────────────────── */
 .sheet-in-enter-active {

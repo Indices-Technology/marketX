@@ -14,7 +14,10 @@ import { authRepository } from '../repositories/auth.repository'
 // ── Username helpers (shared with auth.service for OAuth registration) ────────
 
 const normalizeUsername = (value: string) =>
-  value.toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 20)
+  value
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]/g, '')
+    .slice(0, 20)
 
 export async function createUniqueUsername(seed: string): Promise<string> {
   const fallback = `user_${Math.random().toString(36).slice(2, 8)}`
@@ -58,7 +61,10 @@ export async function sendCheckoutOtp(
     keyPrefix: OTP_RATE_KEY,
   })
   if (!rateLimit.allowed) {
-    throw createError({ statusCode: 429, statusMessage: 'Too many requests. Try again later.' })
+    throw createError({
+      statusCode: 429,
+      statusMessage: 'Too many requests. Try again later.',
+    })
   }
 
   const existing = await prisma.profile.findUnique({
@@ -105,7 +111,10 @@ export async function verifyCheckoutOtp(
   // 1. Validate OTP (one-time use — consumed on verify)
   const entry = await otpStore.verify(email, code)
   if (!entry) {
-    throw createError({ statusCode: 400, statusMessage: 'Invalid or expired verification code' })
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Invalid or expired verification code',
+    })
   }
 
   // 2. Resolve or create user
@@ -113,8 +122,12 @@ export async function verifyCheckoutOtp(
 
   if (!user) {
     const displayName = entry.name || bodyName || email.split('@')[0]!
-    const username = await createUniqueUsername(displayName.split(' ')[0] || email.split('@')[0]!)
-    const passwordHash = await hashPassword(crypto.randomUUID() + crypto.randomUUID())
+    const username = await createUniqueUsername(
+      displayName.split(' ')[0] || email.split('@')[0]!,
+    )
+    const passwordHash = await hashPassword(
+      crypto.randomUUID() + crypto.randomUUID(),
+    )
 
     user = await prisma.profile.create({
       data: {
@@ -143,10 +156,16 @@ export async function verifyCheckoutOtp(
     const appName = (config.public.appName as string) || 'MarketX'
 
     sendPasswordResetEmail(email, resetToken, appUrl).catch((err: Error) =>
-      logger.warn('Checkout OTP password-setup email failed', { email, error: err.message }),
+      logger.warn('Checkout OTP password-setup email failed', {
+        email,
+        error: err.message,
+      }),
     )
     sendWelcomeEmail(email, user.username!, appName).catch((err: Error) =>
-      logger.warn('Checkout OTP welcome email failed', { email, error: err.message }),
+      logger.warn('Checkout OTP welcome email failed', {
+        email,
+        error: err.message,
+      }),
     )
   } else if (!user.email_verified) {
     user = await prisma.profile.update({
@@ -157,7 +176,12 @@ export async function verifyCheckoutOtp(
 
   // 3. Create session
   const sessionId = crypto.randomUUID()
-  const { accessToken, refreshToken } = generateTokens(user.id, user.email, user.role, sessionId)
+  const { accessToken, refreshToken } = generateTokens(
+    user.id,
+    user.email,
+    user.role,
+    sessionId,
+  )
 
   await prisma.session.create({
     data: {
@@ -177,7 +201,9 @@ export async function verifyCheckoutOtp(
     userId: user.id,
     email: user.email,
     eventType: 'CHECKOUT_OTP_LOGIN',
-    reason: entry.isNewUser ? 'Auto-registered via checkout OTP' : 'Logged in via checkout OTP',
+    reason: entry.isNewUser
+      ? 'Auto-registered via checkout OTP'
+      : 'Logged in via checkout OTP',
     ipAddress,
     userAgent,
     success: true,

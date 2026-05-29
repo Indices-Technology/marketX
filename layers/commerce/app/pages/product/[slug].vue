@@ -32,8 +32,8 @@
     <div v-else-if="product" class="mx-auto max-w-5xl px-4 py-6">
       <!-- Back -->
       <button
-        @click="$router.back()"
         class="mb-5 flex items-center gap-1.5 text-sm text-gray-500 transition-colors hover:text-gray-900 dark:hover:text-neutral-100"
+        @click="$router.back()"
       >
         <Icon name="mdi:arrow-left" size="18" />
         Back
@@ -44,35 +44,46 @@
         <div class="flex flex-col gap-3">
           <!-- Main image -->
           <div
-            class="relative aspect-square overflow-hidden rounded-2xl bg-gray-50 dark:bg-neutral-800"
+            class="relative aspect-square overflow-hidden rounded-2xl bg-gray-50 bg-cover bg-center dark:bg-neutral-800"
+            :style="
+              mediaItems[currentIndex]
+                ? {
+                    backgroundImage: `url(${imgLqip(mediaItems[currentIndex].url)})`,
+                  }
+                : undefined
+            "
           >
             <video
               v-if="mediaItems[currentIndex]?.type === 'VIDEO'"
-              :src="mediaItems[currentIndex].url"
+              :src="videoFeedUrl(mediaItems[currentIndex]!.url)"
               class="h-full w-full object-contain"
               controls
               preload="metadata"
+              playsinline
             />
             <img
               v-else
               :src="imgDetail(mediaItems[currentIndex]?.url)"
               :alt="product.title"
               class="h-full w-full object-contain"
+              loading="eager"
+              fetchpriority="high"
+              decoding="async"
             />
             <!-- Nav arrows (multiple images) -->
             <template v-if="mediaItems.length > 1">
               <button
+                class="absolute left-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-md hover:bg-black/50"
                 @click="
                   currentIndex =
                     (currentIndex - 1 + mediaItems.length) % mediaItems.length
                 "
-                class="absolute left-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-md hover:bg-black/50"
               >
                 <Icon name="mdi:chevron-left" size="22" />
               </button>
               <button
-                @click="currentIndex = (currentIndex + 1) % mediaItems.length"
                 class="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-md hover:bg-black/50"
+                @click="currentIndex = (currentIndex + 1) % mediaItems.length"
               >
                 <Icon name="mdi:chevron-right" size="22" />
               </button>
@@ -82,11 +93,11 @@
                 <button
                   v-for="(_, i) in mediaItems"
                   :key="i"
-                  @click="currentIndex = i"
                   class="h-2 rounded-full transition-all"
                   :class="
                     i === currentIndex ? 'w-5 bg-brand' : 'w-2 bg-white/60'
                   "
+                  @click="currentIndex = i"
                 />
               </div>
             </template>
@@ -100,18 +111,24 @@
             <button
               v-for="(item, i) in mediaItems"
               :key="i"
-              @click="currentIndex = i"
               class="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border-2 transition-all"
               :class="
                 i === currentIndex
                   ? 'border-brand'
                   : 'border-transparent opacity-60 hover:opacity-100'
               "
+              @click="currentIndex = i"
             >
               <img
-                :src="item.type === 'VIDEO' ? videoThumb(item.url) : imgThumb(item.url)"
+                :src="
+                  item.type === 'VIDEO'
+                    ? videoThumb(item.url)
+                    : imgThumb(item.url)
+                "
                 :alt="`${product.title} ${i + 1}`"
                 class="h-full w-full object-cover"
+                loading="lazy"
+                decoding="async"
               />
               <Icon
                 v-if="item.type === 'VIDEO'"
@@ -134,6 +151,8 @@
               v-if="product.seller?.store_logo"
               :src="imgAvatar(product.seller.store_logo)"
               class="h-5 w-5 rounded-full object-cover"
+              loading="lazy"
+              decoding="async"
             />
             <Icon
               v-else
@@ -156,7 +175,7 @@
             >
               {{ product.title }}
             </h1>
-            <div class="mt-2 flex items-baseline gap-3">
+            <div class="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <span class="text-2xl font-bold text-brand">{{
                 formatProductPrice(discountedPrice, 'NGN')
               }}</span>
@@ -186,14 +205,14 @@
               <button
                 v-for="v in product.variants"
                 :key="v.id"
-                @click="selectedVariantId = v.id"
                 :disabled="v.stock === 0"
-                class="rounded-xl border-2 px-4 py-2 text-sm font-semibold transition-all disabled:opacity-40"
+                class="min-h-[44px] touch-manipulation rounded-xl border-2 px-4 py-2 text-sm font-semibold transition-all disabled:opacity-40"
                 :class="
                   selectedVariantId === v.id
                     ? 'border-brand bg-brand/5 text-brand'
                     : 'border-gray-200 text-gray-700 hover:border-gray-400 dark:border-neutral-700 dark:text-neutral-300'
                 "
+                @click="selectedVariantId = v.id"
               >
                 {{ v.size }}
                 <span
@@ -234,8 +253,8 @@
               class="flex items-center gap-1 rounded-xl border border-gray-200 dark:border-neutral-700"
             >
               <button
+                class="touch-manipulation px-3 py-3 text-lg font-bold text-gray-600 hover:text-brand dark:text-neutral-400"
                 @click="qty = Math.max(1, qty - 1)"
-                class="px-3 py-2.5 text-lg font-bold text-gray-600 hover:text-brand dark:text-neutral-400"
               >
                 −
               </button>
@@ -244,20 +263,20 @@
                 >{{ qty }}</span
               >
               <button
+                class="touch-manipulation px-3 py-3 text-lg font-bold text-gray-600 hover:text-brand dark:text-neutral-400"
                 @click="qty++"
-                class="px-3 py-2.5 text-lg font-bold text-gray-600 hover:text-brand dark:text-neutral-400"
               >
                 +
               </button>
             </div>
             <button
-              @click="handleAddToCart"
               :disabled="
                 addingToCart ||
                 !selectedVariantId ||
                 selectedVariant?.stock === 0
               "
-              class="flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand py-3 text-sm font-bold text-white transition-all hover:bg-brand/90 disabled:opacity-50"
+              class="flex flex-1 touch-manipulation items-center justify-center gap-2 rounded-xl bg-brand py-3.5 text-sm font-bold text-white transition-all hover:bg-brand/90 disabled:opacity-50"
+              @click="handleAddToCart"
             >
               <Icon
                 v-if="addingToCart"
@@ -273,15 +292,18 @@
           <!-- Share / Copy link -->
           <div class="flex gap-2">
             <button
+              class="flex flex-1 touch-manipulation items-center justify-center gap-1.5 rounded-xl border border-gray-200 px-4 py-2.5 text-xs font-semibold text-gray-600 transition-colors hover:border-brand hover:text-brand dark:border-neutral-700 dark:text-neutral-400"
               @click="copyLink"
-              class="flex items-center gap-1.5 rounded-xl border border-gray-200 px-4 py-2 text-xs font-semibold text-gray-600 transition-colors hover:border-brand hover:text-brand dark:border-neutral-700 dark:text-neutral-400"
             >
-              <Icon :name="copied ? 'mdi:check' : 'mdi:link-variant'" size="15" />
+              <Icon
+                :name="copied ? 'mdi:check' : 'mdi:link-variant'"
+                size="15"
+              />
               {{ copied ? 'Copied!' : 'Copy link' }}
             </button>
             <button
+              class="flex flex-1 touch-manipulation items-center justify-center gap-1.5 rounded-xl border border-gray-200 px-4 py-2.5 text-xs font-semibold text-gray-600 transition-colors hover:border-brand hover:text-brand dark:border-neutral-700 dark:text-neutral-400"
               @click="handleShare"
-              class="flex items-center gap-1.5 rounded-xl border border-gray-200 px-4 py-2 text-xs font-semibold text-gray-600 transition-colors hover:border-brand hover:text-brand dark:border-neutral-700 dark:text-neutral-400"
             >
               <Icon name="mdi:share-variant-outline" size="15" />
               Share
@@ -302,15 +324,23 @@
             <p class="mb-3 text-xs text-gray-500 dark:text-neutral-400">
               Share this link to earn a commission on every sale you refer.
             </p>
-            <div class="flex items-center gap-2 rounded-xl border border-brand/20 bg-white px-3 py-2 dark:bg-neutral-900">
-              <span class="flex-1 truncate text-xs text-gray-600 dark:text-neutral-400">
+            <div
+              class="flex items-center gap-2 rounded-xl border border-brand/20 bg-white px-3 py-2 dark:bg-neutral-900"
+            >
+              <span
+                class="flex-1 truncate text-xs text-gray-600 dark:text-neutral-400"
+              >
                 {{ affiliateUrl }}
               </span>
               <button
-                @click="copyAffiliateLink"
                 class="shrink-0 rounded-lg bg-brand px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-brand/90"
+                @click="copyAffiliateLink"
               >
-                <Icon :name="copiedAffiliate ? 'mdi:check' : 'mdi:content-copy'" size="13" class="mr-1" />
+                <Icon
+                  :name="copiedAffiliate ? 'mdi:check' : 'mdi:content-copy'"
+                  size="13"
+                  class="mr-1"
+                />
                 {{ copiedAffiliate ? 'Copied!' : 'Copy' }}
               </button>
             </div>
@@ -326,9 +356,10 @@
             >
               Description
             </p>
+            <!-- eslint-disable-next-line vue/no-v-html — sanitized by DOMPurify -->
             <div
-              v-html="product.description"
               class="product-desc text-sm leading-relaxed text-gray-700 dark:text-neutral-300"
+              v-html="safeDescription"
             />
           </div>
         </div>
@@ -336,7 +367,9 @@
 
       <!-- ── Reviews ── -->
       <div class="mt-10">
-        <h2 class="mb-4 text-lg font-bold text-gray-900 dark:text-white">Customer Reviews</h2>
+        <h2 class="mb-4 text-lg font-bold text-gray-900 dark:text-white">
+          Customer Reviews
+        </h2>
         <ProductReviews :product-id="product.id" />
       </div>
     </div>
@@ -344,18 +377,32 @@
 </template>
 
 <script setup lang="ts">
+import { useRoute } from 'vue-router'
+import { useSeo } from '~~/layers/core/app/composables/useSeo'
+import { useViewTracker } from '~~/layers/core/app/composables/useViewTracker'
+import { computed, onMounted, ref, watch } from 'vue'
+import DOMPurify from 'dompurify'
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import ProductReviews from '~~/layers/commerce/app/components/ProductReviews.vue'
 import { useCart } from '~~/layers/commerce/app/composables/useCart'
 import { useAffiliate } from '~~/layers/commerce/app/composables/useAffiliate'
+import { useProductApi } from '~~/layers/commerce/app/services/product.api'
 import { formatProductPrice } from '~~/shared/utils/currency'
-import { videoThumb, imgDetail, imgThumb, imgAvatar } from '~~/layers/core/app/utils/cloudinary'
+import {
+  videoThumb,
+  videoFeedUrl,
+  imgDetail,
+  imgThumb,
+  imgAvatar,
+  imgLqip,
+} from '~~/layers/core/app/utils/cloudinary'
 import { notify } from '@kyvg/vue3-notification'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 
 const route = useRoute()
 const slug = computed(() => route.params.slug as string)
-const { captureAffiliateRef, affiliateCode, isEnrolled, fetchAffiliateStatus } = useAffiliate()
+const { captureAffiliateRef, affiliateCode, isEnrolled, fetchAffiliateStatus } =
+  useAffiliate()
 const profileStore = useProfileStore()
 
 // Capture ?ref= from URL on every product page load (30-day TTL)
@@ -369,12 +416,9 @@ onMounted(() => {
 })
 
 // Fetch product by slug
-const { data, pending, status } = await useLazyAsyncData(
+const { data, pending } = await useLazyAsyncData(
   `product-${slug.value}`,
-  () =>
-    $fetch<{ success: boolean; data: any }>(
-      `/api/commerce/products/by-slug/${slug.value}`,
-    ),
+  () => useProductApi().getProductBySlug(slug.value),
   { server: false },
 )
 
@@ -384,7 +428,7 @@ const product = computed(() => data.value?.data ?? null)
 const currentIndex = ref(0)
 const mediaItems = computed(() =>
   (product.value?.media ?? []).filter(
-    (m: any) => !m.isBgMusic && m.type !== 'AUDIO',
+    (m) => !m.isBgMusic && m.type !== 'AUDIO',
   ),
 )
 
@@ -402,9 +446,8 @@ watch(
 const selectedVariantId = ref<number | null>(null)
 const selectedVariant = computed(
   () =>
-    product.value?.variants?.find(
-      (v: any) => v.id === selectedVariantId.value,
-    ) ?? null,
+    product.value?.variants?.find((v) => v.id === selectedVariantId.value) ??
+    null,
 )
 const discountedPrice = computed(() => {
   if (!product.value) return 0
@@ -418,12 +461,18 @@ watch(
   product,
   (p) => {
     if (p?.variants?.length) {
-      const first = p.variants.find((v: any) => v.stock > 0)
+      const first = p.variants.find((v) => v.stock > 0)
       selectedVariantId.value = first?.id ?? p.variants[0]?.id ?? null
     }
   },
   { immediate: true },
 )
+
+// Description — sanitize before v-html to prevent XSS from seller-supplied content
+const safeDescription = computed(() => {
+  if (!product.value?.description || !import.meta.client) return ''
+  return DOMPurify.sanitize(product.value.description)
+})
 
 // Cart
 const qty = ref(1)
@@ -463,54 +512,83 @@ const affiliateUrl = computed(() => {
 const copyLink = async () => {
   await navigator.clipboard.writeText(productUrl.value).catch(() => {})
   copied.value = true
-  setTimeout(() => { copied.value = false }, 2000)
+  setTimeout(() => {
+    copied.value = false
+  }, 2000)
 }
 
 const copyAffiliateLink = async () => {
   if (!affiliateUrl.value) return
   await navigator.clipboard.writeText(affiliateUrl.value).catch(() => {})
   copiedAffiliate.value = true
-  setTimeout(() => { copiedAffiliate.value = false }, 2000)
+  setTimeout(() => {
+    copiedAffiliate.value = false
+  }, 2000)
 }
 
 const handleShare = async () => {
   if (navigator.share) {
-    await navigator.share({ title: product.value?.title, url: productUrl.value }).catch(() => {})
+    await navigator
+      .share({ title: product.value?.title, url: productUrl.value })
+      .catch(() => {})
   } else {
     await copyLink()
   }
 }
 
-// SEO
+// SEO — setProductPage handles all meta via useSeoMeta; no raw useHead needed
 const { setProductPage } = useSeo()
-watch(product, (p) => {
-  if (p) setProductPage({ title: p.title, description: p.description, imageUrl: p.media?.[0]?.url })
-}, { immediate: true })
-
-useHead(
-  computed(() => ({
-    title: product.value?.title || 'Product',
-    meta: [
-      { name: 'description', content: product.value?.description || '' },
-      { property: 'og:title', content: product.value?.title || '' },
-      { property: 'og:description', content: product.value?.description || '' },
-      { property: 'og:image', content: mediaItems.value[0]?.url || '' },
-      { property: 'og:url', content: productUrl.value },
-      { name: 'twitter:card', content: 'summary_large_image' },
-    ],
-  })),
+watch(
+  product,
+  (p) => {
+    if (p)
+      setProductPage({
+        title: p.title,
+        description: p.description,
+        imageUrl: p.media?.[0]?.url,
+        slug: p.slug,
+        sellerName: p.seller?.store_name,
+      })
+  },
+  { immediate: true },
 )
 </script>
 
 <style scoped>
-.product-desc :deep(p) { margin-bottom: 0.6em; }
-.product-desc :deep(p:last-child) { margin-bottom: 0; }
-.product-desc :deep(h1),.product-desc :deep(h2),.product-desc :deep(h3) { font-weight: 700; margin: 0.8em 0 0.3em; }
-.product-desc :deep(ul),.product-desc :deep(ol) { padding-left: 1.25rem; margin-bottom: 0.6em; }
-.product-desc :deep(ul) { list-style-type: disc; }
-.product-desc :deep(ol) { list-style-type: decimal; }
-.product-desc :deep(li) { margin-bottom: 0.2em; }
-.product-desc :deep(strong) { font-weight: 700; }
-.product-desc :deep(em) { font-style: italic; }
-.product-desc :deep(a) { color: #f02c56; text-decoration: underline; }
+.product-desc :deep(p) {
+  margin-bottom: 0.6em;
+}
+.product-desc :deep(p:last-child) {
+  margin-bottom: 0;
+}
+.product-desc :deep(h1),
+.product-desc :deep(h2),
+.product-desc :deep(h3) {
+  font-weight: 700;
+  margin: 0.8em 0 0.3em;
+}
+.product-desc :deep(ul),
+.product-desc :deep(ol) {
+  padding-left: 1.25rem;
+  margin-bottom: 0.6em;
+}
+.product-desc :deep(ul) {
+  list-style-type: disc;
+}
+.product-desc :deep(ol) {
+  list-style-type: decimal;
+}
+.product-desc :deep(li) {
+  margin-bottom: 0.2em;
+}
+.product-desc :deep(strong) {
+  font-weight: 700;
+}
+.product-desc :deep(em) {
+  font-style: italic;
+}
+.product-desc :deep(a) {
+  color: #f02c56;
+  text-decoration: underline;
+}
 </style>

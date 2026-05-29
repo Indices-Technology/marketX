@@ -14,10 +14,25 @@ import {
   toRefs,
   readonly,
 } from 'vue'
+import { defineStore } from 'pinia'
 
 // ── Vue reactivity globals ─────────────────────────────────────────────────────
 // Components that rely on Nuxt auto-imports for Vue APIs (no explicit import)
 // need these available as globals in the Vitest environment.
+vi.stubGlobal('defineStore', defineStore)
+vi.stubGlobal('useAsyncStatus', () => {
+  const isLoading = ref(false)
+  const hasFetchedOnce = ref(false)
+  return {
+    isLoading,
+    hasFetchedOnce,
+    isInitialLoad: computed(() => isLoading.value || !hasFetchedOnce.value),
+    begin: () => { isLoading.value = true },
+    end: () => { isLoading.value = false; hasFetchedOnce.value = true },
+    reset: () => { isLoading.value = false; hasFetchedOnce.value = false },
+  }
+})
+
 vi.stubGlobal('ref', ref)
 vi.stubGlobal('reactive', reactive)
 vi.stubGlobal('computed', computed)

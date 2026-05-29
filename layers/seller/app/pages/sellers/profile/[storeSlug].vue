@@ -493,6 +493,7 @@
               wall-type="STORE"
               :wall-slug="storeSlug"
               :is-wall-owner="isOwnStore"
+              :owner-avatar="seller?.store_logo ?? null"
               @deleted="onWallPostDeleted"
             />
 

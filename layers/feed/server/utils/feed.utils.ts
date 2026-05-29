@@ -18,7 +18,7 @@ export const normalizePost = (post: IPost): IFeedItem => {
     author: {
       id: post.authorId,
       username: post.author?.username || 'Unknown',
-      avatar: post.author?.avatar,
+      avatar: post.author?.avatar || (post.author as any)?.sellerProfile?.[0]?.store_logo || null,
       role: (post.author?.role as 'user' | 'seller' | 'admin') ?? 'user',
     },
     // Primary media (first content item, for legacy consumers)

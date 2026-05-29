@@ -6,6 +6,7 @@ import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
 type ItemStatus = 'ok' | 'price_increased' | 'price_decreased' | 'insufficient_stock' | 'unavailable'
 
 export default defineEventHandler(async (event) => {
+  try {
   const user = await requireAuth(event)
 
   const cartItems = await prisma.cartItem.findMany({
@@ -86,4 +87,8 @@ export default defineEventHandler(async (event) => {
   const hasIssues = results.some((r) => r.status !== 'ok' && r.status !== 'price_decreased')
 
   return { success: true, data: { items: results, hasIssues } }
+  } catch (error: any) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error
+    throw createError({ statusCode: 500, statusMessage: 'Internal server error' })
+  }
 })

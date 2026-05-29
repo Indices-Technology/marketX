@@ -20,12 +20,15 @@ export class MapApiClient extends BaseApiClient {
 
   async getSellerPreview(
     storeSlug: string,
-    lat: number,
-    lng: number,
+    lat?: number,
+    lng?: number,
   ): Promise<any> {
+    const params: Record<string, unknown> = {}
+    if (lat !== undefined) params.lat = lat
+    if (lng !== undefined) params.lng = lng
     return this.request(`/api/map/sellers/${storeSlug}/preview`, {
       method: 'GET',
-      params: { lat, lng } as any,
+      params: params as any,
       skipAuth: true,
     })
   }

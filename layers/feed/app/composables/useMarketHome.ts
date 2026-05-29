@@ -4,6 +4,7 @@ import { useSquareApi } from '~~/layers/square/app/services/square.api'
 import { getCachedLocation } from '~~/layers/map/app/composables/useMapSellers'
 import type { IMapSeller } from '~~/layers/map/app/types/map.types'
 import type { IFeedItem } from '../types/feed.types'
+import { useMapApi } from '~~/layers/map/app/services/map.api'
 
 // Module-level guards: if multiple MarketHome instances mount simultaneously,
 // they share one in-flight request rather than each firing their own.
@@ -13,7 +14,10 @@ let _inflightSquares: Promise<any> | null = null
 function observeOnce(el: HTMLElement, cb: () => void, rootMargin = '200px') {
   const obs = new IntersectionObserver(
     ([entry]) => {
-      if (entry.isIntersecting) { cb(); obs.disconnect() }
+      if (entry.isIntersecting) {
+        cb()
+        obs.disconnect()
+      }
     },
     { rootMargin },
   )
@@ -33,12 +37,16 @@ export function useMarketHome() {
     try {
       if (!_inflightDeals) {
         _inflightDeals = feedApi.getDealsFeed({ limit: 20 })
-        _inflightDeals.finally(() => { _inflightDeals = null })
+        _inflightDeals.finally(() => {
+          _inflightDeals = null
+        })
       }
       const res: any = await _inflightDeals
       deals.value = res.data ?? []
-    } catch {}
-    finally { dealsLoading.value = false }
+    } catch {
+    } finally {
+      dealsLoading.value = false
+    }
   }
 
   // ── 2. Squares ─────────────────────────────────────────────────────────────
@@ -49,12 +57,16 @@ export function useMarketHome() {
     try {
       if (!_inflightSquares) {
         _inflightSquares = squareApi.listSquares({ limit: 8 })
-        _inflightSquares.finally(() => { _inflightSquares = null })
+        _inflightSquares.finally(() => {
+          _inflightSquares = null
+        })
       }
       const res: any = await _inflightSquares
       squares.value = res.data ?? []
-    } catch {}
-    finally { squaresLoading.value = false }
+    } catch {
+    } finally {
+      squaresLoading.value = false
+    }
   }
 
   // ── 3. Sellers online (deferred, location-based) ───────────────────────────
@@ -67,48 +79,67 @@ export function useMarketHome() {
   async function fetchSellersWithCoords(lat: number, lng: number) {
     sellersLoading.value = true
     try {
-      const data: any = await useMapApi().getSellers({ lat, lng, radius: 20000, limit: 12 })
+      const data: any = await useMapApi().getSellers({
+        lat,
+        lng,
+        radius: 20000,
+        limit: 12,
+      })
       const all: IMapSeller[] = data.data ?? []
       onlineSellers.value = all.filter((s) => s.isOpenNow).length
         ? all.filter((s) => s.isOpenNow)
         : all
-    } catch {}
-    finally { sellersLoading.value = false }
+    } catch {
+    } finally {
+      sellersLoading.value = false
+    }
   }
 
   async function requestSellerLocation() {
     if (!import.meta.client || !navigator.geolocation) return
     sellersRequesting.value = true
     try {
-      const pos = await new Promise<{ coords: { latitude: number; longitude: number } }>(
-        (resolve, reject) =>
-          navigator.geolocation.getCurrentPosition((p) => resolve(p), reject, { timeout: 8000 }),
+      const pos = await new Promise<{
+        coords: { latitude: number; longitude: number }
+      }>((resolve, reject) =>
+        navigator.geolocation.getCurrentPosition((p) => resolve(p), reject, {
+          timeout: 8000,
+        }),
       )
       await fetchSellersWithCoords(pos.coords.latitude, pos.coords.longitude)
-    } catch {}
-    finally { sellersRequesting.value = false }
+    } catch {
+    } finally {
+      sellersRequesting.value = false
+    }
   }
 
   async function initSellers() {
     section3Loaded.value = true
     const cached = getCachedLocation()
-    if (cached) { await fetchSellersWithCoords(cached.lat, cached.lng); return }
-    const perm = await navigator.permissions?.query({ name: 'geolocation' }).catch(() => null)
+    if (cached) {
+      await fetchSellersWithCoords(cached.lat, cached.lng)
+      return
+    }
+    const perm = await navigator.permissions
+      ?.query({ name: 'geolocation' })
+      .catch(() => null)
     if (perm?.state === 'granted') await requestSellerLocation()
   }
 
-  // ── 4. Fresh stock (deferred) ──────────────────────────────────────────────
+  // ── 4. Fresh stock ────────────────────────────────────────────────────────
   const section4Ref = ref<HTMLElement | null>(null)
   const freshItems = ref<any[]>([])
-  const freshLoading = ref(false)
+  const freshLoading = ref(true)
 
   async function loadFreshStock() {
     freshLoading.value = true
     try {
       const res: any = await feedApi.getFreshDrops({ limit: 20 })
       freshItems.value = res.data ?? []
-    } catch {}
-    finally { freshLoading.value = false }
+    } catch {
+    } finally {
+      freshLoading.value = false
+    }
   }
 
   // ── 5. Market posts (deferred) ─────────────────────────────────────────────
@@ -121,34 +152,49 @@ export function useMarketHome() {
     try {
       const res: any = await feedApi.getHomeFeed({ limit: 10 })
       const items: IFeedItem[] = res.items ?? res.data ?? []
-      marketPosts.value = items.filter((i: any) => i.type === 'POST').slice(0, 5)
-    } catch {}
-    finally { postsLoading.value = false }
+      marketPosts.value = items
+        .filter((i: any) => i.type === 'POST')
+        .slice(0, 5)
+    } catch {
+    } finally {
+      postsLoading.value = false
+    }
   }
 
   // ── Lifecycle ──────────────────────────────────────────────────────────────
   const observers: IntersectionObserver[] = []
 
   onMounted(() => {
-    Promise.all([loadDeals(), loadSquares()])
-    if (section3Ref.value) observers.push(observeOnce(section3Ref.value, initSellers))
-    if (section4Ref.value) observers.push(observeOnce(section4Ref.value, loadFreshStock))
-    if (section5Ref.value) observers.push(observeOnce(section5Ref.value, loadMarketPosts))
+    Promise.all([loadDeals(), loadSquares(), loadFreshStock()])
+    if (section3Ref.value)
+      observers.push(observeOnce(section3Ref.value, initSellers))
+    if (section5Ref.value)
+      observers.push(observeOnce(section5Ref.value, loadMarketPosts))
   })
 
   onUnmounted(() => observers.forEach((o) => o.disconnect()))
 
   return {
     // Deals
-    deals, dealsLoading,
+    deals,
+    dealsLoading,
     // Squares
-    squares, squaresLoading,
+    squares,
+    squaresLoading,
     // Sellers
-    section3Ref, section3Loaded, onlineSellers, sellersLoading, sellersRequesting,
+    section3Ref,
+    section3Loaded,
+    onlineSellers,
+    sellersLoading,
+    sellersRequesting,
     requestSellerLocation,
     // Fresh stock
-    section4Ref, freshItems, freshLoading,
+    section4Ref,
+    freshItems,
+    freshLoading,
     // Posts
-    section5Ref, marketPosts, postsLoading,
+    section5Ref,
+    marketPosts,
+    postsLoading,
   }
 }

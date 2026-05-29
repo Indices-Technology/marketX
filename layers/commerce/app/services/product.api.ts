@@ -1,4 +1,5 @@
 import { BaseApiClient } from "~~/layers/core/app/services/base.api"
+import type { ProductDetail } from '../types/product'
 
 
 export class ProductApiClient extends BaseApiClient {
@@ -20,6 +21,14 @@ export class ProductApiClient extends BaseApiClient {
         ).toString()
       : ''
     return this.request(`/api/commerce/products${query}`, { method: 'GET' })
+  }
+
+  async getProductBySlug(slug: string): Promise<{ success: boolean; data: ProductDetail }> {
+    return this.request(`/api/commerce/products/by-slug/${slug}`, {
+      method: 'GET',
+      skipAuth: true,
+      silent: true,
+    })
   }
 
   async getProductById(id: number): Promise<{ success: boolean; data: any }> {

@@ -49,7 +49,7 @@ export const mapService = {
     }
   },
 
-  async getSellerPreview(storeSlug: string, userLat: number, userLng: number) {
+  async getSellerPreview(storeSlug: string, userLat: number | null, userLng: number | null) {
     const s = await mapRepository.getSellerPreview(storeSlug)
     if (!s || !s.latitude || !s.longitude) return null
 
@@ -121,7 +121,7 @@ export const mapService = {
       businessHours: (s.businessHours as any) ?? null,
       productCount: s._count.products,
       followerCount: s.followers_count,
-      distanceKm: haversineKm(userLat, userLng, s.latitude, s.longitude),
+      distanceKm: haversineKm(userLat ?? s.latitude, userLng ?? s.longitude, s.latitude, s.longitude),
       avgRating: null,
       totalReviews: 0,
       categories: [] as string[],

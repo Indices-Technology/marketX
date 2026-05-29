@@ -2,7 +2,8 @@
 // Returns the minimal variant + product fields the cart UI needs.
 export default defineEventHandler(async (event) => {
   const id = Number(getRouterParam(event, 'id'))
-  if (!id) throw createError({ statusCode: 400, statusMessage: 'Invalid variant id' })
+  if (!id)
+    throw createError({ statusCode: 400, statusMessage: 'Invalid variant id' })
 
   const variant = await prisma.productVariant.findUnique({
     where: { id },
@@ -29,8 +30,11 @@ export default defineEventHandler(async (event) => {
           offers: {
             where: { isActive: true },
             select: {
-              id: true, minQuantity: true, discount: true,
-              label: true, isActive: true,
+              id: true,
+              minQuantity: true,
+              discount: true,
+              label: true,
+              isActive: true,
             },
           },
         },
@@ -38,7 +42,8 @@ export default defineEventHandler(async (event) => {
     },
   })
 
-  if (!variant) throw createError({ statusCode: 404, statusMessage: 'Variant not found' })
+  if (!variant)
+    throw createError({ statusCode: 404, statusMessage: 'Variant not found' })
 
   // Normalize Prisma floats — keep null as null so effectiveUnitPrice falls
   // through to product.price when a variant has no per-variant price set.

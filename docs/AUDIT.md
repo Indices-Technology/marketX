@@ -182,11 +182,11 @@ Focused on the critical user journeys only. Do not e2e-test everything — pick 
 
 | Flow | Entry | API Routes | Risk | Status |
 |------|-------|-----------|------|--------|
-| Guest adds to cart | `/` product page | `POST /api/commerce/cart` | cart ID collision | not started |
-| Authenticated adds to cart | product page | `POST /api/commerce/cart` | merge on login | not started |
-| Update cart quantity | cart drawer | `PATCH /api/commerce/cart/:id` | stock race | not started |
-| Remove from cart | cart drawer | `DELETE /api/commerce/cart/:id` | stale UI | not started |
-| Guest cart merges on login | login flow | `POST /api/commerce/cart/merge` | item duplication | not started |
+| Guest adds to cart | `/` product page | `POST /api/commerce/cart` | cart ID collision | passed with evidence |
+| Authenticated adds to cart | product page | `POST /api/commerce/cart` | merge on login | passed with evidence |
+| Update cart quantity | cart drawer | `PATCH /api/commerce/cart/:id` | stock race | passed with evidence |
+| Remove from cart | cart drawer | `DELETE /api/commerce/cart/:id` | stale UI | passed with evidence |
+| Guest cart merges on login | login flow | client-side `syncGuestCartToServer()` → `POST /api/commerce/cart` per item | item duplication | passed with evidence |
 | Checkout email field pre-fill | checkout.vue | client only | fake TLD bypass | not started |
 | Shipping rate selection | checkout.vue | `POST /api/commerce/shipping/calculate` | zone mismatch | not started |
 | Initialize card payment | checkout.vue | `POST /api/commerce/payments/initialize` | Paystack email, duplicate ref | not started |
@@ -709,8 +709,11 @@ Track individual flows here. Update status as work progresses.
 
 | Flow | Risk | Test Type | Status | Notes |
 |------|------|-----------|--------|-------|
-| Guest adds to cart | cart ID collision | API + E2E | not started | |
-| Cart merge on login | item duplication | API | not started | |
+| Guest adds to cart | cart ID collision | API + unit | passed with evidence | 21 Playwright tests (auth guards, input validation, quantity bounds, CRUD, idempotency). Fixed: NaN variantId → 400, `validate.get.ts` missing try-catch, `syncGuestCartToServer` double-sync bug |
+| Update cart quantity | stock race | API | passed with evidence | PATCH stock race test added: qty > stock → 400 + `/stock/i` message. Covers auth guard, quantity bounds, stock enforcement |
+| Remove from cart | stale UI | API | passed with evidence | DELETE + follow-up GET confirms item absent. Covered in CRUD suite |
+| Cart merge on login | item duplication | API + unit | passed with evidence | No `/merge` endpoint — `syncGuestCartToServer()` reuses `POST /api/commerce/cart` per item (upsert). Idempotency test covers double-add. `setItems` dedup fix prevents multi-tab localStorage collision (8 Vitest store tests) |
+| Cart type safety | `any` / manual casts | code review | passed with evidence | `cart.api.ts`: all 5 methods now typed via `request<T>`. `GuestCartVariant` type added. `useCart.ts`: all `any` and manual casts removed. `getVariant()` added to `CartApiClient` to avoid Nuxt `TypedInternalResponse` stack-depth error on dynamic `$fetch` URLs |
 | Checkout email pre-fill | fake TLD bypass | manual UI | not started | |
 | Initialize card payment | duplicate ref | API + E2E | not started | |
 | Initialize POD payment | zone eligibility | API | not started | |

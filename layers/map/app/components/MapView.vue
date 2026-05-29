@@ -3,18 +3,36 @@
   <div class="map-root">
     <div ref="mapEl" class="map-canvas" aria-label="Sellers near you" />
 
-    <!-- Style switcher (bottom-right, above attribution) -->
-    <div class="map-style-btns">
-      <button
-        v-for="s in mapStyles"
-        :key="s.id"
-        class="style-btn"
-        :class="{ 'style-btn--active': activeStyle === s.id }"
-        :title="s.label"
-        @click="switchStyle(s.id)"
-      >
-        <Icon :name="s.icon" size="15" />
-      </button>
+    <!-- Right controls: view-mode toggle + style switcher -->
+    <div class="map-controls-right">
+      <!-- View mode segmented control -->
+      <div class="view-mode-group">
+        <button
+          v-for="m in viewModes"
+          :key="m.id"
+          class="vm-btn"
+          :class="{ 'vm-btn--active': viewMode === m.id }"
+          :title="m.label"
+          @click="$emit('update:viewMode', m.id)"
+        >
+          <Icon :name="m.icon" size="13" />
+          <span class="vm-label">{{ m.label }}</span>
+        </button>
+      </div>
+
+      <!-- Style switcher -->
+      <div class="style-group">
+        <button
+          v-for="s in mapStyles"
+          :key="s.id"
+          class="style-btn"
+          :class="{ 'style-btn--active': activeStyle === s.id }"
+          :title="s.label"
+          @click="switchStyle(s.id)"
+        >
+          <Icon :name="s.icon" size="15" />
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -23,6 +41,8 @@
 import { ref, watch, onMounted, onUnmounted } from 'vue'
 import type { IMapSeller, IMapSquare } from '../types/map.types'
 
+export type ViewMode = 'stores' | 'both' | 'squares'
+
 const props = defineProps<{
   sellers: IMapSeller[]
   squares: IMapSquare[]
@@ -30,13 +50,21 @@ const props = defineProps<{
   userLng: number | null
   selectedSlug: string | null
   radiusKm: number
+  viewMode?: ViewMode
 }>()
 
 const emit = defineEmits<{
   'select-seller': [seller: IMapSeller]
   'select-square': [square: IMapSquare]
   'deselect': []
+  'update:viewMode': [mode: ViewMode]
 }>()
+
+const viewModes: { id: ViewMode; icon: string; label: string }[] = [
+  { id: 'stores',  icon: 'mdi:store-outline',      label: 'Stores'  },
+  { id: 'both',    icon: 'mdi:layers-outline',       label: 'Both'    },
+  { id: 'squares', icon: 'mdi:storefront-outline',   label: 'Squares' },
+]
 
 const mapEl = ref<HTMLElement | null>(null)
 let map: any = null
@@ -48,9 +76,11 @@ let userMarker: any = null
 const CLUSTER_ZOOM = 13  // below this zoom → show clusters; at/above → show individual pins
 
 // ── Map styles ────────────────────────────────────────────────────────────────
+// Stadia Maps: free for dev/testing, no API key required (register for production)
+// OpenFreeMap: fully free, no key, based on OSM data
 const MAP_STYLES = {
-  dark:      'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
-  streets:   'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+  dark:      'https://tiles.stadiamaps.com/styles/alidade_smooth_dark.json',
+  streets:   'https://tiles.openfreemap.org/styles/liberty',
   satellite: 'https://api.maptiler.com/maps/satellite/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL',
 }
 const mapStyles = [
@@ -269,16 +299,28 @@ function upsertClusterData() {
   if (src) src.setData(sellersToGeoJSON())
 }
 
-function togglePinVisibility(zoom: number) {
+function applyViewMode(zoom?: number) {
   if (!map) return
-  const show = zoom >= CLUSTER_ZOOM
-  // map.getCanvasContainer() is MapLibre's own internal container that holds
-  // ALL marker wrappers. One class toggle here — zero per-marker DOM work.
-  // CSS rule below hides every .maplibregl-marker EXCEPT the user-dot
-  // (which has the 'user-dot-marker' class).
-  // This is immune to MapLibre re-renders because we never touch marker elements.
-  map.getCanvasContainer().classList.toggle('pins-hidden', !show)
+  const z = zoom ?? map.getZoom()
+  const mode = props.viewMode ?? 'both'
+  const container = map.getCanvasContainer()
+
+  // Store DOM markers: hide when squares-only OR below cluster zoom
+  const showStorePins = mode !== 'squares' && z >= CLUSTER_ZOOM
+  container.classList.toggle('pins-hidden', !showStorePins)
+
+  // Square DOM markers: hide when stores-only
+  container.classList.toggle('hide-square-pins', mode === 'stores')
+
+  // Cluster GL layers: force-hide when squares-only (layer maxzoom handles the rest)
+  const hideClusters = mode === 'squares'
+  for (const id of ['clusters', 'cluster-count']) {
+    if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', hideClusters ? 'none' : 'visible')
+  }
 }
+
+// Keep old name as alias so all existing call sites keep working
+const togglePinVisibility = (zoom: number) => applyViewMode(zoom)
 
 // ── User dot ──────────────────────────────────────────────────────────────────
 function placeUserDot() {
@@ -375,6 +417,9 @@ watch(() => props.selectedSlug, (slug) => {
     })
   }
 })
+
+// Re-apply pin visibility whenever view mode changes
+watch(() => props.viewMode, () => { if (map?.loaded()) applyViewMode() })
 
 // ── Square pins ───────────────────────────────────────────────────────────
 watch(() => props.squares, renderSquarePins, { deep: true })
@@ -525,6 +570,9 @@ function buildPinEl(seller: IMapSeller): HTMLElement {
       <a href="/sellers/profile/${seller.store_slug}" class="tt-visit" onclick="event.stopPropagation()">
         View store →
       </a>
+      <a href="https://www.google.com/maps/dir/?api=1&destination=${seller.latitude},${seller.longitude}" target="_blank" rel="noopener" class="tt-directions" onclick="event.stopPropagation()">
+        Get Directions ↗
+      </a>
     </div>
   `
 
@@ -545,12 +593,55 @@ function buildPinEl(seller: IMapSeller): HTMLElement {
   background: #1a1a2e;
 }
 
-/* ── Style switcher ──────────────────────────────────────────────────────────── */
-.map-style-btns {
+/* ── Right controls column ───────────────────────────────────────────────────── */
+.map-controls-right {
   position: absolute;
   bottom: 36px;
   right: 12px;
   z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+/* ── View mode segmented control ─────────────────────────────────────────────── */
+.view-mode-group {
+  display: flex;
+  flex-direction: row;
+  gap: 2px;
+  background: rgba(10, 15, 30, 0.85);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 3px;
+  backdrop-filter: blur(12px);
+}
+.vm-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 9px;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  color: rgba(255,255,255,0.5);
+  font-size: 10px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.vm-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
+.vm-btn--active {
+  background: #F43F5E;
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(244,63,94,0.4);
+}
+.vm-label { line-height: 1; }
+
+/* ── Style switcher ──────────────────────────────────────────────────────────── */
+.style-group {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -794,12 +885,25 @@ function buildPinEl(seller: IMapSeller): HTMLElement {
   transition: background 0.15s;
 }
 .tt-visit:hover { background: #e11d48; }
+.tt-directions {
+  display: block; width: 100%;
+  text-align: center;
+  background: rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.6); font-size: 11px; font-weight: 700;
+  border-radius: 8px; padding: 6px 0;
+  text-decoration: none;
+  margin-top: 6px;
+  transition: background 0.15s, color 0.15s;
+}
+.tt-directions:hover { background: rgba(255,255,255,0.13); color: #fff; }
 
-/* ── Pin visibility (cluster mode) ───────────────────────────────────────────── */
-/* map.getCanvasContainer() is MapLibre's own container for all markers.
-   One class on it hides every seller marker; user-dot-marker and square-pin-marker
-   are excluded — Squares are landmarks, always visible regardless of zoom. */
+/* ── Pin visibility (cluster mode + view mode) ───────────────────────────────── */
+/* Store markers hidden below CLUSTER_ZOOM or when viewMode is squares-only */
 .maplibregl-canvas-container.pins-hidden .maplibregl-marker:not(.user-dot-marker):not(.square-pin-marker) {
+  display: none !important;
+}
+/* Square markers hidden when viewMode is stores-only */
+.maplibregl-canvas-container.hide-square-pins .square-pin-marker {
   display: none !important;
 }
 

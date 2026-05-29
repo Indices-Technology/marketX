@@ -10,7 +10,7 @@
       <video
         ref="videoRef"
         :src="videoFeedUrl(primaryMedia.url, isSlowNetwork)"
-        :poster="primaryMedia.thumbnailUrl"
+        :poster="primaryMedia.thumbnailUrl || videoThumb(primaryMedia.url)"
         class="h-full w-full object-cover"
         loop
         playsinline
@@ -119,7 +119,7 @@
           class="relative aspect-square overflow-hidden bg-gray-100 dark:bg-neutral-900"
         >
           <img
-            :src="imgFeed(item.url)"
+            :src="gridSrc(item)"
             class="h-full w-full object-cover"
             :alt="post.caption || ''"
           loading="lazy"
@@ -148,7 +148,7 @@
             class="relative overflow-hidden bg-gray-100 dark:bg-neutral-900"
           >
             <img
-              :src="imgFeed(mediaItems[0]!.url)"
+              :src="gridSrc(mediaItems[0]!)"
               class="absolute inset-0 h-full w-full object-cover"
             loading="lazy"
             decoding="async"
@@ -159,7 +159,7 @@
               class="relative overflow-hidden bg-gray-100 dark:bg-neutral-900"
             >
               <img
-                :src="imgFeed(mediaItems[1]!.url)"
+                :src="gridSrc(mediaItems[1]!)"
                 class="absolute inset-0 h-full w-full object-cover"
               />
             </div>
@@ -167,7 +167,7 @@
               class="relative overflow-hidden bg-gray-100 dark:bg-neutral-900"
             >
               <img
-                :src="imgFeed(mediaItems[2]!.url)"
+                :src="gridSrc(mediaItems[2]!)"
                 class="absolute inset-0 h-full w-full object-cover"
               />
             </div>
@@ -185,7 +185,7 @@
           class="relative aspect-square overflow-hidden bg-gray-100 dark:bg-neutral-900"
         >
           <img
-            :src="imgFeed(item.url)"
+            :src="gridSrc(item)"
             class="h-full w-full object-cover"
             :alt="post.caption || ''"
           loading="lazy"
@@ -198,17 +198,17 @@
         <div
           class="relative col-span-2 aspect-video overflow-hidden bg-gray-100 dark:bg-neutral-900"
         >
-          <img :src="imgFeed(mediaItems[0]!.url)" class="h-full w-full object-cover" />
+          <img :src="gridSrc(mediaItems[0]!)" class="h-full w-full object-cover" />
         </div>
         <div
           class="relative aspect-square overflow-hidden bg-gray-100 dark:bg-neutral-900"
         >
-          <img :src="imgFeed(mediaItems[1]!.url)" class="h-full w-full object-cover" />
+          <img :src="gridSrc(mediaItems[1]!)" class="h-full w-full object-cover" />
         </div>
         <div
           class="relative aspect-square overflow-hidden bg-gray-100 dark:bg-neutral-900"
         >
-          <img :src="imgFeed(mediaItems[2]!.url)" class="h-full w-full object-cover" />
+          <img :src="gridSrc(mediaItems[2]!)" class="h-full w-full object-cover" />
           <div
             v-if="mediaItems.length > 3"
             class="absolute inset-0 flex items-center justify-center bg-black/55"
@@ -248,7 +248,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { imgFeed, imgLqip, videoFeedUrl } from '~~/layers/core/app/utils/cloudinary'
+import { imgFeed, imgLqip, videoFeedUrl, videoThumb } from '~~/layers/core/app/utils/cloudinary'
 import AudioPlayer from '../AudioPlayer.vue'
 import PostBgMusicStrip from './PostBgMusicStrip.vue'
 import type { IFeedItem } from '~~/layers/feed/app/types/feed.types'
@@ -294,6 +294,9 @@ const activateVideo = () => {
 const canAutoplay = computed(() => !isSlowNetwork.value || videoActivated.value)
 
 defineExpose({ videoRef, activateVideo, canAutoplay })
+
+const gridSrc = (item: { url: string; type: string }) =>
+  item.type === 'VIDEO' ? videoThumb(item.url) : imgFeed(item.url)
 
 const primaryMedia = computed(() => props.mediaItems[0])
 

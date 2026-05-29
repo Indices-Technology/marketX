@@ -3,7 +3,7 @@ import { useCartStore } from '../stores/cart.store'
 import { extractErrorMessage } from '~~/layers/core/app/utils/errors'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import type { ICartItem } from '../types/commerce.types'
-import type { CartItem } from '../types/cart'
+import type { CartValidationItem } from '../types/cart'
 
 export const useCart = () => {
   const api = useCartApi()
@@ -24,7 +24,7 @@ export const useCart = () => {
     store.setLoading(true)
     store.setError(null)
     try {
-      const result: { data: { items: CartItem[]; podAvailable: boolean } } = await api.getCart()
+      const result = await api.getCart()
       store.setItems(result.data?.items || [])
       store.setPodAvailable(result.data?.podAvailable ?? false)
       return result.data
@@ -45,9 +45,7 @@ export const useCart = () => {
       store.setLoading(true)
       try {
         // Public endpoint — no auth needed
-        const res = await $fetch<{ success: boolean; data: any }>(
-          `/api/commerce/products/variants/${variantId}`,
-        )
+        const res = await api.getVariant(variantId)
         const localItem: ICartItem = {
           id: `guest_${variantId}_${Date.now()}`,
           variantId,
@@ -58,7 +56,11 @@ export const useCart = () => {
         return localItem
       } catch {
         // Fallback: add with no variant data — at least variantId + quantity are correct for checkout
-        store.addItem({ id: `guest_${variantId}`, variantId, quantity } as ICartItem)
+        store.addItem({
+          id: `guest_${variantId}`,
+          variantId,
+          quantity,
+        } as ICartItem)
       } finally {
         store.setLoading(false)
       }
@@ -68,8 +70,8 @@ export const useCart = () => {
     store.setLoading(true)
     store.setError(null)
     try {
-      const result: { data: CartItem } = await api.addToCart(variantId, quantity)
-      store.addItem(result.data as ICartItem)
+      const result = await api.addToCart(variantId, quantity)
+      store.addItem(result.data)
       return result.data
     } catch (e: unknown) {
       store.setError(extractErrorMessage(e, 'Failed to add to cart'))
@@ -85,7 +87,7 @@ export const useCart = () => {
     if (!profileStore.isLoggedIn) return
 
     try {
-      const result: { data: CartItem } = await api.updateQuantity(variantId, quantity)
+      const result = await api.updateQuantity(variantId, quantity)
       return result.data
     } catch (e: unknown) {
       await fetchCart()
@@ -116,12 +118,16 @@ export const useCart = () => {
     await Promise.allSettled(
       localItems.map((item) => api.addToCart(item.variantId, item.quantity)),
     )
+    // Clear local store regardless of individual item results — server is now
+    // source of truth. Prevents quantity doubling if this is called again
+    // (e.g. fetchCart() fails and persisted localStorage items survive the session).
+    store.clearStore()
     await fetchCart()
   }
 
   // ── validateCart ──────────────────────────────────────────────────────────
   // Returns staleness results for all items. Silent — never throws.
-  const validateCart = async (): Promise<any[]> => {
+  const validateCart = async (): Promise<CartValidationItem[]> => {
     if (!profileStore.isLoggedIn || !store.items.length) return []
     try {
       const res = await api.validateCart()

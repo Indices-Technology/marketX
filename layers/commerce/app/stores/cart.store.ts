@@ -41,7 +41,13 @@ export const useCartStore = defineStore(
     )
 
     const setItems = (newItems: ICartItem[]) => {
-      items.value = newItems
+      const seen = new Map<number, ICartItem>()
+      for (const item of newItems) {
+        const existing = seen.get(item.variantId)
+        if (existing) existing.quantity += item.quantity
+        else seen.set(item.variantId, { ...item })
+      }
+      items.value = [...seen.values()]
     }
 
     const updateItem = (variantId: number, quantity: number) => {

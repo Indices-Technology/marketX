@@ -121,9 +121,12 @@ export function useMapSellers() {
   const fetchPreview = async (
     storeSlug: string,
   ): Promise<IMapSellerPreview | null> => {
-    if (userLat.value === null || userLng.value === null) return null
     try {
-      const data: any = await useMapApi().getSellerPreview(storeSlug, userLat.value, userLng.value)
+      const data: any = await useMapApi().getSellerPreview(
+        storeSlug,
+        userLat.value ?? undefined,
+        userLng.value ?? undefined,
+      )
       return data.data
     } catch {
       return null
@@ -151,6 +154,12 @@ export function useMapSellers() {
     userLng.value = lng
   }
 
+  /** Force a seller into the list (e.g. deep-linked store excluded by hideLocation/is_active) */
+  const injectSeller = (seller: IMapSeller) => {
+    if (sellers.value.find((s) => s.store_slug === seller.store_slug)) return
+    sellers.value = [...sellers.value, seller]
+  }
+
   return {
     sellers: readonly(sellers),
     loading: readonly(loading),
@@ -170,6 +179,7 @@ export function useMapSellers() {
     setSearch,
     setCategorySlug,
     setLocation,
+    injectSeller,
   }
 }
 

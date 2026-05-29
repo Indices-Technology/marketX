@@ -10,6 +10,9 @@ const authorSelect = {
   username: true,
   avatar: true,
   role: true,
+  sellerProfile: {
+    select: { store_logo: true },
+  },
 } as const
 
 const postShape = {
@@ -127,8 +130,13 @@ export default defineEventHandler(async (event) => {
     const enriched = items.map((p) => ({
       ...p,
       type: p.wallTargetType ? 'SHOUTOUT' : 'POST',
-      // Viewer's like status
-      viewerLiked: false, // filled below if logged in
+      viewerLiked: false,
+      author: {
+        id: p.author.id,
+        username: p.author.username,
+        avatar: p.author.avatar || p.author.sellerProfile?.[0]?.store_logo || null,
+        role: p.author.role,
+      },
     }))
 
     // Batch-check viewer likes if logged in

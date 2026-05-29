@@ -8,7 +8,7 @@ import { sendCheckoutOtp } from '~~/layers/core/server/services/checkout-otp.ser
 
 const schema = z.object({
   email: z.string().email(),
-  name: z.string().min(1).optional(),
+  name: z.string().min(3).optional(),
   phone: z.string().optional(),
 })
 
@@ -18,11 +18,15 @@ export default defineEventHandler(async (event) => {
     if (!parsed.success) {
       const first = parsed.error.errors[0]
       const field = first?.path?.[0] ? `${first.path[0]}: ` : ''
-      throw createError({ statusCode: 400, statusMessage: `${field}${first?.message ?? 'Invalid input'}` })
+      throw createError({
+        statusCode: 400,
+        statusMessage: `${field}${first?.message ?? 'Invalid input'}`,
+      })
     }
 
     const body = parsed.data
-    const ipAddress = getRequestIP(event, { xForwardedFor: true }) || '127.0.0.1'
+    const ipAddress =
+      getRequestIP(event, { xForwardedFor: true }) || '127.0.0.1'
 
     const result = await sendCheckoutOtp(
       body.email.toLowerCase(),
@@ -34,6 +38,9 @@ export default defineEventHandler(async (event) => {
     return { success: true, ...result }
   } catch (error: unknown) {
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
-    throw createError({ statusCode: 500, statusMessage: 'Failed to send verification code' })
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Failed to send verification code',
+    })
   }
 })

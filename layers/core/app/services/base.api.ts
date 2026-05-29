@@ -288,7 +288,10 @@ export class BaseApiClient {
     originalMessage: string,
   ): string {
     // If the server sent a specific, useful message — show it as-is
-    if (originalMessage && !OPAQUE_MESSAGES.has(originalMessage.toLowerCase())) {
+    if (
+      originalMessage &&
+      !OPAQUE_MESSAGES.has(originalMessage.toLowerCase())
+    ) {
       return originalMessage
     }
 

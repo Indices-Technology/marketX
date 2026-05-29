@@ -8,6 +8,9 @@ const authorSelect = {
   username: true,
   avatar: true,
   role: true,
+  sellerProfile: {
+    select: { store_logo: true },
+  },
 } as const
 
 /** Shared post media select */
