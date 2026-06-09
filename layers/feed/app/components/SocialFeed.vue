@@ -333,8 +333,17 @@
       </button>
     </div>
 
+    <!-- Sort + layout controls -->
+    <FeedSortBar
+      :sort="sortMode"
+      :layout="viewMode"
+      class="mb-2"
+      @update:sort="sortMode = $event"
+      @update:layout="viewMode = $event"
+    />
+
     <!-- Main Feed -->
-    <section class="space-y-6">
+    <section :class="viewMode === 'list' ? 'space-y-2' : 'space-y-6'">
       <template v-for="(chunk, ci) in feedChunks" :key="ci">
         <template v-for="item in chunk" :key="item.id">
           <ShopProductCard
@@ -345,6 +354,13 @@
             @open-detail="openProduct"
             @open-comments="commentProduct = $event"
             @market="marketProduct = $event"
+          />
+          <PostListCard
+            v-else-if="item.type === 'POST' && viewMode === 'list'"
+            :post="item"
+            @open-comments="openPostCommentsModal"
+            @open-details="openPostModal"
+            @deleted="removeFromFeed"
           />
           <PostCard
             v-else-if="item.type === 'POST'"
@@ -470,7 +486,9 @@ import ProductCommentModal from '~~/layers/commerce/app/components/modals/Produc
 import ShopProductCard from '~~/layers/commerce/app/components/ShopProductCard.vue'
 import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 import FeedProductShelf from '~~/layers/feed/app/components/FeedProductShelf.vue'
+import FeedSortBar from '~~/layers/feed/app/components/FeedSortBar.vue'
 import PostCard from '~~/layers/social/app/components/PostCard.vue'
+import PostListCard from '~~/layers/social/app/components/PostListCard.vue'
 
 import { getCachedLocation } from '~~/layers/map/app/composables/useMapSellers'
 import type { IMapSeller } from '~~/layers/map/app/types/map.types'
@@ -606,9 +624,59 @@ watch(activeTab, () => {
 
 const mainFeed = computed(() => feedStore.mainFeed ?? [])
 
+const sortMode = ref<'new' | 'best' | 'hot' | 'top' | 'rising'>('new')
+const viewMode = ref<'card' | 'list'>('card')
+
+const sortedFeed = computed(() => {
+  const items = mainFeed.value.slice()
+  switch (sortMode.value) {
+    case 'top':
+      return items.sort((a, b) => (b.likeCount || 0) - (a.likeCount || 0))
+    case 'best':
+      return items.sort(
+        (a, b) =>
+          ((b.likeCount || 0) + (b.commentCount || 0)) -
+          ((a.likeCount || 0) + (a.commentCount || 0)),
+      )
+    case 'hot': {
+      const score = (item: IFeedItem) => {
+        const age = Math.max(
+          1,
+          (Date.now() - new Date(item.created_at).getTime()) / 3_600_000,
+        )
+        return (
+          ((item.likeCount || 0) + (item.commentCount || 0) * 2) /
+          Math.pow(age, 1.5)
+        )
+      }
+      return items.sort((a, b) => score(b) - score(a))
+    }
+    case 'rising': {
+      const cutoff = Date.now() - 48 * 3_600_000
+      const recent = items.filter(
+        (i) => new Date(i.created_at).getTime() > cutoff,
+      )
+      const old = items.filter(
+        (i) => new Date(i.created_at).getTime() <= cutoff,
+      )
+      recent.sort(
+        (a, b) =>
+          ((b.likeCount || 0) + (b.commentCount || 0)) -
+          ((a.likeCount || 0) + (a.commentCount || 0)),
+      )
+      return [...recent, ...old]
+    }
+    default:
+      return items.sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      )
+  }
+})
+
 const CHUNK_SIZE = 4
 const feedChunks = computed(() => {
-  const items = mainFeed.value
+  const items = sortedFeed.value
   const chunks = []
   for (let i = 0; i < items.length; i += CHUNK_SIZE) {
     chunks.push(items.slice(i, i + CHUNK_SIZE))

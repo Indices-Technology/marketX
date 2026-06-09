@@ -50,6 +50,23 @@
           >
             {{ square.type === 'GEOGRAPHIC' ? '📍 Location' : '🏷️ Category' }}
           </span>
+          <!-- Edit banner button — admins/officers only -->
+          <ClientOnly>
+            <label
+              v-if="canEditImages"
+              class="absolute bottom-3 right-3 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-sm transition hover:bg-black/80"
+              title="Change banner"
+            >
+              <Icon v-if="uploadingBanner" name="eos-icons:loading" size="16" />
+              <Icon v-else name="mdi:camera" size="16" />
+              <input
+                type="file"
+                accept="image/*"
+                class="hidden"
+                @change="uploadBanner"
+              />
+            </label>
+          </ClientOnly>
         </div>
 
         <!-- ── Header row ──────────────────────────────────────────────────── -->
@@ -57,7 +74,7 @@
           <div class="flex items-end justify-between gap-3">
             <!-- Icon -->
             <div
-              class="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-[3px] border-white bg-white shadow-md dark:border-neutral-900 dark:bg-neutral-900"
+              class="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-[3px] border-white bg-white shadow-md dark:border-neutral-900 dark:bg-neutral-900"
               :style="`border-color: ${square.accentColor || '#f59e0b'}66`"
             >
               <img
@@ -65,6 +82,27 @@
                 :alt="square.name"
                 class="h-full w-full rounded-xl object-cover"
               />
+              <ClientOnly>
+                <label
+                  v-if="canEditImages"
+                  class="absolute inset-0 flex cursor-pointer items-center justify-center rounded-xl bg-black/50 opacity-0 transition hover:opacity-100"
+                  title="Change icon"
+                >
+                  <Icon
+                    v-if="uploadingIcon"
+                    name="eos-icons:loading"
+                    size="16"
+                    class="text-white"
+                  />
+                  <Icon v-else name="mdi:camera" size="16" class="text-white" />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    class="hidden"
+                    @change="uploadIcon"
+                  />
+                </label>
+              </ClientOnly>
             </div>
 
             <!-- Actions -->
@@ -94,6 +132,16 @@
               >
                 Join as Seller
               </NuxtLink>
+              <ClientOnly>
+                <NuxtLink
+                  v-if="square.isOfficer || profileStore.me?.role === 'admin'"
+                  :to="`/squares/${square.slug}/admin`"
+                  class="flex items-center gap-1.5 rounded-full border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-neutral-600 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                >
+                  <Icon name="mdi:cog-outline" size="15" />
+                  Manage
+                </NuxtLink>
+              </ClientOnly>
             </div>
           </div>
 
@@ -452,37 +500,21 @@
               </template>
               <!-- All / Posts tab -->
               <template v-else>
+                <!-- Sort bar -->
+                <FeedSortBar
+                  :sort="squareSortMode"
+                  :show-layout-toggle="false"
+                  class="mb-3"
+                  @update:sort="squareSortMode = $event"
+                />
                 <template v-for="(chunk, ci) in postChunks" :key="ci">
-                  <NuxtLink
+                  <PostListCard
                     v-for="item in chunk"
                     :key="item.id"
-                    :to="`/post/${item.id}`"
-                    class="flex items-start gap-3 rounded-xl border border-gray-200 p-3 transition-colors hover:bg-gray-50 dark:border-neutral-800 dark:hover:bg-neutral-900"
-                  >
-                    <img
-                      v-if="item.author?.avatar"
-                      :src="item.author.avatar"
-                      class="h-9 w-9 shrink-0 rounded-full object-cover"
-                    />
-                    <Icon
-                      v-else
-                      name="mdi:account"
-                      size="36"
-                      class="shrink-0 text-gray-300 dark:text-neutral-600"
-                    />
-                    <div class="min-w-0">
-                      <p
-                        class="text-xs font-bold text-gray-700 dark:text-neutral-300"
-                      >
-                        @{{ item.author?.username }}
-                      </p>
-                      <p
-                        class="mt-0.5 line-clamp-2 text-sm text-gray-600 dark:text-neutral-400"
-                      >
-                        {{ item.caption || item.content }}
-                      </p>
-                    </div>
-                  </NuxtLink>
+                    :post="item"
+                    @open-details="$router.push(`/post/${item.id}`)"
+                    @open-comments="$router.push(`/post/${item.id}`)"
+                  />
                   <FeedProductShelf
                     v-if="ci < postChunks.length - 1 && productItems.length"
                     :products="shelfSlice(ci)"
@@ -523,9 +555,13 @@
 <script setup lang="ts">
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import FeedProductShelf from '~~/layers/feed/app/components/FeedProductShelf.vue'
+import FeedSortBar from '~~/layers/feed/app/components/FeedSortBar.vue'
+import PostListCard from '~~/layers/social/app/components/PostListCard.vue'
 import ProductDetailModal from '~~/layers/commerce/app/components/modals/ProductDetailModal.vue'
 import { useProductDetail } from '~~/layers/commerce/app/composables/useProductDetail'
 import { useSquareApi } from '~~/layers/square/app/services/square.api'
+import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
+import { useMediaUpload } from '~~/layers/core/app/composables/useMediaUpload'
 import {
   computed,
   onMounted,
@@ -540,6 +576,7 @@ const route = useRoute()
 const router = useRouter()
 const slug = computed(() => route.params.slug as string)
 const squareApi = useSquareApi()
+const profileStore = useProfileStore()
 
 // ── Fetch Square ──────────────────────────────────────────────────────────────
 const {
@@ -590,6 +627,58 @@ const toggleFollow = async () => {
 }
 
 const canJoin = computed(() => !!square.value)
+
+// ── Image editing (admin / officer only) ──────────────────────────────────────
+const { uploadMedia } = useMediaUpload()
+const uploadingBanner = ref(false)
+const uploadingIcon = ref(false)
+const canEditImages = computed(
+  () => square.value?.isOfficer || profileStore.me?.role === 'admin',
+)
+
+const patchSquareData = (patch: Record<string, unknown>) => {
+  const current = squareData.value as Record<string, unknown>
+  squareData.value = {
+    ...current,
+    data: { ...(current?.data as Record<string, unknown>), ...patch },
+  }
+}
+
+const uploadBanner = async (e: Event) => {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file || !square.value) return
+  uploadingBanner.value = true
+  try {
+    const result = await uploadMedia(file)
+    await squareApi.updateSquare(square.value.slug, {
+      bannerUrl: result.url,
+    })
+    patchSquareData({ bannerUrl: result.url })
+  } catch {
+    /* silent */
+  } finally {
+    uploadingBanner.value = false
+    ;(e.target as HTMLInputElement).value = ''
+  }
+}
+
+const uploadIcon = async (e: Event) => {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file || !square.value) return
+  uploadingIcon.value = true
+  try {
+    const result = await uploadMedia(file)
+    await squareApi.updateSquare(square.value.slug, {
+      iconUrl: result.url,
+    })
+    patchSquareData({ iconUrl: result.url })
+  } catch {
+    /* silent */
+  } finally {
+    uploadingIcon.value = false
+    ;(e.target as HTMLInputElement).value = ''
+  }
+}
 
 // ── Tabs ──────────────────────────────────────────────────────────────────────
 const tabs = [
@@ -648,11 +737,68 @@ const postItems = computed(() =>
   feedItems.value.filter((i) => i.type === 'POST'),
 )
 
+const squareSortMode = ref<'new' | 'best' | 'hot' | 'top' | 'rising'>('new')
+
+type FeedRow = {
+  likeCount?: number
+  commentCount?: number
+  created_at: string | Date
+}
+
+const sortedPostItems = computed(() => {
+  const items = postItems.value.slice() as FeedRow[]
+  switch (squareSortMode.value) {
+    case 'top':
+      return items.sort((a, b) => (b.likeCount || 0) - (a.likeCount || 0))
+    case 'best':
+      return items.sort(
+        (a, b) =>
+          (b.likeCount || 0) +
+          (b.commentCount || 0) -
+          ((a.likeCount || 0) + (a.commentCount || 0)),
+      )
+    case 'hot': {
+      const score = (item: FeedRow) => {
+        const age = Math.max(
+          1,
+          (Date.now() - new Date(item.created_at).getTime()) / 3_600_000,
+        )
+        return (
+          ((item.likeCount || 0) + (item.commentCount || 0) * 2) /
+          Math.pow(age, 1.5)
+        )
+      }
+      return items.sort((a, b) => score(b) - score(a))
+    }
+    case 'rising': {
+      const cutoff = Date.now() - 48 * 3_600_000
+      const recent = items.filter(
+        (i) => new Date(i.created_at).getTime() > cutoff,
+      )
+      const old = items.filter(
+        (i) => new Date(i.created_at).getTime() <= cutoff,
+      )
+      recent.sort(
+        (a, b) =>
+          (b.likeCount || 0) +
+          (b.commentCount || 0) -
+          ((a.likeCount || 0) + (a.commentCount || 0)),
+      )
+      return [...recent, ...old]
+    }
+    default:
+      return items.sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      )
+  }
+})
+
 const CHUNK_SIZE = 4
 const postChunks = computed(() => {
   const chunks: any[][] = []
-  for (let i = 0; i < postItems.value.length; i += CHUNK_SIZE)
-    chunks.push(postItems.value.slice(i, i + CHUNK_SIZE))
+  for (let i = 0; i < sortedPostItems.value.length; i += CHUNK_SIZE)
+    chunks.push(sortedPostItems.value.slice(i, i + CHUNK_SIZE))
   return chunks
 })
 

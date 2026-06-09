@@ -2,6 +2,7 @@
   <div
     ref="cardRef"
     class="group flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:shadow-lg hover:shadow-gray-200/50 dark:border-neutral-800 dark:bg-neutral-900 dark:shadow-none dark:hover:shadow-black/50"
+    :class="cardStateClass"
     @click="$emit('open-detail', product)"
   >
     <!-- ─── MEDIA BLOCK (Single Relative Container) ───────────────────── -->
@@ -119,23 +120,16 @@
 
       <!-- ─── OVERLAYS (Positioned over the entire media block) ──────── -->
 
-      <!-- Top Left: Badges -->
+      <!-- Corner ribbon for pre-loved items -->
       <div
-        v-if="product.isThrift || discountPercent > 0"
-        class="absolute left-2.5 top-2.5 z-10 flex flex-col gap-1.5"
+        v-if="product.isThrift"
+        class="absolute left-0 top-0 z-10 h-16 w-16 overflow-hidden rounded-tl-2xl"
       >
-        <span
-          v-if="product.isThrift"
-          class="rounded-full bg-emerald-500 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white shadow-sm"
+        <div
+          class="absolute -left-5 top-[22px] w-[72px] -rotate-45 bg-amber-500 py-[3px] text-center text-[7px] font-black uppercase tracking-widest text-white"
         >
-          Thrift
-        </span>
-        <span
-          v-if="discountPercent > 0"
-          class="rounded-full bg-brand px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white shadow-sm"
-        >
-          −{{ discountPercent }}%
-        </span>
+          Pre-loved
+        </div>
       </div>
 
       <!-- Bottom Left: Stock Indicator -->
@@ -229,10 +223,15 @@
         </NuxtLink>
       </div>
 
-      <div class="mt-2 flex items-baseline gap-2">
+      <div class="mt-2 flex flex-wrap items-baseline gap-1.5">
         <span
-          class="text-[15px] font-bold text-gray-900 dark:text-neutral-100"
+          class="text-[17px] font-bold text-gray-900 dark:text-neutral-100"
           >{{ formatPrice(discountedPrice) }}</span
+        >
+        <span
+          v-if="discountPercent > 0"
+          class="rounded-md bg-brand/10 px-1.5 py-0.5 text-[10px] font-bold text-brand"
+          >−{{ discountPercent }}%</span
         >
         <span
           v-if="discountPercent > 0"
@@ -313,7 +312,7 @@
         <button
           v-if="product.affiliateCommission && product.affiliateCommission > 0"
           title="Market this product and earn commission"
-          class="flex items-center justify-center rounded-full bg-brand/10 p-1.5 text-brand transition-colors hover:bg-brand/20 dark:bg-brand/10 dark:hover:bg-brand/20"
+          class="flex items-center justify-center rounded-lg bg-brand/10 p-1.5 text-brand transition-colors hover:bg-brand/20 dark:bg-brand/10 dark:hover:bg-brand/20"
           @click="$emit('market', product)"
         >
           <Icon name="mdi:bullhorn-outline" size="16" />
@@ -329,7 +328,7 @@
                 ? 'bg-gray-100 text-gray-400 dark:bg-neutral-800'
                 : 'bg-brand text-white hover:bg-[#d81b36] hover:shadow-md hover:shadow-brand/20 active:scale-95'
           "
-          class="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-semibold transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-50"
+          class="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-semibold transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-50"
           @click="handleAddToCart"
         >
           <Icon :name="cartAdded ? 'mdi:check' : 'mdi:cart-plus'" size="14" />
@@ -506,6 +505,13 @@ const discountedPrice = computed(() =>
     ? Math.round(props.product.price * (1 - discountPercent.value / 100))
     : props.product.price,
 )
+
+// Thin top border signals product state without coloring the whole card
+const cardStateClass = computed(() => {
+  if (props.product.isThrift) return 'border-t-2 border-t-amber-400 dark:border-t-amber-500'
+  if (discountPercent.value > 0) return 'border-t-2 border-t-brand'
+  return ''
+})
 
 // ── Stock / Variant ──────────────────────────────────────────────────────────
 const lowestStock = computed(() => {

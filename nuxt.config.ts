@@ -257,7 +257,7 @@ export default defineNuxtConfig({
             "font-src 'self' https://fonts.gstatic.com",
             "img-src 'self' data: blob: https://res.cloudinary.com https://picsum.photos https://fastly.picsum.photos https://*.googleusercontent.com https://graph.facebook.com https://*.fbsbx.com https://platform-lookaside.fbsbx.com https://tiles.stadiamaps.com https://tiles.openfreemap.org https://api.maptiler.com https://*.cartocdn.com https://*.tile.openstreetmap.org",
             "media-src 'self' blob: https://res.cloudinary.com",
-            "connect-src 'self' https://api.paystack.co https://api.upstash.io https://api.iconify.design https://tiles.stadiamaps.com https://tiles.openfreemap.org https://api.maptiler.com https://*.cartocdn.com https://nominatim.openstreetmap.org https://*.tile.openstreetmap.org wss: ws:",
+            "connect-src 'self' https://api.paystack.co https://api.upstash.io https://api.iconify.design https://api.cloudinary.com https://tiles.stadiamaps.com https://tiles.openfreemap.org https://api.maptiler.com https://*.cartocdn.com https://nominatim.openstreetmap.org https://*.tile.openstreetmap.org wss: ws:",
             'frame-src https://checkout.paystack.com',
             "worker-src 'self' blob:",
           ].join('; '),

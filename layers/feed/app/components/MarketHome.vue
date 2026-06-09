@@ -82,55 +82,12 @@
         v-else-if="squares.length"
         class="scrollbar-hide -mx-1 flex gap-3 overflow-x-auto px-1 pb-1"
       >
-        <NuxtLink
+        <SquareCard
           v-for="sq in squares"
           :key="sq.id"
-          :to="`/squares/${sq.slug}`"
-          class="group w-36 shrink-0 overflow-hidden rounded-2xl border border-gray-200 bg-white transition hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900"
-        >
-          <div class="relative h-14 overflow-hidden">
-            <img
-              :src="sq.bannerUrl ? sqBanner(sq.bannerUrl) : `https://picsum.photos/seed/${encodeURIComponent(sq.slug)}/144/56`"
-              :alt="sq.name"
-              width="144"
-              height="56"
-              class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-              loading="lazy"
-              decoding="async"
-            />
-            <div
-              class="absolute -bottom-4 left-2.5 flex h-8 w-8 items-center justify-center overflow-hidden rounded-xl border-2 border-white bg-white shadow dark:border-neutral-900 dark:bg-neutral-900"
-            >
-              <img
-                v-if="sq.iconUrl"
-                :src="sqIcon(sq.iconUrl)"
-                :alt="sq.name"
-                width="32"
-                height="32"
-                class="h-full w-full rounded-lg object-cover"
-                loading="lazy"
-                decoding="async"
-              />
-              <span
-                v-else
-                class="text-[10px] font-black"
-                :style="`color: ${sq.accentColor || '#f59e0b'}`"
-              >
-                {{ sq.name.slice(0, 2).toUpperCase() }}
-              </span>
-            </div>
-          </div>
-          <div class="pb-3 pl-2.5 pr-2 pt-6">
-            <p
-              class="truncate text-[12px] font-bold text-gray-900 dark:text-white"
-            >
-              {{ sq.name }}
-            </p>
-            <p class="mt-0.5 text-[10px] text-gray-400 dark:text-neutral-500">
-              {{ sq.memberCount ?? 0 }} sellers
-            </p>
-          </div>
-        </NuxtLink>
+          :square="sq"
+          variant="compact"
+        />
 
         <NuxtLink
           to="/squares"
@@ -382,13 +339,14 @@
 <script setup lang="ts">
 import FeedProductShelf from '~~/layers/feed/app/components/FeedProductShelf.vue'
 import PostCard from '~~/layers/social/app/components/PostCard.vue'
+import SquareCard from '~~/layers/square/app/components/SquareCard.vue'
 import ProductDetailModal from '~~/layers/commerce/app/components/modals/ProductDetailModal.vue'
 import PostDetailModal from '~~/layers/social/app/components/modals/PostDetailModal.vue'
 import ProductCommentModal from '~~/layers/commerce/app/components/modals/ProductCommentModal.vue'
 
 import { ref } from 'vue'
 import { useRouter } from '#imports'
-import { imgThumb } from '~~/layers/core/app/utils/cloudinary'
+import { imgAvatar } from '~~/layers/core/app/utils/cloudinary'
 import { useProductDetail } from '~~/layers/commerce/app/composables/useProductDetail'
 import { useMarketHome } from '../composables/useMarketHome'
 import type { IFeedItem } from '~~/layers/feed/app/types/feed.types'
@@ -405,9 +363,7 @@ const {
 const commentProduct = ref<IProduct | null>(null)
 const selectedPost = ref<IFeedItem | null>(null)
 
-const sqBanner = (url: string) => imgThumb(url, 144, 56)
-const sqIcon = (url: string) => imgThumb(url, 64, 64)
-const sellerAvatar = (url: string) => imgThumb(url, 112, 112)
+const sellerAvatar = (url: string) => imgAvatar(url)
 
 const {
   deals,

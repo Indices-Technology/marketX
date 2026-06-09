@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
   try {
     const body = await readBody(event)
     const input = membershipActionSchema.parse(body)
-    const result = await squareService.actOnMembership(user.id, slug, sellerId, input)
+    const result = await squareService.actOnMembership(user.id, slug, sellerId, input, user.role === 'admin')
     return { success: true, data: result }
   } catch (e) {
     if (e instanceof ZodError)

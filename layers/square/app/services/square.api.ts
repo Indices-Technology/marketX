@@ -84,6 +84,57 @@ export class SquareApiClient extends BaseApiClient {
   async joinSquare(slug: string): Promise<any> {
     return this.request(`/api/squares/${slug}/join`, { method: 'POST' })
   }
+
+  // ── Admin: members ───────────────────────────────────────────────────────────
+
+  async getMembers(
+    slug: string,
+    params: {
+      status?: 'PENDING' | 'ACTIVE' | 'SUSPENDED' | 'REJECTED'
+      limit?: number
+      offset?: number
+    },
+  ): Promise<any> {
+    return this.request(`/api/squares/${slug}/members`, {
+      method: 'GET',
+      params: params as any,
+    })
+  }
+
+  async actOnMember(
+    slug: string,
+    sellerId: string,
+    action: 'APPROVE' | 'REJECT' | 'SUSPEND',
+    reason?: string,
+  ): Promise<any> {
+    return this.request(`/api/squares/${slug}/members/${sellerId}`, {
+      method: 'PATCH',
+      body: { action, reason },
+    })
+  }
+
+  // ── Admin: officers ──────────────────────────────────────────────────────────
+
+  async getOfficers(slug: string): Promise<any> {
+    return this.request(`/api/squares/${slug}/officers`, { method: 'GET' })
+  }
+
+  async appointOfficer(
+    slug: string,
+    data: { profileId: string; role: 'CHAIRMAN' | 'SECRETARY' | 'TREASURER' | 'MODERATOR' | 'GOVT_REP' },
+  ): Promise<any> {
+    return this.request(`/api/squares/${slug}/officers`, { method: 'POST', body: data })
+  }
+
+  async removeOfficer(slug: string, profileId: string): Promise<any> {
+    return this.request(`/api/squares/${slug}/officers/${profileId}`, { method: 'DELETE' })
+  }
+
+  // ── Admin: settings ──────────────────────────────────────────────────────────
+
+  async updateSquare(slug: string, data: Record<string, unknown>): Promise<any> {
+    return this.request(`/api/squares/${slug}`, { method: 'PATCH', body: data })
+  }
 }
 
 // Singleton composable — mirrors the pattern used by useSellerApi()

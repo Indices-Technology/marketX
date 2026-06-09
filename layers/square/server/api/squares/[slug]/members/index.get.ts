@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
 
 const querySchema = z.object({
-  status: z.enum(['PENDING', 'ACTIVE', 'SUSPENDED']).default('PENDING'),
+  status: z.enum(['PENDING', 'ACTIVE', 'SUSPENDED', 'REJECTED']).default('PENDING'),
   limit: z.coerce.number().min(1).max(100).default(50),
   offset: z.coerce.number().min(0).default(0),
 })
@@ -18,12 +18,14 @@ export default defineEventHandler(async (event) => {
   const square = await prisma.square.findUnique({ where: { slug }, select: { id: true } })
   if (!square) throw createError({ statusCode: 404, statusMessage: 'Square not found' })
 
-  // Must be an officer of this Square
-  const officer = await prisma.squareOfficer.findFirst({
-    where: { squareId: square.id, profileId: user.id },
-  })
-  if (!officer)
-    throw createError({ statusCode: 403, statusMessage: 'Officers only' })
+  // Must be a platform admin OR an officer of this Square
+  if (user.role !== 'admin') {
+    const officer = await prisma.squareOfficer.findFirst({
+      where: { squareId: square.id, profileId: user.id },
+    })
+    if (!officer)
+      throw createError({ statusCode: 403, statusMessage: 'Officers only' })
+  }
 
   const query = await getValidatedQuery(event, (d) => querySchema.parse(d))
 

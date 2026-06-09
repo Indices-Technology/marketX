@@ -50,13 +50,6 @@
             <div v-else class="flex h-full w-full items-center justify-center">
               <Icon name="mdi:image-outline" size="32" class="text-gray-300" />
             </div>
-            <!-- Discount badge -->
-            <span
-              v-if="product.discount && product.discount > 0"
-              class="absolute left-2 top-2 rounded-full bg-red-500 px-2 py-0.5 text-[11px] font-bold text-white"
-            >
-              -{{ Math.round(product.discount) }}%
-            </span>
           </div>
 
           <!-- Info -->
@@ -64,7 +57,13 @@
             <p class="line-clamp-2 text-xs font-semibold text-gray-800 dark:text-neutral-200">{{ product.title }}</p>
             <p class="mt-0.5 text-[11px] text-gray-400 dark:text-neutral-500">{{ product.seller?.store_name || product.store_slug }}</p>
             <div class="mt-auto pt-2">
-              <p class="text-sm font-bold text-brand">{{ formatPrice(effectivePrice(product)) }}</p>
+              <div class="flex flex-wrap items-baseline gap-1.5">
+                <p class="text-[15px] font-bold text-brand">{{ formatPrice(effectivePrice(product)) }}</p>
+                <span
+                  v-if="product.discount && product.discount > 0"
+                  class="rounded-md bg-brand/10 px-1.5 py-0.5 text-[10px] font-bold text-brand"
+                >-{{ Math.round(product.discount) }}%</span>
+              </div>
               <p v-if="product.discount" class="text-xs text-gray-400 line-through">{{ formatPrice(product.price) }}</p>
               <!-- Countdown -->
               <DealCountdown v-if="product.dealEndsAt" :ends-at="product.dealEndsAt" class="mt-1" />

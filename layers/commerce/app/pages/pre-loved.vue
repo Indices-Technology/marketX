@@ -74,7 +74,7 @@
             <!-- Condition badge -->
             <span
               v-if="product.condition"
-              class="absolute left-2 top-2 rounded-full bg-pink-500/90 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm"
+              class="absolute left-2 top-2 rounded-sm bg-pink-500/90 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm"
             >
               {{ conditionLabel(product.condition) }}
             </span>
@@ -85,7 +85,7 @@
             <p class="line-clamp-2 text-xs font-semibold text-gray-800 dark:text-neutral-200">{{ product.title }}</p>
             <p class="mt-0.5 text-[11px] text-gray-400 dark:text-neutral-500">{{ product.seller?.store_name || product.store_slug }}</p>
             <div class="mt-auto pt-2">
-              <p class="text-sm font-bold text-brand">{{ formatPrice(product.price) }}</p>
+              <p class="text-[15px] font-bold text-brand">{{ formatPrice(product.price) }}</p>
             </div>
           </div>
         </NuxtLink>

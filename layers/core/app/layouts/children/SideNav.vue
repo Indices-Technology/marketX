@@ -4,7 +4,7 @@
     <!-- Logo -->
     <NuxtLink
       to="/"
-      class="mb-6 flex items-center justify-center gap-2.5 xl:justify-start"
+      class="mb-6 flex shrink-0 items-center justify-center gap-2.5 xl:justify-start"
     >
       <div
         class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand shadow-lg shadow-brand/25"
@@ -17,6 +17,9 @@
         {{ $config.public.siteName || 'MarketX' }}
       </span>
     </NuxtLink>
+
+    <!-- Scrollable nav area — profile stays pinned below this -->
+    <div class="nav-scroll min-h-0 flex-1 overflow-y-auto">
 
     <!-- Primary Navigation -->
     <nav class="flex flex-col space-y-1">
@@ -243,8 +246,10 @@
       </button>
     </nav>
 
-    <!-- Bottom: Profile section -->
-    <div class="relative mt-auto pb-2">
+    </div><!-- end scrollable nav area -->
+
+    <!-- Profile — always pinned to bottom, never scrolls away -->
+    <div class="relative shrink-0 pb-2 pt-1">
       <ClientOnly>
         <button
           v-if="profileStore.isLoggedIn"
@@ -441,5 +446,14 @@ onUnmounted(() => document.removeEventListener('click', onClickOutside, true))
 .menu-pop-leave-to {
   opacity: 0;
   transform: translateY(8px) scale(0.96);
+}
+
+/* Hide scrollbar on the nav scroll area — users can still scroll if needed */
+.nav-scroll::-webkit-scrollbar {
+  display: none;
+}
+.nav-scroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 </style>

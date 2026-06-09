@@ -54,6 +54,11 @@
           v-for="product in products"
           :key="product.id"
           class="group flex w-[130px] flex-none flex-col overflow-hidden rounded-xl border border-gray-200 bg-white transition hover:border-brand/30 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-brand/30"
+          :class="
+            product.isDeal || product.discount
+              ? 'border-t-2 border-t-brand'
+              : ''
+          "
           @click="$emit('open-product', product)"
         >
           <!-- Thumbnail -->
@@ -83,12 +88,12 @@
             <!-- Badge -->
             <span
               v-if="product.isDeal"
-              class="absolute left-1.5 top-1.5 rounded-full bg-brand px-1.5 py-0.5 text-[9px] font-bold text-white shadow-sm"
+              class="absolute left-1.5 top-1.5 rounded-sm bg-brand px-1.5 py-0.5 text-[9px] font-bold text-white shadow-sm"
               >SALE</span
             >
             <span
               v-else-if="product.discount"
-              class="absolute left-1.5 top-1.5 rounded-full bg-brand px-1.5 py-0.5 text-[9px] font-bold text-white shadow-sm"
+              class="absolute left-1.5 top-1.5 rounded-sm bg-brand px-1.5 py-0.5 text-[9px] font-bold text-white shadow-sm"
               >−{{ product.discount }}%</span
             >
           </div>

@@ -14,6 +14,7 @@
  */
 
 import { prisma } from '~~/server/utils/db'
+import { bust } from '~~/server/utils/cache'
 import { notificationQueue } from '~~/server/queues/notification.queue'
 import { entityEmbedder } from '~~/layers/ai/server/services/entity-embedder.service'
 import type {
@@ -120,6 +121,7 @@ export const squareService = {
         ...SQUARE_PUBLIC_SELECT,
         physicalAddress: true,
         officers: { select: OFFICER_SELECT },
+        _count: { select: { followers: true, posts: true } },
       },
     })
 
@@ -127,8 +129,6 @@ export const squareService = {
     if (square.status !== 'ACTIVE')
       throw createError({ statusCode: 404, statusMessage: 'Square not found' })
 
-    // Is the requesting user following this Square?
-    // Are they an officer?
     const [followRow, officerRow] = await Promise.all([
       userId
         ? prisma.userSquareFollow.findUnique({
@@ -143,8 +143,11 @@ export const squareService = {
         : null,
     ])
 
+    const { _count, ...squareData } = square
     return {
-      ...square,
+      ...squareData,
+      followerCount: _count.followers,
+      postCount: _count.posts,
       isFollowing: !!followRow,
       isOfficer: !!officerRow,
       officerRole: officerRow?.role ?? null,
@@ -193,6 +196,7 @@ export const squareService = {
     })
 
     entityEmbedder.embedSquare(updated.id)
+    await bust('squares:list:*')
 
     return updated
   },
@@ -265,20 +269,23 @@ export const squareService = {
     squareSlug: string,
     sellerId: string,
     input: MembershipActionInput,
+    isPlatformAdmin = false,
   ) {
     const square = await prisma.square.findUnique({ where: { slug: squareSlug } })
     if (!square) throw createError({ statusCode: 404, statusMessage: 'Square not found' })
 
-    // Verify the caller is an officer with sufficient role
-    const officer = await prisma.squareOfficer.findFirst({
-      where: {
-        squareId: square.id,
-        profileId: officerProfileId,
-        role: { in: ['CHAIRMAN', 'SECRETARY'] },
-      },
-    })
-    if (!officer)
-      throw createError({ statusCode: 403, statusMessage: 'Only a Chairman or Secretary can manage memberships' })
+    // Platform admins bypass the officer check
+    if (!isPlatformAdmin) {
+      const officer = await prisma.squareOfficer.findFirst({
+        where: {
+          squareId: square.id,
+          profileId: officerProfileId,
+          role: { in: ['CHAIRMAN', 'SECRETARY'] },
+        },
+      })
+      if (!officer)
+        throw createError({ statusCode: 403, statusMessage: 'Only a Chairman or Secretary can manage memberships' })
+    }
 
     const membership = await prisma.squareMembership.findUnique({
       where: { squareId_sellerId: { squareId: square.id, sellerId } },
@@ -288,10 +295,10 @@ export const squareService = {
 
     const newStatus =
       input.action === 'APPROVE'
-        ? 'ACTIVE'
+        ? ('ACTIVE' as const)
         : input.action === 'REJECT'
-          ? 'SUSPENDED'
-          : 'SUSPENDED'
+          ? ('REJECTED' as const)
+          : ('SUSPENDED' as const)
 
     const [updated] = await prisma.$transaction(async (tx) => {
       const updated = await tx.squareMembership.update({
@@ -435,6 +442,48 @@ export const squareService = {
     })
 
     return officer
+  },
+
+  async listOfficers(squareSlug: string) {
+    const square = await prisma.square.findUnique({
+      where: { slug: squareSlug },
+      select: { id: true },
+    })
+    if (!square) throw createError({ statusCode: 404, statusMessage: 'Square not found' })
+
+    return prisma.squareOfficer.findMany({
+      where: { squareId: square.id },
+      select: {
+        ...OFFICER_SELECT,
+        appointedBy: true,
+        appointedAt: true,
+      },
+      orderBy: { appointedAt: 'asc' },
+    })
+  },
+
+  async removeOfficer(callerProfileId: string, squareSlug: string, targetProfileId: string) {
+    const square = await prisma.square.findUnique({ where: { slug: squareSlug }, select: { id: true } })
+    if (!square) throw createError({ statusCode: 404, statusMessage: 'Square not found' })
+
+    const caller = await prisma.squareOfficer.findFirst({
+      where: { squareId: square.id, profileId: callerProfileId, role: 'CHAIRMAN' },
+    })
+    if (!caller)
+      throw createError({ statusCode: 403, statusMessage: 'Only the Chairman can remove officers' })
+
+    const target = await prisma.squareOfficer.findUnique({
+      where: { squareId_profileId: { squareId: square.id, profileId: targetProfileId } },
+    })
+    if (!target) throw createError({ statusCode: 404, statusMessage: 'Officer not found' })
+    if (target.role === 'CHAIRMAN')
+      throw createError({ statusCode: 400, statusMessage: 'Cannot remove the Chairman' })
+
+    await prisma.squareOfficer.delete({
+      where: { squareId_profileId: { squareId: square.id, profileId: targetProfileId } },
+    })
+
+    return { removed: true }
   },
 
   // ── Association wallet ──────────────────────────────────────────────────────

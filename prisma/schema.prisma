@@ -1120,6 +1120,7 @@ enum SquareMembershipStatus {
   PENDING    // seller applied, awaiting officer approval
   ACTIVE     // approved and active
   SUSPENDED  // membership suspended
+  REJECTED   // request explicitly denied by officer
 }
 
 enum ProductStatus {
