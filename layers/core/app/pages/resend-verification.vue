@@ -63,21 +63,25 @@
           </div>
 
           <!-- Back to Login -->
-          <NuxtLink
+          <BaseButton
             to="/user-login"
-            class="block w-full rounded-xl border border-gray-300 bg-white/80 py-3.5 text-center text-base font-semibold text-gray-900 shadow-sm hover:bg-gray-50 dark:border-neutral-600 dark:bg-neutral-800/60 dark:text-white dark:hover:bg-neutral-700"
+            tag="NuxtLink"
+            variant="secondary"
+            size="lg"
+            class="w-full"
           >
             Back to Login
-          </NuxtLink>
+          </BaseButton>
 
           <!-- Resend to different email -->
-          <button
+          <BaseButton
             @click="resetForm"
             type="button"
-            class="w-full text-center text-sm font-medium text-brand transition hover:text-brand/80"
+            variant="ghost"
+            class="w-full"
           >
             Resend to a different email
-          </button>
+          </BaseButton>
         </div>
 
         <!-- Pending state info (before sending) -->
@@ -112,40 +116,27 @@
           @submit.prevent="handleResend"
         >
           <!-- Email -->
-          <div>
-            <input
-              v-model="email"
-              type="email"
-              placeholder="Your email address"
-              :disabled="isLoading"
-              class="w-full rounded-xl border bg-white/60 px-4 py-3.5 text-base placeholder-gray-500 transition focus:border-brand focus:ring-2 focus:ring-brand/30 dark:border-neutral-600 dark:bg-neutral-800/50 dark:text-white dark:placeholder-gray-400"
-              :class="{ 'border-red-400 dark:border-red-600': errors.email }"
-            />
-            <p
-              v-if="errors.email"
-              class="mt-1.5 text-xs text-red-600 dark:text-red-400"
-            >
-              {{ errors.email }}
-            </p>
-          </div>
+          <BaseInput
+            v-model="email"
+            type="email"
+            autocomplete="email"
+            placeholder="Your email address"
+            :disabled="isLoading"
+            icon-left="mdi:email-outline"
+            size="lg"
+            :error="errors.email"
+          />
 
           <!-- Submit Button -->
-          <button
+          <BaseButton
             type="submit"
+            size="lg"
+            class="w-full"
+            :loading="isLoading"
             :disabled="isLoading"
-            class="w-full rounded-xl bg-brand py-3.5 text-base font-semibold text-white shadow transition hover:bg-brand/90 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-brand/40 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <span
-              v-if="isLoading"
-              class="flex items-center justify-center gap-2.5"
-            >
-              <div
-                class="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"
-              />
-              Sending verification email...
-            </span>
-            <span v-else>Send Verification Email</span>
-          </button>
+            {{ isLoading ? 'Sending verification email...' : 'Send Verification Email' }}
+          </BaseButton>
         </form>
 
         <!-- Tip Box -->
@@ -196,6 +187,8 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
+import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
+import BaseInput from '~~/layers/ui/app/components/BaseInput.vue'
 
 definePageMeta({
   layout: false,

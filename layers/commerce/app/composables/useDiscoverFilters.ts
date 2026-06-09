@@ -60,7 +60,10 @@ const DEFAULTS = {
 function resetFilters(tab?: DiscoverTabKey) {
   const keys = tab ? [tab] : Object.keys(DEFAULTS) as DiscoverTabKey[]
   for (const k of keys) {
-    Object.assign((filters as any)[k], (DEFAULTS as any)[k])
+    if (k in DEFAULTS) {
+      const key = k as keyof typeof DEFAULTS
+      Object.assign(filters[key], DEFAULTS[key])
+    }
   }
 }
 

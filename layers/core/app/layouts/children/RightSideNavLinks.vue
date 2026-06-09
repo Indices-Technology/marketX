@@ -6,7 +6,7 @@
     <div class="custom-scrollbar flex-1 space-y-4 overflow-y-auto p-3">
       <!-- 1. Help Topics -->
       <div
-        class="rounded-xl border border-gray-100 bg-gray-50/50 p-4 dark:border-neutral-800 dark:bg-neutral-800/30"
+        class="rounded-xl border border-gray-200 bg-gray-50/50 p-4 dark:border-neutral-800 dark:bg-neutral-800/30"
       >
         <div class="mb-3 flex items-center gap-2">
           <Icon
@@ -68,7 +68,7 @@
 
       <!-- 2. Legal & Policies -->
       <div
-        class="rounded-xl border border-gray-100 bg-gray-50/50 p-4 dark:border-neutral-800 dark:bg-neutral-800/30"
+        class="rounded-xl border border-gray-200 bg-gray-50/50 p-4 dark:border-neutral-800 dark:bg-neutral-800/30"
       >
         <div class="mb-3 flex items-center gap-2">
           <Icon name="mdi:scale-balance" size="20" class="text-brand" />

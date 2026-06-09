@@ -6,6 +6,8 @@ import { walletService } from '~~/layers/commerce/server/services/wallet.service
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
 import { notificationQueue } from '~~/server/queues/notification.queue'
+import { emailQueue } from '~~/server/queues/email.queue'
+import { buildOrderStatusEmail } from '~~/server/utils/email/emailService'
 
 const schema = z.object({
   orderId: z.number().int().positive(), // internal order ID
@@ -65,10 +67,32 @@ export default defineEventHandler(async (event) => {
         data: { paymentStatus: 'PAID', status: 'CONFIRMED' },
       })
       if (count > 0) {
-        notifySellers(order.id).catch((e) => logger.error('PayPal: notify sellers failed', { orderId: order.id, error: e?.message ?? e }))
-        walletService
-          .creditSellersOnPayment(order.id)
-          .catch((e) => logger.error('PayPal: wallet credit failed', { orderId: order.id, error: e?.message ?? e }))
+        notifySellers(order.id).catch((e) =>
+          logger.error('PayPal: notify sellers failed', {
+            orderId: order.id,
+            error: e?.message ?? e,
+          }),
+        )
+        walletService.creditSellersOnPayment(order.id).catch((e) =>
+          logger.error('PayPal: wallet credit failed', {
+            orderId: order.id,
+            error: e?.message ?? e,
+          }),
+        )
+        // Buyer confirmation email
+        if (user.email && !user.email.includes('@checkout.marketx.app')) {
+          const { subject, html, text } = buildOrderStatusEmail(
+            order.id,
+            'CONFIRMED',
+          )
+          emailQueue.enqueue({
+            to: user.email,
+            subject,
+            html,
+            text,
+            type: 'ORDER_CONFIRMATION',
+          })
+        }
       }
       return { success: true, data: { status: 'paid', orderId } }
     }
@@ -82,13 +106,24 @@ export default defineEventHandler(async (event) => {
       success: true,
       data: { status: result.status.toLowerCase(), orderId },
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
     if (error instanceof ZodError)
-      throw createError({ statusCode: 400, statusMessage: 'Invalid request body' })
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Invalid request body',
+      })
     if (error instanceof UserError)
-      throw createError({ statusCode: error.status, statusMessage: error.message })
-    logger.logError('[POST /api/commerce/payments/paypal/capture]', error, { requestId: event.context?.requestId })
-    throw createError({ statusCode: 500, statusMessage: 'PayPal capture failed' })
+      throw createError({
+        statusCode: error.status,
+        statusMessage: error.message,
+      })
+    logger.logError('[POST /api/commerce/payments/paypal/capture]', error, {
+      requestId: event.context?.requestId,
+    })
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'PayPal capture failed',
+    })
   }
 })

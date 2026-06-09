@@ -4,13 +4,13 @@
   >
     <!-- ─── TAB NAVIGATION ──────────────────────────────────────────────────── -->
     <div
-      class="flex shrink-0 gap-1 border-b border-gray-100 bg-gray-50/50 p-2 dark:border-neutral-800/50 dark:bg-neutral-900/50"
+      class="flex shrink-0 gap-1 border-b border-gray-200 bg-gray-50/50 p-2 dark:border-neutral-800/50 dark:bg-neutral-900/50"
     >
       <!-- 1. Welcome Card (If logged in) -->
       <ClientOnly>
         <div
           v-if="profileStore.isLoggedIn"
-          class="w-full rounded-xl border border-brand/10 bg-gradient-to-br from-brand/5 to-purple-500/5 p-4 shadow-sm dark:from-brand/10 dark:to-purple-500/10"
+          class="w-full rounded-xl border border-brand/20 bg-brand/5 p-4 shadow-sm dark:bg-brand/10"
         >
           <div class="flex items-center gap-3">
             <div class="relative flex shrink-0">
@@ -55,7 +55,7 @@
       <!-- 2. Top Shops Section -->
       <div
         v-if="topSellers.length"
-        class="mb-4 rounded-xl border border-gray-100 bg-gray-50/50 p-4 dark:border-neutral-800 dark:bg-neutral-800/30"
+        class="mb-4 rounded-xl border border-gray-200 bg-gray-50/50 p-4 dark:border-neutral-800 dark:bg-neutral-800/30"
       >
         <div class="mb-4 flex items-center justify-between">
           <div class="flex items-center gap-2">
@@ -142,7 +142,7 @@
 
       <!-- 4. Quick Links -->
       <div
-        class="mb-4 rounded-xl border border-gray-100 bg-gray-50/50 p-4 dark:border-neutral-800 dark:bg-neutral-800/30"
+        class="mb-4 rounded-xl border border-gray-200 bg-gray-50/50 p-4 dark:border-neutral-800 dark:bg-neutral-800/30"
       >
         <div class="mb-3 flex items-center gap-2">
           <Icon name="mdi:link-variant" size="20" class="text-brand" />

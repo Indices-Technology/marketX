@@ -111,8 +111,7 @@ export const productRepository = {
       select: { primarySquareId: true },
     })
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const productData: any = {
+    const productData: Record<string, unknown> = {
       title: data.title,
       slug: data.slug,
       description: data.description,
@@ -150,7 +149,7 @@ export const productRepository = {
 
     if (data.variants && data.variants.length > 0) {
       productData.variants = {
-        create: data.variants.map((v: any) => ({
+        create: data.variants.map((v) => ({
           size: v.size,
           stock: v.stock,
           price: v.price,
@@ -160,7 +159,7 @@ export const productRepository = {
 
     if (data.offers && data.offers.length > 0) {
       productData.offers = {
-        create: data.offers.map((o: any) => ({
+        create: data.offers.map((o) => ({
           minQuantity: o.minQuantity,
           discount: o.discount,
           label: o.label || null,
@@ -172,7 +171,7 @@ export const productRepository = {
     let linkedPostId: string | undefined
     if ((data.showInFeed || data.showInReels) && authorId) {
       const caption =
-        (data.socialCaptions as any)?.feedCaption || data.description || null
+        data.socialCaptions?.feedCaption || data.description || null
       const post = await prisma.post.create({
         data: {
           authorId,
@@ -189,7 +188,7 @@ export const productRepository = {
 
     // Inline media creation (images + background music)
     // When linked to a Post, each media record also gets postId so it appears in the feed
-    const mediaToCreate: any[] = []
+    const mediaToCreate: Array<Record<string, unknown>> = []
     if (authorId && data.mediaItems?.length) {
       for (const m of data.mediaItems) {
         mediaToCreate.push({
@@ -256,7 +255,7 @@ export const productRepository = {
     },
     pagination: { limit: number; offset: number },
   ) {
-    const where: any = {}
+    const where: Record<string, unknown> = {}
     if (filters.status) where.status = filters.status
     if (filters.sellerId) where.sellerId = filters.sellerId
     if (filters.storeSlug) where.store_slug = filters.storeSlug
@@ -324,7 +323,7 @@ export const productRepository = {
     status?: string,
     search?: string,
   ) {
-    const where: any = { store_slug: storeSlug }
+    const where: Record<string, unknown> = { store_slug: storeSlug }
     if (status) where.status = status
     if (search) {
       where.OR = [
@@ -342,8 +341,7 @@ export const productRepository = {
   },
 
   async updateProduct(id: number, data: UpdateProductInput, authorId?: string) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const updateData: any = {}
+    const updateData: Record<string, unknown> = {}
     if (data.title !== undefined) updateData.title = data.title
     if (data.description !== undefined)
       updateData.description = data.description
@@ -402,7 +400,7 @@ export const productRepository = {
       ].filter(Boolean) as number[])
 
       const existingBySize = new Map(currentVariants.map((v) => [v.size ?? '', v.id]))
-      const submittedSizes = new Set((data.variants as any[]).map((v) => v.size ?? ''))
+      const submittedSizes = new Set(data.variants.map((v) => v.size ?? ''))
 
       // Delete unprotected variants whose sizes were removed from the submitted form
       const toDelete = currentVariants
@@ -414,7 +412,7 @@ export const productRepository = {
 
       // Upsert each submitted variant: update if the size already exists, create if new
       await Promise.all(
-        (data.variants as any[]).map((v) => {
+        data.variants.map((v) => {
           const existingId = existingBySize.get(v.size ?? '')
           if (existingId) {
             return prisma.productVariant.update({
@@ -435,7 +433,7 @@ export const productRepository = {
       await prisma.productOffer.deleteMany({ where: { productId: id } })
       if (data.offers.length > 0) {
         updateData.offers = {
-          create: data.offers.map((o: any) => ({
+          create: data.offers.map((o) => ({
             minQuantity: o.minQuantity,
             discount: o.discount,
             label: o.label || null,
@@ -461,7 +459,7 @@ export const productRepository = {
     // Add new media items
     if (authorId && data.mediaItems?.length) {
       updateData.media = updateData.media || {}
-      updateData.media.create = data.mediaItems.map((m: any) => ({
+      updateData.media.create = data.mediaItems.map((m) => ({
         url: m.url,
         public_id: m.public_id,
         type: m.type || 'IMAGE',
@@ -527,7 +525,7 @@ export const productRepository = {
     isThrift?: boolean
     categorySlug?: string
   }) {
-    const where: any = {}
+    const where: Record<string, unknown> = {}
     if (filters.status) where.status = filters.status
     if (filters.sellerId) where.sellerId = filters.sellerId
     if (filters.storeSlug) where.store_slug = filters.storeSlug

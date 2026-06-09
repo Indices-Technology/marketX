@@ -26,6 +26,6 @@ defineProps<{
 
 <style scoped>
 .filter-section {
-  @apply rounded-xl border border-gray-100 bg-gray-50/50 p-3 dark:border-neutral-800 dark:bg-neutral-900/30;
+  @apply rounded-xl border border-gray-200 bg-gray-50/50 p-3 dark:border-neutral-800 dark:bg-neutral-900/30;
 }
 </style>

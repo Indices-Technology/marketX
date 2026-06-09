@@ -1,4 +1,4 @@
-import { useWalletApi } from '../services/wallet.api'
+import { useWalletApi, type BankAccount } from '../services/wallet.api'
 import { useWalletStore } from '../stores/wallet.store'
 import { extractErrorMessage } from '~~/layers/core/app/utils/errors'
 
@@ -18,14 +18,14 @@ export const useWallet = () => {
     store.setLoading(true)
     store.setError(null)
     try {
-      const result: any = await api.getWallet()
+      const result = await api.getWallet()
       store.setWallet(
         result.data?.wallet,
         result.data?.stats,
         result.data?.stores,
       )
       return result.data
-    } catch (e: any) {
+    } catch (e: unknown) {
       store.setError(extractErrorMessage(e, 'Failed to fetch wallet'))
       throw e
     } finally {
@@ -37,14 +37,14 @@ export const useWallet = () => {
     store.setLoading(true)
     store.setError(null)
     try {
-      const result: any = await api.getTransactions({ limit, offset })
+      const result = await api.getTransactions({ limit, offset })
       if (offset === 0) {
         store.setTransactions(result.data?.transactions, result.data?.total)
       } else {
         store.addTransactions(result.data?.transactions)
       }
       return result.data
-    } catch (e: any) {
+    } catch (e: unknown) {
       store.setError(extractErrorMessage(e, 'Failed to fetch transactions'))
       throw e
     } finally {
@@ -56,10 +56,10 @@ export const useWallet = () => {
     store.setLoading(true)
     store.setError(null)
     try {
-      const result: any = await api.addFunds(amount)
+      const result = await api.addFunds(amount)
       await fetchWallet()
-      return result.data
-    } catch (e: any) {
+      return result
+    } catch (e: unknown) {
       store.setError(extractErrorMessage(e, 'Failed to add funds'))
       throw e
     } finally {
@@ -67,14 +67,14 @@ export const useWallet = () => {
     }
   }
 
-  const withdraw = async (amount: number, bankAccount: any) => {
+  const withdraw = async (amount: number, bankAccount: BankAccount) => {
     store.setLoading(true)
     store.setError(null)
     try {
-      const result: any = await api.withdraw(amount, bankAccount)
+      const result = await api.withdraw(amount, bankAccount)
       await fetchWallet()
-      return result.data
-    } catch (e: any) {
+      return result
+    } catch (e: unknown) {
       store.setError(extractErrorMessage(e, 'Failed to withdraw'))
       throw e
     } finally {

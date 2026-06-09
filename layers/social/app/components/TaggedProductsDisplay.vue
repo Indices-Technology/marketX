@@ -3,7 +3,7 @@
     <!-- Single product -->
     <div
       v-if="products.length === 1"
-      class="flex items-center gap-2.5 rounded-xl border border-gray-100 bg-gray-50 p-2.5 dark:border-neutral-700 dark:bg-neutral-800"
+      class="flex items-center gap-2.5 rounded-xl border border-gray-200 bg-gray-50 p-2.5 dark:border-neutral-700 dark:bg-neutral-800"
     >
       <button
         class="flex min-w-0 flex-1 items-center gap-2.5 text-left"
@@ -48,7 +48,7 @@
         <div
           v-for="product in products"
           :key="product.id"
-          class="w-[120px] shrink-0 rounded-xl border border-gray-100 bg-gray-50 p-2 dark:border-neutral-700 dark:bg-neutral-800"
+          class="w-[120px] shrink-0 rounded-xl border border-gray-200 bg-gray-50 p-2 dark:border-neutral-700 dark:bg-neutral-800"
         >
           <button
             class="mb-1.5 block w-full"

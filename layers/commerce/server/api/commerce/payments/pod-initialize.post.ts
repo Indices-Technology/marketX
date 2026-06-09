@@ -10,6 +10,7 @@ import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
 import { getClientIP } from '~~/server/layers/shared/utils/security'
 import { orderService } from '../../../services/order.service'
 import { orderRepository } from '../../../repositories/order.repository'
+import { walletRepository } from '../../../repositories/wallet.repository'
 import { notificationQueue } from '~~/server/queues/notification.queue'
 
 const schema = z.object({
@@ -120,11 +121,53 @@ export default defineEventHandler(async (event) => {
       userAgent,
     )
 
-    // 3. Build Paystack reference for SHIPPING FEE ONLY
+    // 3. Debit platform fee from each seller's wallet before shipping is collected
+    const PLATFORM_FEE_PERCENT = parseFloat(process.env.PLATFORM_FEE_PERCENT ?? '5')
+
+    const orderItems = await prisma.orderItem.findMany({
+      where: { orderId: order.id },
+      include: {
+        variant: {
+          select: {
+            product: { select: { seller: { select: { id: true } } } },
+          },
+        },
+      },
+    })
+
+    // Aggregate fee per seller (item.price is the correct line total including all discounts)
+    const sellerFees = new Map<string, number>()
+    for (const item of orderItems) {
+      const sellerId = item.variant?.product?.seller?.id
+      if (!sellerId) continue
+      const fee = Math.round(item.price * PLATFORM_FEE_PERCENT / 100)
+      sellerFees.set(sellerId, (sellerFees.get(sellerId) ?? 0) + fee)
+    }
+
+    // Check every seller has sufficient balance before debiting any
+    for (const [sellerId, fee] of sellerFees) {
+      const wallet = await walletRepository.getOrCreateWallet(sellerId)
+      if (wallet.balance < fee) {
+        const shortfallNGN = ((fee - wallet.balance) / 100).toFixed(2)
+        // Cancel the order and restore stock — buyer will see a clean error
+        await orderRepository.restoreStock(
+          orderItems.map((i) => ({ variantId: i.variantId, quantity: i.quantity })),
+        )
+        await prisma.orders.update({ where: { id: order.id }, data: { status: 'CANCELLED' } })
+        throw new UserError(
+          'SELLER_INSUFFICIENT_WALLET',
+          `One or more sellers cannot offer Pay on Delivery at this time (wallet shortfall: ₦${shortfallNGN}). Please choose a different payment method.`,
+          402,
+        )
+      }
+    }
+
+    // 4. Build Paystack reference and initialize BEFORE debiting wallets.
+    //    This way, if Paystack is unavailable the wallet balance is never touched
+    //    and the buyer can safely retry.
     const reference = `pod_ship_${order.id}_${Date.now()}`
     await orderRepository.setPaymentRef(order.id, reference)
 
-    // 4. Initialize Paystack for shipping fee only
     const FAKE_TLDS = new Set(['test', 'demo', 'local', 'example', 'invalid', 'localhost'])
     const isPaystackEmail = (e: string | null | undefined): e is string => {
       if (!e) return false
@@ -145,6 +188,26 @@ export default defineEventHandler(async (event) => {
       callback_url: body.callback_url,
     })
 
+    // 5. Paystack confirmed — now debit platform fees atomically
+    await prisma.$transaction(async (tx) => {
+      for (const [sellerId, fee] of sellerFees) {
+        const wallet = await tx.sellerWallet.findUniqueOrThrow({ where: { sellerId } })
+        await tx.sellerWallet.update({
+          where: { id: wallet.id },
+          data: { balance: { decrement: fee } },
+        })
+        await tx.transaction.create({
+          data: {
+            walletId: wallet.id,
+            amount: fee,
+            type: 'PLATFORM_FEE_DEBIT',
+            description: `POD platform fee (${PLATFORM_FEE_PERCENT}%) — Order #${order.id}`,
+            orderId: order.id,
+          },
+        })
+      }
+    })
+
     return {
       success: true,
       data: {
@@ -156,7 +219,7 @@ export default defineEventHandler(async (event) => {
         productAmount: order.totalAmount,
       },
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
     if (error instanceof ZodError)
       throw createError({ statusCode: 400, statusMessage: 'Invalid request body' })

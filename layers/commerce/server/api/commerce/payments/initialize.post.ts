@@ -79,14 +79,14 @@ export default defineEventHandler(async (event) => {
         accessCode: ps.data.access_code,
       },
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
     if (error instanceof ZodError)
       throw createError({ statusCode: 400, statusMessage: 'Invalid request body' })
     if (error instanceof UserError)
       throw createError({ statusCode: error.status, statusMessage: error.message })
     // Surface Paystack-specific errors so the client can show the real reason
-    const msg: string = error?.message || ''
+    const msg: string = error instanceof Error ? error.message : ''
     if (msg.startsWith('Paystack:')) {
       logger.logError('[POST /api/commerce/payments/initialize] Paystack error', error, { requestId: event.context?.requestId })
       throw createError({ statusCode: 502, statusMessage: msg })

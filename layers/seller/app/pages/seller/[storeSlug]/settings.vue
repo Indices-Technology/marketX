@@ -590,7 +590,7 @@
         <button
           type="submit"
           :disabled="isSaving || isUploadingLogo || isUploadingBanner"
-          class="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#f02c56] to-purple-600 py-3.5 text-[14px] font-bold text-white transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-50"
+          class="flex w-full items-center justify-center gap-2 rounded-xl bg-brand py-3.5 text-[14px] font-bold text-white transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-50"
         >
           <Icon
             v-if="isSaving"

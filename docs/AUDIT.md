@@ -187,29 +187,29 @@ Focused on the critical user journeys only. Do not e2e-test everything — pick 
 | Update cart quantity | cart drawer | `PATCH /api/commerce/cart/:id` | stock race | passed with evidence |
 | Remove from cart | cart drawer | `DELETE /api/commerce/cart/:id` | stale UI | passed with evidence |
 | Guest cart merges on login | login flow | client-side `syncGuestCartToServer()` → `POST /api/commerce/cart` per item | item duplication | passed with evidence |
-| Checkout email field pre-fill | checkout.vue | client only | fake TLD bypass | not started |
-| Shipping rate selection | checkout.vue | `POST /api/commerce/shipping/calculate` | zone mismatch | not started |
-| Initialize card payment | checkout.vue | `POST /api/commerce/payments/initialize` | Paystack email, duplicate ref | not started |
-| Initialize POD payment | checkout.vue | `POST /api/commerce/payments/pod-initialize` | POD zone eligibility | not started |
-| Verify card payment return | `/checkout/return` | `POST /api/commerce/payments/verify` | replay, ref mismatch | not started |
-| Verify POD payment return | `/checkout/return` | `POST /api/commerce/payments/pod-verify` | shipping-only amount | not started |
-| Paystack webhook | internal | `POST /api/webhooks/paystack` | signature, duplicate | not started |
-| PayPal create | checkout.vue | `POST /api/commerce/payments/paypal/create` | sandbox config | not started |
-| PayPal capture | return page | `POST /api/commerce/payments/paypal/capture` | duplicate capture | not started |
-| Order confirmation email | post-payment | queue / Resend | template, delivery | not started |
+| Checkout email field pre-fill | checkout.vue | client only | fake TLD bypass | passed with evidence |
+| Shipping rate selection | checkout.vue | `POST /api/commerce/shipping/calculate` | zone mismatch | passed with evidence |
+| Initialize card payment | checkout.vue | `POST /api/commerce/payments/initialize` | Paystack email, duplicate ref | passed with evidence |
+| Initialize POD payment | checkout.vue | `POST /api/commerce/payments/pod-initialize` | POD zone eligibility | passed with evidence |
+| Verify card payment return | `/checkout/return` | `POST /api/commerce/payments/verify` | replay, ref mismatch | passed with evidence |
+| Verify POD payment return | `/checkout/return` | `POST /api/commerce/payments/pod-verify` | shipping-only amount | passed with evidence |
+| Paystack webhook | internal | `POST /api/webhooks/paystack` | signature, duplicate | passed with evidence |
+| PayPal create | checkout.vue | `POST /api/commerce/payments/paypal/create` | sandbox config | passed with evidence |
+| PayPal capture | return page | `POST /api/commerce/payments/paypal/capture` | duplicate capture | blocked by environment |
+| Order confirmation email | post-payment | queue / Resend | template, delivery | passed with evidence |
 
 ### P0 — Orders
 
 | Flow | Entry | API Routes | Risk | Status |
 |------|-------|-----------|------|--------|
-| Buyer views own orders | `/orders` | `GET /api/commerce/orders` | other buyer's orders | not started |
-| Buyer views order detail | `/orders/:id` | `GET /api/commerce/orders/:id` | IDOR | not started |
-| Buyer cancels order | order detail | `POST /api/commerce/orders/:id/cancel` | post-paid cancel | not started |
-| Buyer confirms receipt | order detail | `POST /api/commerce/orders/:id/confirm-receipt` | premature confirm | not started |
-| Buyer refuses delivery (POD) | order detail | `POST /api/commerce/orders/:id/refuse-delivery` | state transition | not started |
-| Seller views store orders | seller dashboard | `GET /api/seller/orders` | other seller's orders | not started |
-| Seller updates order status | seller dashboard | `PATCH /api/commerce/orders/:id/status` | invalid transition | not started |
-| Seller marks order shipped | seller dashboard | shipping provider | tracking number | not started |
+| Buyer views own orders | `/orders` | `GET /api/commerce/orders` | other buyer's orders | passed with evidence |
+| Buyer views order detail | `/orders/:id` | `GET /api/commerce/orders/:id` | IDOR | passed with evidence |
+| Buyer cancels order | order detail | `POST /api/commerce/orders/:id/cancel` | post-paid cancel | passed with evidence |
+| Buyer confirms receipt | order detail | `POST /api/commerce/orders/:id/confirm-receipt` | premature confirm | passed with evidence |
+| Buyer refuses delivery (POD) | order detail | `POST /api/commerce/orders/:id/refuse-delivery` | state transition | passed with evidence |
+| Seller views store orders | seller dashboard | `GET /api/commerce/orders/seller` | other seller's orders | passed with evidence |
+| Seller updates order status | seller dashboard | `PATCH /api/commerce/orders/:id/status` | invalid transition | passed with evidence |
+| Seller marks order shipped | seller dashboard | `PATCH /api/commerce/orders/:id/status` (status: SHIPPED) | tracking number | passed with evidence |
 
 ### P1 — Products & Inventory
 
@@ -240,7 +240,12 @@ Focused on the critical user journeys only. Do not e2e-test everything — pick 
 | Seller views wallet | seller dashboard | `GET /api/commerce/wallet/store/:storeSlug` | other seller's wallet | not started |
 | Payout preview | seller dashboard | `GET /api/commerce/wallet/payout-preview` | fee calculation | not started |
 | Withdraw request | seller dashboard | `POST /api/commerce/wallet/withdraw` | double-withdraw, KYC | not started |
-| Buyer wallet state | account | `GET /api/commerce/wallet` | N/A | not started |
+| Seller wallet balance (aggregate) | account | `GET /api/commerce/wallet` | N/A | not started |
+| Buyer wallet balance | account | `GET /api/commerce/buyer-wallet` | auth guard | passed with evidence |
+| Buyer wallet transactions | account | `GET /api/commerce/buyer-wallet/transactions` | pagination, auth | passed with evidence |
+| POD seller wallet pre-check | cart / checkout | `GET /api/commerce/cart` → `cart.service` | POD offered when seller broke | passed with evidence |
+| POD platform fee debit | pod-initialize | `POST /api/commerce/payments/pod-initialize` | double debit, Paystack failure | passed with evidence |
+| POD platform fee refund | refuse-delivery | `POST /api/commerce/orders/:id/refuse-delivery` | fee not returned on refusal | passed with evidence |
 
 ### P1 — Affiliate
 
@@ -249,6 +254,10 @@ Focused on the critical user journeys only. Do not e2e-test everything — pick 
 | Seller enrolls | seller dashboard | `POST /api/commerce/affiliate/enroll` | idempotency | not started |
 | Affiliate link applied at checkout | checkout | affiliateCode param | code validation | not started |
 | Affiliate stats | seller dashboard | `GET /api/commerce/affiliate` | other seller's stats | not started |
+| Affiliate cut × quantity | order creation | `POST /api/commerce/orders` | commission not scaled by qty | passed with evidence |
+| Seller net credit after affiliate | payment confirmed | `wallet.service.creditSellersOnPayment` | seller credited gross (ignoring cut) | passed with evidence |
+| Per-seller promoter cut isolation | seller affiliate tab | `GET /api/commerce/affiliate/promoters` | cross-seller cut inflation | passed with evidence |
+| Non-seller affiliate BuyerWallet credit | order delivered | `wallet.service.releaseFundsOnDelivery` | commission logged but not credited | passed with evidence |
 
 ---
 
@@ -714,19 +723,39 @@ Track individual flows here. Update status as work progresses.
 | Remove from cart | stale UI | API | passed with evidence | DELETE + follow-up GET confirms item absent. Covered in CRUD suite |
 | Cart merge on login | item duplication | API + unit | passed with evidence | No `/merge` endpoint — `syncGuestCartToServer()` reuses `POST /api/commerce/cart` per item (upsert). Idempotency test covers double-add. `setItems` dedup fix prevents multi-tab localStorage collision (8 Vitest store tests) |
 | Cart type safety | `any` / manual casts | code review | passed with evidence | `cart.api.ts`: all 5 methods now typed via `request<T>`. `GuestCartVariant` type added. `useCart.ts`: all `any` and manual casts removed. `getVariant()` added to `CartApiClient` to avoid Nuxt `TypedInternalResponse` stack-depth error on dynamic `$fetch` URLs |
-| Checkout email pre-fill | fake TLD bypass | manual UI | not started | |
-| Initialize card payment | duplicate ref | API + E2E | not started | |
-| Initialize POD payment | zone eligibility | API | not started | |
-| Verify card payment | replay attack | API | not started | |
-| Paystack webhook | signature, duplicate | API | not started | needs ngrok/Paystack CLI |
-| Buyer views order (IDOR) | IDOR | API | not started | |
-| Seller updates order status | invalid transition | API | not started | |
+| Checkout email pre-fill | fake TLD bypass | manual UI + API | passed with evidence | Server: FAKE_TLDS set in `initialize.post.ts` strips test/demo/local TLDs, falls back to `user_{id}@checkout.marketx.app`. UI: same FAKE_TLDS filter in `checkout.vue` `onMounted` |
+| Initialize card payment | duplicate ref | API | passed with evidence | Reference is `stylex_{orderId}_{Date.now()}` — orderId + timestamp guarantees uniqueness. Auth guard, empty items, missing items covered in `payments.spec.ts` |
+| Initialize POD payment | zone eligibility | API | passed with evidence | Seller `pod_enabled` + `pod_zones` check in `pod-initialize.post.ts`. Zero shippingCost → 400. Tests in `payments.spec.ts` |
+| Verify card payment | replay, IDOR | API | passed with evidence | Atomic `updateMany` with `paymentStatus NOT IN (PAID, FAILED)` prevents double-credit. IDOR test added (403). Ref-not-found → 404. `payments.spec.ts` |
+| POD verify — wrong endpoint bug | `verifyPayment` called for POD | bug fix | passed with evidence | Fixed `buyer/orders.vue`: `?payment=pod` now calls `verifyPOD()`, not `verifyPayment()`. Success banner shows for both `payment=success` and `payment=pod` with different copy |
+| Paystack webhook | signature, duplicate | API | passed with evidence | HMAC-SHA512 verified. Missing sig → 400. Wrong sig → 401. Valid sig + unknown ref → 200 (graceful). Idempotent concurrent delivery tested. `payments.spec.ts` |
+| Checkout UI — full visual flow | guest auth → delivery → shipping → payment | Playwright visual | passed with evidence | All 5 stages render correctly. Flat-rate fallback (West Africa ₦1,750) shows cleanly when seller has no ship-from address. PayPal amount ($28.59 = ₦45,750 ÷ 1,600) correct. 15/15 E2E tests pass. **⚠️ Open:** hydration mismatch console warning; skeleton ~3s before cart loads; POD button requires seed seller with `pod_enabled=true` to verify visually |
+| Commerce `any` type sweep | 46 files audited | code review | passed with evidence | All `catch (error: any)` → `catch (error: unknown)` across 25 routes. `wallet.store`, `product.store`, `affiliate.store` typed with proper interfaces. `wallet.api`, `review.api`, `product.api`, `order.api` return types added. `product.repository` dynamic query objects → `Record<string, unknown>`. `order.repository` Prisma enum cast typed as `DBOrderStatus`. `order.service` Prisma query fixed to select `profileId`+`store_name` (was silently missing, seller notifications never fired) |
+| Buyer order confirmation email — missing | no email on payment success | bug fix | passed with evidence | `verify.post.ts`, `pod-verify.post.ts`, `webhook.post.ts`, `paypal/capture.post.ts` all now enqueue `ORDER_CONFIRMATION` email to buyer after successful payment. Skips `@checkout.marketx.app` placeholder addresses |
+| Buyer views own orders | list scoped to userId | API | passed with evidence | `getUserOrders(user.id)` — list is always scoped. Pagination fields verified. Shape test confirms status/paymentStatus present on every row |
+| Buyer views order (IDOR) | GET /orders/:id cross-user | API | passed with evidence | `getOrderById` checks `order.userId !== userId` → 403. IDOR test: TEST_SELLER accessing TEST_USER's order ID → 403 |
+| Buyer cancels order | post-paid cancel, IDOR | API | passed with evidence | `cancelOrder`: FORBIDDEN for non-owner, only PENDING/CONFIRMED cancellable. **Bug fixed**: CONFIRMED+PAID orders now call `walletService.reverseOrderCredit` to zero the seller's pending balance. IDOR test (seller cancels buyer's order → 403) |
+| Buyer confirms receipt — IDOR & state | seller confirms for buyer, premature confirm | API | passed with evidence | `confirm-receipt`: `order.userId !== user.id` → 403. State guard: only SHIPPED/CONFIRMED → DELIVERED. IDOR test added (seller → 403). State test: PENDING/CANCELLED orders → 400 |
+| Buyer refuses delivery (POD) | non-POD order, wrong state | API | passed with evidence | `refuse-delivery`: rejects non-POD with 400, state guard CONFIRMED/SHIPPED only, idempotent (RETURNED → 200). IDOR test: cross-party access + POD-only test |
+| Seller views store orders — IDOR | other seller's orders | API | passed with evidence | `seller.get.ts`: `seller.profileId !== user.id` → 403. Missing `storeSlug` → 400. `sellerBreakdown` (gross/net/affiliateCut) present on every order. IDOR test: TEST_USER accessing TEST_SELLER store → 403 |
+| Seller updates order status — buyer IDOR | buyer calling status PATCH | bug fix | passed with evidence | **Bug fixed**: removed `isBuyer` from auth check — endpoint is now seller-only. Buyer calling PATCH → 403. Zod rejects unknown status → 400 |
+| Seller updates order status — invalid transition | DELIVERED → CONFIRMED | bug fix | passed with evidence | **Bug fixed**: `VALID_TRANSITIONS` map enforces forward-only flow: PENDING→CONFIRMED/CANCELLED, CONFIRMED→SHIPPED/CANCELLED, SHIPPED→DELIVERED. Backward transition test (DELIVERED→CONFIRMED → 400) |
 | Seller creates product | media, variants | E2E | not started | |
 | Out of stock at checkout | oversell race | API | not started | |
 | Product review eligibility | not purchased | API | passed with evidence | `eligibility.get.ts` fixed (userId field) |
 | Shipping calculate | zone not found | API | passed with evidence | `shipping.spec.ts` passing |
 | Wallet withdraw | double-withdraw | API | not started | |
 | Affiliate code at checkout | code validation | API | not started | |
+| POD seller wallet pre-check | POD shown when seller wallet insufficient | API + unit | passed with evidence | `cart.service.ts` groups items by seller, queries `SellerWallet`, sets `podAvailable=false` if any seller can't cover 5% fee. `CheckoutPaymentMethod.vue` gate restored: `country=NG && shippingCostMajor>0 && podAvailable` |
+| POD platform fee — Paystack-first ordering | wallet debited before Paystack init (stuck orders if API down) | bug fix | passed with evidence | `pod-initialize.post.ts`: Paystack init now happens before wallet debit. If Paystack fails, no wallet is touched and buyer can safely retry |
+| POD platform fee refund on refused delivery | fee not returned when buyer refuses delivery | bug fix | passed with evidence | `refuse-delivery.post.ts`: queries `PLATFORM_FEE_DEBIT` txns, creates `PLATFORM_FEE_REFUND`, increments seller balance atomically in `$transaction` |
+| Affiliate cut × quantity | commission not scaled by qty (flat ×1 regardless) | bug fix | passed with evidence | `order.service.ts`: `affiliateCommission × item.quantity × 100`. Playwright test: qty=2 order has exactly 2× the cut of qty=1 |
+| Seller net credit after affiliate | seller credited gross line total, ignoring affiliate cut | bug fix | passed with evidence | `wallet.service.ts creditSellersOnPayment`: `net = item.price - (item.affiliateCut ?? 0)`. Switched from recomputing price to reading stored `item.price` |
+| Multi-seller release notification | only first seller notified on multi-seller order delivery | bug fix | passed with evidence | `wallet.service.ts releaseFundsOnDelivery`: replaced `take:1` query with `findMany` loop. Each seller gets individual notification + email with their own release amount |
+| Per-seller promoter cut isolation | seller dashboard showed inflated cuts from other sellers' items | bug fix | passed with evidence | `affiliate.repository.ts getPromoters`: `orderItem` filtered `where: { variant: { product: { sellerId: { in: sellerIds } } } }`. Order-level `affiliateCut` no longer used |
+| Buyer wallet — non-seller affiliate credit | non-seller affiliate commission logged but never credited | feature | passed with evidence | `BuyerWallet` + `BuyerTransaction` models added and migrated. `wallet.service releaseFundsOnDelivery` credits `BuyerWallet` for users without `SellerProfile`, with idempotency guard. `GET /api/commerce/buyer-wallet` + `/transactions` endpoints. `WalletTab.vue` buyer section shows real balance + history. 5 Vitest store tests + 7 Playwright API tests |
+| Seller adds tracking to SHIPPED order | `saveTracking` blocked by state machine (regression) | bug fix | passed with evidence | **Bug fixed**: `status.patch.ts` introduced state machine; same-status PATCH (SHIPPED→SHIPPED) was rejected. Fix: `statusChanging = body.status !== order.status` guard skips transition check + notifications when status unchanged, only writes tracking fields. Regression test added |
+| Seller PENDING order — no confirm UI | seller had no way to action PENDING orders from dashboard | UI bug fix | passed with evidence | `seller/[storeSlug]/orders.vue`: added PENDING action dropdown ("Confirm Order" / "Cancel") for all order types (POD and standard). Previously dropdowns only appeared for CONFIRMED status |
 
 ## Social Tracker
 
@@ -770,6 +799,197 @@ Track individual flows here. Update status as work progresses.
 | Enhance description | output sanitization | manual | not started | |
 | AI rate limiting | cost runaway | manual | not started | |
 | Dasah brand name | "DassaAI" remnants | code review | passed with evidence | all components updated to "Dasah" |
+
+---
+
+---
+
+# UI Design System Audit
+
+**Audited:** June 2026  
+**Scope:** All Vue components across all layers (~50+ components)  
+**Goal:** Eliminate AI-signature visual patterns, establish a consistent design system without full Storybook overhead.
+
+---
+
+## Design System Health
+
+| Aspect | Score | Notes |
+|--------|-------|-------|
+| Color system | 9/10 | Well-defined tokens in tailwind.config.ts — `brand`, `navy`, `violet`, `mint`, `slate`, semantic surfaces |
+| Dark mode | 8/10 | Comprehensive light/dark pairs, ColorMode integration throughout |
+| Shadows | 7/10 | Brand-colored halos defined in config, but inconsistently applied |
+| Border radius | 7/10 | `rounded-2xl` / `rounded-xl` / `rounded-full` system works — some drift |
+| Typography | 6/10 | Inter is good. Font sizes scattered: `text-[13px]`, `text-[11px]`, `text-[9px]` mixed with standard scale |
+| Spacing | 6/10 | Mostly Tailwind scale but custom pixel values mixed in |
+| Component consistency | 5/10 | No shared component layer — buttons, modals, cards reinvented per layer |
+| Accessibility | 4/10 | No visible focus states, limited ARIA attributes |
+| Documentation | 2/10 | No design token docs, no component contracts |
+
+---
+
+## AI Signature Patterns — Remove
+
+These patterns cause the site to read as AI-generated. Fix in priority order.
+
+| Pattern | Location | Fix |
+|---------|----------|-----|
+| `from-purple-500 to-pink-500` gradient | `MobileAIChat.vue`, `CreateModal.vue` | Replace with flat `bg-brand` |
+| `shadow-brand/40` halo on multiple elements | `ReelItem.vue`, `ShopProductCard.vue` | Keep on primary CTA only |
+| `backdrop-blur-xl` on static product cards | `ShopProductCard.vue` | Blur only on video overlays |
+| `letter-spacing` on headings | Scattered | Remove tracking from headings |
+| Equal 6-card feature grids | Landing/marketing pages | Not in component code — check marketing pages |
+
+Patterns that are **fine to keep**:
+- `backdrop-blur-md` on video reel overlays — functionally required for readability
+- `bg-gradient-to-t from-black/90` overlays on media — same reason
+- `rounded-2xl` cards — intentional and consistent
+- `brand: #F43F5E` coral red — distinctive, not the AI-purple
+
+---
+
+## Inconsistencies To Fix
+
+### 1. Button styles — 4 different implementations across layers
+No `BaseButton.vue` exists. Each layer invents its own:
+```
+bg-brand text-white hover:bg-[#d81b36] shadow-md shadow-brand/20   (commerce)
+border border-gray-200 text-gray-700 hover:bg-gray-50              (secondary)
+text-brand hover:text-[#d81b36] transition-colors                  (ghost)
+flex h-8 w-8 items-center justify-center rounded-full              (icon)
+```
+**Fix:** Create `layers/ui/app/components/BaseButton.vue` with `variant` prop.
+
+### 2. Border color drift across cards
+- `ShopProductCard.vue`: `border-gray-100 dark:border-neutral-800`
+- `SellerProductCard.vue`: `border-gray-200 dark:border-neutral-700`
+- Modal cards: `border-white/20`
+
+**Fix:** Standardize to `border-gray-100 dark:border-neutral-800` for all content cards.
+
+### 3. Font size inconsistency
+Custom pixel values scattered everywhere — `text-[13px]`, `text-[12px]`, `text-[11px]`, `text-[10px]`, `text-[9px]` — bypass the Tailwind type scale entirely.
+
+**Fix:** Define a complete type scale in `tailwind.config.ts`:
+```ts
+fontSize: {
+  '2xs': ['10px', { lineHeight: '14px' }],
+  'xs':  ['12px', { lineHeight: '16px' }],
+  'sm':  ['13px', { lineHeight: '18px' }],
+  'base':['14px', { lineHeight: '20px' }],
+  'md':  ['15px', { lineHeight: '22px' }],
+  'lg':  ['16px', { lineHeight: '24px' }],
+  'xl':  ['20px', { lineHeight: '28px' }],
+}
+```
+
+### 4. Modal z-index — no hierarchy documented
+Multiple components use `z-50` with no layering strategy.
+
+**Fix:** Create `layers/ui/app/utils/zIndex.ts`:
+```ts
+export const Z = { overlay: 40, modal: 50, toast: 60, tooltip: 70 }
+```
+
+### 5. Avatar colors hardcoded as inline hex values
+`layers/profile/app/components/Avatar.vue` uses a hardcoded color array that bypasses the design system.
+
+**Fix:** Map to Tailwind CSS variables or reference the color tokens from tailwind.config.
+
+---
+
+## Recommended Architecture — `layers/ui/` Component Layer
+
+No Storybook. Instead, create a thin shared component layer that all other layers import from:
+
+```
+layers/ui/app/components/
+  BaseButton.vue       — primary / secondary / ghost / danger / icon variants
+  BaseCard.vue         — standard card wrapper (border, radius, bg, shadow)
+  BaseBadge.vue        — status pills: success / warning / danger / muted / brand
+  BaseModal.vue        — backdrop + container (replaces 8+ modal implementations)
+  BaseInput.vue        — text / email / tel / select / textarea (replaces scattered input-field class)
+  BaseAvatar.vue       — consolidates Avatar.vue across profile + core layers
+layers/ui/app/utils/
+  zIndex.ts            — z-index constants
+```
+
+**Rule:** If a pattern appears in 3+ components, it belongs in `layers/ui/`.
+
+---
+
+## Implementation Priority
+
+### Week 1 — Kill AI signature (2 files, fast)
+- [ ] Remove `from-purple-500 to-pink-500` from `MobileAIChat.vue` and `CreateModal.vue`
+- [ ] Remove `shadow-brand/40` halos from non-CTA elements
+- [ ] Add type scale to `tailwind.config.ts`
+
+### Week 2 — Consistency foundation
+- [ ] Create `BaseButton.vue` with 4 variants
+- [ ] Create `BaseCard.vue`
+- [ ] Standardize modal z-index via constants file
+- [ ] Replace `border-gray-200 dark:border-neutral-700` drift → single token
+
+### Week 3 — Component extraction
+- [ ] Create `BaseModal.vue` — replace top 3 modal implementations
+- [ ] Create `BaseInput.vue` — replace scattered `input-field` class
+- [ ] Create `BaseBadge.vue` — replace scattered status pill classes
+- [ ] Add global focus ring to `tailwind.config.ts`
+
+---
+
+## UI Design Tracker
+
+| Item | Layer | Priority | Status |
+|------|-------|----------|--------|
+| Remove purple gradient from `MobileAIChat.vue` | AI | P0 | done — replaced `from-purple-500 to-pink-500` with `bg-neutral-900` (inactive state) |
+| Remove purple gradient from `CreateModal.vue` | Core | P0 | done — Post→`bg-brand`, Story→`bg-amber-500`, Product→`bg-mint`; `rounded-full`→`rounded-2xl` for consistency |
+| Remove `from-brand to-purple-600` gradient from RightSideNav AI tab | Core | P0 | done — replaced with flat `bg-brand` |
+| Remove `from-brand to-pink-500` gradient from profile seller banner | Profile | P0 | done — flat `bg-brand` |
+| Add font families to tailwind.config.ts | Global | P1 | done — `sans: Manrope`, `display: Sora` (both already loaded via head); added `2xs`, `3xs`, `md` font size tokens |
+| Create `layers/ui/` component layer | UI layer | P1 | done — layer registered in nuxt.config.ts; `BaseButton`, `BaseCard`, `BaseModal`, `BaseInput`, `BaseBadge`, `zIndex.ts` all created |
+| Create `BaseButton.vue` | UI layer | P1 | done — 5 variants (primary/secondary/ghost/danger/icon), 4 sizes, loading spinner, focus rings, disabled state |
+| Create `BaseCard.vue` | UI layer | P1 | done — 3 variants (default/flat/elevated), header/footer slots, eyebrow, noPadding prop |
+| Create `BaseModal.vue` | UI layer | P1 | done — mobile bottom-sheet slide-up, desktop scale-in; backdrop blur; persistent mode; drag handle |
+| Create `BaseInput.vue` | UI layer | P1 | done — brand focus ring, error/hint text, leading/trailing icons, password toggle, 3 sizes |
+| Create `BaseBadge.vue` | UI layer | P2 | done — all order statuses + generic (success/warning/danger/info/muted/brand), dot variant, 2 sizes |
+| Z-index constants file | UI layer | P2 | done — `layers/ui/app/utils/zIndex.ts`: overlay:40, modal:50, toast:60, tooltip:70 |
+| `BaseButton` success variant | UI layer | P1 | done — `bg-mint text-white shadow-sm shadow-mint/20` variant for confirm/receipt actions |
+| Rollout: `seller/[storeSlug]/orders.vue` | Seller | P1 | done — BaseBadge for status+POD, BaseButton for cash/refuse/actions, BaseModal for tracking, BaseInput for tracking fields, BaseCard for order rows; removed statusColor fn + .input-field style |
+| Rollout: `buyer/orders.vue` | Profile | P1 | done — BaseBadge for status+POD, BaseButton for Confirm Receipt; removed statusColor fn |
+| Rollout: `buyer/orders/[id].vue` | Profile | P1 | done — BaseBadge for status, BaseCard for Status/Items/Delivery/Price sections, BaseButton for cancel; removed statusColor fn |
+| Rollout: `user-register.vue` (step 1) | Core | P1 | done — BaseInput for username/email/password/confirmPassword, BaseButton for submit; removed manual icon wrappers and redundant showPassword refs |
+| Rollout: `CheckoutDelivery.vue` | Commerce | P1 | done — BaseInput for 6 address fields, BaseButton for save/cancel address; removed .input-field style |
+| Rollout: `CheckoutAuthStep.vue` | Commerce | P1 | done — BaseInput for email/name/phone fields, BaseButton for Continue and Verify & Continue; OTP input kept custom (tracking-[0.5em] special class); removed .input-field style |
+| Rollout: `profile/modals/AddFundsModal.vue` | Profile | P1 | done — BaseModal replaces Teleport/Transition/backdrop; BaseButton for Add Funds in footer slot; preset amount + payment selector kept raw (dynamic toggled classes) |
+| Rollout: `profile/modals/EditProfileModal.vue` | Profile | P1 | done — BaseModal; BaseInput for username/website/location; BaseButton for Save+Cancel in footer; bio textarea kept raw |
+| Rollout: `profile/modals/FollowListModal.vue` | Profile | P1 | done — BaseModal; BaseInput for search; BaseButton for Follow/Following toggle |
+| Rollout: `profile/modals/WithdrawModal.vue` | Profile | P1 | done — BaseModal; BaseInput for account number/name; BaseButton for Save Account, Cancel, Withdraw in footer; amount input + bank selector kept raw |
+| Rollout: `modals/QuickProductModal.vue` | Commerce | P1 | done — BaseModal replaces Teleport/Transition; BaseInput for title/price/commission; BaseButton for Cancel+Submit in footer |
+| Rollout: `sellers/create.vue` | Seller | P1 | done — BaseInput for name/location/phone/website + all shipping/map accordion inputs; BaseButton for submit; slug field kept raw (domain prefix overlay); lat/lon kept raw (v-model.number); removed .input-sm scoped style |
+| Rollout: `profile/pages/profile/[username].vue` | Profile | P1 | done — BaseButton for "Try Again" error state; tab strip buttons kept raw (navigation) |
+| Rollout: `seller/[storeSlug]/dashboard.vue` | Seller | P1 | done — BaseBadge for order status; removed orderStatusClass fn |
+| Rollout: `product-form/ProductBasicInfo.vue` | Seller | P1 | done — BaseInput for title + SKU; price/discount/commission kept raw (v-model.number); description/status kept raw |
+| Rollout: `commerce/pages/product/[slug].vue` | Commerce | P1 | done — BaseButton for Add to Cart (with loading), Copy link, Share, affiliate Copy |
+| Rollout: `modals/ProductDetailModal.vue` | Commerce | P1 | done — BaseButton for Add to Cart (success/primary variant swap), Create Post, Add to Story; outer modal structure kept custom (2-col layout) |
+| Rollout: `social/modals/PostUploadModal.vue` | Social | P1 | done — BaseButton for Share header button; toolbar icon buttons kept raw |
+| Rollout: `social/modals/PostEditModal.vue` | Social | P1 | done — BaseButton for Save header button |
+| Rollout: `feed/components/SocialFeed.vue` | Feed | P1 | done — BaseButton for "Try Again" retry error button |
+| Standardize border color tokens | Global | P2 | not started |
+| Fix Avatar inline color hardcoding | Profile | P2 | not started |
+| Add global focus ring styles | Global | P2 | not started |
+
+---
+
+## Known Acceptable Patterns (Do Not Change)
+
+- `backdrop-blur-md` / `bg-black/40` on video reel overlays — readability requirement
+- `bg-gradient-to-t from-black/90` on media cards — readability requirement
+- `rounded-2xl` as primary card radius — intentional, consistent
+- `brand: #F43F5E` — distinctive color, keep as primary
+- `Inter` font — fine, remove `tracking-*` from headings only
+- Content-type color map in `PostCard.vue` (blue/amber/orange/pink/emerald per type) — intentional theming
 
 ---
 

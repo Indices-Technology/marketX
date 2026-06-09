@@ -1,5 +1,6 @@
 <template>
   <div
+    id="app-root"
     class="min-h-screen bg-white text-neutral-900 transition-colors duration-300 dark:bg-neutral-950 dark:text-neutral-100"
   >
     <NuxtLayout>
@@ -94,5 +95,17 @@ html.text-size-small {
 }
 html.text-size-large {
   font-size: 18px;
+}
+
+/* Subtle grain texture on dark surfaces */
+html.dark #app-root::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9998;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23g)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
 }
 </style>

@@ -1,6 +1,6 @@
 <template>
   <button
-    class="flex w-full items-center gap-3 border-b border-gray-100 px-4 py-3 text-left transition-colors hover:bg-gray-50 dark:border-neutral-800 dark:hover:bg-neutral-900"
+    class="flex w-full items-center gap-3 border-b border-gray-200 px-4 py-3 text-left transition-colors hover:bg-gray-50 dark:border-neutral-800 dark:hover:bg-neutral-900"
     :disabled="isCreating"
     @click="$emit('select')"
   >

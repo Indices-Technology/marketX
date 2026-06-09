@@ -11,7 +11,7 @@
         >
           <!-- Header -->
           <div
-            class="flex shrink-0 items-center justify-between border-b border-gray-100 px-5 py-4 dark:border-neutral-800"
+            class="flex shrink-0 items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-neutral-800"
           >
             <div class="flex items-center gap-2.5">
               <div
@@ -35,7 +35,7 @@
 
           <!-- Tabs -->
           <div
-            class="flex shrink-0 gap-0 border-b border-gray-100 px-5 dark:border-neutral-800"
+            class="flex shrink-0 gap-0 border-b border-gray-200 px-5 dark:border-neutral-800"
           >
             <button
               v-for="tab in TABS"
@@ -463,7 +463,7 @@
 
           <!-- ── FOOTER ─────────────────────────────────────────────── -->
           <div
-            class="shrink-0 border-t border-gray-100 bg-white px-4 py-3 dark:border-neutral-800 dark:bg-neutral-900"
+            class="shrink-0 border-t border-gray-200 bg-white px-4 py-3 dark:border-neutral-800 dark:bg-neutral-900"
             style="padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px))"
           >
             <!-- Selected track preview -->

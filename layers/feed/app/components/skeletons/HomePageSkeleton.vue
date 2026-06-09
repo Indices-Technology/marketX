@@ -24,7 +24,7 @@
     <div
       v-for="i in 3"
       :key="i"
-      class="transform-gpu overflow-hidden border-y border-gray-100 bg-white sm:rounded-2xl sm:border dark:border-neutral-800 dark:bg-neutral-950"
+      class="transform-gpu overflow-hidden border-y border-gray-200 bg-white sm:rounded-2xl sm:border dark:border-neutral-800 dark:bg-neutral-950"
     >
       <!-- Author header -->
       <div class="flex items-center gap-3 px-4 py-3">

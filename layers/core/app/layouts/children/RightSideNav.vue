@@ -5,7 +5,7 @@
   >
     <!-- Tab Navigation -->
     <div
-      class="flex shrink-0 gap-1 border-b border-gray-100 bg-gray-50/80 p-2 backdrop-blur-sm dark:border-neutral-800/50 dark:bg-neutral-900/70"
+      class="flex shrink-0 gap-1 border-b border-gray-200 bg-gray-50/80 p-2 backdrop-blur-sm dark:border-neutral-800/50 dark:bg-neutral-900/70"
     >
       <button
         class="flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all"
@@ -24,7 +24,7 @@
         class="relative flex flex-1 items-center justify-center gap-2 overflow-hidden rounded-lg px-3 py-2.5 text-sm font-semibold transition-all"
         :class="
           activeTab === 'ai'
-            ? 'border border-transparent bg-gradient-to-r from-brand to-purple-600 text-white shadow-md shadow-brand/20'
+            ? 'bg-brand text-white shadow-sm shadow-brand/20'
             : 'text-gray-500 hover:bg-gray-100 hover:text-brand dark:text-neutral-400 dark:hover:bg-neutral-800'
         "
         @click="activeTab = 'ai'"
@@ -55,7 +55,7 @@
         <ClientOnly>
           <div
             v-if="profileStore.isLoggedIn"
-            class="rounded-2xl border border-brand/10 bg-gradient-to-br from-brand/5 via-purple-500/5 to-transparent p-4 shadow-sm dark:border-brand/20 dark:from-brand/10 dark:via-purple-500/10"
+            class="rounded-2xl border border-brand/20 bg-brand/5 p-4 shadow-sm dark:border-brand/20 dark:bg-brand/10"
           >
             <div class="flex items-center gap-3">
               <Avatar
@@ -82,7 +82,11 @@
                     >
                   </template>
                   <template v-else>
-                    Check your store stats or list new products?
+                    <NuxtLink
+                      :to="`/seller/${sellerStore.sellers[0]?.store_slug}/dashboard`"
+                      class="font-medium text-gray-700 underline hover:text-gray-900 dark:text-neutral-300 dark:hover:text-white"
+                      >View your dashboard →</NuxtLink
+                    >
                   </template>
                 </p>
               </div>
@@ -93,7 +97,7 @@
         <!-- Top Shops -->
         <div
           v-if="topSellers.length"
-          class="rounded-2xl border border-gray-100 bg-gray-50/70 p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-800/40"
+          class="rounded-2xl border border-gray-200 bg-gray-50 p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-800/40"
         >
           <div class="mb-4 flex items-center justify-between">
             <div class="flex items-center gap-2">
@@ -116,7 +120,7 @@
             <div
               v-for="seller in topSellers.slice(0, 5)"
               :key="seller.id"
-              class="group flex items-center justify-between rounded-xl border border-transparent p-2.5 transition-all hover:border-gray-200 hover:bg-white hover:shadow dark:hover:border-neutral-700 dark:hover:bg-neutral-800/60"
+              class="group flex items-center justify-between rounded-xl border border-gray-200 bg-white/60 p-2.5 transition-all hover:bg-white hover:shadow-sm dark:border-neutral-700/60 dark:bg-neutral-800/30 dark:hover:bg-neutral-800/70"
             >
               <NuxtLink
                 :to="`/sellers/profile/${seller.store_slug}`"
@@ -172,7 +176,7 @@
         <!-- Categories Grid -->
         <div
           v-if="categories.length"
-          class="rounded-2xl border border-gray-100 bg-gray-50/70 p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-800/40"
+          class="rounded-2xl border border-gray-200 bg-gray-50 p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-800/40"
         >
           <div class="mb-4 flex items-center gap-2">
             <Icon
@@ -230,7 +234,7 @@
 
         <!-- Quick Links -->
         <div
-          class="rounded-2xl border border-gray-100 bg-gray-50/70 p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-800/40"
+          class="rounded-2xl border border-gray-200 bg-gray-50 p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-800/40"
         >
           <div class="mb-3 flex items-center gap-2">
             <Icon

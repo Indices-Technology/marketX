@@ -55,7 +55,7 @@ export default defineEventHandler(async (event) => {
     const orderStatus = rawStatus === 'DELIVERED' ? 'DELIVERED' : 'SHIPPED'
     await prisma.orders.update({
       where: { id: order.id },
-      data: { status: orderStatus as any },
+      data: { status: orderStatus as 'DELIVERED' | 'SHIPPED' },
     })
 
     // Push real-time notification to buyer via SSE

@@ -1,4 +1,4 @@
-// POST /api/commerce/orders/[id]/confirm-cash
+﻿// POST /api/commerce/orders/[id]/confirm-cash
 // Called by the seller after collecting cash payment on delivery.
 // Sets paymentStatus → PAID, status → DELIVERED, credits seller wallet.
 
@@ -79,7 +79,7 @@ export default defineEventHandler(async (event) => {
       success: true,
       data: { message: 'Cash confirmed. Order marked delivered and wallet credited.' },
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
     if (error instanceof UserError)
       throw createError({ statusCode: error.status, statusMessage: error.message })

@@ -11,7 +11,7 @@
         >
           <!-- ── Header ── -->
           <div
-            class="flex shrink-0 items-center justify-between border-b border-gray-100 px-4 py-3 dark:border-neutral-800"
+            class="flex shrink-0 items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-neutral-800"
           >
             <button
               @click="handleClose()"
@@ -29,13 +29,15 @@
             >
               {{ $t('upload.newPost') }}
             </h2>
-            <button
-              @click="handlePost"
+            <BaseButton
+              variant="primary"
+              size="sm"
+              :loading="isPosting"
               :disabled="!canPost || isPosting"
-              class="rounded-full bg-brand px-4 py-1.5 text-[13px] font-bold text-white transition-all hover:bg-[#c51230] active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+              @click="handlePost"
             >
               {{ isPosting ? $t('upload.sharing') : $t('upload.share') }}
-            </button>
+            </BaseButton>
           </div>
 
           <!-- ── Scrollable body ── -->
@@ -264,7 +266,7 @@
           </div>
 
           <!-- ── Bottom Toolbar ── -->
-          <div class="shrink-0 border-t border-gray-100 dark:border-neutral-800">
+          <div class="shrink-0 border-t border-gray-200 dark:border-neutral-800">
             <!-- Advanced options panel -->
             <Transition name="expand">
               <div v-if="showAdvancedOptions" class="space-y-3 px-4 pb-3 pt-3">
@@ -287,7 +289,7 @@
                   </select>
                 </div>
                 <label
-                  class="flex cursor-pointer items-center justify-between border-t border-gray-100 pt-3 dark:border-neutral-800"
+                  class="flex cursor-pointer items-center justify-between border-t border-gray-200 pt-3 dark:border-neutral-800"
                 >
                   <span
                     class="text-[13px] text-gray-700 dark:text-neutral-300"
@@ -392,6 +394,7 @@ import MentionInput from '../MentionInput.vue'
 import type { MentionData } from '../MentionInput.vue'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import Avatar from '~~/layers/profile/app/components/Avatar.vue'
+import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 import type { ICloudinaryUploadResult } from '~~/layers/core/app/types/media.types'
 
 const props = defineProps<{

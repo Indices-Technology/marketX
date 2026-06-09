@@ -56,7 +56,7 @@
           v-for="product in products"
           :key="product.id"
           :to="`/sellers/profile/${product.store_slug}/products/${product.slug}`"
-          class="group flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white transition-shadow hover:shadow-md dark:border-neutral-700 dark:bg-neutral-800"
+          class="group flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white transition-shadow hover:shadow-md dark:border-neutral-700 dark:bg-neutral-800"
         >
           <!-- Image -->
           <div class="relative aspect-square w-full overflow-hidden bg-gray-100 dark:bg-neutral-700">

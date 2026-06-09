@@ -67,7 +67,14 @@ export default {
       },
 
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['Manrope', 'system-ui', 'sans-serif'],
+        display: ['Sora', 'system-ui', 'sans-serif'],
+      },
+
+      fontSize: {
+        '2xs': ['10px', { lineHeight: '14px', letterSpacing: '0' }],
+        '3xs': ['9px', { lineHeight: '12px', letterSpacing: '0' }],
+        'md': ['15px', { lineHeight: '22px' }],
       },
 
       borderRadius: {

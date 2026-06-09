@@ -1,7 +1,7 @@
 <template>
   <NuxtLink
     :to="`/messages/${conversation.id}`"
-    class="flex items-center gap-3 border-b border-gray-100 p-4 transition-colors hover:bg-gray-50 dark:border-neutral-800 dark:hover:bg-neutral-900"
+    class="flex items-center gap-3 border-b border-gray-200 p-4 transition-colors hover:bg-gray-50 dark:border-neutral-800 dark:hover:bg-neutral-900"
     :class="{ 'bg-gray-50 dark:bg-neutral-900': isActive }"
   >
     <!-- Avatar: square for stores, round for users -->

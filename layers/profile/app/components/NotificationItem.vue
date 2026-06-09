@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex cursor-pointer items-start gap-3 border-b border-gray-100 p-4 transition-colors hover:bg-gray-50 dark:border-neutral-800 dark:hover:bg-neutral-900"
+    class="flex cursor-pointer items-start gap-3 border-b border-gray-200 p-4 transition-colors hover:bg-gray-50 dark:border-neutral-800 dark:hover:bg-neutral-900"
     :class="{ 'bg-blue-50 dark:bg-blue-900/10': !notification.read }"
     @click="handleClick"
   >

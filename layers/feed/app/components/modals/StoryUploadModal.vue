@@ -31,7 +31,7 @@
             class="max-h-full"
             controls
           />
-          <img v-else :src="mediaPreview" class="max-h-full object-contain" />
+          <img v-else :src="mediaPreview" alt="Story preview" class="max-h-full object-contain" />
           <button
             class="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white"
             @click="clearMedia"

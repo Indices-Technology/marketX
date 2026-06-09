@@ -1,6 +1,6 @@
 <template>
   <div
-    class="w-44 flex-shrink-0 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-all hover:shadow-md active:scale-[0.98] dark:border-neutral-800 dark:bg-neutral-900"
+    class="w-44 flex-shrink-0 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-all hover:shadow-md active:scale-[0.98] dark:border-neutral-800 dark:bg-neutral-900"
   >
     <!-- Image -->
     <div class="relative h-32 w-full overflow-hidden bg-gray-100 dark:bg-neutral-800">

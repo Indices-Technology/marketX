@@ -1,4 +1,4 @@
-// POST /api/commerce/payments/paypal/create
+﻿// POST /api/commerce/payments/paypal/create
 // Creates a PENDING internal order then a PayPal order.
 // Returns the PayPal approval URL for redirect.
 import { z, ZodError } from 'zod'
@@ -44,6 +44,7 @@ export default defineEventHandler(async (event) => {
 
     const config = useRuntimeConfig()
     const baseURL = config.public.baseURL || 'http://localhost:3000'
+    const baseAppName = config.public.siteName || 'MarketX'
     const returnUrl = `${baseURL}/buyer/orders?paypal=success&orderId=${order.id}`
     const cancelUrl = `${baseURL}/checkout`
 
@@ -51,7 +52,7 @@ export default defineEventHandler(async (event) => {
     const pp = await paypal.createOrder({
       amountUSD,
       internalOrderId: order.id,
-      description: `stylex Order #${order.id}`,
+      description: `${baseAppName} Order #${order.id}`,
       returnUrl,
       cancelUrl,
     })
@@ -71,13 +72,31 @@ export default defineEventHandler(async (event) => {
         amountUSD,
       },
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
     if (error instanceof ZodError)
-      throw createError({ statusCode: 400, statusMessage: 'Invalid request body' })
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Invalid request body',
+      })
     if (error instanceof UserError)
-      throw createError({ statusCode: error.status, statusMessage: error.message })
-    logger.logError('[POST /api/commerce/payments/paypal/create]', error, { requestId: event.context?.requestId })
-    throw createError({ statusCode: 500, statusMessage: 'PayPal order creation failed' })
+      throw createError({
+        statusCode: error.status,
+        statusMessage: error.message,
+      })
+    const msg: string =
+      error?.message || error?.data?.message || 'PayPal order creation failed'
+    logger.logError('[POST /api/commerce/payments/paypal/create]', error, {
+      requestId: event.context?.requestId,
+    })
+    if (
+      msg.includes('PAYPAL_CLIENT_ID') ||
+      msg.includes('PAYPAL_CLIENT_SECRET')
+    )
+      throw createError({
+        statusCode: 503,
+        statusMessage: 'PayPal is not configured on this server',
+      })
+    throw createError({ statusCode: 502, statusMessage: `PayPal: ${msg}` })
   }
 })

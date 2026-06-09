@@ -57,6 +57,7 @@ model Profile {
   aiProfile          UserAIProfile?
   affiliateOrders    Orders[]       @relation("AffiliateOrders")
   reviews            Review[]       @relation("UserReviews")
+  buyerWallet        BuyerWallet?
 
   // ── Squares ──────────────────────────────────────────────────────────────
   squareOfficerRoles     SquareOfficer[]      @relation("SquareOfficers")
@@ -443,6 +444,29 @@ model Payout {
   completed_at    DateTime?
   id              String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   wallet          SellerWallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+}
+
+/// Wallet for buyers — holds affiliate commissions earned by non-seller users,
+/// refunds, and any future buyer-side credits.
+model BuyerWallet {
+  id           String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  profileId    String             @unique @db.Uuid
+  balance      Float              @default(0)
+  updated_at   DateTime           @updatedAt
+  profile      Profile            @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  transactions BuyerTransaction[]
+}
+
+model BuyerTransaction {
+  id          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  walletId    String      @db.Uuid
+  amount      Float
+  /// AFFILIATE_CREDIT | REFUND | DEBIT | CREDIT
+  type        String
+  orderId     Int?
+  description String
+  created_at  DateTime    @default(now())
+  wallet      BuyerWallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
 }
 
 model Story {

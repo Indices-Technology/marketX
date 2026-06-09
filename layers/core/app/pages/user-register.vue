@@ -204,142 +204,50 @@
         <!-- Account form -->
         <form class="space-y-5" novalidate @submit.prevent="handleAccountStep">
           <!-- Username -->
-          <div>
-            <div class="relative">
-              <Icon
-                name="mdi:account-outline"
-                class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                size="20"
-              />
-              <input
-                v-model="form.username"
-                type="text"
-                :placeholder="$t('auth.register.usernamePlaceholder')"
-                autocomplete="username"
-                :disabled="isBusy"
-                class="w-full rounded-xl border bg-white/60 py-3.5 pl-11 pr-4 text-base placeholder-gray-500 transition focus:border-brand focus:ring-2 focus:ring-brand/30 dark:border-neutral-600 dark:bg-neutral-800/50 dark:text-white dark:placeholder-gray-400"
-                :class="{
-                  'border-red-400 dark:border-red-600': errors.username,
-                }"
-              />
-            </div>
-            <p
-              v-if="errors.username"
-              class="mt-1.5 text-xs text-red-600 dark:text-red-400"
-            >
-              {{ errors.username }}
-            </p>
-          </div>
+          <BaseInput
+            v-model="form.username"
+            :placeholder="$t('auth.register.usernamePlaceholder')"
+            autocomplete="username"
+            :disabled="isBusy"
+            icon-left="mdi:account-outline"
+            size="lg"
+            :error="errors.username"
+          />
 
           <!-- Email -->
-          <div>
-            <div class="relative">
-              <Icon
-                name="mdi:at"
-                class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                size="20"
-              />
-              <input
-                v-model="form.email"
-                type="email"
-                :placeholder="$t('auth.register.emailPlaceholder')"
-                autocomplete="email"
-                :disabled="isBusy"
-                class="w-full rounded-xl border bg-white/60 py-3.5 pl-11 pr-4 text-base placeholder-gray-500 transition focus:border-brand focus:ring-2 focus:ring-brand/30 dark:border-neutral-600 dark:bg-neutral-800/50 dark:text-white dark:placeholder-gray-400"
-                :class="{ 'border-red-400 dark:border-red-600': errors.email }"
-              />
-            </div>
-            <p
-              v-if="errors.email"
-              class="mt-1.5 text-xs text-red-600 dark:text-red-400"
-            >
-              {{ errors.email }}
-            </p>
-          </div>
+          <BaseInput
+            v-model="form.email"
+            type="email"
+            :placeholder="$t('auth.register.emailPlaceholder')"
+            autocomplete="email"
+            :disabled="isBusy"
+            icon-left="mdi:at"
+            size="lg"
+            :error="errors.email"
+          />
 
           <!-- Password -->
           <div class="grid gap-5 sm:grid-cols-2">
-            <div>
-              <div class="relative">
-                <Icon
-                  name="mdi:lock-outline"
-                  class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                  size="20"
-                />
-                <input
-                  v-model="form.password"
-                  :type="showPassword ? 'text' : 'password'"
-                  :placeholder="$t('auth.register.passwordPlaceholder')"
-                  autocomplete="new-password"
-                  :disabled="isBusy"
-                  class="w-full rounded-xl border bg-white/60 py-3.5 pl-11 pr-11 text-base placeholder-gray-500 transition focus:border-brand focus:ring-2 focus:ring-brand/30 dark:border-neutral-600 dark:bg-neutral-800/50 dark:text-white dark:placeholder-gray-400"
-                  :class="{
-                    'border-red-400 dark:border-red-600': errors.password,
-                  }"
-                />
-                <button
-                  type="button"
-                  :disabled="isBusy"
-                  class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                  @click="showPassword = !showPassword"
-                >
-                  <Icon
-                    :name="
-                      showPassword ? 'mdi:eye-off-outline' : 'mdi:eye-outline'
-                    "
-                    size="20"
-                  />
-                </button>
-              </div>
-              <p
-                v-if="errors.password"
-                class="mt-1.5 text-xs text-red-600 dark:text-red-400"
-              >
-                {{ errors.password }}
-              </p>
-            </div>
-            <div>
-              <div class="relative">
-                <Icon
-                  name="mdi:lock-check-outline"
-                  class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                  size="20"
-                />
-                <input
-                  v-model="form.confirmPassword"
-                  :type="showConfirmPassword ? 'text' : 'password'"
-                  :placeholder="$t('auth.register.confirmPasswordPlaceholder')"
-                  autocomplete="new-password"
-                  :disabled="isBusy"
-                  class="w-full rounded-xl border bg-white/60 py-3.5 pl-11 pr-11 text-base placeholder-gray-500 transition focus:border-brand focus:ring-2 focus:ring-brand/30 dark:border-neutral-600 dark:bg-neutral-800/50 dark:text-white dark:placeholder-gray-400"
-                  :class="{
-                    'border-red-400 dark:border-red-600':
-                      errors.confirmPassword,
-                  }"
-                />
-                <button
-                  type="button"
-                  :disabled="isBusy"
-                  class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                  @click="showConfirmPassword = !showConfirmPassword"
-                >
-                  <Icon
-                    :name="
-                      showConfirmPassword
-                        ? 'mdi:eye-off-outline'
-                        : 'mdi:eye-outline'
-                    "
-                    size="20"
-                  />
-                </button>
-              </div>
-              <p
-                v-if="errors.confirmPassword"
-                class="mt-1.5 text-xs text-red-600 dark:text-red-400"
-              >
-                {{ errors.confirmPassword }}
-              </p>
-            </div>
+            <BaseInput
+              v-model="form.password"
+              type="password"
+              :placeholder="$t('auth.register.passwordPlaceholder')"
+              autocomplete="new-password"
+              :disabled="isBusy"
+              icon-left="mdi:lock-outline"
+              size="lg"
+              :error="errors.password"
+            />
+            <BaseInput
+              v-model="form.confirmPassword"
+              type="password"
+              :placeholder="$t('auth.register.confirmPasswordPlaceholder')"
+              autocomplete="new-password"
+              :disabled="isBusy"
+              icon-left="mdi:lock-check-outline"
+              size="lg"
+              :error="errors.confirmPassword"
+            />
           </div>
 
           <PasswordStrengthMeter
@@ -377,30 +285,19 @@
             </span>
           </label>
 
-          <button
+          <BaseButton
             type="submit"
+            size="lg"
+            class="w-full"
+            :loading="isLoading"
             :disabled="isBusy || !agreedToTerms"
-            class="w-full rounded-xl bg-brand py-3.5 text-base font-semibold text-white shadow transition hover:bg-brand/90 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-brand/40 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <span
-              v-if="isLoading"
-              class="flex items-center justify-center gap-2.5"
-            >
-              <div
-                class="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"
-              />
-              {{
-                accountType === 'seller'
-                  ? 'Continuing…'
-                  : $t('auth.register.creating')
-              }}
-            </span>
-            <span v-else>{{
+            {{
               accountType === 'seller'
                 ? 'Continue to store setup →'
                 : $t('auth.register.createButton')
-            }}</span>
-          </button>
+            }}
+          </BaseButton>
         </form>
 
         <div class="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
@@ -746,6 +643,8 @@ import { useAuth } from '../composables/useAuth'
 import PasswordStrengthMeter from '../components/PasswordStrengthMeter.vue'
 import { useMediaUpload } from '~~/layers/core/app/composables/useMediaUpload'
 import { useSellerManagement } from '~~/layers/seller/app/composables/useSellerManagement'
+import BaseInput from '~~/layers/ui/app/components/BaseInput.vue'
+import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 
 definePageMeta({ layout: false, middleware: 'guest' })
 
@@ -778,8 +677,6 @@ const chooseType = (type: 'buyer' | 'seller') => {
 }
 
 // ── Account form ──────────────────────────────────────────────────────────────
-const showPassword = ref(false)
-const showConfirmPassword = ref(false)
 const agreedToTerms = ref(false)
 const isSocialLoading = ref(false)
 

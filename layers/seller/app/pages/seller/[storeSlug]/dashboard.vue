@@ -85,7 +85,7 @@
           </NuxtLink>
           <NuxtLink
             :to="`/seller/${storeSlug}/products/create`"
-            class="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[#f02c56] to-purple-600 px-3 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+            class="flex items-center gap-1.5 rounded-lg bg-brand px-3 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
           >
             <Icon name="mdi:plus" size="16" />
             <span class="hidden sm:inline">Add Product</span>
@@ -93,10 +93,54 @@
         </div>
       </div>
 
+      <!-- Quick actions strip -->
+      <div class="mb-6 grid grid-cols-4 gap-3">
+        <NuxtLink
+          :to="`/seller/${storeSlug}/products/create`"
+          class="flex flex-col items-center gap-2 rounded-2xl border border-gray-200 bg-white px-2 py-4 text-center transition-all hover:border-brand/30 hover:shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
+        >
+          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-brand/10 dark:bg-brand/20">
+            <Icon name="mdi:plus-box" size="22" class="text-brand" />
+          </div>
+          <span class="text-[11px] font-semibold text-gray-700 dark:text-neutral-300">Add Product</span>
+        </NuxtLink>
+        <NuxtLink
+          :to="`/seller/${storeSlug}/orders`"
+          class="relative flex flex-col items-center gap-2 rounded-2xl border border-gray-200 bg-white px-2 py-4 text-center transition-all hover:border-brand/30 hover:shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
+        >
+          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-900/20">
+            <Icon name="mdi:shopping-outline" size="22" class="text-amber-600 dark:text-amber-400" />
+          </div>
+          <span class="text-[11px] font-semibold text-gray-700 dark:text-neutral-300">Orders</span>
+          <span
+            v-if="pendingOrderCount > 0"
+            class="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-brand text-[9px] font-bold text-white"
+          >{{ pendingOrderCount }}</span>
+        </NuxtLink>
+        <NuxtLink
+          :to="`/seller/${storeSlug}/messages`"
+          class="flex flex-col items-center gap-2 rounded-2xl border border-gray-200 bg-white px-2 py-4 text-center transition-all hover:border-brand/30 hover:shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
+        >
+          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-900/20">
+            <Icon name="mdi:message-text-outline" size="22" class="text-blue-600 dark:text-blue-400" />
+          </div>
+          <span class="text-[11px] font-semibold text-gray-700 dark:text-neutral-300">Messages</span>
+        </NuxtLink>
+        <NuxtLink
+          :to="`/seller/${storeSlug}/settings`"
+          class="flex flex-col items-center gap-2 rounded-2xl border border-gray-200 bg-white px-2 py-4 text-center transition-all hover:border-brand/30 hover:shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
+        >
+          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 dark:bg-neutral-800">
+            <Icon name="mdi:cog-outline" size="22" class="text-gray-500 dark:text-neutral-400" />
+          </div>
+          <span class="text-[11px] font-semibold text-gray-700 dark:text-neutral-300">Settings</span>
+        </NuxtLink>
+      </div>
+
       <!-- Store completeness score -->
       <div
         v-if="completeness < 100"
-        class="mb-6 rounded-xl border border-brand/20 bg-gradient-to-r from-brand/5 to-purple-600/5 p-4 dark:from-brand/10 dark:to-purple-600/10"
+        class="mb-6 rounded-xl border border-brand/20 bg-brand/5 p-4 dark:bg-brand/10"
       >
         <div class="mb-3 flex items-center justify-between">
           <div class="flex items-center gap-2">
@@ -117,7 +161,7 @@
           class="mb-3 h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-neutral-700"
         >
           <div
-            class="h-full rounded-full bg-gradient-to-r from-brand to-purple-600 transition-all duration-500"
+            class="h-full rounded-full bg-brand transition-all duration-500"
             :style="{ width: `${completeness}%` }"
           />
         </div>
@@ -245,7 +289,7 @@
           <div
             v-for="order in recentOrders"
             :key="order.id"
-            class="flex items-center justify-between rounded-lg border border-gray-100 px-3 py-2.5 dark:border-neutral-800"
+            class="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2.5 dark:border-neutral-800"
           >
             <div class="min-w-0 flex-1">
               <p
@@ -261,12 +305,7 @@
               <p class="text-[13px] font-bold text-gray-900 dark:text-white">
                 {{ formatKobo(order.totalAmount) }}
               </p>
-              <span
-                class="rounded-full px-1.5 py-0.5 text-[10px] font-bold uppercase"
-                :class="orderStatusClass(order.status)"
-              >
-                {{ order.status }}
-              </span>
+              <BaseBadge :status="order.status" :label="order.status" />
             </div>
           </div>
         </div>
@@ -324,7 +363,7 @@
             v-for="product in recentProducts"
             :key="product.id"
             :to="`/seller/${storeSlug}/products/${product.id}/edit`"
-            class="group overflow-hidden rounded-xl border border-gray-100 transition-shadow hover:shadow-md dark:border-neutral-700"
+            class="group overflow-hidden rounded-xl border border-gray-200 transition-shadow hover:shadow-md dark:border-neutral-700"
           >
             <div class="relative aspect-square bg-gray-100 dark:bg-neutral-800">
               <img
@@ -390,6 +429,7 @@ import { useProduct } from '~~/layers/commerce/app/composables/useProduct'
 import { useOrderApi } from '~~/layers/commerce/app/services/order.api'
 import { useWalletApi } from '~~/layers/commerce/app/services/wallet.api'
 import { videoThumb } from '~~/layers/core/app/utils/cloudinary'
+import BaseBadge from '~~/layers/ui/app/components/BaseBadge.vue'
 
 definePageMeta({ middleware: 'auth', layout: 'store-layout' })
 
@@ -448,25 +488,6 @@ const storeWallet = ref({
   totalSpent: 0,
 })
 
-const orderStatusClass = (status: string) => {
-  const map: Record<string, string> = {
-    PENDING:
-      'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-    CONFIRMED:
-      'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-    PAID: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-    SHIPPED:
-      'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
-    DELIVERED:
-      'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-    CANCELLED: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-    CANCELED: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-  }
-  return (
-    map[status] ??
-    'bg-gray-100 text-gray-600 dark:bg-neutral-800 dark:text-neutral-400'
-  )
-}
 
 const itemsLabel = (order: Record<string, unknown>) => {
   const count = (order.orderItem as unknown[])?.length ?? 0

@@ -2,7 +2,7 @@
 <!-- Horizontally scrollable shoppable product shelf injected between feed posts -->
 <template>
   <div
-    class="w-full overflow-hidden rounded-2xl border border-gray-100 bg-white dark:border-neutral-800 dark:bg-neutral-950"
+    class="w-full overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-950"
   >
     <!-- Header -->
     <div class="flex items-center justify-between px-4 py-3">
@@ -53,7 +53,7 @@
         <button
           v-for="product in products"
           :key="product.id"
-          class="group flex w-[130px] flex-none flex-col overflow-hidden rounded-xl border border-gray-100 bg-white transition hover:border-brand/30 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-brand/30"
+          class="group flex w-[130px] flex-none flex-col overflow-hidden rounded-xl border border-gray-200 bg-white transition hover:border-brand/30 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-brand/30"
           @click="$emit('open-product', product)"
         >
           <!-- Thumbnail -->

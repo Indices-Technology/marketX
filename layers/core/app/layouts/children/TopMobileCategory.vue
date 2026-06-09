@@ -16,6 +16,7 @@
         <Icon :name="tab.icon" size="14" class="shrink-0" />
         {{ tab.label }}
       </button>
+
     </div>
   </div>
 </template>

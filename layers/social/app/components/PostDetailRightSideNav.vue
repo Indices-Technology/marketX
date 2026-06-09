@@ -14,7 +14,7 @@
 
       <!-- ── AUTHOR CARD ─────────────────────────────────────── -->
       <div
-        class="rounded-2xl border border-gray-100 bg-gray-50/70 p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-800/40"
+        class="rounded-2xl border border-gray-200 bg-gray-50/70 p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-800/40"
       >
         <p class="mb-3 text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-neutral-500">
           Posted by
@@ -66,7 +66,7 @@
 
       <!-- ── MORE FROM THIS AUTHOR ──────────────────────────── -->
       <div
-        class="rounded-2xl border border-gray-100 bg-gray-50/70 p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-800/40"
+        class="rounded-2xl border border-gray-200 bg-gray-50/70 p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-800/40"
       >
         <div class="mb-3 flex items-center justify-between">
           <p class="text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-neutral-500">
@@ -129,7 +129,7 @@
       <!-- ── TAGGED PRODUCTS ────────────────────────────────── -->
       <div
         v-if="taggedProducts.length"
-        class="rounded-2xl border border-gray-100 bg-gray-50/70 p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-800/40"
+        class="rounded-2xl border border-gray-200 bg-gray-50/70 p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-800/40"
       >
         <p class="mb-3 text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-neutral-500">
           Products in this post

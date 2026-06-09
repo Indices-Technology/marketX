@@ -3,7 +3,7 @@
     :is="to ? NuxtLink : 'div'"
     :to="to"
     :class="[
-      'rounded-xl p-4 bg-white dark:bg-neutral-900 border border-gray-100 dark:border-neutral-800 flex flex-col gap-2',
+      'rounded-xl p-4 bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 flex flex-col gap-2',
       to ? 'hover:border-gray-200 dark:hover:border-neutral-700 transition-colors cursor-pointer' : '',
     ]"
   >

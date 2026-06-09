@@ -1,7 +1,7 @@
 <template>
   <!-- Distribution -->
   <div
-    class="rounded-xl border border-brand/20 bg-gradient-to-br from-brand/5 to-purple-600/5 p-4 sm:p-6 dark:from-brand/10 dark:to-purple-600/10"
+    class="rounded-xl border border-brand/20 bg-brand/5 p-4 sm:p-6 dark:bg-brand/10"
   >
     <div class="mb-4 flex items-center gap-2">
       <Icon name="mdi:share-variant-outline" size="20" class="text-brand" />

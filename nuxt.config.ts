@@ -1,7 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
-  devtools: { enabled: false },
+  devtools: { enabled: true },
 
   app: {
     head: {
@@ -18,8 +18,17 @@ export default defineNuxtConfig({
         { name: 'format-detection', content: 'telephone=no' },
       ],
       link: [
-        { rel: 'apple-touch-icon', sizes: '180x180', href: '/icons/icon-180.png' },
-        { rel: 'icon', type: 'image/png', sizes: '192x192', href: '/icons/icon-192.png' },
+        {
+          rel: 'apple-touch-icon',
+          sizes: '180x180',
+          href: '/icons/icon-180.png',
+        },
+        {
+          rel: 'icon',
+          type: 'image/png',
+          sizes: '192x192',
+          href: '/icons/icon-192.png',
+        },
         { rel: 'icon', type: 'image/svg+xml', href: '/icons/icon-512.svg' },
         { rel: 'manifest', href: '/manifest.webmanifest' },
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
@@ -46,6 +55,7 @@ export default defineNuxtConfig({
   },
 
   extends: [
+    './layers/ui',
     './layers/ai',
     './layers/core',
     './layers/feed',
@@ -94,12 +104,37 @@ export default defineNuxtConfig({
       categories: ['shopping', 'business', 'social'],
       icons: [
         // PNG — required for iOS home screen (Safari ignores SVG icons)
-        { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
-        { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-        { src: '/icons/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+        {
+          src: '/icons/icon-192.png',
+          sizes: '192x192',
+          type: 'image/png',
+          purpose: 'any',
+        },
+        {
+          src: '/icons/icon-512.png',
+          sizes: '512x512',
+          type: 'image/png',
+          purpose: 'any',
+        },
+        {
+          src: '/icons/icon-maskable-512.png',
+          sizes: '512x512',
+          type: 'image/png',
+          purpose: 'maskable',
+        },
         // SVG fallback for browsers that support it
-        { src: '/icons/icon-192.svg', sizes: '192x192', type: 'image/svg+xml', purpose: 'any' },
-        { src: '/icons/icon-512.svg', sizes: '512x512', type: 'image/svg+xml', purpose: 'any' },
+        {
+          src: '/icons/icon-192.svg',
+          sizes: '192x192',
+          type: 'image/svg+xml',
+          purpose: 'any',
+        },
+        {
+          src: '/icons/icon-512.svg',
+          sizes: '512x512',
+          type: 'image/svg+xml',
+          purpose: 'any',
+        },
       ],
       shortcuts: [
         {
@@ -211,7 +246,8 @@ export default defineNuxtConfig({
           'X-Frame-Options': 'SAMEORIGIN',
           'X-Content-Type-Options': 'nosniff',
           'Referrer-Policy': 'strict-origin-when-cross-origin',
-          'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
+          'Strict-Transport-Security':
+            'max-age=31536000; includeSubDomains; preload',
           'Permissions-Policy': 'geolocation=(self), camera=(), microphone=()',
           'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
           'Content-Security-Policy': [
@@ -222,7 +258,7 @@ export default defineNuxtConfig({
             "img-src 'self' data: blob: https://res.cloudinary.com https://picsum.photos https://fastly.picsum.photos https://*.googleusercontent.com https://graph.facebook.com https://*.fbsbx.com https://platform-lookaside.fbsbx.com https://tiles.stadiamaps.com https://tiles.openfreemap.org https://api.maptiler.com https://*.cartocdn.com https://*.tile.openstreetmap.org",
             "media-src 'self' blob: https://res.cloudinary.com",
             "connect-src 'self' https://api.paystack.co https://api.upstash.io https://api.iconify.design https://tiles.stadiamaps.com https://tiles.openfreemap.org https://api.maptiler.com https://*.cartocdn.com https://nominatim.openstreetmap.org https://*.tile.openstreetmap.org wss: ws:",
-            "frame-src https://checkout.paystack.com",
+            'frame-src https://checkout.paystack.com',
             "worker-src 'self' blob:",
           ].join('; '),
         },
@@ -294,7 +330,8 @@ export default defineNuxtConfig({
         process.env.NUXT_PUBLIC_PRIVACY_EMAIL || 'privacy@marketx.app',
       legalEmail: process.env.NUXT_PUBLIC_LEGAL_EMAIL || 'legal@marketx.app',
       baseURL: process.env.NUXT_PUBLIC_BASE_URL || 'http://localhost:3000',
-      dassaSocketUrl: process.env.NUXT_PUBLIC_DASSA_SOCKET_URL || 'http://localhost:4000',
+      dassaSocketUrl:
+        process.env.NUXT_PUBLIC_DASSA_SOCKET_URL || 'http://localhost:4000',
       // Payments
       paystackPk: process.env.PAYSTACK_PUBLIC_KEY,
       // Cloudinary

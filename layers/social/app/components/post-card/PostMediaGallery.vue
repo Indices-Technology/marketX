@@ -198,17 +198,17 @@
         <div
           class="relative col-span-2 aspect-video overflow-hidden bg-gray-100 dark:bg-neutral-900"
         >
-          <img :src="gridSrc(mediaItems[0]!)" class="h-full w-full object-cover" />
+          <img :src="gridSrc(mediaItems[0]!)" alt="Post media" class="h-full w-full object-cover" />
         </div>
         <div
           class="relative aspect-square overflow-hidden bg-gray-100 dark:bg-neutral-900"
         >
-          <img :src="gridSrc(mediaItems[1]!)" class="h-full w-full object-cover" />
+          <img :src="gridSrc(mediaItems[1]!)" alt="Post media" class="h-full w-full object-cover" />
         </div>
         <div
           class="relative aspect-square overflow-hidden bg-gray-100 dark:bg-neutral-900"
         >
-          <img :src="gridSrc(mediaItems[2]!)" class="h-full w-full object-cover" />
+          <img :src="gridSrc(mediaItems[2]!)" alt="Post media" class="h-full w-full object-cover" />
           <div
             v-if="mediaItems.length > 3"
             class="absolute inset-0 flex items-center justify-center bg-black/55"

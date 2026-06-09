@@ -66,7 +66,7 @@ const contentTypes = [
     label: 'Style Inspiration',
     description: 'Show off your style and outfit ideas',
     icon: 'mdi:palette',
-    color: 'bg-gradient-to-br from-purple-500 to-pink-500',
+    color: 'bg-gradient-to-br from-brand to-rose-400',
   },
   {
     value: 'EDUCATIONAL',

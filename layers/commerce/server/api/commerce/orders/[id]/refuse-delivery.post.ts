@@ -1,4 +1,4 @@
-// POST /api/commerce/orders/[id]/refuse-delivery
+﻿// POST /api/commerce/orders/[id]/refuse-delivery
 // Called by buyer or seller to flag a refused delivery.
 // Order → RETURNED. Shipping fee stays with seller (non-refundable commitment).
 // Product stock is restored.
@@ -72,6 +72,30 @@ export default defineEventHandler(async (event) => {
     // Restore product stock
     await orderRepository.restoreStock(order.orderItem)
 
+    // Refund the platform fee that was debited from seller wallet at order creation
+    const feeDebits = await prisma.transaction.findMany({
+      where: { orderId: id, type: 'PLATFORM_FEE_DEBIT' },
+    })
+    if (feeDebits.length) {
+      await prisma.$transaction(async (tx) => {
+        for (const debit of feeDebits) {
+          await tx.sellerWallet.update({
+            where: { id: debit.walletId },
+            data: { balance: { increment: debit.amount } },
+          })
+          await tx.transaction.create({
+            data: {
+              walletId: debit.walletId,
+              amount: debit.amount,
+              type: 'PLATFORM_FEE_REFUND',
+              description: `POD platform fee refunded — Order #${id} refused`,
+              orderId: id,
+            },
+          })
+        }
+      })
+    }
+
     const reasonNote = body.reason ? ` Reason: ${body.reason}` : ''
 
     // Notify the other party
@@ -105,7 +129,7 @@ export default defineEventHandler(async (event) => {
       success: true,
       data: { message: 'Order marked as returned. Stock restored.' },
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
     if (error instanceof ZodError)
       throw createError({ statusCode: 400, statusMessage: 'Invalid request body' })

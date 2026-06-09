@@ -7,7 +7,7 @@
     <div class="discover-page-wrap relative w-full pb-20 md:pb-0 md:pt-0">
       <!-- ─── STICKY HEADER ──────────────────────────────────────────────── -->
       <div
-        class="discover-sticky-header -mx-2 border-b border-gray-100 bg-white/90 px-4 pb-3 pt-4 backdrop-blur-xl sm:-mx-4 dark:border-neutral-800 dark:bg-neutral-950/90"
+        class="discover-sticky-header -mx-2 border-b border-gray-200 bg-white/90 px-4 pb-3 pt-4 backdrop-blur-xl sm:-mx-4 dark:border-neutral-800 dark:bg-neutral-950/90"
         :style="{ top: discoverStickyTop }"
       >
         <div class="mb-3 flex items-center justify-between gap-3">

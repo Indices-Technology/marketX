@@ -12,7 +12,7 @@
       </div>
       <NuxtLink
         to="/sellers/create"
-        class="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-[#f02c56] to-purple-600 px-4 py-2 text-[13px] font-bold text-white transition-all hover:opacity-90 active:scale-[0.98]"
+        class="flex items-center gap-1.5 rounded-xl bg-brand px-4 py-2 text-[13px] font-bold text-white transition-all hover:opacity-90 active:scale-[0.98]"
       >
         <Icon name="mdi:plus" size="16" />
         Create Store
@@ -41,7 +41,7 @@
       <div
         v-for="i in 3"
         :key="i"
-        class="animate-pulse overflow-hidden rounded-2xl border border-gray-100 bg-white dark:border-neutral-800 dark:bg-neutral-900"
+        class="animate-pulse overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
       >
         <div class="h-28 bg-gray-100 dark:bg-neutral-800" />
         <div class="space-y-3 p-4">
@@ -76,7 +76,7 @@
       </div>
       <NuxtLink
         to="/sellers/create"
-        class="rounded-xl bg-gradient-to-r from-[#f02c56] to-purple-600 px-6 py-2.5 text-[13px] font-bold text-white transition-opacity hover:opacity-90"
+        class="rounded-xl bg-brand px-6 py-2.5 text-[13px] font-bold text-white transition-opacity hover:opacity-90"
       >
         Create Your First Store
       </NuxtLink>
@@ -87,12 +87,12 @@
       <div
         v-for="seller in sellers"
         :key="seller.id"
-        class="cursor-pointer overflow-hidden rounded-2xl border border-gray-100 bg-white transition-shadow hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900"
+        class="cursor-pointer overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900"
         @click="router.push(`/seller/${seller.store_slug}/dashboard`)"
       >
         <!-- Banner -->
         <div
-          class="relative h-28 bg-gradient-to-r from-[#f02c56] to-purple-600"
+          class="relative h-28 bg-brand"
           :style="
             seller.store_banner
               ? {
@@ -170,7 +170,7 @@
 
           <!-- Stats -->
           <div
-            class="mb-3 grid grid-cols-3 gap-2 border-b border-t border-gray-100 py-3 dark:border-neutral-800"
+            class="mb-3 grid grid-cols-3 gap-2 border-b border-t border-gray-200 py-3 dark:border-neutral-800"
           >
             <div class="text-center">
               <p
@@ -208,7 +208,7 @@
           <div class="flex flex-wrap gap-2" @click.stop>
             <NuxtLink
               :to="`/seller/${seller.store_slug}/dashboard`"
-              class="flex-1 rounded-xl bg-gradient-to-r from-[#f02c56] to-purple-600 py-2 text-center text-[12px] font-semibold text-white transition-opacity hover:opacity-90"
+              class="flex-1 rounded-xl bg-brand py-2 text-center text-[12px] font-semibold text-white transition-opacity hover:opacity-90"
             >
               Manage
             </NuxtLink>

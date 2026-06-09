@@ -72,10 +72,11 @@ export default defineEventHandler(async (event) => {
   try {
     const rates = await provider.getRates(payload)
     return { success: true, data: rates }
-  } catch (err: any) {
+  } catch (err: unknown) {
     // Provider API unavailable or not configured — fall back to flat rates
+    const msg = err instanceof Error ? err.message : String(err)
     logger.warn(
-      `[shipping/rates] ${provider.name} failed (${err?.message ?? err}), falling back to GlobalShippingZone`,
+      `[shipping/rates] ${provider.name} failed (${msg}), falling back to GlobalShippingZone`,
     )
     return { success: true, data: [], fallback: true }
   }

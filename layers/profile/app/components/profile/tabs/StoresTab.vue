@@ -34,7 +34,7 @@
       </p>
       <NuxtLink
         to="/sellers/create"
-        class="rounded-xl bg-gradient-to-r from-[#f02c56] to-purple-600 px-5 py-2 text-[13px] font-bold text-white transition-opacity hover:opacity-90"
+        class="rounded-xl bg-brand px-5 py-2 text-[13px] font-bold text-white transition-opacity hover:opacity-90"
       >
         Create a Store
       </NuxtLink>
@@ -45,11 +45,11 @@
       <div
         v-for="seller in sellers"
         :key="seller.id"
-        class="overflow-hidden rounded-2xl border border-gray-100 bg-gray-50 transition-shadow hover:shadow-md dark:border-neutral-700 dark:bg-neutral-800"
+        class="overflow-hidden rounded-2xl border border-gray-200 bg-gray-50 transition-shadow hover:shadow-md dark:border-neutral-700 dark:bg-neutral-800"
       >
         <!-- Banner -->
         <div
-          class="relative h-20 bg-gradient-to-r from-[#f02c56] to-purple-600"
+          class="relative h-20 bg-brand"
           :style="
             seller.store_banner
               ? {
@@ -148,7 +148,7 @@
             </NuxtLink>
             <NuxtLink
               :to="`/seller/${seller.store_slug}/dashboard`"
-              class="flex-1 rounded-lg bg-gradient-to-r from-[#f02c56] to-purple-600 py-1.5 text-center text-[12px] font-semibold text-white transition-opacity hover:opacity-90"
+              class="flex-1 rounded-lg bg-brand py-1.5 text-center text-[12px] font-semibold text-white transition-opacity hover:opacity-90"
             >
               Manage
             </NuxtLink>

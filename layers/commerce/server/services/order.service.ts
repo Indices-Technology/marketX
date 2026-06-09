@@ -4,6 +4,7 @@ import {
 } from '../repositories/order.repository'
 import { cartRepository } from '../repositories/cart.repository'
 import { affiliateRepository } from '../repositories/affiliate.repository'
+import { walletService } from './wallet.service'
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { auditQueue } from '~~/server/queues/audit.queue'
 import { notificationQueue } from '~~/server/queues/notification.queue'
@@ -70,7 +71,7 @@ export const orderService = {
                   where: { isActive: true },
                   orderBy: { minQuantity: 'desc' },
                 },
-                seller: { select: { id: true } },
+                seller: { select: { id: true, profileId: true, store_name: true } },
               },
             },
           },
@@ -116,7 +117,7 @@ export const orderService = {
 
       let itemAffiliateCut = 0
       if (affiliateUserId && variant.product.affiliateCommission) {
-        itemAffiliateCut = Math.round(variant.product.affiliateCommission * 100)
+        itemAffiliateCut = Math.round(variant.product.affiliateCommission * item.quantity * 100)
         totalAffiliateCut += itemAffiliateCut
       }
 
@@ -243,9 +244,9 @@ export const orderService = {
     }
     const sellerMap = new Map<string, SellerInfo>()
     for (let i = 0; i < variantRows.length; i++) {
-      const seller = variantRows[i]?.product.seller as any
+      const seller = variantRows[i]?.product.seller
       if (!seller?.profileId) continue
-      const profileId = seller.profileId as string
+      const profileId = seller.profileId
       const existing = sellerMap.get(profileId)
       const lineTotal = enrichedItems[i]?.price ?? 0
       const qty = enrichedItems[i]?.quantity ?? 1
@@ -329,6 +330,15 @@ export const orderService = {
 
     const updated = await orderRepository.updateOrderStatus(id, 'CANCELLED')
     await orderRepository.restoreStock(order.orderItem)
+
+    // If the order was already paid, reverse any pending seller credit so the
+    // seller's pending_balance stays accurate. A Paystack refund to the buyer
+    // must be issued separately (manual or via admin tooling).
+    if (order.paymentStatus === 'PAID') {
+      walletService.reverseOrderCredit(id).catch((e) =>
+        logger.logError('[cancelOrder wallet reverse]', e),
+      )
+    }
 
     auditQueue.enqueue({
       userId,

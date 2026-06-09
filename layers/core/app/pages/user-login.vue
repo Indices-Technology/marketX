@@ -52,12 +52,32 @@
               class="mt-2.5 flex items-center gap-1.5 rounded-lg bg-red-100 px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-200 disabled:opacity-60 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50"
               @click="resendVerification"
             >
-              <svg v-if="resendLoading" class="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"/>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+              <svg
+                v-if="resendLoading"
+                class="h-3 w-3 animate-spin"
+                viewBox="0 0 24 24"
+                fill="none"
+              >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="3"
+                />
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                />
               </svg>
               <Icon v-else name="mdi:email-sync-outline" size="13" />
-              {{ resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend verification email' }}
+              {{
+                resendCooldown > 0
+                  ? `Resend in ${resendCooldown}s`
+                  : 'Resend verification email'
+              }}
             </button>
           </div>
           <div
@@ -116,70 +136,27 @@
 
         <!-- Form -->
         <form class="space-y-5" @submit.prevent="handleSubmit">
-          <div>
-            <div class="relative">
-              <Icon
-                name="mdi:at"
-                class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                size="20"
-              />
-              <input
-                v-model="form.email"
-                type="email"
-                autocomplete="email"
-                :disabled="isBusy"
-                placeholder="you@example.com"
-                class="w-full rounded-xl border bg-white/60 py-3.5 pl-11 pr-4 text-base placeholder-gray-500 transition focus:border-brand focus:ring-2 focus:ring-brand/30 dark:border-neutral-600 dark:bg-neutral-800/50 dark:text-white dark:placeholder-gray-400"
-                :class="{ 'border-red-400 dark:border-red-600': errors.email }"
-              />
-            </div>
-            <p
-              v-if="errors.email"
-              class="mt-1.5 text-xs text-red-600 dark:text-red-400"
-            >
-              {{ errors.email }}
-            </p>
-          </div>
+          <BaseInput
+            v-model="form.email"
+            type="email"
+            autocomplete="email"
+            :disabled="isBusy"
+            placeholder="you@example.com"
+            icon-left="mdi:at"
+            size="lg"
+            :error="errors.email"
+          />
 
-          <div>
-            <div class="relative">
-              <Icon
-                name="mdi:lock-outline"
-                class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                size="20"
-              />
-              <input
-                v-model="form.password"
-                :type="showPassword ? 'text' : 'password'"
-                autocomplete="current-password"
-                :disabled="isBusy"
-                placeholder="Enter your password"
-                class="w-full rounded-xl border bg-white/60 py-3.5 pl-11 pr-11 text-base placeholder-gray-500 transition focus:border-brand focus:ring-2 focus:ring-brand/30 dark:border-neutral-600 dark:bg-neutral-800/50 dark:text-white dark:placeholder-gray-400"
-                :class="{
-                  'border-red-400 dark:border-red-600': errors.password,
-                }"
-              />
-              <button
-                type="button"
-                :disabled="isBusy"
-                class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                @click="showPassword = !showPassword"
-              >
-                <Icon
-                  :name="
-                    showPassword ? 'mdi:eye-off-outline' : 'mdi:eye-outline'
-                  "
-                  size="20"
-                />
-              </button>
-            </div>
-            <p
-              v-if="errors.password"
-              class="mt-1.5 text-xs text-red-600 dark:text-red-400"
-            >
-              {{ errors.password }}
-            </p>
-          </div>
+          <BaseInput
+            v-model="form.password"
+            type="password"
+            autocomplete="current-password"
+            :disabled="isBusy"
+            placeholder="Enter your password"
+            icon-left="mdi:lock-outline"
+            size="lg"
+            :error="errors.password"
+          />
 
           <div class="flex items-center justify-end">
             <NuxtLink
@@ -190,22 +167,15 @@
             </NuxtLink>
           </div>
 
-          <button
+          <BaseButton
             type="submit"
+            size="lg"
+            class="w-full"
+            :loading="isLoading"
             :disabled="isBusy"
-            class="w-full rounded-xl bg-brand py-3.5 text-base font-semibold text-white shadow transition hover:bg-brand/90 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-brand/40 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <span
-              v-if="isLoading"
-              class="flex items-center justify-center gap-2.5"
-            >
-              <div
-                class="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"
-              />
-              Signing in...
-            </span>
-            <span v-else>Sign in</span>
-          </button>
+            {{ isLoading ? 'Signing in...' : 'Sign in' }}
+          </BaseButton>
         </form>
 
         <!-- Footer Links -->
@@ -230,6 +200,8 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { definePageMeta, useRoute } from '#imports'
 import { useAuth } from '~~/layers/core/app/composables/useAuth'
 import { useAuthApi } from '~~/layers/core/app/services/auth.api'
+import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
+import BaseInput from '~~/layers/ui/app/components/BaseInput.vue'
 
 definePageMeta({
   layout: false,
@@ -244,7 +216,6 @@ const {
   error: authError,
 } = useAuth()
 
-const showPassword = ref(false)
 const isSocialLoading = ref(false)
 const localMessage = ref('')
 
@@ -262,8 +233,8 @@ const isLoading = computed(() => authLoading.value)
 const error = computed(() => authError.value)
 const isBusy = computed(() => authLoading.value || isSocialLoading.value)
 
-const isVerificationError = computed(() =>
-  !!error.value && /verify your email/i.test(error.value),
+const isVerificationError = computed(
+  () => !!error.value && /verify your email/i.test(error.value),
 )
 
 const resendLoading = ref(false)
@@ -316,7 +287,7 @@ const handleSubmit = async () => {
   await authLogin(form.email.trim(), form.password)
 }
 
-const handleSocial = async (provider: 'google' | 'apple' | 'facebook') => {
+const handleSocial = async (provider: 'google' | 'facebook' | 'tiktok') => {
   localMessage.value = ''
   isSocialLoading.value = true
   await socialLogin(provider, '/')

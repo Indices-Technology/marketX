@@ -8,7 +8,7 @@
         bannerVisible ? 'bottom-36' : 'bottom-20',
         unreadMessages > 0
           ? 'bg-brand text-white'
-          : 'bg-gradient-to-br from-purple-500 to-pink-500 text-white',
+          : 'bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900',
       ]"
       aria-label="Messages & AI"
       @click="open"
@@ -138,7 +138,7 @@
                 v-for="c in filteredConversations"
                 :key="c.id"
                 :to="`/messages/${c.id}`"
-                class="flex items-center gap-3 border-b border-gray-100 px-4 py-3 transition-colors active:bg-gray-50 dark:border-neutral-800 dark:active:bg-neutral-900"
+                class="flex items-center gap-3 border-b border-gray-200 px-4 py-3 transition-colors active:bg-gray-50 dark:border-neutral-800 dark:active:bg-neutral-900"
                 @click="close"
               >
                 <img

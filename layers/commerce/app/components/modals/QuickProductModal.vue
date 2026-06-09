@@ -1,44 +1,12 @@
-<template>
+﻿<template>
   <Teleport to="body">
-    <transition
-      enter-active-class="transition-opacity duration-200 ease-out"
-      leave-active-class="transition-opacity duration-150 ease-in"
-      enter-from-class="opacity-0"
-      leave-to-class="opacity-0"
+    <BaseModal
+      :model-value="isOpen"
+      title="Quick Add Product"
+      max-width="sm"
+      @update:model-value="(v) => !v && close()"
     >
-      <div
-        v-if="isOpen"
-        class="fixed inset-0 z-50 flex items-end justify-center bg-black/60 sm:items-center"
-        @click.self="close"
-      >
-        <div
-          @click.stop
-          class="flex w-full flex-col rounded-t-2xl bg-white shadow-2xl sm:max-w-lg sm:rounded-2xl dark:bg-neutral-900"
-          style="max-height: 92vh"
-        >
-          <!-- Header -->
-          <div
-            class="flex shrink-0 items-center justify-between border-b border-gray-200 px-4 py-3.5 dark:border-neutral-800"
-          >
-            <h2
-              class="text-base font-semibold text-gray-900 dark:text-neutral-100"
-            >
-              Quick Add Product
-            </h2>
-            <button
-              @click="close"
-              class="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-gray-100 dark:hover:bg-neutral-800"
-            >
-              <Icon
-                name="mdi:close"
-                size="20"
-                class="text-gray-500 dark:text-neutral-400"
-              />
-            </button>
-          </div>
-
-          <!-- Scrollable body -->
-          <div class="flex-1 space-y-4 overflow-y-auto p-4">
+      <div class="space-y-4">
             <!-- Store Selector -->
             <div>
               <label
@@ -59,7 +27,7 @@
                     />
                     <div
                       v-else
-                      class="h-5 w-5 shrink-0 rounded-full bg-gradient-to-br from-[#f02c56] to-purple-600"
+                      class="h-5 w-5 shrink-0 rounded-full bg-brand"
                     />
                     <span class="truncate">{{
                       selectedSeller?.store_name ?? 'Select a store'
@@ -98,7 +66,7 @@
                     />
                     <div
                       v-else
-                      class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#f02c56] to-purple-600"
+                      class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand"
                     >
                       <Icon name="mdi:store" size="14" class="text-white" />
                     </div>
@@ -155,7 +123,7 @@
                 v-else
                 class="relative aspect-video overflow-hidden rounded-xl"
               >
-                <img :src="coverPreview" class="h-full w-full object-cover" />
+                <img :src="coverPreview" alt="Product cover preview" class="h-full w-full object-cover" />
                 <!-- Video badge -->
                 <div
                   v-if="coverResult?.type === 'VIDEO'"
@@ -228,7 +196,7 @@
             <!-- AI Magic Lister (shown after cover upload) -->
             <div
               v-if="coverResult && !uploadingCover"
-              class="flex items-center justify-between gap-3 rounded-xl border border-brand/20 bg-gradient-to-r from-brand/10 to-purple-600/10 p-3 dark:from-brand/20 dark:to-purple-600/20"
+              class="flex items-center justify-between gap-3 rounded-xl border border-brand/20 bg-brand/10 p-3 dark:bg-brand/20"
             >
               <div class="min-w-0">
                 <p
@@ -268,12 +236,7 @@
                 class="mb-1.5 block text-xs font-semibold text-gray-600 dark:text-neutral-400"
                 >Product Title *</label
               >
-              <input
-                v-model="form.title"
-                type="text"
-                placeholder="e.g. Nike Air Max 90"
-                class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
-              />
+              <BaseInput v-model="form.title" placeholder="e.g. Nike Air Max 90" />
             </div>
 
             <!-- Price + Status row -->
@@ -281,15 +244,9 @@
               <div>
                 <label
                   class="mb-1.5 block text-xs font-semibold text-gray-600 dark:text-neutral-400"
-                  >Price (₦) *</label
+                  >Price (â‚¦) *</label
                 >
-                <input
-                  v-model="form.price"
-                  type="number"
-                  min="0"
-                  placeholder="0"
-                  class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
-                />
+                <BaseInput v-model="form.price" type="number" min="0" placeholder="0" />
               </div>
               <div>
                 <label
@@ -308,25 +265,24 @@
 
             <!-- Affiliate Commission -->
             <div
-              class="rounded-lg border border-purple-100 bg-purple-50 px-3 py-3 dark:border-purple-800/30 dark:bg-purple-900/10"
+              class="rounded-lg border border-brand/20 bg-brand/5 px-3 py-3 dark:border-brand/30 dark:bg-brand/10"
             >
               <label
                 class="mb-1.5 block text-xs font-semibold text-gray-600 dark:text-neutral-400"
-                >Affiliate Commission (₦)
+                >Affiliate Commission (â‚¦)
                 <span class="font-normal text-gray-400">(optional)</span></label
               >
-              <input
+              <BaseInput
                 v-model="form.affiliateCommission"
                 type="number"
                 min="0"
                 placeholder="e.g. 500"
-                class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
               />
               <p
                 v-if="Number(form.affiliateCommission) > 0"
-                class="mt-1.5 text-[11px] text-purple-600 dark:text-purple-400"
+                class="mt-1.5 text-[11px] text-brand dark:text-brand/80"
               >
-                Marketers will see: "Earn ₦{{
+                Marketers will see: "Earn â‚¦{{
                   Number(form.affiliateCommission).toLocaleString()
                 }}
                 by selling this"
@@ -360,7 +316,7 @@
                 class="flex items-center gap-2 text-xs text-gray-400 dark:text-neutral-500"
               >
                 <Icon name="mdi:loading" size="14" class="animate-spin" />
-                Loading…
+                Loadingâ€¦
               </div>
               <div v-else class="flex flex-wrap gap-1.5">
                 <button
@@ -389,40 +345,21 @@
             </p>
           </div>
 
-          <!-- Footer -->
-          <div
-            class="flex shrink-0 gap-3 border-t border-gray-200 px-4 py-3 dark:border-neutral-800"
-            style="padding-bottom: max(0.75rem, calc(env(safe-area-inset-bottom, 0px) + 0.5rem))"
+      <template #footer>
+        <div class="flex gap-3">
+          <BaseButton variant="secondary" class="flex-1" @click="close">Cancel</BaseButton>
+          <BaseButton
+            variant="primary"
+            class="flex-1"
+            :loading="isSubmitting"
+            :disabled="!canSubmit || isSubmitting"
+            @click="submit"
           >
-            <button
-              @click="close"
-              class="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
-            >
-              Cancel
-            </button>
-            <button
-              @click="submit"
-              :disabled="!canSubmit || isSubmitting"
-              class="flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#d81b36] disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <div
-                v-if="isSubmitting"
-                class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"
-              />
-              <Icon
-                v-else-if="submitted"
-                name="mdi:check"
-                size="18"
-                class="text-white"
-              />
-              <span>{{
-                isSubmitting ? 'Saving…' : submitted ? 'Saved!' : 'Add Product'
-              }}</span>
-            </button>
-          </div>
+            {{ submitted ? 'Saved!' : 'Add Product' }}
+          </BaseButton>
         </div>
-      </div>
-    </transition>
+      </template>
+    </BaseModal>
 
     <MusicPicker
       :is-open="showMusicPicker"
@@ -441,6 +378,9 @@ import { useAiApi } from '~~/layers/core/app/services/ai.api'
 import { extractErrorMessage } from '~~/layers/core/app/utils/errors'
 import MusicPicker from '~~/layers/core/app/components/MusicPicker.vue'
 import type { MusicSelection } from '~~/layers/core/app/components/MusicPicker.vue'
+import BaseModal from '~~/layers/ui/app/components/BaseModal.vue'
+import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
+import BaseInput from '~~/layers/ui/app/components/BaseInput.vue'
 
 const props = defineProps<{ isOpen: boolean }>()
 const emit = defineEmits(['close', 'posted'])
@@ -562,7 +502,7 @@ const removeCover = () => {
   aiCaptions.pinterest = ''
 }
 
-// ── AI Auto-Fill ──────────────────────────────────────────────────────────────
+// â”€â”€ AI Auto-Fill â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const isGeneratingAI = ref(false)
 const aiCaptions = reactive({ instagram: '', facebook: '', pinterest: '' })
 const hasAiCaptions = computed(
@@ -619,7 +559,7 @@ const onMusicSelected = async (music: MusicSelection) => {
       bgMusicResult.value = {
         url: music.url,
         public_id: `jamendo-${Date.now()}`,
-        name: `${music.name}${music.artist ? ` · ${music.artist}` : ''}`,
+        name: `${music.name}${music.artist ? ` Â· ${music.artist}` : ''}`,
       }
     }
   } catch {
@@ -699,7 +639,7 @@ const submit = async () => {
     submitted.value = true
     emit('posted')
     setTimeout(() => close(), 800)
-  } catch (e: any) {
+  } catch (e: unknown) {
     submitError.value = extractErrorMessage(e, 'Failed to create product')
   } finally {
     isSubmitting.value = false
@@ -733,7 +673,7 @@ watch(
       selectedCategoryIds.value = []
       submitError.value = null
       submitted.value = false
-      // Keep selectedSeller — convenient for repeat additions
+      // Keep selectedSeller â€” convenient for repeat additions
     } else {
       // Load sellers if not loaded
       if (sellers.value.length === 0) loadUserSellers().catch(() => {})

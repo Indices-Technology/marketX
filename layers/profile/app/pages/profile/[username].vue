@@ -5,19 +5,33 @@
     </template>
 
     <div class="mx-auto max-w-5xl space-y-4 pb-20">
-      <!-- Loading -->
-      <div
-        v-if="isLoading && !profile"
-        class="flex flex-col items-center justify-center gap-3 py-24"
-      >
-        <Icon
-          name="eos-icons:loading"
-          size="40"
-          class="animate-spin text-brand"
-        />
-        <span class="text-sm text-gray-400 dark:text-neutral-500"
-          >Loading profile…</span
-        >
+      <!-- Loading skeleton -->
+      <div v-if="isLoading && !profile" class="animate-pulse space-y-4">
+        <!-- Cover + avatar -->
+        <div class="relative h-48 rounded-2xl bg-gray-100 dark:bg-neutral-800 sm:h-56">
+          <div class="absolute -bottom-8 left-4 h-20 w-20 rounded-full border-4 border-white bg-gray-200 dark:border-neutral-950 dark:bg-neutral-700" />
+        </div>
+        <!-- Name + bio block -->
+        <div class="pl-28 pr-4 pt-2 space-y-2">
+          <div class="h-5 w-1/3 rounded bg-gray-100 dark:bg-neutral-800" />
+          <div class="h-4 w-1/4 rounded bg-gray-100 dark:bg-neutral-800" />
+          <div class="h-4 w-2/3 rounded bg-gray-100 dark:bg-neutral-800" />
+        </div>
+        <!-- Stats row -->
+        <div class="flex gap-6 px-4 pt-2">
+          <div v-for="i in 3" :key="i" class="space-y-1">
+            <div class="h-5 w-10 rounded bg-gray-100 dark:bg-neutral-800" />
+            <div class="h-3 w-14 rounded bg-gray-100 dark:bg-neutral-800" />
+          </div>
+        </div>
+        <!-- Tabs -->
+        <div class="flex gap-4 border-b border-gray-200 px-4 dark:border-neutral-800">
+          <div v-for="i in 4" :key="i" class="h-8 w-16 rounded bg-gray-100 dark:bg-neutral-800" />
+        </div>
+        <!-- Post grid -->
+        <div class="grid grid-cols-3 gap-1">
+          <div v-for="i in 9" :key="i" class="aspect-square rounded bg-gray-100 dark:bg-neutral-800" />
+        </div>
       </div>
 
       <!-- Error -->
@@ -29,12 +43,7 @@
         <p class="font-medium text-gray-700 dark:text-neutral-300">
           {{ error }}
         </p>
-        <button
-          @click="retryFetch"
-          class="rounded-lg bg-brand px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#d81b36]"
-        >
-          Try Again
-        </button>
+        <BaseButton variant="primary" size="sm" @click="retryFetch">Try Again</BaseButton>
       </div>
 
       <!-- Profile Content -->
@@ -58,7 +67,7 @@
         <NuxtLink
           v-if="isOwnProfile && !sellerStore.hasSellers"
           to="/sellers/create"
-          class="flex items-center gap-3 rounded-2xl bg-gradient-to-r from-brand to-pink-500 px-4 py-3.5 shadow-md shadow-brand/20 md:hidden"
+          class="flex items-center gap-3 rounded-2xl bg-brand px-4 py-3.5 shadow-sm shadow-brand/20 md:hidden"
         >
           <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20">
             <Icon name="mdi:store-plus-outline" size="22" class="text-white" />
@@ -174,6 +183,7 @@ import TaggedTab from '../../components/profile/tabs/TaggedTab.vue'
 import AboutTab from '../../components/profile/tabs/AboutTab.vue'
 import EditProfileModal from '../../components/profile/modals/EditProfileModal.vue'
 import FollowListModal from '../../components/profile/modals/FollowListModal.vue'
+import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 import StoresTab from '../../components/profile/tabs/StoresTab.vue'
 import MediaTab from '../../components/profile/tabs/MediaTab.vue'
 

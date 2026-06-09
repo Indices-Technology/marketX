@@ -71,7 +71,7 @@
               <button
                 v-for="notif in notifications"
                 :key="notif.id"
-                class="flex w-full items-start gap-3 border-b border-gray-100 px-4 py-3.5 text-left transition-colors hover:bg-gray-50 dark:border-neutral-800/50 dark:hover:bg-neutral-900"
+                class="flex w-full items-start gap-3 border-b border-gray-200 px-4 py-3.5 text-left transition-colors hover:bg-gray-50 dark:border-neutral-800/50 dark:hover:bg-neutral-900"
                 :class="{ 'bg-brand/5 dark:bg-brand/10': !notif.read }"
                 @click="handleNotifClick(notif)"
               >

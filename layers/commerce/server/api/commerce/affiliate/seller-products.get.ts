@@ -1,4 +1,4 @@
-// GET /api/commerce/affiliate/seller-products
+﻿// GET /api/commerce/affiliate/seller-products
 // Returns the authenticated seller's products that have affiliateCommission set,
 // along with aggregated order stats (units sold, revenue) for each product.
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
@@ -64,7 +64,7 @@ export default defineEventHandler(async (event) => {
       )
       const unitsSold = paidItems.reduce((s, i) => s + i.quantity, 0)
       const revenue = paidItems.reduce((s, i) => s + i.price * i.quantity, 0)
-      // affiliateCommission is a fixed ₦ amount (major units) per unit sold.
+      // affiliateCommission is a fixed â‚¦ amount (major units) per unit sold.
       // Multiply by 100 to convert to kobo, then by units sold.
       const commissionEarned = unitsSold * Math.round((p.affiliateCommission ?? 0) * 100)
 
@@ -94,7 +94,7 @@ export default defineEventHandler(async (event) => {
         totalCommission,
       },
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
     logger.logError('[affiliate/seller-products]', error)
     throw createError({

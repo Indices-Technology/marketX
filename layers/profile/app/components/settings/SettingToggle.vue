@@ -1,7 +1,7 @@
 <template>
   <div
     class="flex items-center justify-between px-5 py-4 transition-colors"
-    :class="border ? 'border-b border-gray-100 dark:border-neutral-800' : ''"
+    :class="border ? 'border-b border-gray-200 dark:border-neutral-800' : ''"
   >
     <div class="flex items-center gap-3">
       <Icon

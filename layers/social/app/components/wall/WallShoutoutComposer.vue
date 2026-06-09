@@ -1,5 +1,5 @@
 <template>
-  <div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+  <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
     <div class="flex gap-3">
       <!-- Avatar -->
       <div class="shrink-0">

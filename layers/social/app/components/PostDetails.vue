@@ -21,7 +21,7 @@
 
     <!-- Author Header -->
     <div
-      class="flex shrink-0 items-center gap-3 border-b border-gray-100 px-4 py-3.5 dark:border-neutral-800"
+      class="flex shrink-0 items-center gap-3 border-b border-gray-200 px-4 py-3.5 dark:border-neutral-800"
     >
       <NuxtLink :to="`/profile/${post.author?.username}`" class="shrink-0">
         <Avatar
@@ -167,7 +167,7 @@
         </div>
 
         <!-- Like count + date (inside scroll, above comments) -->
-        <div class="border-t border-gray-100 pt-2 dark:border-neutral-800">
+        <div class="border-t border-gray-200 pt-2 dark:border-neutral-800">
           <button
             v-if="likeCount > 0"
             class="text-sm font-semibold text-gray-900 transition-opacity hover:opacity-70 dark:text-white"
@@ -227,7 +227,7 @@
             <!-- Inline replies -->
             <div
               v-if="comment._replies?.length"
-              class="mt-2 space-y-2 border-l-2 border-gray-100 pl-3 dark:border-neutral-800"
+              class="mt-2 space-y-2 border-l-2 border-gray-200 pl-3 dark:border-neutral-800"
             >
               <div
                 v-for="reply in comment._replies"
@@ -301,7 +301,7 @@
 
     <!-- Bottom Action Bar + Comment Input -->
     <div
-      class="shrink-0 border-t border-gray-100 bg-white dark:border-neutral-800 dark:bg-neutral-900"
+      class="shrink-0 border-t border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
     >
       <!-- Actions: Like / Comment / Share / Bookmark -->
       <div class="flex items-center justify-between px-3 py-1">
@@ -383,7 +383,7 @@
       <!-- Reply context banner -->
       <div
         v-if="replyingTo"
-        class="flex items-center justify-between border-t border-gray-100 bg-gray-50 px-4 py-2 dark:border-neutral-800 dark:bg-neutral-800/50"
+        class="flex items-center justify-between border-t border-gray-200 bg-gray-50 px-4 py-2 dark:border-neutral-800 dark:bg-neutral-800/50"
       >
         <span class="text-xs text-gray-500 dark:text-neutral-400">
           Replying to
@@ -402,7 +402,7 @@
 
       <!-- Comment Input -->
       <form
-        class="flex items-start gap-3 border-t border-gray-100 bg-gray-50/70 px-4 py-2.5 dark:border-neutral-800 dark:bg-neutral-950/50"
+        class="flex items-start gap-3 border-t border-gray-200 bg-gray-50/70 px-4 py-2.5 dark:border-neutral-800 dark:bg-neutral-950/50"
         style="
           padding-bottom: max(
             0.625rem,

@@ -119,7 +119,7 @@
       </button>
       <div
         v-if="menuOpen"
-        class="absolute right-0 top-8 z-20 min-w-[140px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-gray-100 bg-white shadow-lg dark:border-neutral-700 dark:bg-neutral-800"
+        class="absolute right-0 top-8 z-20 min-w-[140px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg dark:border-neutral-700 dark:bg-neutral-800"
         @click.stop
       >
         <button

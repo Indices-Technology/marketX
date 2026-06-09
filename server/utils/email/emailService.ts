@@ -345,26 +345,33 @@ export function buildAccountStatusEmail(
   durationDays?: number,
   appName = 'MarketX',
 ): { subject: string; html: string; text: string } {
-  const messages: Record<string, { subject: string; detail: string; color: string; bg: string }> = {
+  const messages: Record<
+    string,
+    { subject: string; detail: string; color: string; bg: string }
+  > = {
     SUSPENDED: {
       subject: `⚠️ Your ${appName} account has been suspended`,
       detail: `Your account has been suspended for ${durationDays} day${durationDays !== 1 ? 's' : ''}${reason ? ` — ${reason}` : ''}. It will be automatically restored after this period.`,
-      color: '#92400e', bg: '#fef3c7',
+      color: '#92400e',
+      bg: '#fef3c7',
     },
     BANNED: {
       subject: `🚫 Your ${appName} account has been banned`,
       detail: `Your account has been permanently banned${reason ? `: ${reason}` : '. If you believe this is an error, please contact support.'}`,
-      color: '#991b1b', bg: '#fee2e2',
+      color: '#991b1b',
+      bg: '#fee2e2',
     },
     DISABLED: {
       subject: `⚠️ Your ${appName} account has been disabled`,
       detail: `Your account has been disabled by an administrator${reason ? `: ${reason}` : '. Contact support if you believe this is an error.'}`,
-      color: '#92400e', bg: '#fef3c7',
+      color: '#92400e',
+      bg: '#fef3c7',
     },
     ENABLED: {
       subject: `✅ Your ${appName} account has been restored`,
       detail: `Your account has been re-enabled. You can now log in and access all features.`,
-      color: '#166534', bg: '#dcfce7',
+      color: '#166534',
+      bg: '#dcfce7',
     },
   }
   const { subject, detail, color, bg } = messages[action]!
@@ -531,17 +538,23 @@ export function buildContentModerationEmail(
     WARNED: {
       subject: `⚠️ Your ${label} has received a warning`,
       detail: `Your ${label.toLowerCase()} has received a warning from our moderation team${reason ? `: ${reason}` : '. Please review our community guidelines.'}`,
-      color: '#92400e', bg: '#fef3c7', badge: '⚠️ Warning',
+      color: '#92400e',
+      bg: '#fef3c7',
+      badge: '⚠️ Warning',
     },
     HIDDEN: {
       subject: `👁 Your ${label} has been hidden`,
       detail: `Your ${label.toLowerCase()} has been hidden from public view${reason ? `: ${reason}` : '. It will not be visible to other users.'}`,
-      color: '#1e40af', bg: '#dbeafe', badge: '👁 Hidden',
+      color: '#1e40af',
+      bg: '#dbeafe',
+      badge: '👁 Hidden',
     },
     REMOVED: {
       subject: `🚫 Your ${label} has been removed`,
       detail: `Your ${label.toLowerCase()} has been removed for violating our community guidelines${reason ? `: ${reason}` : '.'}`,
-      color: '#991b1b', bg: '#fee2e2', badge: '🚫 Removed',
+      color: '#991b1b',
+      bg: '#fee2e2',
+      badge: '🚫 Removed',
     },
   }
   const { subject, detail, color, bg, badge } = info[action]
@@ -569,7 +582,8 @@ export function buildRoleChangeEmail(
   appName = 'MarketX',
 ): { subject: string; html: string; text: string } {
   const isPromotion = role === 'moderator' || role === 'admin'
-  const roleLabel = role === 'moderator' ? 'Moderator' : role === 'admin' ? 'Admin' : 'User'
+  const roleLabel =
+    role === 'moderator' ? 'Moderator' : role === 'admin' ? 'Admin' : 'User'
   const subject = isPromotion
     ? `🎉 You've been granted ${roleLabel} access on ${appName}`
     : `Your ${appName} role has been updated`
@@ -596,9 +610,11 @@ p{font-size:15px;color:#333;line-height:1.6;margin:0 0 12px}
   return { subject, html, text: `Role Update\n\n${detail}` }
 }
 
-export function buildSuspensionLiftedEmail(
-  appName = 'MarketX',
-): { subject: string; html: string; text: string } {
+export function buildSuspensionLiftedEmail(appName = 'MarketX'): {
+  subject: string
+  html: string
+  text: string
+} {
   const subject = `✅ Your ${appName} suspension has been lifted`
   const detail = `Your account suspension has been lifted and your account is now fully restored. Welcome back!`
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>

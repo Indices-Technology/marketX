@@ -1,4 +1,4 @@
-// GET /api/commerce/wallet
+﻿// GET /api/commerce/wallet
 
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
@@ -63,7 +63,7 @@ export default defineEventHandler(async (event) => {
         stores: storeWallets,
       },
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
     if (error instanceof UserError)
       throw createError({ statusCode: error.status, statusMessage: error.message })

@@ -3,7 +3,7 @@
     <div class="space-y-6 pb-20 md:pb-6">
       <!-- Page Header -->
       <section
-        class="rounded-2xl border border-gray-100 bg-white py-8 text-center dark:border-neutral-800 dark:bg-neutral-900"
+        class="rounded-2xl border border-gray-200 bg-white py-8 text-center dark:border-neutral-800 dark:bg-neutral-900"
       >
         <h1 class="mb-1 text-2xl font-bold text-gray-900 dark:text-neutral-100">
           Discover Stores
@@ -75,7 +75,7 @@
           v-for="seller in sellers"
           :key="seller.id"
           :to="`/sellers/profile/${seller.store_slug}`"
-          class="group overflow-hidden rounded-2xl border border-gray-100 bg-white transition-all hover:border-brand/20 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900"
+          class="group overflow-hidden rounded-2xl border border-gray-200 bg-white transition-all hover:border-brand/20 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900"
         >
           <!-- Banner -->
           <div

@@ -1,9 +1,18 @@
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { auditQueue } from '~~/server/queues/audit.queue'
 import { walletRepository } from '../repositories/wallet.repository'
+import { buyerWalletRepository } from '../repositories/buyer-wallet.repository'
 import { notificationQueue } from '~~/server/queues/notification.queue'
 import { emailQueue } from '~~/server/queues/email.queue'
 import { buildFundsReleasedEmail } from '~~/server/utils/email/emailService'
+
+interface BankAccount {
+  type?: string
+  account_number: string
+  bank_code: string
+  name: string
+  [key: string]: string | undefined
+}
 
 export const walletService = {
   /**
@@ -20,13 +29,13 @@ export const walletService = {
 
     const items = await prisma.orderItem.findMany({
       where: { orderId },
-      include: {
+      select: {
+        price: true,
+        affiliateCut: true,
         variant: {
-          include: {
+          select: {
             product: {
               select: {
-                price: true,
-                discount: true,
                 seller: { select: { id: true } },
               },
             },
@@ -37,18 +46,13 @@ export const walletService = {
 
     const sellerAmounts = new Map<string, number>()
     for (const item of items) {
-      const product = item.variant.product
-      const sellerId = product.seller?.id
+      const sellerId = item.variant.product.seller?.id
       if (!sellerId) continue
-      const price = item.variant.price ?? product.price
-      const discount = product.discount ?? 0
-      const amountKobo = Math.round(
-        price * (1 - discount / 100) * item.quantity * 100,
-      )
-      sellerAmounts.set(
-        sellerId,
-        (sellerAmounts.get(sellerId) ?? 0) + amountKobo,
-      )
+      // item.price is the line total the buyer paid. Affiliate cut (if any) is
+      // deducted so the seller only receives their net amount — the affiliate
+      // earns the cut, not the platform.
+      const net = item.price - (item.affiliateCut ?? 0)
+      sellerAmounts.set(sellerId, (sellerAmounts.get(sellerId) ?? 0) + net)
     }
 
     for (const [sellerId, amount] of sellerAmounts) {
@@ -114,43 +118,34 @@ export const walletService = {
       })
     }
 
-    // Notify each seller that funds are available — fire-and-forget
-    const totalReleased = [...byWallet.values()].reduce((sum, { total }) => sum + total, 0)
-    prisma.orders.findUnique({
-      where: { id: orderId },
+    // Notify each seller — resolve wallet IDs to seller profiles, then notify individually
+    prisma.sellerWallet.findMany({
+      where: { id: { in: [...byWallet.keys()] } },
       select: {
-        orderItem: {
-          take: 1,
-          include: {
-            variant: {
-              include: {
-                product: {
-                  select: {
-                    seller: {
-                      select: {
-                        profileId: true,
-                        profile: { select: { email: true } },
-                      },
-                    },
-                  },
-                },
-              },
-            },
+        id: true,
+        seller: {
+          select: {
+            profileId: true,
+            profile: { select: { email: true } },
           },
         },
       },
-    }).then((ord) => {
-      const seller = ord?.orderItem[0]?.variant.product.seller
-      if (!seller?.profileId) return
-      notificationQueue.enqueue({
-        userId: seller.profileId,
-        type: 'ORDER',
-        message: `₦${(totalReleased / 100).toLocaleString('en-NG')} from Order #${orderId} has been released to your wallet.`,
-        orderId,
-      })
-      if (seller.profile?.email) {
-        const { subject, html, text } = buildFundsReleasedEmail(orderId, totalReleased)
-        emailQueue.enqueue({ to: seller.profile.email, subject, html, text, type: 'GENERAL' })
+    }).then((walletRows) => {
+      for (const row of walletRows) {
+        const profileId = row.seller?.profileId
+        if (!profileId) continue
+        const amount = byWallet.get(row.id)?.total ?? 0
+        notificationQueue.enqueue({
+          userId: profileId,
+          type: 'ORDER',
+          message: `₦${(amount / 100).toLocaleString('en-NG')} from Order #${orderId} has been released to your wallet.`,
+          orderId,
+        })
+        const email = row.seller?.profile?.email
+        if (email) {
+          const { subject, html, text } = buildFundsReleasedEmail(orderId, amount)
+          emailQueue.enqueue({ to: email, subject, html, text, type: 'GENERAL' })
+        }
       }
     }).catch(() => {})
 
@@ -191,13 +186,58 @@ export const walletService = {
           })
         }
       } else {
-        // Non-seller affiliate: store as a buyer-wallet credit using a lightweight transaction log
-        // (for now, log it — a dedicated buyer wallet can be added later)
-        logger.info(
-          `[affiliate] Non-seller affiliate ${order.affiliateUserId} earned ${order.affiliateCut} kobo on order #${orderId} — buyer wallet not yet implemented`,
+        // Non-seller affiliate — credit their BuyerWallet
+        const buyerWallet = await buyerWalletRepository.getOrCreate(order.affiliateUserId)
+        const existingBuyerCredit = await buyerWalletRepository.findExistingCredit(
+          buyerWallet.id,
+          orderId,
+          'AFFILIATE_CREDIT',
         )
+        if (!existingBuyerCredit) {
+          await buyerWalletRepository.incrementBalance(buyerWallet.id, order.affiliateCut)
+          await buyerWalletRepository.createTransaction(buyerWallet.id, {
+            amount: order.affiliateCut,
+            type: 'AFFILIATE_CREDIT',
+            description: `Affiliate commission — Order #${orderId}`,
+            orderId,
+          })
+          notificationQueue.enqueue({
+            userId: order.affiliateUserId,
+            type: 'ORDER',
+            message: `You earned ₦${(order.affiliateCut / 100).toLocaleString('en-NG')} affiliate commission from Order #${orderId}`,
+            orderId,
+          })
+        }
       }
     }
+  },
+
+  /**
+   * Called when a PAID order is cancelled before delivery.
+   * Reverses CREDIT_PENDING entries so the seller's pending balance is correct.
+   * Does NOT issue a Paystack refund — that must be handled separately or manually.
+   */
+  async reverseOrderCredit(orderId: number) {
+    const pendingCredits = await prisma.transaction.findMany({
+      where: { orderId, type: 'CREDIT_PENDING' },
+    })
+    if (!pendingCredits.length) return
+
+    await prisma.$transaction(async (tx) => {
+      for (const credit of pendingCredits) {
+        await tx.sellerWallet.update({
+          where: { id: credit.walletId },
+          data: { pending_balance: { decrement: credit.amount } },
+        })
+        await tx.transaction.update({
+          where: { id: credit.id },
+          data: {
+            type: 'CREDIT_CANCELLED',
+            description: `Order #${orderId} cancelled — pending credit reversed`,
+          },
+        })
+      }
+    })
   },
 
   async getWallet(sellerId: string) {
@@ -253,7 +293,7 @@ export const walletService = {
   async withdraw(
     sellerId: string,
     amount: number,
-    bankAccount: any,
+    bankAccount: BankAccount,
     ipAddress: string,
     userAgent: string,
   ) {

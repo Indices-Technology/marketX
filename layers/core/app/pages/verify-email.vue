@@ -7,7 +7,7 @@
       class="flex flex-col items-center justify-center py-12"
     >
       <div
-        class="mb-6 h-16 w-16 animate-spin rounded-full border-4 border-purple-200 border-t-purple-600 dark:border-purple-900"
+        class="mb-6 h-16 w-16 animate-spin rounded-full border-4 border-brand/20 border-t-brand dark:border-brand/10"
       />
       <p class="text-sm text-gray-600 dark:text-gray-400">
         Verifying your email...
@@ -52,7 +52,7 @@
       <!-- Manual Link -->
       <NuxtLink
         to="/user-login"
-        class="block w-full rounded-xl bg-gradient-to-r from-purple-600 to-purple-500 py-3 text-center text-sm font-semibold text-white transition-all hover:from-purple-700 hover:to-purple-600 hover:shadow-lg"
+        class="block w-full rounded-xl bg-brand py-3 text-center text-sm font-semibold text-white transition-all hover:bg-brand/90 hover:shadow-lg"
       >
         Go to Login Now
       </NuxtLink>
@@ -89,7 +89,7 @@
       <div class="space-y-3">
         <NuxtLink
           to="/resend-verification"
-          class="block w-full rounded-xl bg-gradient-to-r from-purple-600 to-purple-500 py-3 text-center text-sm font-semibold text-white transition-all hover:from-purple-700 hover:to-purple-600 hover:shadow-lg"
+          class="block w-full rounded-xl bg-brand py-3 text-center text-sm font-semibold text-white transition-all hover:bg-brand/90 hover:shadow-lg"
         >
           Request New Verification Link
         </NuxtLink>

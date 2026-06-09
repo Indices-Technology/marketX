@@ -20,34 +20,22 @@
         <!-- Options -->
         <div class="p-2">
           <button class="create-option" @click="$emit('open-post-modal')">
-            <div
-              class="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-pink-500"
-            >
-              <Icon name="mdi:image-plus" size="24" class="text-white" />
+            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand">
+              <Icon name="mdi:image-plus" size="22" class="text-white" />
             </div>
             <div class="flex-1 text-left">
-              <p class="font-semibold text-gray-900 dark:text-neutral-100">
-                Post
-              </p>
-              <p class="text-sm text-gray-500 dark:text-neutral-400">
-                Share photos and videos
-              </p>
+              <p class="font-semibold text-gray-900 dark:text-neutral-100">Post</p>
+              <p class="text-sm text-gray-500 dark:text-neutral-400">Share photos and videos</p>
             </div>
           </button>
 
           <button class="create-option" @click="$emit('open-story-modal')">
-            <div
-              class="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-red-500"
-            >
-              <Icon name="mdi:camera-plus" size="24" class="text-white" />
+            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500">
+              <Icon name="mdi:camera-plus" size="22" class="text-white" />
             </div>
             <div class="flex-1 text-left">
-              <p class="font-semibold text-gray-900 dark:text-neutral-100">
-                Story
-              </p>
-              <p class="text-sm text-gray-500 dark:text-neutral-400">
-                Share a moment
-              </p>
+              <p class="font-semibold text-gray-900 dark:text-neutral-100">Story</p>
+              <p class="text-sm text-gray-500 dark:text-neutral-400">Share a moment</p>
             </div>
           </button>
 
@@ -56,18 +44,12 @@
             class="create-option"
             @click="$emit('open-product-modal')"
           >
-            <div
-              class="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-teal-500"
-            >
-              <Icon name="mdi:shopping-outline" size="24" class="text-white" />
+            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-mint">
+              <Icon name="mdi:shopping-outline" size="22" class="text-white" />
             </div>
             <div class="flex-1 text-left">
-              <p class="font-semibold text-gray-900 dark:text-neutral-100">
-                Product
-              </p>
-              <p class="text-sm text-gray-500 dark:text-neutral-400">
-                List an item for sale
-              </p>
+              <p class="font-semibold text-gray-900 dark:text-neutral-100">Product</p>
+              <p class="text-sm text-gray-500 dark:text-neutral-400">List an item for sale</p>
             </div>
           </button>
         </div>

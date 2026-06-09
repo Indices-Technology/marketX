@@ -6,7 +6,9 @@ import { z, ZodError } from 'zod'
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
 import { notificationQueue } from '~~/server/queues/notification.queue'
+import { emailQueue } from '~~/server/queues/email.queue'
 import { orderRepository } from '../../../repositories/order.repository'
+import { buildOrderStatusEmail } from '~~/server/utils/email/emailService'
 
 const schema = z.object({ reference: z.string().min(1) })
 
@@ -91,6 +93,11 @@ export default defineEventHandler(async (event) => {
       notifyBuyerPODConfirmed(order).catch((e) =>
         logger.error('POD verify: notify buyer failed', { orderId: order.id, error: e?.message ?? e }),
       )
+      // Buyer order confirmation email
+      if (user.email && !user.email.includes('@checkout.marketx.app')) {
+        const { subject, html, text } = buildOrderStatusEmail(order.id, 'CONFIRMED')
+        emailQueue.enqueue({ to: user.email, subject, html, text, type: 'ORDER_CONFIRMATION' })
+      }
     }
 
     return { success: true, data: { status: 'shipping_paid', orderId: order.id } }

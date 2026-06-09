@@ -27,7 +27,7 @@
         <div
           v-for="i in 4"
           :key="i"
-          class="h-28 animate-pulse rounded-2xl border border-gray-100 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900"
+          class="h-28 animate-pulse rounded-2xl border border-gray-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900"
         />
       </div>
 
@@ -41,21 +41,14 @@
 
       <div v-else-if="order" class="space-y-5">
         <!-- Status Card -->
-        <div
-          class="rounded-2xl border border-gray-100 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900"
-        >
+        <BaseCard>
           <div class="mb-4 flex items-center justify-between">
             <p
               class="text-sm font-semibold text-gray-700 dark:text-neutral-300"
             >
               Status
             </p>
-            <span
-              class="rounded-full px-3 py-1 text-sm font-semibold"
-              :class="statusColor(order.status)"
-            >
-              {{ order.status }}
-            </span>
+            <BaseBadge :status="order.status" :label="order.status" size="sm" />
           </div>
 
           <!-- Progress bar -->
@@ -82,21 +75,10 @@
               <div v-if="i < ORDER_STEPS.length - 1" class="hidden" />
             </div>
           </div>
-        </div>
+        </BaseCard>
 
         <!-- Items -->
-        <div
-          class="overflow-hidden rounded-2xl border border-gray-100 bg-white dark:border-neutral-800 dark:bg-neutral-900"
-        >
-          <div
-            class="border-b border-gray-100 px-5 py-4 dark:border-neutral-800"
-          >
-            <h2
-              class="text-sm font-semibold text-gray-700 dark:text-neutral-300"
-            >
-              Items ({{ order.orderItem.length }})
-            </h2>
-          </div>
+        <BaseCard no-padding :title="`Items (${order.orderItem.length})`">
           <div class="divide-y divide-gray-100 dark:divide-neutral-800">
             <div
               v-for="item in order.orderItem"
@@ -128,26 +110,14 @@
               <p
                 class="shrink-0 text-sm font-semibold text-gray-900 dark:text-neutral-100"
               >
-                {{
-                  formatPrice(
-                    (item.variant?.price ?? item.variant?.product?.price ?? 0) *
-                      item.quantity,
-                  )
-                }}
+                {{ formatPrice(item.price) }}
               </p>
             </div>
           </div>
-        </div>
+        </BaseCard>
 
         <!-- Delivery info -->
-        <div
-          class="rounded-2xl border border-gray-100 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900"
-        >
-          <h2
-            class="mb-3 text-sm font-semibold text-gray-700 dark:text-neutral-300"
-          >
-            Delivery
-          </h2>
+        <BaseCard title="Delivery">
           <div class="space-y-1.5 text-sm text-gray-600 dark:text-neutral-400">
             <p class="font-medium text-gray-900 dark:text-neutral-100">
               {{ order.name }}
@@ -174,47 +144,71 @@
               <span>{{ order.shipper }} · {{ order.trackingNumber }}</span>
             </div>
           </div>
-        </div>
+        </BaseCard>
 
         <!-- Price breakdown -->
-        <div
-          class="space-y-2 rounded-2xl border border-gray-100 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900"
-        >
-          <div
-            class="flex justify-between text-sm text-gray-500 dark:text-neutral-400"
-          >
-            <span>Subtotal</span>
-            <span>{{ formatPrice(order.totalAmount) }}</span>
+        <BaseCard>
+          <div class="space-y-2">
+          <!-- POD split view -->
+          <template v-if="order.paymentMethod === 'pay_on_delivery'">
+            <div
+              v-if="order.shippingCost"
+              class="flex justify-between text-sm text-gray-500 dark:text-neutral-400"
+            >
+              <span>Shipping <span class="text-green-600 dark:text-green-400">(paid)</span></span>
+              <span>{{ formatPrice(order.shippingCost) }}</span>
+            </div>
+            <div
+              class="flex justify-between border-t border-gray-200 pt-2 text-base font-bold text-emerald-700 dark:border-neutral-800 dark:text-emerald-400"
+            >
+              <span>Due on delivery (cash)</span>
+              <span>{{ formatPrice(order.totalAmount) }}</span>
+            </div>
+            <p class="text-xs text-gray-400 dark:text-neutral-500">
+              Shipping paid via Paystack · Product amount due in cash on delivery
+            </p>
+          </template>
+
+          <!-- Standard payment -->
+          <template v-else>
+            <div
+              class="flex justify-between text-sm text-gray-500 dark:text-neutral-400"
+            >
+              <span>Subtotal</span>
+              <span>{{ formatPrice(order.totalAmount) }}</span>
+            </div>
+            <div
+              v-if="order.shippingCost"
+              class="flex justify-between text-sm text-gray-500 dark:text-neutral-400"
+            >
+              <span>Shipping</span>
+              <span>{{ formatPrice(order.shippingCost) }}</span>
+            </div>
+            <div
+              class="flex justify-between border-t border-gray-200 pt-2 text-base font-bold text-gray-900 dark:border-neutral-800 dark:text-neutral-100"
+            >
+              <span>Total</span>
+              <span>{{ formatPrice(order.totalAmount + (order.shippingCost || 0)) }}</span>
+            </div>
+            <p class="text-xs text-gray-400 dark:text-neutral-500">
+              Paid via {{ order.paymentMethod }}
+            </p>
+          </template>
           </div>
-          <div
-            v-if="order.shippingCost"
-            class="flex justify-between text-sm text-gray-500 dark:text-neutral-400"
-          >
-            <span>Shipping</span>
-            <span>{{ formatPrice(order.shippingCost) }}</span>
-          </div>
-          <div
-            class="flex justify-between border-t border-gray-100 pt-2 text-base font-bold text-gray-900 dark:border-neutral-800 dark:text-neutral-100"
-          >
-            <span>Total</span>
-            <span>{{
-              formatPrice(order.totalAmount + (order.shippingCost || 0))
-            }}</span>
-          </div>
-          <p class="text-xs text-gray-400 dark:text-neutral-500">
-            Paid via {{ order.paymentMethod }}
-          </p>
-        </div>
+        </BaseCard>
 
         <!-- Cancel button (only if PENDING) -->
-        <button
+        <BaseButton
           v-if="order.status === 'PENDING'"
-          @click="handleCancel"
+          variant="danger"
+          size="lg"
+          class="w-full"
+          :loading="cancelling"
           :disabled="cancelling"
-          class="w-full rounded-2xl border border-red-200 py-3.5 text-sm font-semibold text-red-500 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-800 dark:hover:bg-red-900/20"
+          @click="handleCancel"
         >
-          {{ cancelling ? 'Cancelling…' : 'Cancel Order' }}
-        </button>
+          Cancel Order
+        </BaseButton>
       </div>
     </div>
   </HomeLayout>
@@ -225,6 +219,9 @@ import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import { useOrderApi } from '~~/layers/commerce/app/services/order.api'
 import { extractErrorMessage } from '~~/layers/core/app/utils/errors'
 import { notify } from '@kyvg/vue3-notification'
+import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
+import BaseBadge from '~~/layers/ui/app/components/BaseBadge.vue'
+import BaseCard from '~~/layers/ui/app/components/BaseCard.vue'
 
 definePageMeta({ middleware: 'auth' })
 
@@ -270,20 +267,6 @@ const handleCancel = async () => {
     cancelling.value = false
   }
 }
-
-const statusColor = (status: string) =>
-  ({
-    PENDING:
-      'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400',
-    CONFIRMED:
-      'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400',
-    SHIPPED:
-      'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400',
-    DELIVERED:
-      'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
-    CANCELLED: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
-  })[status] ||
-  'bg-gray-100 dark:bg-neutral-800 text-gray-600 dark:text-neutral-400'
 
 const formatPrice = (cents: number) =>
   new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(

@@ -15,13 +15,16 @@ export class OrderApiClient extends BaseApiClient {
   async getOrderById(id: number) {
     return this.request(`/api/commerce/orders/${id}`, { method: 'GET' })
   }
-  async placeOrder(data: any) {
+  async placeOrder(data: Record<string, unknown>) {
     return this.request('/api/commerce/orders', { method: 'POST', body: data })
   }
   async cancelOrder(id: number) {
     return this.request(`/api/commerce/orders/${id}/cancel`, { method: 'POST' })
   }
-  async initializePayment(data: any) {
+  async initializePayment(data: Record<string, unknown>): Promise<{
+    success: boolean
+    data: { orderId: number; reference: string; authorizationUrl: string; accessCode: string }
+  }> {
     return this.request('/api/commerce/payments/initialize', {
       method: 'POST',
       body: data,
@@ -37,7 +40,10 @@ export class OrderApiClient extends BaseApiClient {
     storeSlug: string,
     params?: { status?: string; limit?: number; offset?: number },
   ) {
-    const q = new URLSearchParams({ storeSlug, ...(params as any) }).toString()
+    const entries = Object.entries({ storeSlug, ...params })
+      .filter(([, v]) => v != null)
+      .map(([k, v]) => [k, String(v)] as [string, string])
+    const q = new URLSearchParams(entries).toString()
     return this.request(`/api/commerce/orders/seller?${q}`, { method: 'GET' })
   }
   async updateOrderStatus(
@@ -49,7 +55,10 @@ export class OrderApiClient extends BaseApiClient {
       body,
     })
   }
-  async initializePayPal(data: any) {
+  async initializePayPal(data: Record<string, unknown>): Promise<{
+    success: boolean
+    data: { orderId: number; paypalOrderId: string; approvalUrl: string; amountUSD: number }
+  }> {
     return this.request('/api/commerce/payments/paypal/create', {
       method: 'POST',
       body: data,
@@ -66,7 +75,10 @@ export class OrderApiClient extends BaseApiClient {
       method: 'POST',
     })
   }
-  async initializePOD(data: any) {
+  async initializePOD(data: Record<string, unknown>): Promise<{
+    success: boolean
+    data: { orderId: number; reference: string; authorizationUrl: string; accessCode: string; shippingCost: number; productAmount: number }
+  }> {
     return this.request('/api/commerce/payments/pod-initialize', {
       method: 'POST',
       body: data,

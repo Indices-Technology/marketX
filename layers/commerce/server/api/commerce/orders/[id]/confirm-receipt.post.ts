@@ -1,4 +1,4 @@
-// POST /api/commerce/orders/[id]/confirm-receipt
+﻿// POST /api/commerce/orders/[id]/confirm-receipt
 // Called by the buyer to confirm they received their order.
 // Moves status to DELIVERED and releases seller funds immediately.
 import { walletService } from '~~/layers/commerce/server/services/wallet.service'
@@ -80,7 +80,7 @@ export default defineEventHandler(async (event) => {
       success: true,
       data: { message: 'Receipt confirmed. Funds released to seller.' },
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof UserError)
       throw createError({ statusCode: error.status, statusMessage: error.message })
     if (error && typeof error === 'object' && 'statusCode' in error) throw error

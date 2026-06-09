@@ -28,7 +28,7 @@
       <template v-else>
         <!-- Square header card -->
         <div
-          class="overflow-hidden rounded-2xl border border-gray-100 bg-white dark:border-neutral-800 dark:bg-neutral-900"
+          class="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
         >
           <!-- Banner -->
           <div class="relative h-28">
@@ -192,7 +192,7 @@
         <!-- Apply form -->
         <div
           v-else
-          class="mt-4 rounded-2xl border border-gray-100 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900"
+          class="mt-4 rounded-2xl border border-gray-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900"
         >
           <!-- Success state -->
           <div v-if="applied" class="py-6 text-center">

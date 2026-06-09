@@ -17,8 +17,8 @@
           : message.role === 'system'
             ? 'mx-auto max-w-full rounded-xl bg-amber-50 px-3 py-2 text-center text-xs text-amber-700 dark:bg-amber-950/30 dark:text-amber-400'
             : message.metadata?.products?.length
-              ? 'w-full max-w-[97%] rounded-bl-sm border border-gray-100 bg-white dark:border-neutral-800 dark:bg-neutral-900'
-              : 'max-w-[82%] rounded-bl-sm border border-gray-100 bg-white dark:border-neutral-800 dark:bg-neutral-900',
+              ? 'w-full max-w-[97%] rounded-bl-sm border border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900'
+              : 'max-w-[82%] rounded-bl-sm border border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900',
       ]"
     >
       <!-- Text -->

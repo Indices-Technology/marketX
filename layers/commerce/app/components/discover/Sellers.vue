@@ -38,10 +38,10 @@
         v-for="seller in sellers"
         :key="seller.id"
         :to="`/sellers/profile/${seller.store_slug}`"
-        class="group overflow-hidden rounded-2xl border border-gray-100 bg-white transition-all hover:border-brand/20 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900"
+        class="group overflow-hidden rounded-2xl border border-gray-200 bg-white transition-all hover:border-brand/20 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900"
       >
         <div
-          class="relative h-20 overflow-hidden bg-gradient-to-br from-brand to-purple-600"
+          class="relative h-20 overflow-hidden bg-brand"
         >
           <img
             v-if="seller.store_banner"
@@ -62,7 +62,7 @@
             />
             <div
               v-else
-              class="flex h-full w-full items-center justify-center bg-gradient-to-br from-brand to-purple-600"
+              class="flex h-full w-full items-center justify-center bg-brand"
             >
               <Icon name="mdi:storefront" size="18" class="text-white" />
             </div>

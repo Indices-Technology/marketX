@@ -4,7 +4,7 @@
   >
     <!-- ─── HEADER ────────────────────────────────────────────────────────── -->
     <div
-      class="flex shrink-0 items-center justify-between border-b border-gray-100 p-4 dark:border-neutral-800"
+      class="flex shrink-0 items-center justify-between border-b border-gray-200 p-4 dark:border-neutral-800"
     >
       <div>
         <h2
@@ -76,7 +76,7 @@
       <template v-else>
         <!-- 1. Revenue Summary Card -->
         <div
-          class="group relative overflow-hidden rounded-2xl border border-brand/10 bg-gradient-to-br from-brand/5 to-purple-500/5 p-5 shadow-sm dark:from-brand/10 dark:to-purple-500/10"
+          class="group relative overflow-hidden rounded-2xl border border-brand/20 bg-brand/5 p-5 shadow-sm dark:bg-brand/10"
         >
           <div
             class="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-brand/10 blur-2xl transition-colors group-hover:bg-brand/20"
@@ -187,7 +187,7 @@
         <!-- 3. Recent Orders Feed -->
         <div>
           <div
-            class="mb-3 flex items-center justify-between border-t border-gray-100 pt-2 dark:border-neutral-800"
+            class="mb-3 flex items-center justify-between border-t border-gray-200 pt-2 dark:border-neutral-800"
           >
             <h4 class="text-sm font-bold text-gray-900 dark:text-neutral-100">
               Recent Orders
@@ -245,7 +245,7 @@
                 <!-- Affiliate breakdown pill -->
                 <p
                   v-if="order.sellerBreakdown?.affiliateCut > 0"
-                  class="mt-0.5 text-[10px] text-purple-500"
+                  class="mt-0.5 text-[10px] text-brand"
                 >
                   net {{ fmtNGN(order.sellerBreakdown.net) }}
                 </p>
@@ -264,7 +264,7 @@
 
     <!-- ─── STICKY BOTTOM CTA ──────────────────────────────────────────────── -->
     <div
-      class="sticky bottom-0 flex-shrink-0 border-t border-gray-100 bg-white px-4 pb-5 pt-3 dark:border-neutral-800 dark:bg-neutral-900"
+      class="sticky bottom-0 flex-shrink-0 border-t border-gray-200 bg-white px-4 pb-5 pt-3 dark:border-neutral-800 dark:bg-neutral-900"
     >
       <NuxtLink
         v-if="storeSlug"

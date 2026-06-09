@@ -31,18 +31,18 @@ export class ProductApiClient extends BaseApiClient {
     })
   }
 
-  async getProductById(id: number): Promise<{ success: boolean; data: any }> {
+  async getProductById(id: number): Promise<{ success: boolean; data: ProductDetail }> {
     return this.request(`/api/commerce/products/${id}`, { method: 'GET' })
   }
 
-  async createProduct(data: any) {
+  async createProduct(data: Record<string, unknown>) {
     return this.request('/api/commerce/products', {
       method: 'POST',
       body: data,
     })
   }
 
-  async updateProduct(id: number, data: any) {
+  async updateProduct(id: number, data: Record<string, unknown>) {
     return this.request(`/api/commerce/products/${id}`, {
       method: 'PATCH',
       body: data,

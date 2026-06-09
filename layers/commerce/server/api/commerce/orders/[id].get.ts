@@ -1,4 +1,4 @@
-// GET /api/commerce/orders/:id
+﻿// GET /api/commerce/orders/:id
 
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
@@ -12,10 +12,11 @@ export default defineEventHandler(async (event) => {
       throw new UserError('INVALID_ID', 'Order ID must be a number', 400)
     const order = await orderService.getOrderById(id, user.id)
     return { success: true, data: order }
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof UserError)
       throw createError({ statusCode: error.status, statusMessage: error.message })
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
+    logger.logError('[GET /api/commerce/orders/:id]', error, { requestId: event.context?.requestId })
     throw createError({ statusCode: 500, statusMessage: 'Internal server error' })
   }
 })

@@ -104,7 +104,7 @@ export const walletRepository = {
     walletId: string,
     data: {
       amount: number
-      bank_account: any
+      bank_account: Record<string, unknown>
       transaction_ref?: string
     },
   ) {

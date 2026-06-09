@@ -17,7 +17,7 @@
         >
           <!-- Header -->
           <div
-            class="flex items-center justify-between border-b border-gray-100 px-5 py-4 dark:border-neutral-800"
+            class="flex items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-neutral-800"
           >
             <div class="flex items-center gap-2">
               <Icon name="mdi:bullhorn-outline" size="20" class="text-brand" />

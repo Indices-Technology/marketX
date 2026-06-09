@@ -249,7 +249,7 @@
         </div>
 
         <div
-          class="flex items-center gap-5 border-t border-gray-100 py-2 dark:border-neutral-800"
+          class="flex items-center gap-5 border-t border-gray-200 py-2 dark:border-neutral-800"
         >
           <div
             class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-neutral-400"

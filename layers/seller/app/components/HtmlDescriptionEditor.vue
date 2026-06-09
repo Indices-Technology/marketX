@@ -70,7 +70,7 @@
 
     <!-- Bottom bar: AI Enhance button -->
     <div
-      class="flex items-center justify-between border-t border-gray-100 px-3 py-2 dark:border-neutral-700/60"
+      class="flex items-center justify-between border-t border-gray-200 px-3 py-2 dark:border-neutral-700/60"
     >
       <p class="text-[11px] text-gray-400 dark:text-neutral-600">
         Paste text from any website — formatting is preserved
@@ -83,7 +83,7 @@
         :class="
           enhancing || !hasContent
             ? 'cursor-not-allowed bg-gray-100 text-gray-400 dark:bg-neutral-800 dark:text-neutral-600'
-            : 'bg-gradient-to-r from-brand to-purple-600 text-white shadow-sm hover:opacity-90 active:scale-95'
+            : 'bg-brand text-white shadow-sm hover:opacity-90 active:scale-95'
         "
       >
         <Icon

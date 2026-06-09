@@ -1,12 +1,32 @@
 <template>
   <HomeLayout :narrow-feed="false" :hide-right-sidebar="true">
-    <!-- Loading -->
-    <div v-if="pending" class="flex min-h-[60vh] items-center justify-center">
-      <Icon
-        name="eos-icons:loading"
-        size="36"
-        class="animate-spin text-brand"
-      />
+    <!-- Loading skeleton -->
+    <div v-if="pending" class="max-w-5xl animate-pulse px-3 py-4 sm:px-6 sm:py-6">
+      <!-- Mobile: stacked; Desktop: 2-col -->
+      <div class="flex flex-col gap-8 lg:flex-row">
+        <!-- Image gallery -->
+        <div class="flex flex-col gap-2 lg:w-[480px] lg:shrink-0">
+          <div class="aspect-square w-full rounded-2xl bg-gray-100 dark:bg-neutral-800" />
+          <div class="flex gap-2">
+            <div v-for="i in 4" :key="i" class="h-16 w-16 rounded-lg bg-gray-100 dark:bg-neutral-800" />
+          </div>
+        </div>
+        <!-- Details -->
+        <div class="flex-1 space-y-4">
+          <div class="h-5 w-1/3 rounded bg-gray-100 dark:bg-neutral-800" />
+          <div class="h-8 w-3/4 rounded-lg bg-gray-100 dark:bg-neutral-800" />
+          <div class="h-7 w-1/4 rounded bg-gray-100 dark:bg-neutral-800" />
+          <div class="space-y-2">
+            <div class="h-4 rounded bg-gray-100 dark:bg-neutral-800" />
+            <div class="h-4 w-5/6 rounded bg-gray-100 dark:bg-neutral-800" />
+            <div class="h-4 w-4/6 rounded bg-gray-100 dark:bg-neutral-800" />
+          </div>
+          <div class="flex gap-3 pt-2">
+            <div class="h-12 flex-1 rounded-xl bg-gray-100 dark:bg-neutral-800" />
+            <div class="h-12 w-12 rounded-xl bg-gray-100 dark:bg-neutral-800" />
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Not found (status=error on 404, or success with null data) -->
@@ -269,45 +289,28 @@
                 +
               </button>
             </div>
-            <button
-              :disabled="
-                addingToCart ||
-                !selectedVariantId ||
-                selectedVariant?.stock === 0
-              "
-              class="flex flex-1 touch-manipulation items-center justify-center gap-2 rounded-xl bg-brand py-3.5 text-sm font-bold text-white transition-all hover:bg-brand/90 disabled:opacity-50"
+            <BaseButton
+              variant="primary"
+              class="flex-1 touch-manipulation py-3.5"
+              :loading="addingToCart"
+              :disabled="addingToCart || !selectedVariantId || selectedVariant?.stock === 0"
               @click="handleAddToCart"
             >
-              <Icon
-                v-if="addingToCart"
-                name="eos-icons:loading"
-                size="16"
-                class="animate-spin"
-              />
-              <Icon v-else name="mdi:cart-plus" size="16" />
+              <Icon v-if="!addingToCart" name="mdi:cart-plus" size="16" class="mr-1" />
               {{ addingToCart ? 'Adding…' : 'Add to Cart' }}
-            </button>
+            </BaseButton>
           </div>
 
           <!-- Share / Copy link -->
           <div class="flex gap-2">
-            <button
-              class="flex flex-1 touch-manipulation items-center justify-center gap-1.5 rounded-xl border border-gray-200 px-4 py-2.5 text-xs font-semibold text-gray-600 transition-colors hover:border-brand hover:text-brand dark:border-neutral-700 dark:text-neutral-400"
-              @click="copyLink"
-            >
-              <Icon
-                :name="copied ? 'mdi:check' : 'mdi:link-variant'"
-                size="15"
-              />
+            <BaseButton variant="secondary" size="sm" class="flex-1 touch-manipulation" @click="copyLink">
+              <Icon :name="copied ? 'mdi:check' : 'mdi:link-variant'" size="15" class="mr-1" />
               {{ copied ? 'Copied!' : 'Copy link' }}
-            </button>
-            <button
-              class="flex flex-1 touch-manipulation items-center justify-center gap-1.5 rounded-xl border border-gray-200 px-4 py-2.5 text-xs font-semibold text-gray-600 transition-colors hover:border-brand hover:text-brand dark:border-neutral-700 dark:text-neutral-400"
-              @click="handleShare"
-            >
-              <Icon name="mdi:share-variant-outline" size="15" />
+            </BaseButton>
+            <BaseButton variant="secondary" size="sm" class="flex-1 touch-manipulation" @click="handleShare">
+              <Icon name="mdi:share-variant-outline" size="15" class="mr-1" />
               Share
-            </button>
+            </BaseButton>
           </div>
 
           <!-- Affiliate link panel — visible only to enrolled affiliates -->
@@ -332,24 +335,17 @@
               >
                 {{ affiliateUrl }}
               </span>
-              <button
-                class="shrink-0 rounded-lg bg-brand px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-brand/90"
-                @click="copyAffiliateLink"
-              >
-                <Icon
-                  :name="copiedAffiliate ? 'mdi:check' : 'mdi:content-copy'"
-                  size="13"
-                  class="mr-1"
-                />
+              <BaseButton variant="primary" size="xs" class="shrink-0" @click="copyAffiliateLink">
+                <Icon :name="copiedAffiliate ? 'mdi:check' : 'mdi:content-copy'" size="13" class="mr-1" />
                 {{ copiedAffiliate ? 'Copied!' : 'Copy' }}
-              </button>
+              </BaseButton>
             </div>
           </div>
 
           <!-- Description -->
           <div
             v-if="product.description"
-            class="rounded-2xl border border-gray-100 bg-gray-50 p-4 dark:border-neutral-800 dark:bg-neutral-800/50"
+            class="rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-neutral-800 dark:bg-neutral-800/50"
           >
             <p
               class="mb-2 text-[11px] font-bold uppercase tracking-widest text-gray-400 dark:text-neutral-500"
@@ -398,6 +394,7 @@ import {
 } from '~~/layers/core/app/utils/cloudinary'
 import { notify } from '@kyvg/vue3-notification'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
+import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 
 const route = useRoute()
 const slug = computed(() => route.params.slug as string)

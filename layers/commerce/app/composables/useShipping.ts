@@ -81,7 +81,8 @@ export const useShipping = () => {
   const ratesError = ref<string | null>(null)
 
   const fetchLiveRates = async (payload: {
-    from: Record<string, string>
+    storeSlug?: string
+    from?: Record<string, string>
     to: Record<string, string>
     parcel: Record<string, number>
   }) => {

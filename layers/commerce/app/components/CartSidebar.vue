@@ -11,7 +11,7 @@
         >
           <!-- Header -->
           <div
-            class="flex shrink-0 items-center justify-between border-b border-gray-100 px-5 py-4 dark:border-neutral-800"
+            class="flex shrink-0 items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-neutral-800"
           >
             <div class="flex items-center gap-2">
               <Icon
@@ -242,7 +242,7 @@
           <!-- Footer -->
           <div
             v-if="items.length > 0"
-            class="shrink-0 space-y-3 border-t border-gray-100 px-5 py-4 dark:border-neutral-800"
+            class="shrink-0 space-y-3 border-t border-gray-200 px-5 py-4 dark:border-neutral-800"
           >
             <!-- Subtotal -->
             <div class="flex items-center justify-between text-[14px]">

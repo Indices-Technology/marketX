@@ -1,7 +1,7 @@
 <template>
   <div
     ref="cardRef"
-    class="group flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white transition-all duration-300 hover:shadow-lg hover:shadow-gray-200/50 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:shadow-black/50"
+    class="group flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:shadow-lg hover:shadow-gray-200/50 dark:border-neutral-800 dark:bg-neutral-900 dark:shadow-none dark:hover:shadow-black/50"
     @click="$emit('open-detail', product)"
   >
     <!-- ─── MEDIA BLOCK (Single Relative Container) ───────────────────── -->
@@ -313,7 +313,7 @@
         <button
           v-if="product.affiliateCommission && product.affiliateCommission > 0"
           title="Market this product and earn commission"
-          class="flex items-center justify-center rounded-full bg-purple-50 p-1.5 text-purple-500 transition-colors hover:bg-purple-100 dark:bg-purple-500/10 dark:hover:bg-purple-500/20"
+          class="flex items-center justify-center rounded-full bg-brand/10 p-1.5 text-brand transition-colors hover:bg-brand/20 dark:bg-brand/10 dark:hover:bg-brand/20"
           @click="$emit('market', product)"
         >
           <Icon name="mdi:bullhorn-outline" size="16" />

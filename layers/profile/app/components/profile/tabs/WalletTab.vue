@@ -14,13 +14,13 @@
       <template v-if="storeWallets.length === 0">
         <!-- Affiliate earnings card -->
         <div
-          class="rounded-xl bg-gradient-to-br from-purple-600 to-pink-600 p-6 text-white"
+          class="rounded-xl bg-gradient-to-br from-brand to-[#c41230] p-6 text-white"
         >
           <div class="mb-4 flex items-center justify-between">
             <div class="flex-1">
               <p class="text-sm text-white/80">Affiliate Earnings</p>
               <h2 class="text-4xl font-bold">
-                {{ formatAmount(affiliateEarnings) }}
+                {{ formatAmount(buyerBalance) }}
               </h2>
             </div>
             <Icon name="mdi:cash-multiple" size="48" class="text-white/20" />
@@ -52,15 +52,15 @@
             class="rounded-xl border border-gray-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"
           >
             <Icon
-              name="mdi:shopping-outline"
+              name="mdi:trending-up"
               size="24"
               class="mb-2 text-brand"
             />
             <p class="text-2xl font-bold text-gray-900 dark:text-neutral-100">
-              {{ formatAmount(stats.totalSpent ?? 0) }}
+              {{ formatAmount(buyerStats.totalEarned) }}
             </p>
             <p class="text-xs text-gray-500 dark:text-neutral-400">
-              Total Spent
+              Total Earned
             </p>
           </div>
           <div
@@ -69,14 +69,70 @@
             <Icon
               name="mdi:cash-multiple"
               size="24"
-              class="mb-2 text-purple-500"
+              class="mb-2 text-green-500"
             />
             <p class="text-2xl font-bold text-gray-900 dark:text-neutral-100">
-              {{ formatAmount(affiliateEarnings) }}
+              {{ formatAmount(buyerBalance) }}
             </p>
             <p class="text-xs text-gray-500 dark:text-neutral-400">
-              Affiliate Earned
+              Available Now
             </p>
+          </div>
+        </div>
+
+        <!-- Buyer transaction history -->
+        <div
+          class="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
+        >
+          <div class="border-b border-gray-200 p-4 dark:border-neutral-800">
+            <h3 class="font-semibold text-gray-900 dark:text-neutral-100">Earnings History</h3>
+          </div>
+
+          <div
+            v-if="buyerTransactions.length === 0"
+            class="p-8 text-center text-gray-400 dark:text-neutral-500"
+          >
+            <Icon name="mdi:receipt-text-outline" size="40" class="mx-auto mb-2" />
+            <p class="text-sm">No earnings yet</p>
+            <p class="mt-1 text-xs">Share affiliate links to earn commissions</p>
+          </div>
+
+          <div v-else class="divide-y divide-gray-100 dark:divide-neutral-800">
+            <div
+              v-for="tx in buyerTransactions"
+              :key="tx.id"
+              class="flex items-center justify-between p-4"
+            >
+              <div class="flex items-center gap-3">
+                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-brand/10 dark:bg-brand/20">
+                  <Icon name="mdi:tag-heart" size="20" class="text-brand dark:text-brand/80" />
+                </div>
+                <div>
+                  <p class="text-sm font-medium text-gray-900 dark:text-neutral-100">
+                    {{ tx.description }}
+                  </p>
+                  <p class="text-xs text-gray-500 dark:text-neutral-400">
+                    {{ formatDate(tx.created_at) }}
+                  </p>
+                </div>
+              </div>
+              <p class="font-semibold text-green-600 dark:text-green-400">
+                +{{ formatAmount(tx.amount) }}
+              </p>
+            </div>
+
+            <div
+              v-if="buyerTransactionsTotal > buyerTransactions.length"
+              class="border-t border-gray-200 p-3 text-center dark:border-neutral-800"
+            >
+              <button
+                @click="loadMoreBuyerTx"
+                :disabled="isLoading"
+                class="text-[12px] font-semibold text-brand hover:underline disabled:opacity-50"
+              >
+                Load more
+              </button>
+            </div>
           </div>
         </div>
 
@@ -327,7 +383,7 @@
           <!-- Add account inline form -->
           <div
             v-if="showAddBankAccount"
-            class="border-t border-gray-100 p-4 dark:border-neutral-800"
+            class="border-t border-gray-200 p-4 dark:border-neutral-800"
           >
             <p
               class="mb-3 text-sm font-semibold text-gray-900 dark:text-neutral-100"
@@ -445,8 +501,7 @@
               </div>
               <div class="text-right" :class="txAmountColor(transaction.type)">
                 <p class="font-semibold">
-                  {{ transaction.type === 'DEBIT' ? '-' : '+'
-                  }}{{ formatAmount(transaction.amount) }}
+                  {{ TX_DEBIT_TYPES.has(transaction.type) ? '-' : '+' }}{{ formatAmount(transaction.amount) }}
                 </p>
               </div>
             </div>
@@ -469,7 +524,7 @@
 <script setup lang="ts">
 import WithdrawModal from '../modals/WithdrawModal.vue'
 import { useWallet } from '~~/layers/commerce/app/composables/useWallet'
-import { useAffiliate } from '~~/layers/commerce/app/composables/useAffiliate'
+import { useBuyerWallet } from '~~/layers/commerce/app/composables/useBuyerWallet'
 import { BaseApiClient } from '~~/layers/core/app/services/base.api'
 import { useSellerStore } from '~~/layers/seller/app/store/seller.store'
 import { useCurrency } from '~~/layers/core/app/composables/useCurrency'
@@ -487,14 +542,21 @@ const {
   withdraw,
 } = useWallet()
 
+const {
+  balance: buyerBalance,
+  stats: buyerStats,
+  transactions: buyerTransactions,
+  transactionsTotal: buyerTransactionsTotal,
+  fetchWallet: fetchBuyerWallet,
+  fetchTransactions: fetchBuyerTransactions,
+} = useBuyerWallet()
+
+const loadMoreBuyerTx = () => fetchBuyerTransactions(20, buyerTransactions.value.length)
+
 const showWithdrawModal = ref(false)
 const sellerStore = useSellerStore()
 const api = new BaseApiClient()
 const { formatKobo } = useCurrency()
-const { stats: affiliateStats, fetchAffiliateStatus } = useAffiliate()
-
-// Affiliate earnings pulled from affiliate stats (works for non-sellers too)
-const affiliateEarnings = computed(() => affiliateStats.value?.totalEarnings ?? 0)
 
 // ── Bank accounts ─────────────────────────────────────────────────────────────
 const bankAccounts = ref<any[]>([])
@@ -582,8 +644,9 @@ onMounted(async () => {
     await Promise.all([
       fetchWallet(),
       fetchTransactions(),
+      fetchBuyerWallet(),
+      fetchBuyerTransactions(),
       loadBankAccounts(),
-      fetchAffiliateStatus().catch(() => {}),
     ])
   } catch {
     // Wallet might not exist yet for non-sellers — handled gracefully
@@ -592,24 +655,32 @@ onMounted(async () => {
 
 const formatAmount = (amount: number) => formatKobo(amount)
 
+const TX_DEBIT_TYPES = new Set(['DEBIT', 'PLATFORM_FEE_DEBIT'])
+const TX_PENDING_TYPES = new Set(['CREDIT_PENDING'])
+const TX_REFUND_TYPES = new Set(['PLATFORM_FEE_REFUND'])
+
 const txIconBg = (type: string) => {
-  if (type === 'DEBIT') return 'bg-red-100 dark:bg-red-900/20'
-  if (type === 'CREDIT_PENDING') return 'bg-amber-100 dark:bg-amber-900/20'
+  if (TX_DEBIT_TYPES.has(type)) return 'bg-red-100 dark:bg-red-900/20'
+  if (TX_PENDING_TYPES.has(type)) return 'bg-amber-100 dark:bg-amber-900/20'
+  if (TX_REFUND_TYPES.has(type)) return 'bg-blue-100 dark:bg-blue-900/20'
   return 'bg-green-100 dark:bg-green-900/20'
 }
 const txIcon = (type: string) => {
-  if (type === 'DEBIT') return 'mdi:arrow-up'
-  if (type === 'CREDIT_PENDING') return 'mdi:clock-outline'
+  if (TX_DEBIT_TYPES.has(type)) return 'mdi:arrow-up'
+  if (TX_PENDING_TYPES.has(type)) return 'mdi:clock-outline'
+  if (TX_REFUND_TYPES.has(type)) return 'mdi:arrow-u-left-top'
   return 'mdi:arrow-down'
 }
 const txIconColor = (type: string) => {
-  if (type === 'DEBIT') return 'text-red-600'
-  if (type === 'CREDIT_PENDING') return 'text-amber-600'
+  if (TX_DEBIT_TYPES.has(type)) return 'text-red-600'
+  if (TX_PENDING_TYPES.has(type)) return 'text-amber-600'
+  if (TX_REFUND_TYPES.has(type)) return 'text-blue-600'
   return 'text-green-600'
 }
 const txAmountColor = (type: string) => {
-  if (type === 'DEBIT') return 'text-red-600'
-  if (type === 'CREDIT_PENDING') return 'text-amber-600'
+  if (TX_DEBIT_TYPES.has(type)) return 'text-red-600'
+  if (TX_PENDING_TYPES.has(type)) return 'text-amber-600'
+  if (TX_REFUND_TYPES.has(type)) return 'text-blue-600'
   return 'text-green-600'
 }
 

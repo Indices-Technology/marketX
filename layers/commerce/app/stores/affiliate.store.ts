@@ -1,14 +1,23 @@
+interface AffiliateStats {
+  totalEarnings: number
+  pendingEarnings: number
+  totalConversions: number
+}
+
+interface AffiliateReferral {
+  id: string
+  [key: string]: unknown
+}
+
 export const useAffiliateStore = defineStore('affiliate', () => {
   const isEnrolled = ref(false)
   const affiliateCode = ref<string | null>(null)
-  const stats = ref({
+  const stats = ref<AffiliateStats>({
     totalEarnings: 0,
     pendingEarnings: 0,
-    totalClicks: 0,
     totalConversions: 0,
-    conversionRate: 0,
   })
-  const referrals = ref<any[]>([])
+  const referrals = ref<AffiliateReferral[]>([])
   const isLoading = ref(false)
   const error = ref<string | null>(null)
 
@@ -19,12 +28,12 @@ export const useAffiliateStore = defineStore('affiliate', () => {
     referrals,
     isLoading,
     error,
-    setStatus: (enrolled: boolean, code: string | null, newStats: any) => {
+    setStatus: (enrolled: boolean, code: string | null, newStats: Partial<AffiliateStats>) => {
       isEnrolled.value = enrolled
       affiliateCode.value = code
       stats.value = { ...stats.value, ...newStats }
     },
-    setReferrals: (r: any[]) => {
+    setReferrals: (r: AffiliateReferral[]) => {
       referrals.value = r
     },
     setLoading: (val: boolean) => {

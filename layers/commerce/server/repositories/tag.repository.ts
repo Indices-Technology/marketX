@@ -15,7 +15,7 @@ const tagProductInclude = {
 
 export const tagRepository = {
   async getTags(search: string, limit: number) {
-    const where: any = {
+    const where: Record<string, unknown> = {
       OR: [{ products: { some: {} } }, { posts: { some: {} } }],
     }
     if (search) {

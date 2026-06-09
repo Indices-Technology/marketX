@@ -13,7 +13,7 @@ const cartInclude = {
           price: true,
           discount: true,
           seller: {
-            select: { store_slug: true, store_name: true, pod_enabled: true },
+            select: { id: true, store_slug: true, store_name: true, pod_enabled: true },
           },
           media: {
             take: 1,

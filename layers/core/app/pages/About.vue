@@ -13,7 +13,7 @@
         >
           We give the upper hand <br class="hidden sm:block" />
           <span
-            class="bg-gradient-to-r from-brand to-purple-600 bg-clip-text text-transparent"
+            class="text-brand"
             >back to the seller.</span
           >
         </h1>
@@ -31,7 +31,7 @@
       <div class="mb-20 grid gap-6 md:grid-cols-2 lg:gap-8">
         <!-- Pillar 1: AI -->
         <div
-          class="group relative overflow-hidden rounded-3xl border border-gray-100 bg-white p-8 shadow-sm transition-shadow hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900"
+          class="group relative overflow-hidden rounded-3xl border border-gray-200 bg-white p-8 shadow-sm transition-shadow hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900"
         >
           <div
             class="absolute right-0 top-0 h-32 w-32 -translate-y-1/2 translate-x-1/2 rounded-full bg-blue-500/10 blur-3xl transition-colors group-hover:bg-blue-500/20"
@@ -58,7 +58,7 @@
 
         <!-- Pillar 2: Social Reach (The Killer Feature) -->
         <div
-          class="group relative overflow-hidden rounded-3xl border border-gray-100 bg-white p-8 shadow-sm transition-shadow hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900"
+          class="group relative overflow-hidden rounded-3xl border border-gray-200 bg-white p-8 shadow-sm transition-shadow hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900"
         >
           <div
             class="absolute right-0 top-0 h-32 w-32 -translate-y-1/2 translate-x-1/2 rounded-full bg-brand/10 blur-3xl transition-colors group-hover:bg-brand/20"
@@ -85,7 +85,7 @@
 
         <!-- Pillar 3: Borders & Logistics -->
         <div
-          class="group relative overflow-hidden rounded-3xl border border-gray-100 bg-white p-8 shadow-sm transition-shadow hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900"
+          class="group relative overflow-hidden rounded-3xl border border-gray-200 bg-white p-8 shadow-sm transition-shadow hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900"
         >
           <div
             class="absolute right-0 top-0 h-32 w-32 -translate-y-1/2 translate-x-1/2 rounded-full bg-emerald-500/10 blur-3xl transition-colors group-hover:bg-emerald-500/20"
@@ -112,13 +112,13 @@
 
         <!-- Pillar 4: The Buyer Experience -->
         <div
-          class="group relative overflow-hidden rounded-3xl border border-gray-100 bg-white p-8 shadow-sm transition-shadow hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900"
+          class="group relative overflow-hidden rounded-3xl border border-gray-200 bg-white p-8 shadow-sm transition-shadow hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900"
         >
           <div
-            class="absolute right-0 top-0 h-32 w-32 -translate-y-1/2 translate-x-1/2 rounded-full bg-purple-500/10 blur-3xl transition-colors group-hover:bg-purple-500/20"
+            class="absolute right-0 top-0 h-32 w-32 -translate-y-1/2 translate-x-1/2 rounded-full bg-brand/10 blur-3xl transition-colors group-hover:bg-brand/20"
           ></div>
           <div
-            class="relative z-10 mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-purple-50 text-purple-600 dark:bg-purple-900/20"
+            class="relative z-10 mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand/10 text-brand dark:bg-brand/20"
           >
             <Icon name="mdi:shopping-search" size="28" />
           </div>
@@ -146,7 +146,7 @@
           class="pointer-events-none absolute right-0 top-0 h-64 w-64 -translate-y-1/2 translate-x-1/2 rounded-full bg-brand/20 blur-3xl"
         ></div>
         <div
-          class="pointer-events-none absolute bottom-0 left-0 h-64 w-64 -translate-x-1/2 translate-y-1/2 rounded-full bg-purple-500/20 blur-3xl"
+          class="pointer-events-none absolute bottom-0 left-0 h-64 w-64 -translate-x-1/2 translate-y-1/2 rounded-full bg-brand/15 blur-3xl"
         ></div>
 
         <div class="relative z-10">

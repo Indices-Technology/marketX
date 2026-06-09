@@ -1,4 +1,4 @@
-// GET /api/commerce/products/:id
+﻿// GET /api/commerce/products/:id
 import { productService } from '~~/layers/commerce/server/services/product.service'
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { optionalAuth } from '~~/server/layers/shared/middleware/requireAuth'
@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
       )
     const product = await productService.getProductById(id)
     return { success: true, data: product }
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof UserError)
       throw createError({
         statusCode: error.status,

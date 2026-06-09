@@ -1,5 +1,5 @@
 <template>
-  <div class="rounded-2xl border border-gray-100 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
+  <div class="rounded-2xl border border-gray-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
     <!-- Header -->
     <div class="flex items-start justify-between gap-3">
       <div class="flex items-center gap-3">

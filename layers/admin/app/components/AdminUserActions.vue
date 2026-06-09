@@ -1,17 +1,15 @@
 <template>
-  <div class="relative" ref="root">
-    <button
-      class="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
-      @click="open = !open"
-    >
-      <Icon name="mdi:dots-horizontal" size="16" />
-    </button>
-
-    <Transition name="fade">
-      <div
-        v-if="open"
-        class="absolute right-0 top-8 z-20 w-52 overflow-hidden rounded-xl border border-gray-100 bg-white py-1 text-[13px] shadow-lg dark:border-neutral-800 dark:bg-neutral-900"
-      >
+  <BaseDropdownMenu v-model="open" placement="right" width="md">
+    <template #trigger="{ toggle }">
+      <BaseButton
+        variant="icon"
+        size="sm"
+        aria-label="User actions"
+        icon-left="mdi:dots-horizontal"
+        @click="toggle"
+      />
+    </template>
+    <template #default>
         <!-- Account state -->
         <button
           v-if="!user.isActive"
@@ -65,62 +63,70 @@
           <Icon :name="r.icon" size="15" />
           {{ r.label }}
         </button>
-      </div>
-    </Transition>
-  </div>
+    </template>
+  </BaseDropdownMenu>
 
   <!-- Suspend / Ban modal -->
-  <Teleport to="body">
-    <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div class="w-full max-w-sm space-y-4 rounded-2xl bg-white p-6 shadow-2xl dark:bg-neutral-900">
-        <h3 class="font-bold text-gray-900 dark:text-neutral-100">
-          {{ permanentBan ? 'Permanently ban' : 'Suspend' }} @{{ user.username }}
-        </h3>
-        <div class="space-y-3">
-          <div v-if="!permanentBan" class="space-y-1">
-            <label class="text-[12px] font-medium text-gray-600 dark:text-neutral-400">Duration (days)</label>
-            <input
-              v-model.number="durationDays"
-              type="number"
-              min="1"
-              max="365"
-              class="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-[13px] focus:outline-none focus:ring-2 focus:ring-rose-400 dark:border-neutral-700 dark:bg-neutral-800"
-            />
-          </div>
-          <div class="space-y-1">
-            <label class="text-[12px] font-medium text-gray-600 dark:text-neutral-400">Reason</label>
-            <textarea
-              v-model="reason"
-              rows="3"
-              placeholder="Describe the reason…"
-              class="w-full resize-none rounded-xl border border-gray-200 bg-white px-3 py-2 text-[13px] focus:outline-none focus:ring-2 focus:ring-rose-400 dark:border-neutral-700 dark:bg-neutral-800"
-            />
-          </div>
-        </div>
-        <div class="flex gap-2">
-          <button
-            class="flex-1 rounded-xl border border-gray-200 py-2 text-[13px] dark:border-neutral-700"
-            @click="showModal = false"
-          >
-            Cancel
-          </button>
-          <button
-            :disabled="!reason.trim() || submitting"
-            class="flex-1 rounded-xl bg-rose-500 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-rose-600 disabled:opacity-50"
-            @click="confirmSuspend"
-          >
-            {{ submitting ? 'Saving…' : 'Confirm' }}
-          </button>
-        </div>
-      </div>
+  <BaseModal
+    v-model="showModal"
+    :title="`${permanentBan ? 'Permanently ban' : 'Suspend'} @${user.username}`"
+    max-width="sm"
+    :persistent="submitting"
+  >
+    <div class="space-y-3">
+      <BaseInput
+        v-if="!permanentBan"
+        v-model="durationDays"
+        type="number"
+        min="1"
+        max="365"
+        label="Duration (days)"
+        size="sm"
+      />
+      <BaseTextarea
+        v-model="reason"
+        rows="3"
+        label="Reason"
+        placeholder="Describe the reason..."
+        resize="none"
+        size="sm"
+      />
     </div>
-  </Teleport>
+
+    <template #footer>
+      <div class="flex gap-2">
+        <BaseButton
+          variant="secondary"
+          size="sm"
+          class="flex-1"
+          :disabled="submitting"
+          @click="showModal = false"
+        >
+          Cancel
+        </BaseButton>
+        <BaseButton
+          variant="danger"
+          size="sm"
+          class="flex-1"
+          :loading="submitting"
+          :disabled="!reason.trim() || submitting"
+          @click="confirmSuspend"
+        >
+          {{ submitting ? 'Saving...' : 'Confirm' }}
+        </BaseButton>
+      </div>
+    </template>
+  </BaseModal>
 </template>
 
 <script setup lang="ts">
-import { onClickOutside } from '@vueuse/core'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import { useAdminApi } from '~~/layers/admin/app/services/admin.api'
+import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
+import BaseDropdownMenu from '~~/layers/ui/app/components/BaseDropdownMenu.vue'
+import BaseInput from '~~/layers/ui/app/components/BaseInput.vue'
+import BaseModal from '~~/layers/ui/app/components/BaseModal.vue'
+import BaseTextarea from '~~/layers/ui/app/components/BaseTextarea.vue'
 
 const props = defineProps<{ user: any }>()
 const emit = defineEmits<{ updated: [] }>()
@@ -131,7 +137,6 @@ const permanentBan = ref(false)
 const durationDays = ref(7)
 const reason = ref('')
 const submitting = ref(false)
-const root = ref<HTMLElement | null>(null)
 
 const adminApi = useAdminApi()
 const profileStore = useProfileStore()
@@ -142,12 +147,12 @@ const isSuspended = computed(
   () => props.user.suspendedUntil && new Date(props.user.suspendedUntil) > new Date(),
 )
 
-const ROLE_OPTIONS: Record<string, { label: string; icon: string }[]> = {
+const ROLE_OPTIONS: Record<string, { label: string; icon: string; value: 'user' | 'moderator' | 'admin' }[]> = {
   user: [
-    { label: 'Promote to Moderator', icon: 'mdi:shield-account-outline', value: 'moderator' } as any,
+    { label: 'Promote to Moderator', icon: 'mdi:shield-account-outline', value: 'moderator' },
   ],
   moderator: [
-    { label: 'Demote to User', icon: 'mdi:account-outline', value: 'user' } as any,
+    { label: 'Demote to User', icon: 'mdi:account-outline', value: 'user' },
   ],
   admin: [],
 }
@@ -164,8 +169,6 @@ const availableRoles = computed(() => {
   }
   return base
 })
-
-onClickOutside(root, () => { open.value = false })
 
 function openSuspend(ban: boolean) {
   permanentBan.value = ban
@@ -214,8 +217,3 @@ async function changeRole(role: 'user' | 'moderator' | 'admin') {
   } catch {}
 }
 </script>
-
-<style scoped>
-.fade-enter-active, .fade-leave-active { transition: opacity 0.15s, transform 0.15s; }
-.fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(-4px); }
-</style>

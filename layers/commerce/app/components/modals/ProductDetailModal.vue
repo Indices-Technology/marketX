@@ -187,13 +187,13 @@
                   <NuxtLink
                     v-if="product.seller"
                     :to="`/sellers/profile/${product.seller.store_slug}`"
-                    class="group/seller mb-3 inline-flex items-center gap-2 rounded-full border border-gray-100 bg-gray-50 py-1 pl-1 pr-3 transition-colors hover:border-brand/30 hover:bg-brand/5 dark:border-neutral-800 dark:bg-neutral-800"
+                    class="group/seller mb-3 inline-flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 py-1 pl-1 pr-3 transition-colors hover:border-brand/30 hover:bg-brand/5 dark:border-neutral-800 dark:bg-neutral-800"
                     @click="$emit('close')"
                   >
                     <img
                       v-if="product.seller.store_logo"
                       :src="imgAvatar(product.seller.store_logo)"
-                      class="h-5 w-5 rounded-full border border-gray-100 object-cover dark:border-neutral-700"
+                      class="h-5 w-5 rounded-full border border-gray-200 object-cover dark:border-neutral-700"
                     />
                     <div
                       v-else
@@ -496,7 +496,7 @@
 
           <!-- ── Footer Actions (Sticky at bottom always) ── -->
           <div
-            class="relative z-20 shrink-0 space-y-3 border-t border-gray-100 bg-white px-4 pt-4 md:px-8 md:pb-8 dark:border-neutral-800 dark:bg-neutral-900"
+            class="relative z-20 shrink-0 space-y-3 border-t border-gray-200 bg-white px-4 pt-4 md:px-8 md:pb-8 dark:border-neutral-800 dark:bg-neutral-900"
             style="
               padding-bottom: max(
                 1.5rem,
@@ -530,37 +530,24 @@
               </div>
 
               <!-- Add to Cart Button -->
-              <button
+              <BaseButton
+                :variant="cartAdded ? 'success' : 'primary'"
+                class="h-[50px] flex-1 md:h-[52px]"
+                :loading="isAdding"
                 :disabled="!canAddToCart || isAdding"
-                class="flex h-[50px] flex-1 items-center justify-center gap-2 rounded-xl text-[14px] font-bold transition-all md:h-[52px] md:text-[15px]"
-                :class="
-                  cartAdded
-                    ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
-                    : canAddToCart
-                      ? 'bg-brand text-white shadow-lg shadow-brand/20 hover:bg-[#d81b36] active:scale-[0.98]'
-                      : 'cursor-not-allowed bg-gray-100 text-gray-400 dark:bg-neutral-800'
-                "
                 @click="handleAddToCart"
               >
                 <template v-if="cartAdded">
-                  <Icon name="mdi:check-circle" size="20" /> Added!
-                </template>
-                <template v-else-if="isAdding">
-                  <Icon
-                    name="eos-icons:loading"
-                    size="20"
-                    class="animate-spin"
-                  />
-                  Adding…
+                  <Icon name="mdi:check-circle" size="20" class="mr-1" /> Added!
                 </template>
                 <template v-else-if="!product.variants?.length">
                   Not available
                 </template>
-                <template v-else-if="isSoldOut"> Sold out </template>
+                <template v-else-if="isSoldOut">Sold out</template>
                 <template v-else>
-                  <Icon name="mdi:cart-plus" size="20" /> Add to Cart
+                  <Icon name="mdi:cart-plus" size="20" class="mr-1" /> Add to Cart
                 </template>
-              </button>
+              </BaseButton>
             </div>
 
             <!-- Create content buttons (logged-in users) -->
@@ -569,20 +556,14 @@
                 v-if="profileStore.isLoggedIn"
                 class="flex gap-2 pt-2 md:gap-3"
               >
-                <button
-                  class="flex flex-1 items-center justify-center gap-1.5 rounded-xl border-2 border-gray-100 bg-gray-50 py-2.5 text-[12px] font-bold text-gray-600 transition-all hover:border-brand hover:bg-brand/5 hover:text-brand dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400"
-                  @click="showPostModal = true"
-                >
-                  <Icon name="mdi:camera-plus-outline" size="18" />
+                <BaseButton variant="secondary" size="sm" class="flex-1" @click="showPostModal = true">
+                  <Icon name="mdi:camera-plus-outline" size="18" class="mr-1" />
                   Create Post
-                </button>
-                <button
-                  class="flex flex-1 items-center justify-center gap-1.5 rounded-xl border-2 border-gray-100 bg-gray-50 py-2.5 text-[12px] font-bold text-gray-600 transition-all hover:border-brand hover:bg-brand/5 hover:text-brand dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400"
-                  @click="showStoryModal = true"
-                >
-                  <Icon name="mdi:image-plus-outline" size="18" />
+                </BaseButton>
+                <BaseButton variant="secondary" size="sm" class="flex-1" @click="showStoryModal = true">
+                  <Icon name="mdi:image-plus-outline" size="18" class="mr-1" />
                   Add to Story
-                </button>
+                </BaseButton>
               </div>
             </ClientOnly>
 
@@ -776,6 +757,7 @@ import {
   imgAvatar,
   videoThumb,
 } from '~~/layers/core/app/utils/cloudinary'
+import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 
 // Assume you have a cart composable
 const { addToCart } = useCart()

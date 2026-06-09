@@ -1,4 +1,4 @@
-// GET /api/commerce/wallet/store/[storeSlug]
+﻿// GET /api/commerce/wallet/store/[storeSlug]
 // Returns wallet balance for a specific seller store owned by the authenticated user.
 
 import { walletService } from '~~/layers/commerce/server/services/wallet.service'
@@ -33,7 +33,7 @@ export default defineEventHandler(async (event) => {
         totalSpent: stats?.totalSpent ?? 0,
       },
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
     if (error instanceof UserError)
       throw createError({ statusCode: error.status, statusMessage: error.message })

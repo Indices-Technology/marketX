@@ -1,4 +1,4 @@
-// DELETE /api/commerce/products/:id (soft delete - archives)
+﻿// DELETE /api/commerce/products/:id (soft delete - archives)
 
 import { productService } from '~~/layers/commerce/server/services/product.service'
 import { UserError } from '~~/layers/profile/server/types/user.types'
@@ -34,7 +34,7 @@ export default defineEventHandler(async (event) => {
       userAgent,
     )
     return { success: true, data: result }
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof UserError)
       throw createError({ statusCode: error.status, statusMessage: error.message })
     if (error && typeof error === 'object' && 'statusCode' in error) throw error

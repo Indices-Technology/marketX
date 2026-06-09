@@ -79,7 +79,7 @@
                   v-else
                   @click="startConversation(item.id, 'SELLER')"
                   :disabled="isCreating && selectedId === item.id"
-                  class="flex w-full items-center justify-between gap-3 border-b border-gray-100 px-4 py-3 text-left transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-neutral-800 dark:hover:bg-neutral-900"
+                  class="flex w-full items-center justify-between gap-3 border-b border-gray-200 px-4 py-3 text-left transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-neutral-800 dark:hover:bg-neutral-900"
                 >
                   <div class="flex min-w-0 items-center gap-3">
                     <img
@@ -88,7 +88,7 @@
                         `https://api.dicebear.com/7.x/initials/svg?seed=${item.name}`
                       "
                       :alt="item.name"
-                      class="h-11 w-11 shrink-0 rounded-xl border border-gray-100 object-cover dark:border-neutral-800"
+                      class="h-11 w-11 shrink-0 rounded-xl border border-gray-200 object-cover dark:border-neutral-800"
                     />
                     <div class="min-w-0 flex-1">
                       <div class="flex items-center gap-1.5">
@@ -162,7 +162,7 @@
                   v-else
                   @click="startConversation(item.id, 'SELLER')"
                   :disabled="isCreating && selectedId === item.id"
-                  class="flex w-full items-center justify-between gap-3 border-b border-gray-100 px-4 py-3 text-left transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-neutral-800 dark:hover:bg-neutral-900"
+                  class="flex w-full items-center justify-between gap-3 border-b border-gray-200 px-4 py-3 text-left transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-neutral-800 dark:hover:bg-neutral-900"
                 >
                   <div class="flex min-w-0 items-center gap-3">
                     <img
@@ -171,7 +171,7 @@
                         `https://api.dicebear.com/7.x/initials/svg?seed=${item.name || item.username}`
                       "
                       :alt="item.name || item.username"
-                      class="h-11 w-11 shrink-0 rounded-xl border border-gray-100 object-cover dark:border-neutral-800"
+                      class="h-11 w-11 shrink-0 rounded-xl border border-gray-200 object-cover dark:border-neutral-800"
                     />
                     <div class="min-w-0 flex-1">
                       <div class="flex items-center gap-1.5">

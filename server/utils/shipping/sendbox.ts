@@ -86,14 +86,18 @@ export const sendboxProvider: IShippingProvider = {
       // Single quote response
       const q = res?.data ?? res
       if (q?.total_cost ?? q?.amount) {
-        return [{
-          rateId: q.service_code ?? 'sendbox-standard',
-          carrier: 'Sendbox',
-          service: q.service_name ?? q.service_code ?? 'Standard',
-          amountNGN: Math.round((q.total_cost ?? q.amount ?? 0) * 100) / 100,
-          estimatedDays: q.estimated_days ? `${q.estimated_days} business day(s)` : '2-5 business days',
-          provider: 'sendbox',
-        }]
+        return [
+          {
+            rateId: q.service_code ?? 'sendbox-standard',
+            carrier: 'Sendbox',
+            service: q.service_name ?? q.service_code ?? 'Standard',
+            amountNGN: Math.round((q.total_cost ?? q.amount ?? 0) * 100) / 100,
+            estimatedDays: q.estimated_days
+              ? `${q.estimated_days} business day(s)`
+              : '2-5 business days',
+            provider: 'sendbox',
+          },
+        ]
       }
       return []
     }
@@ -101,7 +105,9 @@ export const sendboxProvider: IShippingProvider = {
       rateId: r.id ?? r.service_code ?? 'sendbox-standard',
       carrier: r.carrier ?? r.courier_name ?? 'Sendbox',
       service: r.service_name ?? r.service_type ?? 'Standard',
-      amountNGN: Math.round((r.total_cost ?? r.fee ?? r.amount ?? r.price ?? 0) * 100) / 100,
+      amountNGN:
+        Math.round((r.total_cost ?? r.fee ?? r.amount ?? r.price ?? 0) * 100) /
+        100,
       estimatedDays: r.estimated_days
         ? `${r.estimated_days} business day(s)`
         : '2-5 business days',

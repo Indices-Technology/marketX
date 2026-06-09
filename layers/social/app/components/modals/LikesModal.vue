@@ -11,7 +11,7 @@
         <!-- Popup -->
         <div class="relative w-full max-w-[280px] overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-neutral-900">
           <!-- Header -->
-          <div class="flex items-center justify-between border-b border-gray-100 px-4 py-2.5 dark:border-neutral-800">
+          <div class="flex items-center justify-between border-b border-gray-200 px-4 py-2.5 dark:border-neutral-800">
             <span class="text-[13px] font-bold text-gray-900 dark:text-neutral-100">
               {{ total > 0 ? `${total.toLocaleString()} ${total === 1 ? $t('post.like') : $t('post.likes')}` : $t('post.likes') }}
             </span>

@@ -8,14 +8,14 @@
     <template v-else>
       <!-- ─── NOT ENROLLED: CTA + preview of available products ────────── -->
       <template v-if="!isEnrolled">
-        <div class="rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 p-8 text-center text-white">
+        <div class="rounded-xl bg-gradient-to-br from-brand to-[#c41230] p-8 text-center text-white">
           <Icon name="mdi:cash-multiple" size="64" class="mx-auto mb-4" />
           <h2 class="mb-2 text-2xl font-bold">{{ $t('affiliate.joinTitle') }}</h2>
           <p class="mb-6 text-white/90">{{ $t('affiliate.joinSubtitle') }}</p>
           <button
             @click="handleEnroll"
             :disabled="isLoading"
-            class="rounded-lg bg-white px-8 py-3 font-bold text-purple-600 transition-colors hover:bg-gray-100 disabled:opacity-50"
+            class="rounded-lg bg-white px-8 py-3 font-bold text-brand transition-colors hover:bg-gray-100 disabled:opacity-50"
           >
             {{ $t('affiliate.enrollNow') }}
           </button>
@@ -29,7 +29,7 @@
         >
           <div class="flex items-center justify-between border-b border-gray-200 p-4 dark:border-neutral-800">
             <div class="flex items-center gap-3">
-              <Icon name="mdi:tag-heart-outline" size="22" class="text-purple-500" />
+              <Icon name="mdi:tag-heart-outline" size="22" class="text-brand" />
               <div>
                 <h3 class="font-semibold text-gray-900 dark:text-neutral-100">
                   {{ $t('affiliate.availableTitle') }}
@@ -39,7 +39,7 @@
                 </p>
               </div>
             </div>
-            <span class="rounded-full bg-purple-100 px-2 py-0.5 text-[11px] font-bold text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+            <span class="rounded-full bg-brand/10 px-2 py-0.5 text-[11px] font-bold text-brand dark:bg-brand/20 dark:text-brand/80">
               {{ availableMeta.total ?? availableProducts.length }}
             </span>
           </div>
@@ -67,7 +67,7 @@
               <!-- Enroll-to-copy nudge -->
               <button
                 @click="handleEnroll"
-                class="shrink-0 rounded-xl bg-purple-600/10 px-3 py-1.5 text-[11px] font-bold text-purple-700 transition-colors hover:bg-purple-600/20 dark:text-purple-400"
+                class="shrink-0 rounded-xl bg-brand/10 px-3 py-1.5 text-[11px] font-bold text-brand transition-colors hover:bg-brand/20 dark:text-brand/80"
               >
                 Enroll to copy
               </button>
@@ -177,12 +177,12 @@
                   class="inline-block rounded-full px-2 py-0.5 text-[10px] font-bold"
                   :class="statusClass(referral.status)"
                 >
-                  {{ referral.status }}
+                  {{ statusLabel(referral.status) }}
                 </span>
               </div>
             </div>
 
-            <div v-if="referralsMeta.hasMore" class="border-t border-gray-100 p-3 text-center dark:border-neutral-800">
+            <div v-if="referralsMeta.hasMore" class="border-t border-gray-200 p-3 text-center dark:border-neutral-800">
               <button
                 @click="loadMoreReferrals"
                 :disabled="loadingReferrals"
@@ -230,12 +230,12 @@
 
           <div v-else class="divide-y divide-gray-100 dark:divide-neutral-800">
             <!-- Summary row -->
-            <div class="grid grid-cols-3 gap-0 border-b border-gray-100 dark:border-neutral-800">
+            <div class="grid grid-cols-3 gap-0 border-b border-gray-200 dark:border-neutral-800">
               <div class="p-3 text-center">
                 <p class="text-lg font-bold text-gray-900 dark:text-neutral-100">{{ sellerProductStats.products.length }}</p>
                 <p class="text-[10px] text-gray-400 dark:text-neutral-500">{{ $t('affiliate.products') }}</p>
               </div>
-              <div class="border-x border-gray-100 p-3 text-center dark:border-neutral-800">
+              <div class="border-x border-gray-200 p-3 text-center dark:border-neutral-800">
                 <p class="text-lg font-bold text-gray-900 dark:text-neutral-100">{{ sellerProductStats.totalUnitsSold }}</p>
                 <p class="text-[10px] text-gray-400 dark:text-neutral-500">{{ $t('affiliate.unitsSold') }}</p>
               </div>
@@ -252,12 +252,12 @@
               class="flex items-center justify-between p-4"
             >
               <div class="flex items-center gap-3">
-                <img :src="imgThumb(product.imageUrl)" class="h-12 w-12 rounded-lg bg-gray-100 object-cover dark:bg-neutral-800" />
+                <img :src="imgThumb(product.imageUrl)" :alt="product.title || 'Product image'" class="h-12 w-12 rounded-lg bg-gray-100 object-cover dark:bg-neutral-800" />
                 <div>
                   <p class="text-sm font-medium text-gray-900 dark:text-neutral-100">{{ product.title }}</p>
                   <p class="text-xs text-gray-400 dark:text-neutral-500">
                     {{ product.storeName }} ·
-                    <span class="text-purple-600 dark:text-purple-400">
+                    <span class="text-brand dark:text-brand/80">
                       {{ $t('affiliate.commission', { rate: product.affiliateCommission }) }}
                     </span>
                   </p>
@@ -313,9 +313,12 @@
                   <p class="text-xs text-gray-400 dark:text-neutral-500">{{ promoter.orderCount }} sale{{ promoter.orderCount !== 1 ? 's' : '' }}</p>
                 </div>
               </div>
-              <p class="text-sm font-bold text-green-600 dark:text-green-400">
-                {{ formatKobo(promoter.totalEarned) }} earned
-              </p>
+              <div class="text-right">
+                <p class="text-sm font-bold text-green-600 dark:text-green-400">
+                  {{ formatKobo(promoter.totalEarned) }}
+                </p>
+                <p class="text-[10px] text-gray-400 dark:text-neutral-500">in commissions</p>
+              </div>
             </div>
           </div>
         </div>
@@ -324,7 +327,7 @@
         <div class="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
           <div class="flex items-center justify-between border-b border-gray-200 p-4 dark:border-neutral-800">
             <div class="flex items-center gap-3">
-              <Icon name="mdi:tag-heart-outline" size="22" class="text-purple-500" />
+              <Icon name="mdi:tag-heart-outline" size="22" class="text-brand" />
               <div>
                 <h3 class="font-semibold text-gray-900 dark:text-neutral-100">{{ $t('affiliate.availableTitle') }}</h3>
                 <p class="text-xs text-gray-400 dark:text-neutral-500">{{ $t('affiliate.availableHint') }}</p>
@@ -332,7 +335,7 @@
             </div>
             <span
               v-if="availableProducts.length"
-              class="rounded-full bg-purple-100 px-2 py-0.5 text-[11px] font-bold text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
+              class="rounded-full bg-brand/10 px-2 py-0.5 text-[11px] font-bold text-brand dark:bg-brand/20 dark:text-brand/80"
             >
               {{ availableMeta.total ?? availableProducts.length }}
             </span>
@@ -375,14 +378,14 @@
                 </div>
                 <button
                   @click="copyAffiliateProductLink(product)"
-                  class="shrink-0 rounded-xl bg-purple-600/10 px-3 py-1.5 text-[11px] font-bold text-purple-700 transition-colors hover:bg-purple-600/20 dark:text-purple-400"
+                  class="shrink-0 rounded-xl bg-brand/10 px-3 py-1.5 text-[11px] font-bold text-brand transition-colors hover:bg-brand/20 dark:text-brand/80"
                 >
                   {{ $t('affiliate.copyLink') }}
                 </button>
               </div>
             </div>
 
-            <div v-if="availableMeta.hasMore" class="border-t border-gray-100 p-3 text-center dark:border-neutral-800">
+            <div v-if="availableMeta.hasMore" class="border-t border-gray-200 p-3 text-center dark:border-neutral-800">
               <button
                 @click="loadMoreAvailable"
                 :disabled="loadingAvailable"
@@ -586,4 +589,17 @@ const statusClass = (status: string) => {
   if (s === 'CANCELLED' || s === 'CANCELED' || s === 'RETURNED') return 'bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400'
   return 'bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400'
 }
+
+const STATUS_LABELS: Record<string, string> = {
+  PENDING: 'Awaiting payment',
+  CONFIRMED: 'Seller confirmed',
+  PROCESSING: 'Processing',
+  SHIPPED: 'In transit',
+  DELIVERED: 'Paid out',
+  CANCELLED: 'Cancelled',
+  CANCELED: 'Cancelled',
+  RETURNED: 'Returned',
+  FAILED: 'Failed',
+}
+const statusLabel = (status: string) => STATUS_LABELS[status?.toUpperCase()] ?? status
 </script>

@@ -4,7 +4,7 @@
   >
     <!-- Header -->
     <div
-      class="border-b border-gray-100 px-4 pb-4 pt-5 sm:px-6 dark:border-neutral-700"
+      class="border-b border-gray-200 px-4 pb-4 pt-5 sm:px-6 dark:border-neutral-700"
     >
       <div class="flex items-start justify-between gap-4">
         <div>

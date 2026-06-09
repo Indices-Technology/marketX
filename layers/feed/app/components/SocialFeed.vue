@@ -27,12 +27,9 @@
             Please check your connection and try again.
           </p>
         </div>
-        <button
-          class="rounded-xl bg-brand px-6 py-3 text-sm font-semibold text-white shadow-md transition-all hover:bg-brand/90 hover:shadow-lg active:scale-95"
-          @click="refresh()"
-        >
+        <BaseButton variant="primary" @click="refresh()">
           {{ $t('common.tryAgain') }}
-        </button>
+        </BaseButton>
       </div>
     </Transition>
 
@@ -135,7 +132,7 @@
       <section v-if="profileStore.isLoggedIn && !isEnrolled">
         <NuxtLink
           :to="`/profile/${profileStore.me?.username}?tab=affiliate`"
-          class="group flex items-center gap-4 overflow-hidden rounded-2xl bg-gradient-to-r from-purple-600 via-purple-500 to-pink-500 p-4 shadow-md transition-all hover:shadow-lg hover:brightness-105 active:scale-[0.99]"
+          class="group flex items-center gap-4 overflow-hidden rounded-2xl bg-gradient-to-r from-brand to-[#c41230] p-4 shadow-md transition-all hover:shadow-lg hover:brightness-105 active:scale-[0.99]"
         >
           <div
             class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/20"
@@ -318,7 +315,7 @@
 
     <!-- Feed tabs (desktop only) -->
     <div
-      class="-mx-2 mb-4 mt-4 hidden items-center gap-1 border-b border-gray-100 px-2 pb-3 md:flex dark:border-neutral-800"
+      class="-mx-2 mb-4 mt-4 hidden items-center gap-1 border-b border-gray-200 px-2 pb-3 md:flex dark:border-neutral-800"
     >
       <button
         v-for="tab in FEED_TABS"
@@ -471,6 +468,7 @@ import PostDetailModal from '~~/layers/social/app/components/modals/PostDetailMo
 import ProductMarketModal from '~~/layers/commerce/app/components/modals/ProductMarketModal.vue'
 import ProductCommentModal from '~~/layers/commerce/app/components/modals/ProductCommentModal.vue'
 import ShopProductCard from '~~/layers/commerce/app/components/ShopProductCard.vue'
+import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 import FeedProductShelf from '~~/layers/feed/app/components/FeedProductShelf.vue'
 import PostCard from '~~/layers/social/app/components/PostCard.vue'
 

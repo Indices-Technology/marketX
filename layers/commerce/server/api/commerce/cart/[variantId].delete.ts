@@ -1,4 +1,4 @@
-// DELETE /api/commerce/cart/:variantId - Remove cart item
+﻿// DELETE /api/commerce/cart/:variantId - Remove cart item
 
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
       throw new UserError('INVALID_ID', 'variantId must be a number', 400)
     await cartService.removeFromCart(user.id, variantId)
     return { success: true }
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof UserError)
       throw createError({ statusCode: error.status, statusMessage: error.message })
     if (error && typeof error === 'object' && 'statusCode' in error) throw error

@@ -1,4 +1,4 @@
-// GET /api/commerce/products/by-slug/:slug
+﻿// GET /api/commerce/products/by-slug/:slug
 import { productService } from '~~/layers/commerce/server/services/product.service'
 import { UserError } from '~~/layers/profile/server/types/user.types'
 
@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
 
     const product = await productService.getProductBySlug(slug)
     return { success: true, data: product }
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof UserError)
       throw createError({
         statusCode: error.status,

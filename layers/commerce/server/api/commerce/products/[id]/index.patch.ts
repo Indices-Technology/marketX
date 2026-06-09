@@ -1,4 +1,4 @@
-import { productService } from '~~/layers/commerce/server/services/product.service'
+﻿import { productService } from '~~/layers/commerce/server/services/product.service'
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
 import { getClientIP } from '~~/server/layers/shared/utils/security'
@@ -35,7 +35,7 @@ export default defineEventHandler(async (event) => {
       user.id,
     )
     return { success: true, data: result }
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof UserError)
       throw createError({ statusCode: error.status, statusMessage: error.message })
     if (error && typeof error === 'object' && 'statusCode' in error) throw error

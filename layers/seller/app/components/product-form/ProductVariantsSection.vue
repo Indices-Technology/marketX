@@ -22,7 +22,7 @@
       <div
         v-for="(variant, i) in variants"
         :key="i"
-        class="flex items-start gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-neutral-700 dark:bg-neutral-900"
+        class="flex items-start gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-neutral-700 dark:bg-neutral-900"
       >
         <div class="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-3">
           <div>

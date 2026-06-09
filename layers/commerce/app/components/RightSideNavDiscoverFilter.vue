@@ -3,7 +3,7 @@
     class="discover-filter-panel overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-950"
   >
     <div
-      class="border-b border-gray-100 bg-gray-50/80 px-4 py-3 dark:border-neutral-800 dark:bg-neutral-900/60"
+      class="border-b border-gray-200 bg-gray-50/80 px-4 py-3 dark:border-neutral-800 dark:bg-neutral-900/60"
     >
       <div class="flex items-start justify-between gap-3">
         <div class="min-w-0">

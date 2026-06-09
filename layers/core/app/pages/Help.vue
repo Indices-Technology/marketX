@@ -53,7 +53,7 @@
       <div class="mb-16 grid grid-cols-2 gap-4 md:grid-cols-4">
         <NuxtLink
           to="/help/getting-started"
-          class="group flex flex-col items-center gap-3 rounded-2xl border border-gray-100 bg-white p-5 text-center transition-all hover:border-brand/30 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900"
+          class="group flex flex-col items-center gap-3 rounded-2xl border border-gray-200 bg-white p-5 text-center transition-all hover:border-brand/30 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900"
         >
           <div
             class="flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-blue-500 transition-transform group-hover:scale-110 dark:bg-blue-900/20"
@@ -67,7 +67,7 @@
 
         <NuxtLink
           to="/help/orders"
-          class="group flex flex-col items-center gap-3 rounded-2xl border border-gray-100 bg-white p-5 text-center transition-all hover:border-brand/30 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900"
+          class="group flex flex-col items-center gap-3 rounded-2xl border border-gray-200 bg-white p-5 text-center transition-all hover:border-brand/30 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900"
         >
           <div
             class="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-500 transition-transform group-hover:scale-110 dark:bg-emerald-900/20"
@@ -81,7 +81,7 @@
 
         <NuxtLink
           to="/help/returns"
-          class="group flex flex-col items-center gap-3 rounded-2xl border border-gray-100 bg-white p-5 text-center transition-all hover:border-brand/30 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900"
+          class="group flex flex-col items-center gap-3 rounded-2xl border border-gray-200 bg-white p-5 text-center transition-all hover:border-brand/30 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900"
         >
           <div
             class="flex h-12 w-12 items-center justify-center rounded-full bg-orange-50 text-orange-500 transition-transform group-hover:scale-110 dark:bg-orange-900/20"
@@ -95,10 +95,10 @@
 
         <NuxtLink
           to="/help/sellers"
-          class="group flex flex-col items-center gap-3 rounded-2xl border border-gray-100 bg-white p-5 text-center transition-all hover:border-brand/30 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900"
+          class="group flex flex-col items-center gap-3 rounded-2xl border border-gray-200 bg-white p-5 text-center transition-all hover:border-brand/30 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900"
         >
           <div
-            class="flex h-12 w-12 items-center justify-center rounded-full bg-purple-50 text-purple-500 transition-transform group-hover:scale-110 dark:bg-purple-900/20"
+            class="flex h-12 w-12 items-center justify-center rounded-full bg-brand/10 text-brand transition-transform group-hover:scale-110 dark:bg-brand/20"
           >
             <Icon name="mdi:storefront-outline" size="24" />
           </div>
@@ -138,7 +138,7 @@
         <div class="min-h-[250px] space-y-4">
           <div
             v-if="filteredFaqs.length === 0"
-            class="rounded-2xl border border-gray-100 bg-white py-16 text-center dark:border-neutral-800 dark:bg-neutral-900"
+            class="rounded-2xl border border-gray-200 bg-white py-16 text-center dark:border-neutral-800 dark:bg-neutral-900"
           >
             <Icon
               name="mdi:file-search-outline"
@@ -179,7 +179,7 @@
               </span>
             </summary>
             <div
-              class="mt-2 border-t border-gray-100 px-5 pb-6 pt-0 pt-4 text-sm leading-relaxed text-gray-600 sm:px-6 dark:border-neutral-800 dark:text-neutral-400"
+              class="mt-2 border-t border-gray-200 px-5 pb-6 pt-0 pt-4 text-sm leading-relaxed text-gray-600 sm:px-6 dark:border-neutral-800 dark:text-neutral-400"
             >
               {{ faq.answer }}
             </div>
@@ -312,7 +312,7 @@
           class="pointer-events-none absolute right-0 top-0 h-64 w-64 -translate-y-1/2 translate-x-1/2 rounded-full bg-brand/20 blur-3xl"
         ></div>
         <div
-          class="pointer-events-none absolute bottom-0 left-0 h-64 w-64 -translate-x-1/2 translate-y-1/2 rounded-full bg-purple-500/20 blur-3xl"
+          class="pointer-events-none absolute bottom-0 left-0 h-64 w-64 -translate-x-1/2 translate-y-1/2 rounded-full bg-brand/15 blur-3xl"
         ></div>
 
         <div class="relative z-10">

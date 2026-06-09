@@ -124,7 +124,7 @@
                 />
                 <div
                   v-else
-                  class="flex h-full w-full items-center justify-center bg-gradient-to-br from-brand to-purple-600"
+                  class="flex h-full w-full items-center justify-center bg-brand"
                 >
                   <Icon name="mdi:storefront" size="40" class="text-white" />
                 </div>
@@ -293,7 +293,7 @@
           <!-- Stats strip -->
           <div class="mt-5 grid grid-cols-3 gap-3">
             <div
-              class="rounded-2xl border border-gray-100 bg-white px-3 py-4 text-center shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
+              class="rounded-2xl border border-gray-200 bg-white px-3 py-4 text-center shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
             >
               <p
                 class="text-xl font-black text-gray-900 sm:text-2xl dark:text-neutral-100"
@@ -307,7 +307,7 @@
               </p>
             </div>
             <div
-              class="rounded-2xl border border-gray-100 bg-white px-3 py-4 text-center shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
+              class="rounded-2xl border border-gray-200 bg-white px-3 py-4 text-center shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
             >
               <p
                 class="text-xl font-black text-gray-900 sm:text-2xl dark:text-neutral-100"
@@ -321,7 +321,7 @@
               </p>
             </div>
             <div
-              class="rounded-2xl border border-gray-100 bg-white px-3 py-4 text-center shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
+              class="rounded-2xl border border-gray-200 bg-white px-3 py-4 text-center shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
             >
               <div class="flex items-center justify-center gap-1">
                 <p
@@ -439,7 +439,7 @@
               <div
                 v-for="i in 3"
                 :key="i"
-                class="animate-pulse rounded-2xl border border-gray-100 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"
+                class="animate-pulse rounded-2xl border border-gray-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"
               >
                 <div class="flex items-center gap-3">
                   <div
@@ -526,7 +526,7 @@
               <div
                 v-for="i in 8"
                 :key="i"
-                class="animate-pulse overflow-hidden rounded-2xl border border-gray-100 bg-white dark:border-neutral-800 dark:bg-neutral-900"
+                class="animate-pulse overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
               >
                 <div class="aspect-[3/4] bg-gray-100 dark:bg-neutral-800" />
                 <div class="space-y-2 p-3">
@@ -597,7 +597,7 @@
           <div v-show="activeTab === 'about'" class="max-w-2xl space-y-4">
             <!-- Description card -->
             <div
-              class="rounded-2xl border border-gray-100 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900"
+              class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900"
             >
               <p
                 class="mb-3 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-neutral-500"
@@ -618,7 +618,7 @@
             <div class="grid gap-3 sm:grid-cols-2">
               <div
                 v-if="seller.store_location"
-                class="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"
+                class="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"
               >
                 <div
                   class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand/10"
@@ -644,7 +644,7 @@
               </div>
 
               <div
-                class="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"
+                class="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"
               >
                 <div
                   class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand/10"
@@ -671,7 +671,7 @@
 
               <div
                 v-if="seller.store_phone"
-                class="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"
+                class="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"
               >
                 <div
                   class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand/10"
@@ -694,7 +694,7 @@
 
               <div
                 v-if="seller.store_website"
-                class="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"
+                class="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"
               >
                 <div
                   class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand/10"
@@ -719,7 +719,7 @@
               </div>
 
               <div
-                class="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"
+                class="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"
               >
                 <div
                   class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50"
@@ -745,7 +745,7 @@
               </div>
 
               <div
-                class="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"
+                class="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"
               >
                 <div
                   class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50"

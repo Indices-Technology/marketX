@@ -4,7 +4,7 @@
     <aside
       class="hidden min-h-screen w-60 shrink-0 flex-col border-r border-gray-200 bg-white lg:flex dark:border-neutral-800 dark:bg-neutral-900"
     >
-      <div class="border-b border-gray-100 px-5 py-5 dark:border-neutral-800">
+      <div class="border-b border-gray-200 px-5 py-5 dark:border-neutral-800">
         <NuxtLink to="/" class="flex items-center gap-2">
           <span class="text-lg font-black tracking-tight text-rose-500"
             >MarketX</span
@@ -48,7 +48,7 @@
       </nav>
 
       <div
-        class="border-t border-gray-100 px-4 py-4 text-[12px] text-gray-400 dark:border-neutral-800 dark:text-neutral-600"
+        class="border-t border-gray-200 px-4 py-4 text-[12px] text-gray-400 dark:border-neutral-800 dark:text-neutral-600"
       >
         Logged in as
         <span class="font-semibold text-gray-600 dark:text-neutral-400">{{

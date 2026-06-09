@@ -86,7 +86,7 @@
           leave-from-class="max-h-[480px] opacity-100"
           leave-to-class="max-h-0 opacity-0"
         >
-          <div v-if="composing" class="border-b border-gray-100 dark:border-neutral-800">
+          <div v-if="composing" class="border-b border-gray-200 dark:border-neutral-800">
             <!-- Loading state -->
             <div
               v-if="isSearching || isLoadingFollowing"
@@ -117,7 +117,7 @@
                   v-for="item in composeResults"
                   :key="`${item.type}-${item.id}`"
                   :disabled="isCreating && selectedId === item.id"
-                  class="flex w-full items-center gap-3 border-b border-gray-100 px-4 py-3 text-left transition-colors hover:bg-gray-50 disabled:opacity-60 dark:border-neutral-800 dark:hover:bg-neutral-900"
+                  class="flex w-full items-center gap-3 border-b border-gray-200 px-4 py-3 text-left transition-colors hover:bg-gray-50 disabled:opacity-60 dark:border-neutral-800 dark:hover:bg-neutral-900"
                   @click="startConversation(item.id, item.type)"
                 >
                   <img

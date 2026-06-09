@@ -36,7 +36,7 @@
 
     <!-- Table -->
     <div
-      class="overflow-hidden rounded-xl border border-gray-100 bg-white dark:border-neutral-800 dark:bg-neutral-900"
+      class="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
     >
       <table v-if="pending" class="w-full text-[13px]">
         <thead class="bg-gray-50 dark:bg-neutral-800/50">

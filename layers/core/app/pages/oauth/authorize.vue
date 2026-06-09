@@ -4,7 +4,7 @@
       <div class="w-full max-w-sm rounded-2xl border border-gray-200/80 bg-white shadow-xl dark:border-neutral-800 dark:bg-neutral-900">
 
         <!-- Header -->
-        <div class="border-b border-gray-100 px-6 py-5 dark:border-neutral-800">
+        <div class="border-b border-gray-200 px-6 py-5 dark:border-neutral-800">
           <div class="flex items-center gap-3">
             <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand text-white font-black text-sm">
               MX
@@ -110,7 +110,7 @@
         </template>
 
         <!-- Footer -->
-        <div class="border-t border-gray-100 px-6 py-3 dark:border-neutral-800">
+        <div class="border-t border-gray-200 px-6 py-3 dark:border-neutral-800">
           <p class="text-[11px] text-center text-gray-400 dark:text-neutral-600">
             By approving you allow {{ clientName }} to access your account on MarketX.
           </p>

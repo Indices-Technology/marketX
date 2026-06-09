@@ -51,6 +51,20 @@
         >
           Reels
         </NuxtLink>
+        <NuxtLink
+          v-if="sellerStore.hasSellers"
+          :to="sellerStore.sellers.length === 1
+            ? `/seller/${sellerStore.sellers[0].store_slug}/dashboard`
+            : '/seller/dashboard'"
+          class="px-6 py-1 text-sm font-semibold transition-colors border-l border-gray-200 dark:border-neutral-700"
+          :class="
+            isSellerRoute
+              ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300'
+              : 'text-gray-500 hover:text-gray-900 dark:text-neutral-400 dark:hover:text-neutral-100'
+          "
+        >
+          Sell
+        </NuxtLink>
       </div>
     </div>
   </ClientOnly>
@@ -283,6 +297,8 @@ const props = defineProps<{
   customPadding?: boolean
   narrowSidebar?: boolean
 }>()
+
+const isSellerRoute = computed(() => route.path.startsWith('/seller'))
 
 // ─── Layout Detection ───────────────────────────────────────────────────────
 const isNarrowFeed = computed(() => {

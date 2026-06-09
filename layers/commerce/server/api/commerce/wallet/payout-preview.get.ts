@@ -1,4 +1,4 @@
-// GET /api/commerce/wallet/payout-preview?amount=<kobo>
+﻿// GET /api/commerce/wallet/payout-preview?amount=<kobo>
 // Returns a fee breakdown for the requested payout amount.
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
       )
 
     return { success: true, data: calculatePayout(amount) }
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
     if (error instanceof UserError)
       throw createError({ statusCode: error.status, statusMessage: error.message })

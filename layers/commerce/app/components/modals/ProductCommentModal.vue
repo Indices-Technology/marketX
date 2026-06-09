@@ -10,7 +10,7 @@
       >
         <!-- Header -->
         <div
-          class="flex shrink-0 items-center justify-between border-b border-gray-100 px-5 py-4 dark:border-neutral-800"
+          class="flex shrink-0 items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-neutral-800"
         >
           <h3 class="text-[15px] font-bold text-gray-900 dark:text-neutral-100">
             Comments
@@ -92,7 +92,7 @@
         <ClientOnly>
           <div
             v-if="profileStore.isLoggedIn"
-            class="shrink-0 border-t border-gray-100 px-4 py-3 dark:border-neutral-800"
+            class="shrink-0 border-t border-gray-200 px-4 py-3 dark:border-neutral-800"
           >
             <div class="flex items-center gap-2">
               <input
@@ -120,7 +120,7 @@
           </div>
           <div
             v-else
-            class="shrink-0 border-t border-gray-100 px-5 py-3 text-center dark:border-neutral-800"
+            class="shrink-0 border-t border-gray-200 px-5 py-3 text-center dark:border-neutral-800"
           >
             <NuxtLink
               to="/login"

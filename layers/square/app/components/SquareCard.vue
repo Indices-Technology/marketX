@@ -1,7 +1,7 @@
 <template>
   <NuxtLink
     :to="`/squares/${square.slug}`"
-    class="group relative flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white transition-all hover:border-amber-200/60 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-amber-700/30"
+    class="group relative flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white transition-all hover:border-amber-200/60 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-amber-700/30"
   >
     <!-- Banner -->
     <div class="relative h-24 overflow-hidden">

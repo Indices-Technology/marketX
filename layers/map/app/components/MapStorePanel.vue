@@ -122,7 +122,7 @@
           :class="activeCategory === cat.slug ? 'bg-brand/80 text-white' : 'bg-white/5 text-white/50 hover:bg-white/10 hover:text-white/80'"
           @click="$emit('update:category', cat.slug)"
         >
-          <img v-if="cat.thumbnailCatUrl" :src="cat.thumbnailCatUrl" class="h-3 w-3 rounded-full object-cover" />
+          <img v-if="cat.thumbnailCatUrl" :src="cat.thumbnailCatUrl" :alt="cat.name || 'Category'" class="h-3 w-3 rounded-full object-cover" />
           {{ cat.name }}
         </button>
       </div>

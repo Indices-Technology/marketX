@@ -16,10 +16,10 @@
 
       <!-- Appearance -->
       <section
-        class="overflow-hidden rounded-2xl border border-gray-100 bg-white dark:border-neutral-800 dark:bg-neutral-900"
+        class="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
       >
         <div
-          class="border-b border-gray-100 px-5 py-3.5 dark:border-neutral-800"
+          class="border-b border-gray-200 px-5 py-3.5 dark:border-neutral-800"
         >
           <h2
             class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-neutral-500"
@@ -30,7 +30,7 @@
 
         <!-- Dark mode -->
         <div
-          class="flex items-center justify-between border-b border-gray-100 px-5 py-4 dark:border-neutral-800"
+          class="flex items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-neutral-800"
         >
           <div class="flex items-center gap-3">
             <Icon
@@ -109,10 +109,10 @@
 
       <!-- Playback -->
       <section
-        class="overflow-hidden rounded-2xl border border-gray-100 bg-white dark:border-neutral-800 dark:bg-neutral-900"
+        class="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
       >
         <div
-          class="border-b border-gray-100 px-5 py-3.5 dark:border-neutral-800"
+          class="border-b border-gray-200 px-5 py-3.5 dark:border-neutral-800"
         >
           <h2
             class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-neutral-500"
@@ -132,10 +132,10 @@
 
       <!-- Feed -->
       <section
-        class="overflow-hidden rounded-2xl border border-gray-100 bg-white dark:border-neutral-800 dark:bg-neutral-900"
+        class="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
       >
         <div
-          class="border-b border-gray-100 px-5 py-3.5 dark:border-neutral-800"
+          class="border-b border-gray-200 px-5 py-3.5 dark:border-neutral-800"
         >
           <h2
             class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-neutral-500"
@@ -194,10 +194,10 @@
 
       <!-- Language -->
       <section
-        class="overflow-hidden rounded-2xl border border-gray-100 bg-white dark:border-neutral-800 dark:bg-neutral-900"
+        class="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
       >
         <div
-          class="border-b border-gray-100 px-5 py-3.5 dark:border-neutral-800"
+          class="border-b border-gray-200 px-5 py-3.5 dark:border-neutral-800"
         >
           <h2
             class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-neutral-500"
@@ -236,10 +236,10 @@
 
       <!-- Currency -->
       <section
-        class="overflow-hidden rounded-2xl border border-gray-100 bg-white dark:border-neutral-800 dark:bg-neutral-900"
+        class="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
       >
         <div
-          class="border-b border-gray-100 px-5 py-3.5 dark:border-neutral-800"
+          class="border-b border-gray-200 px-5 py-3.5 dark:border-neutral-800"
         >
           <h2
             class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-neutral-500"
@@ -283,10 +283,10 @@
       <ClientOnly>
         <section
           v-if="profileStore.isLoggedIn"
-          class="overflow-hidden rounded-2xl border border-gray-100 bg-white dark:border-neutral-800 dark:bg-neutral-900"
+          class="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
         >
           <div
-            class="border-b border-gray-100 px-5 py-3.5 dark:border-neutral-800"
+            class="border-b border-gray-200 px-5 py-3.5 dark:border-neutral-800"
           >
             <h2
               class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-neutral-500"
@@ -297,7 +297,7 @@
 
           <NuxtLink
             to="/buyer/orders"
-            class="setting-link border-b border-gray-100 dark:border-neutral-800"
+            class="setting-link border-b border-gray-200 dark:border-neutral-800"
           >
             <Icon
               name="mdi:package-variant-closed-outline"
@@ -318,7 +318,7 @@
                 ? '/seller/dashboard'
                 : '/buyer/profile'
             "
-            class="setting-link border-b border-gray-100 dark:border-neutral-800"
+            class="setting-link border-b border-gray-200 dark:border-neutral-800"
           >
             <Icon
               name="mdi:account-outline"

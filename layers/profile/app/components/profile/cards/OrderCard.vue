@@ -1,7 +1,5 @@
 <template>
-  <div
-    class="overflow-hidden rounded-xl border border-gray-200 bg-white transition-shadow hover:shadow-lg dark:border-neutral-800 dark:bg-neutral-900"
-  >
+  <BaseCard variant="elevated" no-padding>
     <!-- Header -->
     <div
       class="flex items-center justify-between border-b border-gray-200 p-4 dark:border-neutral-800"
@@ -14,12 +12,9 @@
           {{ formatDate(order.created_at) }}
         </p>
       </div>
-      <span
-        class="rounded-full px-3 py-1 text-xs font-semibold"
-        :class="statusClasses[order.status] ?? statusClasses.DEFAULT"
-      >
+      <BaseBadge :status="order.status" size="sm" dot>
         {{ order.status }}
-      </span>
+      </BaseBadge>
     </div>
 
     <!-- Items -->
@@ -50,7 +45,7 @@
     <!-- Tracking -->
     <div
       v-if="order.trackingNumber"
-      class="flex items-center gap-1.5 border-t border-gray-100 px-4 py-2 text-xs text-brand dark:border-neutral-800"
+      class="flex items-center gap-1.5 border-t border-gray-200 px-4 py-2 text-xs text-brand dark:border-neutral-800"
     >
       <Icon name="mdi:truck-outline" size="14" />
       {{ order.shipper || 'Courier' }} · {{ order.trackingNumber }}
@@ -59,7 +54,7 @@
     <!-- Auto-release notice -->
     <div
       v-if="order.status === 'SHIPPED' && !confirmed"
-      class="flex items-start gap-1.5 border-t border-gray-100 px-4 py-2 text-xs text-amber-600 dark:border-neutral-800 dark:text-amber-400"
+      class="flex items-start gap-1.5 border-t border-gray-200 px-4 py-2 text-xs text-amber-600 dark:border-neutral-800 dark:text-amber-400"
     >
       <Icon name="mdi:clock-alert-outline" size="14" class="mt-0.5 shrink-0" />
       Payment will be automatically released to the seller in 7 days. Confirm
@@ -81,23 +76,25 @@
 
       <div class="flex gap-2">
         <!-- Track Button (if shipped) -->
-        <button
+        <BaseButton
           v-if="order.status === 'SHIPPED'"
           @click="emit('track', order.id)"
-          class="rounded-lg border border-brand px-3 py-2 text-sm font-medium text-brand transition-colors hover:bg-brand/10"
+          variant="secondary"
+          size="sm"
         >
           Track
-        </button>
+        </BaseButton>
 
         <!-- Confirm Receipt (if shipped, buyer action) -->
-        <button
+        <BaseButton
           v-if="order.status === 'SHIPPED' && !confirmed"
           @click="confirmReceipt"
+          size="sm"
+          :loading="confirming"
           :disabled="confirming"
-          class="rounded-lg bg-green-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
         >
           {{ confirming ? 'Confirming…' : 'Confirm Receipt' }}
-        </button>
+        </BaseButton>
         <span
           v-if="confirmed"
           class="rounded-lg bg-green-100 px-3 py-2 text-sm font-medium text-green-700 dark:bg-green-900/20 dark:text-green-400"
@@ -106,20 +103,24 @@
         </span>
 
         <!-- Cancel Button (if pending) -->
-        <button
+        <BaseButton
           v-if="order.status === 'PENDING'"
           @click="emit('cancel', order.id)"
-          class="rounded-lg bg-red-100 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30"
+          variant="danger"
+          size="sm"
         >
           Cancel
-        </button>
+        </BaseButton>
       </div>
     </div>
-  </div>
+  </BaseCard>
 </template>
 
 <script setup lang="ts">
 import { useOrderApi } from '~~/layers/commerce/app/services/order.api'
+import BaseBadge from '~~/layers/ui/app/components/BaseBadge.vue'
+import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
+import BaseCard from '~~/layers/ui/app/components/BaseCard.vue'
 
 const props = defineProps<{
   order: any
@@ -147,19 +148,6 @@ const confirmReceipt = async () => {
   } finally {
     confirming.value = false
   }
-}
-
-const statusClasses: Record<string, string> = {
-  PENDING:
-    'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400',
-  CONFIRMED: 'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400',
-  SHIPPED:
-    'bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400',
-  DELIVERED:
-    'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400',
-  CANCELLED: 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400',
-  DEFAULT:
-    'bg-gray-100 dark:bg-neutral-800 text-gray-600 dark:text-neutral-400',
 }
 
 const formatDate = (dateString: string) => {

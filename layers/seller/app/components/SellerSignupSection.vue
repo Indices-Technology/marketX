@@ -39,7 +39,7 @@
       leave-from-class="opacity-100 translate-y-0"
       leave-to-class="opacity-0 -translate-y-1"
     >
-      <div v-if="open" class="border-t border-gray-100 px-4 pb-4 pt-3 dark:border-neutral-700">
+      <div v-if="open" class="border-t border-gray-200 px-4 pb-4 pt-3 dark:border-neutral-700">
         <p class="mb-3 flex items-start gap-1.5 text-xs text-blue-600 dark:text-blue-400">
           <Icon name="mdi:information-outline" size="13" class="mt-0.5 shrink-0" />
           Your account is created first. Then we'll set up your store — logo, products, and more.

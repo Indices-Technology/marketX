@@ -77,7 +77,7 @@
         <div
           v-for="i in 6"
           :key="i"
-          class="animate-pulse overflow-hidden rounded-2xl border border-gray-100 bg-white dark:border-neutral-800 dark:bg-neutral-900"
+          class="animate-pulse overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
         >
           <div class="h-28 bg-gray-100 dark:bg-neutral-800" />
           <div class="space-y-2 p-4">

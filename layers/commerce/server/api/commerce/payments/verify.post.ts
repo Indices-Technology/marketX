@@ -4,9 +4,11 @@ import { z, ZodError } from 'zod'
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
 import { notificationQueue } from '~~/server/queues/notification.queue'
+import { emailQueue } from '~~/server/queues/email.queue'
 import { walletService } from '../../../services/wallet.service'
 import { orderRepository } from '../../../repositories/order.repository'
 import { squareService } from '~~/layers/square/server/services/square.service'
+import { buildOrderStatusEmail } from '~~/server/utils/email/emailService'
 
 /** Notify every unique seller whose products are in this order */
 async function notifySellers(orderId: number, buyerName: string) {
@@ -72,6 +74,11 @@ export default defineEventHandler(async (event) => {
           .catch((e) => logger.error('Verify: wallet credit failed', { orderId: order.id, error: e?.message ?? e }))
         squareService.creditAssociationsForOrder(order.id)
           .catch((e) => logger.error('Verify: association credit failed', { orderId: order.id, error: e?.message ?? e }))
+        // Buyer order confirmation email
+        if (user.email && !user.email.includes('@checkout.marketx.app')) {
+          const { subject, html, text } = buildOrderStatusEmail(order.id, 'CONFIRMED')
+          emailQueue.enqueue({ to: user.email, subject, html, text, type: 'ORDER_CONFIRMATION' })
+        }
       }
       return { success: true, data: { status: 'paid', orderId: order.id } }
     }

@@ -90,7 +90,7 @@
             <button
               v-for="tag in allTags.slice(0, 8)"
               :key="tag.id"
-              class="group flex shrink-0 flex-col items-start rounded-2xl border border-gray-100 bg-white p-3.5 transition-all hover:border-brand/20 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900"
+              class="group flex shrink-0 flex-col items-start rounded-2xl border border-gray-200 bg-white p-3.5 transition-all hover:border-brand/20 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900"
               style="min-width: 110px"
               @click="openTagView(tag)"
             >
@@ -119,7 +119,7 @@
           <button
             v-for="tag in allTags"
             :key="tag.id"
-            class="group flex items-center gap-2.5 rounded-xl border border-gray-100 bg-white p-3 text-left transition-all hover:border-brand/20 hover:shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
+            class="group flex items-center gap-2.5 rounded-xl border border-gray-200 bg-white p-3 text-left transition-all hover:border-brand/20 hover:shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
             @click="openTagView(tag)"
           >
             <div

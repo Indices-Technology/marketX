@@ -118,10 +118,14 @@
         />
         <div>
           <p class="text-sm font-semibold text-green-800 dark:text-green-300">
-            Payment successful!
+            {{ paymentType === 'pod' ? 'Shipping secured!' : 'Payment successful!' }}
           </p>
           <p class="text-xs text-green-600 dark:text-green-400">
-            Your order has been placed and is being processed.
+            {{
+              paymentType === 'pod'
+                ? 'Shipping fee paid. The seller will pack and ship — pay the product amount in cash on delivery.'
+                : 'Your order has been placed and is being processed.'
+            }}
           </p>
         </div>
       </div>
@@ -162,7 +166,7 @@
         <div
           v-for="i in 3"
           :key="i"
-          class="animate-pulse rounded-2xl border border-gray-100 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900"
+          class="animate-pulse rounded-2xl border border-gray-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900"
         >
           <div class="flex gap-3">
             <div class="h-16 w-16 rounded-xl bg-gray-200 dark:bg-neutral-800" />
@@ -179,7 +183,7 @@
         <div
           v-for="order in filteredOrders"
           :key="order.id"
-          class="overflow-hidden rounded-2xl border border-gray-100 bg-white dark:border-neutral-800 dark:bg-neutral-900"
+          class="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
         >
           <NuxtLink
             :to="`/buyer/orders/${order.id}`"
@@ -195,12 +199,13 @@
                   {{ formatDate(order.created_at) }}
                 </p>
               </div>
-              <span
-                class="rounded-full px-2.5 py-1 text-[11px] font-semibold"
-                :class="statusColor(order.status)"
-              >
-                {{ confirmedIds.has(order.id) ? 'DELIVERED' : order.status }}
-              </span>
+              <div class="flex items-center gap-1.5">
+                <BaseBadge v-if="order.paymentMethod === 'pay_on_delivery'" status="success">POD</BaseBadge>
+                <BaseBadge
+                  :status="confirmedIds.has(order.id) ? 'DELIVERED' : order.status"
+                  :label="confirmedIds.has(order.id) ? 'DELIVERED' : order.status"
+                />
+              </div>
             </div>
 
             <!-- Items preview -->
@@ -237,12 +242,21 @@
             <!-- Tracking -->
             <div
               v-if="order.trackingNumber"
-              class="mt-2 flex items-center gap-1.5 border-t border-gray-100 pt-2 text-xs text-brand dark:border-neutral-800"
+              class="mt-2 flex items-center gap-1.5 border-t border-gray-200 pt-2 text-xs text-brand dark:border-neutral-800"
             >
               <Icon name="mdi:truck-outline" size="14" />
               {{ order.shipper || 'Courier' }} · {{ order.trackingNumber }}
             </div>
           </NuxtLink>
+
+          <!-- POD cash reminder — shown for active POD orders not yet delivered -->
+          <div
+            v-if="order.paymentMethod === 'pay_on_delivery' && !['DELIVERED','CANCELLED','RETURNED'].includes(order.status) && !confirmedIds.has(order.id)"
+            class="flex items-center gap-2 border-t border-emerald-100 bg-emerald-50 px-5 py-2.5 text-xs text-emerald-700 dark:border-emerald-900/30 dark:bg-emerald-900/10 dark:text-emerald-400"
+          >
+            <Icon name="mdi:cash" size="14" class="shrink-0" />
+            Have <strong class="mx-0.5">{{ formatPrice(order.totalAmount) }}</strong> ready to pay in cash on delivery
+          </div>
 
           <!-- Confirm Receipt bar — shown only for SHIPPED orders -->
           <div
@@ -260,17 +274,16 @@
                 />
                 Payment auto-releases to seller in 7 days
               </div>
-              <button
-                @click.prevent="confirmReceipt(order.id)"
+              <BaseButton
+                variant="success"
+                size="sm"
+                class="shrink-0"
+                :loading="confirmingIds.has(order.id)"
                 :disabled="confirmingIds.has(order.id)"
-                class="shrink-0 rounded-lg bg-green-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+                @click.prevent="confirmReceipt(order.id)"
               >
-                {{
-                  confirmingIds.has(order.id)
-                    ? 'Confirming…'
-                    : 'Confirm Receipt'
-                }}
-              </button>
+                Confirm Receipt
+              </BaseButton>
             </div>
           </div>
 
@@ -326,6 +339,8 @@ import { useOrderApi } from '~~/layers/commerce/app/services/order.api'
 import { useSellerManagement } from '~~/layers/seller/app/composables/useSellerManagement'
 import { extractErrorMessage } from '~~/layers/core/app/utils/errors'
 import { notify } from '@kyvg/vue3-notification'
+import BaseBadge from '~~/layers/ui/app/components/BaseBadge.vue'
+import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 
 definePageMeta({ middleware: 'auth' })
 const { setOrdersPage } = useSeo()
@@ -404,20 +419,26 @@ const confirmReceipt = async (orderId: number) => {
 }
 
 const activeStatus = ref('ALL')
-const paymentSuccess = ref(route.query.payment === 'success')
+const paymentType = route.query.payment as string | undefined
+const paymentSuccess = ref(paymentType === 'success' || paymentType === 'pod')
 const showInitialOrdersLoader = computed(
   () => !hasFetchedOnce.value && !orders.value.length,
 )
 
 // Verify payment if redirected from Paystack or capture PayPal
 onMounted(async () => {
-  // Paystack redirect
   const ref = route.query.reference as string
+
   if (ref) {
     try {
-      await orderApi.verifyPayment(ref)
+      // POD shipping payment uses a separate verify endpoint
+      if (paymentType === 'pod') {
+        await orderApi.verifyPOD(ref)
+      } else {
+        await orderApi.verifyPayment(ref)
+      }
     } catch {
-      /* silent */
+      /* silent — webhook may have already confirmed the order */
     }
   }
 
@@ -474,21 +495,6 @@ const STATUS_TABS = [
   { value: 'DELIVERED', label: 'Delivered' },
   { value: 'CANCELLED', label: 'Cancelled' },
 ]
-
-const statusColor = (status: string) =>
-  ({
-    PENDING:
-      'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400',
-    CONFIRMED:
-      'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400',
-    SHIPPED:
-      'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400',
-    DELIVERED:
-      'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
-    CANCELLED: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
-    CANCELED: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
-  })[status] ||
-  'bg-gray-100 dark:bg-neutral-800 text-gray-600 dark:text-neutral-400'
 
 const formatPrice = (cents: number) =>
   new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(

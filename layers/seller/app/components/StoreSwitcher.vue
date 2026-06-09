@@ -76,7 +76,7 @@
           </button>
         </div>
 
-        <div class="border-t border-gray-100 py-1 dark:border-neutral-800">
+        <div class="border-t border-gray-200 py-1 dark:border-neutral-800">
           <NuxtLink
             to="/sellers/create"
             @click="isOpen = false"

@@ -7,6 +7,9 @@ import type {
   ReferralsResponse,
 } from '../types/affiliate'
 
+export const isValidAffiliateRef = (ref: string): boolean =>
+  /^[a-z0-9_-]{1,64}$/i.test(ref)
+
 export const useAffiliate = () => {
   const api = useAffiliateApi()
   const store = useAffiliateStore()
@@ -82,6 +85,7 @@ export const useAffiliate = () => {
     const route = useRoute()
     const ref = route.query.ref as string | undefined
     if (!ref) return
+    if (!isValidAffiliateRef(ref)) return
     localStorage.setItem(REF_KEY, ref)
     localStorage.setItem(REF_EXP_KEY, String(Date.now() + REF_TTL_MS))
   }

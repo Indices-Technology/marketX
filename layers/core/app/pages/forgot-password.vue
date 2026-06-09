@@ -47,40 +47,27 @@
         <div v-if="!submitted" class="space-y-6">
           <form class="space-y-5" @submit.prevent="handleSubmit">
             <!-- Email Input -->
-            <div>
-              <input
-                v-model="form.email"
-                type="email"
-                placeholder="Your email address"
-                :disabled="isLoading"
-                class="w-full rounded-xl border bg-white/60 px-4 py-3.5 text-base placeholder-gray-500 transition focus:border-brand focus:ring-2 focus:ring-brand/30 dark:border-neutral-600 dark:bg-neutral-800/50 dark:text-white dark:placeholder-gray-400"
-                :class="{ 'border-red-400 dark:border-red-600': errors.email }"
-              />
-              <p
-                v-if="errors.email"
-                class="mt-1.5 text-xs text-red-600 dark:text-red-400"
-              >
-                {{ errors.email }}
-              </p>
-            </div>
+            <BaseInput
+              v-model="form.email"
+              type="email"
+              autocomplete="email"
+              placeholder="Your email address"
+              :disabled="isLoading"
+              icon-left="mdi:email-outline"
+              size="lg"
+              :error="errors.email"
+            />
 
             <!-- Submit Button -->
-            <button
+            <BaseButton
               type="submit"
+              size="lg"
+              class="w-full"
+              :loading="isLoading"
               :disabled="isLoading"
-              class="w-full rounded-xl bg-brand py-3.5 text-base font-semibold text-white shadow transition hover:bg-brand/90 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-brand/40 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              <span
-                v-if="isLoading"
-                class="flex items-center justify-center gap-2.5"
-              >
-                <div
-                  class="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"
-                />
-                Sending reset link...
-              </span>
-              <span v-else>Send Reset Link</span>
-            </button>
+              {{ isLoading ? 'Sending reset link...' : 'Send Reset Link' }}
+            </BaseButton>
           </form>
 
           <!-- Info Box -->
@@ -126,23 +113,17 @@
           </div>
 
           <!-- Resend Button -->
-          <button
+          <BaseButton
             type="button"
             @click="handleSendAgain"
+            variant="secondary"
+            size="lg"
+            class="w-full"
+            :loading="isLoading"
             :disabled="isLoading"
-            class="w-full rounded-xl border border-gray-300 bg-white/80 py-3.5 text-base font-semibold text-gray-900 shadow-sm hover:bg-gray-50 disabled:opacity-60 dark:border-neutral-600 dark:bg-neutral-800/60 dark:text-white dark:hover:bg-neutral-700"
           >
-            <span
-              v-if="isLoading"
-              class="flex items-center justify-center gap-2.5"
-            >
-              <div
-                class="h-4 w-4 animate-spin rounded-full border-2 border-gray-400/30 border-t-gray-900 dark:border-t-white"
-              />
-              Sending again...
-            </span>
-            <span v-else>Send Link Again</span>
-          </button>
+            {{ isLoading ? 'Sending again...' : 'Send Link Again' }}
+          </BaseButton>
         </div>
 
         <!-- Footer Links -->
@@ -176,6 +157,8 @@
 <script setup lang="ts">
 import { reactive, ref, computed } from 'vue'
 import { useAuth } from '../composables/useAuth'
+import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
+import BaseInput from '~~/layers/ui/app/components/BaseInput.vue'
 
 definePageMeta({
   layout: false,

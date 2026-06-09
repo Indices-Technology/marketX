@@ -14,7 +14,7 @@
     </div>
 
     <div class="space-y-4">
-      <div class="rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-neutral-700 dark:bg-neutral-900">
+      <div class="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-neutral-700 dark:bg-neutral-900">
         <label class="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-neutral-300">
           <Icon name="mdi:instagram" class="text-pink-600" size="16" />
           Instagram
@@ -26,7 +26,7 @@
         />
       </div>
 
-      <div class="rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-neutral-700 dark:bg-neutral-900">
+      <div class="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-neutral-700 dark:bg-neutral-900">
         <label class="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-neutral-300">
           <Icon name="mdi:facebook" class="text-blue-600" size="16" />
           Facebook
@@ -38,7 +38,7 @@
         />
       </div>
 
-      <div class="rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-neutral-700 dark:bg-neutral-900">
+      <div class="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-neutral-700 dark:bg-neutral-900">
         <label class="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-neutral-300">
           <Icon name="mdi:pinterest" class="text-red-600" size="16" />
           Pinterest

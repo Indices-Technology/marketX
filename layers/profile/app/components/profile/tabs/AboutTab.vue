@@ -80,12 +80,12 @@
       >
         <div class="flex items-start gap-3">
           <div
-            class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/20"
+            class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-brand/10 dark:bg-brand/20"
           >
             <Icon
               name="mdi:email"
               size="20"
-              class="text-purple-600 dark:text-purple-400"
+              class="text-brand dark:text-brand/80"
             />
           </div>
           <div class="min-w-0 flex-1">

@@ -148,7 +148,7 @@
         <div
           v-for="i in 6"
           :key="i"
-          class="animate-pulse overflow-hidden rounded-2xl border border-gray-100 bg-white dark:border-neutral-800 dark:bg-neutral-900"
+          class="animate-pulse overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
         >
           <div class="aspect-[3/4] bg-gray-100 dark:bg-neutral-800" />
           <div class="space-y-2 p-3">
@@ -183,7 +183,7 @@
             v-for="product in likedProducts"
             :key="product.id"
             :to="`/sellers/profile/${product.seller?.store_slug}`"
-            class="group overflow-hidden rounded-2xl border border-gray-100 bg-white transition-all hover:border-brand/20 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900"
+            class="group overflow-hidden rounded-2xl border border-gray-200 bg-white transition-all hover:border-brand/20 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900"
           >
             <!-- Image -->
             <div
@@ -215,7 +215,7 @@
               <!-- Affiliate pill -->
               <div
                 v-if="product.affiliateCommission"
-                class="absolute bottom-2 left-2 rounded-full bg-purple-600/90 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm"
+                class="absolute bottom-2 left-2 rounded-full bg-brand/90 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm"
               >
                 {{ product.affiliateCommission }}% affiliate
               </div>

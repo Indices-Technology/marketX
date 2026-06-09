@@ -1,4 +1,4 @@
-// GET /api/commerce/products
+﻿// GET /api/commerce/products
 import { productService } from '~~/layers/commerce/server/services/product.service'
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { optionalAuth } from '~~/server/layers/shared/middleware/requireAuth'
@@ -26,7 +26,7 @@ export default defineEventHandler(async (event) => {
       { limit: query.limit, offset: query.offset },
     )
     return { success: true, data: result }
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof UserError)
       throw createError({
         statusCode: error.status,

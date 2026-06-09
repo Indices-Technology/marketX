@@ -140,7 +140,13 @@ export class AuthApiClient extends BaseApiClient {
     code: string
     name?: string
     phone?: string
-  }): Promise<any> {
+  }): Promise<{
+    success: boolean
+    isNewUser: boolean
+    accessToken: string
+    refreshToken: string
+    user: { id: string; email: string; username: string; emailVerified: boolean; role: string }
+  }> {
     return this.request('/api/auth/checkout-otp/verify', {
       method: 'POST',
       body: data,

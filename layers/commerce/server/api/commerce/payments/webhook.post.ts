@@ -3,8 +3,10 @@
 // Set this URL in the Paystack dashboard: https://yourdomain.com/api/commerce/payments/webhook
 import crypto from 'crypto'
 import { notificationQueue } from '~~/server/queues/notification.queue'
+import { emailQueue } from '~~/server/queues/email.queue'
 import { walletService } from '../../../services/wallet.service'
 import { squareService } from '~~/layers/square/server/services/square.service'
+import { buildOrderStatusEmail } from '~~/server/utils/email/emailService'
 
 async function notifySellers(orderId: number) {
   const items = await prisma.orderItem.findMany({
@@ -88,6 +90,15 @@ export default defineEventHandler(async (event) => {
           squareService
             .creditAssociationsForOrder(order.id)
             .catch((e) => logger.error('Webhook association credit failed', { orderId: order.id, error: e?.message ?? e }))
+          // Buyer confirmation email — fire-and-forget
+          prisma.user
+            .findUnique({ where: { id: order.userId }, select: { email: true } })
+            .then((buyer) => {
+              if (!buyer?.email || buyer.email.includes('@checkout.marketx.app')) return
+              const { subject, html, text } = buildOrderStatusEmail(order.id, 'CONFIRMED')
+              emailQueue.enqueue({ to: buyer.email, subject, html, text, type: 'ORDER_CONFIRMATION' })
+            })
+            .catch(() => {})
         }
       }
     }

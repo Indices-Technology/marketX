@@ -1,4 +1,4 @@
-// GET /api/commerce/wallet/transactions
+﻿// GET /api/commerce/wallet/transactions
 // Returns transactions across ALL seller profiles owned by the user, sorted newest first.
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
@@ -46,7 +46,7 @@ export default defineEventHandler(async (event) => {
     ])
 
     return { success: true, data: { transactions, total } }
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
     if (error instanceof UserError)
       throw createError({ statusCode: error.status, statusMessage: error.message })

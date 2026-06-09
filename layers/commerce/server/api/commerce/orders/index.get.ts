@@ -1,4 +1,4 @@
-// GET /api/commerce/orders
+﻿// GET /api/commerce/orders
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
 import { orderService } from '../../../services/order.service'
@@ -11,10 +11,11 @@ export default defineEventHandler(async (event) => {
     const offset = Number(query.offset) || 0
     const result = await orderService.getUserOrders(user.id, limit, offset)
     return { success: true, data: result }
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof UserError)
       throw createError({ statusCode: error.status, statusMessage: error.message })
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
+    logger.logError('[GET /api/commerce/orders]', error, { requestId: event.context?.requestId })
     throw createError({ statusCode: 500, statusMessage: 'Internal server error' })
   }
 })

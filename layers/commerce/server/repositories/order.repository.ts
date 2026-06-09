@@ -1,3 +1,13 @@
+type DBOrderStatus =
+  | 'PENDING'
+  | 'CONFIRMED'
+  | 'PROCESSING'
+  | 'SHIPPED'
+  | 'DELIVERED'
+  | 'CANCELLED'
+  | 'FAILED'
+  | 'REFUNDED'
+
 export interface CreateOrderData {
   name: string
   address: string
@@ -58,7 +68,9 @@ export const orderRepository = {
         country: data.country,
         totalAmount: data.totalAmount,
         paymentMethod: data.paymentMethod,
-        ...(data.affiliateUserId ? { affiliateUserId: data.affiliateUserId } : {}),
+        ...(data.affiliateUserId
+          ? { affiliateUserId: data.affiliateUserId }
+          : {}),
         ...(data.affiliateCut ? { affiliateCut: data.affiliateCut } : {}),
         orderItem: {
           create: data.items.map((item) => ({
@@ -90,7 +102,7 @@ export const orderRepository = {
   async updateOrderStatus(id: number, status: string) {
     return prisma.orders.update({
       where: { id },
-      data: { status: status as any },
+      data: { status: status as DBOrderStatus },
       include: orderInclude,
     })
   },
@@ -104,7 +116,7 @@ export const orderRepository = {
       where: { id },
       data: {
         paymentStatus,
-        ...(orderStatus ? { status: orderStatus as any } : {}),
+        ...(orderStatus ? { status: orderStatus as DBOrderStatus } : {}),
       },
     })
   },

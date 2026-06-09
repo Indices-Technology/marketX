@@ -237,10 +237,10 @@
               v-for="seller in featuredSellers"
               :key="seller.id"
               :to="`/sellers/profile/${seller.store_slug}`"
-              class="group flex w-[100px] shrink-0 snap-start flex-col items-center gap-2 rounded-2xl border border-gray-100 bg-white p-3 text-center transition-all dark:border-neutral-800 dark:bg-neutral-900"
+              class="group flex w-[100px] shrink-0 snap-start flex-col items-center gap-2 rounded-2xl border border-gray-200 bg-white p-3 text-center transition-all dark:border-neutral-800 dark:bg-neutral-900"
             >
               <div
-                class="h-14 w-14 overflow-hidden rounded-full border-2 border-gray-100 bg-gray-100 dark:border-neutral-700 dark:bg-neutral-800"
+                class="h-14 w-14 overflow-hidden rounded-full border-2 border-gray-200 bg-gray-100 dark:border-neutral-700 dark:bg-neutral-800"
               >
                 <img
                   v-if="seller.store_logo"
@@ -250,7 +250,7 @@
                 />
                 <div
                   v-else
-                  class="flex h-full w-full items-center justify-center bg-gradient-to-br from-brand to-purple-600"
+                  class="flex h-full w-full items-center justify-center bg-brand"
                 >
                   <Icon name="mdi:storefront" size="20" class="text-white" />
                 </div>
@@ -275,10 +275,10 @@
             v-for="seller in featuredSellers"
             :key="seller.id"
             :to="`/sellers/profile/${seller.store_slug}`"
-            class="group flex flex-col items-center gap-2 rounded-2xl border border-gray-100 bg-white p-4 text-center transition-all hover:border-brand/20 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900"
+            class="group flex flex-col items-center gap-2 rounded-2xl border border-gray-200 bg-white p-4 text-center transition-all hover:border-brand/20 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900"
           >
             <div
-              class="h-14 w-14 overflow-hidden rounded-full border-2 border-gray-100 bg-gray-100 dark:border-neutral-700 dark:bg-neutral-800"
+              class="h-14 w-14 overflow-hidden rounded-full border-2 border-gray-200 bg-gray-100 dark:border-neutral-700 dark:bg-neutral-800"
             >
               <img
                 v-if="seller.store_logo"
@@ -288,7 +288,7 @@
               />
               <div
                 v-else
-                class="flex h-full w-full items-center justify-center bg-gradient-to-br from-brand to-purple-600"
+                class="flex h-full w-full items-center justify-center bg-brand"
               >
                 <Icon name="mdi:storefront" size="22" class="text-white" />
               </div>

@@ -1,7 +1,6 @@
 // POST /api/commerce/shipping/calculate — returns shipping cost for a country
 import { z, ZodError } from 'zod'
 
-
 const schema = z.object({
   countryCode: z.string().min(2).max(2).toUpperCase(),
   weightKg: z.number().positive().optional().default(0.5),
@@ -16,7 +15,10 @@ export default defineEventHandler(async (event) => {
     weightKg = parsed.weightKg
   } catch (err) {
     if (err instanceof ZodError)
-      throw createError({ statusCode: 400, statusMessage: 'Invalid request body' })
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Invalid request body',
+      })
     throw err
   }
 

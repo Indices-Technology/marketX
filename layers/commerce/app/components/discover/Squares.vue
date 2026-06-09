@@ -30,7 +30,7 @@
         v-for="sq in squares"
         :key="sq.id"
         :to="`/squares/${sq.slug}`"
-        class="group relative overflow-hidden rounded-2xl border border-gray-100 bg-white transition-all hover:border-amber-200 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-amber-500/30"
+        class="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white transition-all hover:border-amber-200 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-amber-500/30"
       >
         <div class="relative h-24 overflow-hidden">
           <img

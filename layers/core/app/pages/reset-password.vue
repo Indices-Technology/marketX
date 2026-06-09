@@ -80,64 +80,26 @@
           @submit.prevent="handleSubmit"
         >
           <!-- New Password -->
-          <div class="relative">
-            <input
-              v-model="form.password"
-              :type="showPassword ? 'text' : 'password'"
-              placeholder="New password (min 12 characters)"
-              :disabled="isLoading"
-              class="w-full rounded-xl border bg-white/60 px-4 py-3.5 pr-12 text-base placeholder-gray-500 transition focus:border-brand focus:ring-2 focus:ring-brand/30 dark:border-neutral-600 dark:bg-neutral-800/50 dark:text-white dark:placeholder-gray-400"
-              :class="{ 'border-red-400 dark:border-red-600': errors.password }"
-            />
-            <button
-              type="button"
-              :disabled="isLoading"
-              class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-              @click="showPassword = !showPassword"
-            >
-              <Icon
-                :name="showPassword ? 'mdi:eye-off' : 'mdi:eye'"
-                class="h-5.5 w-5.5"
-              />
-            </button>
-            <p
-              v-if="errors.password"
-              class="mt-1.5 text-xs text-red-600 dark:text-red-400"
-            >
-              {{ errors.password }}
-            </p>
-          </div>
+          <BaseInput
+            v-model="form.password"
+            type="password"
+            autocomplete="new-password"
+            placeholder="New password (min 12 characters)"
+            :disabled="isLoading"
+            size="lg"
+            :error="errors.password"
+          />
 
           <!-- Confirm Password -->
-          <div class="relative">
-            <input
-              v-model="form.confirmPassword"
-              :type="showConfirmPassword ? 'text' : 'password'"
-              placeholder="Confirm new password"
-              :disabled="isLoading"
-              class="w-full rounded-xl border bg-white/60 px-4 py-3.5 pr-12 text-base placeholder-gray-500 transition focus:border-brand focus:ring-2 focus:ring-brand/30 dark:border-neutral-600 dark:bg-neutral-800/50 dark:text-white dark:placeholder-gray-400"
-              :class="{
-                'border-red-400 dark:border-red-600': errors.confirmPassword,
-              }"
-            />
-            <button
-              type="button"
-              :disabled="isLoading"
-              class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-              @click="showConfirmPassword = !showConfirmPassword"
-            >
-              <Icon
-                :name="showConfirmPassword ? 'mdi:eye-off' : 'mdi:eye'"
-                class="h-5.5 w-5.5"
-              />
-            </button>
-            <p
-              v-if="errors.confirmPassword"
-              class="mt-1.5 text-xs text-red-600 dark:text-red-400"
-            >
-              {{ errors.confirmPassword }}
-            </p>
-          </div>
+          <BaseInput
+            v-model="form.confirmPassword"
+            type="password"
+            autocomplete="new-password"
+            placeholder="Confirm new password"
+            :disabled="isLoading"
+            size="lg"
+            :error="errors.confirmPassword"
+          />
 
           <!-- Password Strength Meter -->
           <PasswordStrengthMeter
@@ -146,22 +108,15 @@
           />
 
           <!-- Submit Button -->
-          <button
+          <BaseButton
             type="submit"
+            size="lg"
+            class="mt-2 w-full"
+            :loading="isLoading"
             :disabled="isLoading"
-            class="mt-2 w-full rounded-xl bg-brand py-3.5 text-base font-semibold text-white shadow transition hover:bg-brand/90 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-brand/40 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <span
-              v-if="isLoading"
-              class="flex items-center justify-center gap-2.5"
-            >
-              <div
-                class="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"
-              />
-              Resetting password...
-            </span>
-            <span v-else>Reset Password</span>
-          </button>
+            {{ isLoading ? 'Resetting password...' : 'Reset Password' }}
+          </BaseButton>
         </form>
 
         <!-- Success State -->
@@ -218,9 +173,11 @@
 
 <script setup lang="ts">
 import { reactive, ref, onMounted, computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 import PasswordStrengthMeter from '../components/PasswordStrengthMeter.vue'
+import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
+import BaseInput from '~~/layers/ui/app/components/BaseInput.vue'
 
 definePageMeta({
   layout: false,
@@ -228,7 +185,6 @@ definePageMeta({
 })
 
 const route = useRoute()
-const router = useRouter()
 
 const {
   resetPassword: authResetPassword,
@@ -238,9 +194,6 @@ const {
 
 const success = ref(false)
 const tokenInvalid = ref(false)
-
-const showPassword = ref(false)
-const showConfirmPassword = ref(false)
 
 const form = reactive({
   password: '',

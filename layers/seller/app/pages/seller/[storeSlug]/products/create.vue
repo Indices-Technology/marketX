@@ -15,7 +15,7 @@
     <!-- Onboarding welcome banner -->
     <div
       v-if="isOnboarding"
-      class="mb-6 max-w-3xl rounded-2xl border border-brand/20 bg-gradient-to-r from-brand/10 to-purple-600/10 p-5 dark:from-brand/20 dark:to-purple-600/20"
+      class="mb-6 max-w-3xl rounded-2xl border border-brand/20 bg-brand/10 p-5 dark:bg-brand/20"
     >
       <div class="flex items-start gap-4">
         <div
@@ -65,7 +65,7 @@
               :key="i"
               class="relative aspect-square overflow-hidden rounded-lg border border-gray-200 bg-gray-100 dark:border-neutral-700 dark:bg-neutral-900"
             >
-              <img :src="img.preview" class="h-full w-full object-cover" />
+              <img :src="img.preview" alt="Product image preview" class="h-full w-full object-cover" />
               <div
                 v-if="img.uploading"
                 class="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-black/55"
@@ -132,7 +132,7 @@
           <!-- ✨ AI Magic Lister Banner (Shows after image upload) -->
           <div
             v-if="mediaItems.length > 0"
-            class="mt-6 flex flex-col items-start justify-between gap-4 rounded-xl border border-brand/20 bg-gradient-to-r from-brand/10 to-purple-600/10 p-5 shadow-sm sm:flex-row sm:items-center dark:from-brand/20 dark:to-purple-600/20"
+            class="mt-6 flex flex-col items-start justify-between gap-4 rounded-xl border border-brand/20 bg-brand/10 p-5 shadow-sm sm:flex-row sm:items-center dark:bg-brand/20"
           >
             <div>
               <h3
@@ -165,7 +165,7 @@
 
           <!-- Background Music -->
           <div
-            class="mt-4 border-t border-gray-100 pt-4 dark:border-neutral-700"
+            class="mt-4 border-t border-gray-200 pt-4 dark:border-neutral-700"
           >
             <h3
               class="mb-2 text-sm font-medium text-gray-700 dark:text-neutral-300"

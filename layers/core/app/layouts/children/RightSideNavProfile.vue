@@ -10,7 +10,7 @@
           <!-- Viewing own profile -->
           <div
             v-if="isOwnProfile && sellerStore.hasSellers"
-            class="group relative overflow-hidden rounded-2xl border border-brand/10 bg-gradient-to-br from-brand/5 to-purple-500/5 p-5 shadow-sm dark:from-brand/10 dark:to-purple-500/10"
+            class="group relative overflow-hidden rounded-2xl border border-brand/20 bg-brand/5 p-5 shadow-sm dark:bg-brand/10"
           >
             <div
               class="absolute -right-4 -top-4 h-20 w-20 rounded-full bg-brand/10 blur-xl"
@@ -68,7 +68,7 @@
           <!-- Viewing someone else's profile who has a store -->
           <div
             v-else-if="!isOwnProfile && viewedProfileStore"
-            class="group relative overflow-hidden rounded-2xl border border-gray-100 bg-gray-50 p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-800/40"
+            class="group relative overflow-hidden rounded-2xl border border-gray-200 bg-gray-50 p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-800/40"
           >
             <div class="flex items-center gap-3">
               <img
@@ -104,7 +104,7 @@
       <!-- Top Shops -->
       <div
         v-if="topSellers.length"
-        class="rounded-2xl border border-gray-100 bg-gray-50/70 p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-800/40"
+        class="rounded-2xl border border-gray-200 bg-gray-50 p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-800/40"
       >
         <div class="mb-3 flex items-center justify-between">
           <div class="flex items-center gap-2">
@@ -157,7 +157,7 @@
 
       <!-- Quick Links -->
       <div
-        class="rounded-2xl border border-gray-100 bg-gray-50/70 p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-800/40"
+        class="rounded-2xl border border-gray-200 bg-gray-50 p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-800/40"
       >
         <div class="mb-3 flex items-center gap-2">
           <Icon name="mdi:compass-outline" size="18" class="text-brand" />

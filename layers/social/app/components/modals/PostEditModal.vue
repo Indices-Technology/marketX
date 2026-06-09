@@ -11,7 +11,7 @@
       >
         <!-- Header -->
         <div
-          class="flex items-center justify-between border-b border-gray-100 px-4 py-3 dark:border-neutral-800"
+          class="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-neutral-800"
         >
           <button
             class="rounded-full p-1.5 text-gray-400 transition-colors hover:text-gray-700 dark:hover:text-neutral-200"
@@ -24,13 +24,15 @@
           >
             Edit Post
           </h2>
-          <button
+          <BaseButton
+            variant="primary"
+            size="sm"
+            :loading="isSaving"
             :disabled="isSaving || !isDirty"
-            class="text-[14px] font-semibold text-brand transition-opacity disabled:opacity-40"
             @click="handleSave"
           >
             {{ isSaving ? 'Saving…' : 'Save' }}
-          </button>
+          </BaseButton>
         </div>
 
         <!-- Body -->
@@ -55,7 +57,7 @@
                     :src="videoThumb(m.url)"
                     class="h-full w-full object-cover"
                   />
-                  <img v-else :src="m.url" class="h-full w-full object-cover" />
+                  <img v-else :src="m.url" alt="Post media" class="h-full w-full object-cover" />
                   <button
                     type="button"
                     class="absolute right-0.5 top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
@@ -71,7 +73,7 @@
                   :key="'new-' + i"
                   class="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-gray-200 bg-gray-100 dark:border-neutral-700 dark:bg-neutral-800"
                 >
-                  <img :src="item.preview" class="h-full w-full object-cover" />
+                  <img :src="item.preview" alt="Media preview" class="h-full w-full object-cover" />
                   <!-- Upload progress ring -->
                   <div
                     v-if="item.uploading"
@@ -186,6 +188,7 @@ import { videoThumb } from '~~/layers/core/app/utils/cloudinary'
 import { notify } from '@kyvg/vue3-notification'
 import type { IFeedItem } from '~~/layers/feed/app/types/feed.types'
 import SaveStatusOverlay from '~~/layers/core/app/components/SaveStatusOverlay.vue'
+import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 
 const props = defineProps<{ post: IFeedItem | null }>()
 const emit = defineEmits<{

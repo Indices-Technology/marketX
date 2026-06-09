@@ -86,7 +86,7 @@
           v-for="sq in squares"
           :key="sq.id"
           :to="`/squares/${sq.slug}`"
-          class="group w-36 shrink-0 overflow-hidden rounded-2xl border border-gray-100 bg-white transition hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900"
+          class="group w-36 shrink-0 overflow-hidden rounded-2xl border border-gray-200 bg-white transition hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900"
         >
           <div class="relative h-14 overflow-hidden">
             <img

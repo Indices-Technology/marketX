@@ -2,7 +2,7 @@
   <div class="flex h-full flex-col overflow-hidden bg-gray-50 dark:bg-neutral-950">
 
     <!-- Header -->
-    <div class="flex shrink-0 items-center justify-between border-b border-gray-100 bg-white px-4 py-2.5 dark:border-neutral-800 dark:bg-neutral-900">
+    <div class="flex shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4 py-2.5 dark:border-neutral-800 dark:bg-neutral-900">
       <!-- Mode toggle -->
       <div class="flex items-center gap-2">
         <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-neutral-500">Mode</span>
@@ -67,7 +67,7 @@
 
       <!-- Typing indicator -->
       <div v-if="isTyping" class="mb-2 ml-10 flex items-center">
-        <div class="flex items-center gap-1 rounded-2xl rounded-bl-sm border border-gray-100 bg-white px-3.5 py-2.5 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+        <div class="flex items-center gap-1 rounded-2xl rounded-bl-sm border border-gray-200 bg-white px-3.5 py-2.5 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
           <span class="h-1.5 w-1.5 animate-bounce rounded-full bg-gray-400" style="animation-delay:0s" />
           <span class="h-1.5 w-1.5 animate-bounce rounded-full bg-gray-400" style="animation-delay:0.15s" />
           <span class="h-1.5 w-1.5 animate-bounce rounded-full bg-gray-400" style="animation-delay:0.3s" />
@@ -76,7 +76,7 @@
     </div>
 
     <!-- Input -->
-    <div class="flex shrink-0 items-center gap-2 border-t border-gray-100 bg-white px-3 py-3 dark:border-neutral-800 dark:bg-neutral-900">
+    <div class="flex shrink-0 items-center gap-2 border-t border-gray-200 bg-white px-3 py-3 dark:border-neutral-800 dark:bg-neutral-900">
       <input
         v-model="draft"
         type="text"

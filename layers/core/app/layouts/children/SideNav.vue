@@ -49,8 +49,128 @@
       </NuxtLink>
     </nav>
 
+    <!-- Seller entry point: Start Selling (users without a store) -->
+    <ClientOnly>
+      <NuxtLink
+        v-if="profileStore.isLoggedIn && !sellerStore.hasSellers"
+        to="/sellers/create"
+        class="mt-2 flex items-center gap-4 rounded-xl border border-dashed border-brand/30 px-3 py-2.5 text-brand/80 transition-all hover:border-brand/60 hover:bg-brand/5 hover:text-brand"
+      >
+        <Icon name="mdi:store-plus-outline" size="24" />
+        <span class="nav-text font-semibold">Start Selling</span>
+      </NuxtLink>
+    </ClientOnly>
+
+    <!-- Seller Hub (only for users who have stores) -->
+    <ClientOnly>
+      <div
+        v-if="profileStore.isLoggedIn && sellerStore.hasSellers"
+        class="relative mt-2"
+      >
+        <!-- Single store → direct link -->
+        <NuxtLink
+          v-if="sellerStore.sellers.length === 1"
+          :to="`/seller/${sellerStore.sellers[0].store_slug}/dashboard`"
+          class="seller-hub-btn group"
+          :class="{ active: isSellerRoute }"
+        >
+          <div class="relative flex h-6 w-6 shrink-0 items-center justify-center">
+            <img
+              v-if="sellerStore.sellers[0].store_logo"
+              :src="sellerStore.sellers[0].store_logo"
+              :alt="sellerStore.sellers[0].store_name || 'Store'"
+              class="h-6 w-6 rounded-md object-cover"
+            />
+            <Icon v-else name="mdi:store-outline" size="24" />
+            <span
+              v-if="isSellerRoute"
+              class="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-500 dark:border-neutral-900"
+            />
+          </div>
+          <span class="nav-text">Seller Hub</span>
+          <span
+            v-if="isSellerRoute"
+            class="ml-auto hidden rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700 xl:inline dark:bg-emerald-900/30 dark:text-emerald-400"
+          >Active</span>
+        </NuxtLink>
+
+        <!-- Multiple stores → picker trigger -->
+        <button
+          v-else
+          class="seller-hub-btn group w-full"
+          :class="{ active: isSellerRoute }"
+          @click="storePickerOpen = !storePickerOpen"
+        >
+          <div class="relative flex h-6 w-6 shrink-0 items-center justify-center">
+            <Icon name="mdi:store-outline" size="24" />
+            <span
+              v-if="isSellerRoute"
+              class="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-500 dark:border-neutral-900"
+            />
+          </div>
+          <span class="nav-text">Seller Hub</span>
+          <span class="ml-auto hidden rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] font-bold text-gray-500 xl:inline dark:bg-neutral-800 dark:text-neutral-400">
+            {{ sellerStore.sellers.length }}
+          </span>
+        </button>
+
+        <!-- Store picker panel (multi-store) -->
+        <Transition name="menu-pop">
+          <div
+            v-if="storePickerOpen"
+            class="absolute bottom-full left-0 z-50 mb-2 w-64 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-neutral-700 dark:bg-neutral-900"
+          >
+            <p class="px-4 pb-2 pt-3 text-[11px] font-bold uppercase tracking-widest text-gray-400 dark:text-neutral-500">
+              Switch Store
+            </p>
+            <NuxtLink
+              v-for="store in sellerStore.sellers"
+              :key="store.id"
+              :to="`/seller/${store.store_slug}/dashboard`"
+              class="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-gray-50 dark:hover:bg-neutral-800"
+              @click="storePickerOpen = false"
+            >
+              <div class="h-9 w-9 shrink-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-100 dark:border-neutral-700 dark:bg-neutral-800">
+                <img
+                  v-if="store.store_logo"
+                  :src="store.store_logo"
+                  :alt="store.store_name || 'Store'"
+                  class="h-full w-full object-cover"
+                />
+                <div v-else class="flex h-full w-full items-center justify-center">
+                  <Icon name="mdi:store" size="18" class="text-gray-400 dark:text-neutral-500" />
+                </div>
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="truncate text-sm font-semibold text-gray-900 dark:text-white">
+                  {{ store.store_name || 'Unnamed Store' }}
+                </p>
+                <p class="text-[11px] text-gray-400 dark:text-neutral-500">@{{ store.store_slug }}</p>
+              </div>
+              <span
+                class="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold"
+                :class="store.is_active
+                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                  : 'bg-gray-100 text-gray-500 dark:bg-neutral-800 dark:text-neutral-400'"
+              >{{ store.is_active ? 'Live' : 'Off' }}</span>
+            </NuxtLink>
+            <div class="border-t border-gray-200 p-2 dark:border-neutral-700">
+              <NuxtLink
+                to="/sellers/create"
+                class="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-brand transition-colors hover:bg-brand/5"
+                @click="storePickerOpen = false"
+              >
+                <Icon name="mdi:plus" size="16" />
+                <span class="nav-text">Add new store</span>
+              </NuxtLink>
+            </div>
+          </div>
+        </Transition>
+      </div>
+    </ClientOnly>
+
     <!-- Divider -->
-    <div class="mx-2 my-3 h-px bg-gray-100 dark:bg-neutral-800" />
+    <div class="mx-2 my-3 h-px bg-gray-200 dark:bg-neutral-800" />
 
     <!-- User actions (logged-in only) -->
     <nav class="flex flex-col space-y-1">
@@ -183,14 +303,24 @@
             <span>My Orders</span>
           </NuxtLink>
 
+          <!-- Seller Hub in profile popup -->
           <NuxtLink
-            v-if="sellerStore.hasSellers"
+            v-if="sellerStore.hasSellers && !isSellerRoute"
             to="/seller/dashboard"
-            class="menu-item group"
+            class="menu-item group text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/30"
             @click="menuOpen = false"
           >
             <Icon name="mdi:store-outline" size="20" />
-            <span>My Stores</span>
+            <span>Switch to Seller Mode</span>
+          </NuxtLink>
+          <NuxtLink
+            v-else-if="sellerStore.hasSellers && isSellerRoute"
+            to="/"
+            class="menu-item group"
+            @click="menuOpen = false"
+          >
+            <Icon name="mdi:shopping-outline" size="20" />
+            <span>Switch to Buyer Mode</span>
           </NuxtLink>
 
           <div class="mx-4 my-1.5 h-px bg-gray-100 dark:bg-neutral-800" />
@@ -251,6 +381,7 @@ const { cartCount } = useCart()
 const isHome = computed(() => route.path === '/')
 const isDiscover = computed(() => route.path === '/discover')
 const isSquares = computed(() => route.path.startsWith('/squares'))
+const isSellerRoute = computed(() => route.path.startsWith('/seller'))
 const unreadCount = computed(() => notificationStore.unreadCount)
 const messageCount = computed(() =>
   chatStore.conversations.reduce(
@@ -260,10 +391,13 @@ const messageCount = computed(() =>
 )
 
 const menuOpen = ref(false)
+const storePickerOpen = ref(false)
 
 const onClickOutside = (e: MouseEvent) => {
-  const el = document.querySelector('.bottom-profile-menu')
-  if (el && !el.contains(e.target as Node)) menuOpen.value = false
+  const profileMenu = document.querySelector('.bottom-profile-menu')
+  if (profileMenu && !profileMenu.contains(e.target as Node)) menuOpen.value = false
+  const pickerEl = document.querySelector('.store-picker-anchor')
+  if (pickerEl && !pickerEl.contains(e.target as Node)) storePickerOpen.value = false
 }
 
 onMounted(() => document.addEventListener('click', onClickOutside, true))
@@ -281,6 +415,14 @@ onUnmounted(() => document.removeEventListener('click', onClickOutside, true))
 
 .sell-button {
   @apply flex items-center gap-4 rounded-xl px-3 py-2.5 font-semibold text-gray-600 transition-all hover:bg-gray-100 hover:text-gray-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-white;
+}
+
+.seller-hub-btn {
+  @apply flex items-center gap-4 rounded-xl px-3 py-2.5 font-semibold text-gray-600 transition-all hover:bg-emerald-50 hover:text-emerald-800 dark:text-neutral-400 dark:hover:bg-emerald-950/30 dark:hover:text-emerald-300;
+}
+
+.seller-hub-btn.active {
+  @apply bg-emerald-50 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300;
 }
 
 .nav-text {

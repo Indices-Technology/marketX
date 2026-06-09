@@ -1,6 +1,6 @@
-// GET /api/commerce/cart/validate
+﻿// GET /api/commerce/cart/validate
 // Checks every cart item for staleness: price changes, low stock, unavailability.
-// Called when the cart sidebar opens — no writes, pure read.
+// Called when the cart sidebar opens â€” no writes, pure read.
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
 
 type ItemStatus = 'ok' | 'price_increased' | 'price_decreased' | 'insufficient_stock' | 'unavailable'
@@ -87,7 +87,7 @@ export default defineEventHandler(async (event) => {
   const hasIssues = results.some((r) => r.status !== 'ok' && r.status !== 'price_decreased')
 
   return { success: true, data: { items: results, hasIssues } }
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
     throw createError({ statusCode: 500, statusMessage: 'Internal server error' })
   }

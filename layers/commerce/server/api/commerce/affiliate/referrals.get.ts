@@ -1,4 +1,4 @@
-// GET /api/commerce/affiliate/referrals
+﻿// GET /api/commerce/affiliate/referrals
 // Returns the authenticated affiliate's conversion history (orders they referred).
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
@@ -34,7 +34,7 @@ export default defineEventHandler(async (event) => {
         hasMore: offset + limit < total,
       },
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
     if (error instanceof UserError)
       throw createError({ statusCode: error.status, statusMessage: error.message })

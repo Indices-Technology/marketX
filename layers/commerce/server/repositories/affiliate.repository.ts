@@ -82,7 +82,12 @@ export const affiliateRepository = {
       },
       select: {
         affiliateUserId: true,
-        affiliateCut: true,
+        // Only items belonging to this seller's products — avoids double-counting
+        // affiliate cuts from other sellers in the same multi-seller order.
+        orderItem: {
+          where: { variant: { product: { sellerId: { in: sellerIds } } } },
+          select: { affiliateCut: true },
+        },
         affiliate: {
           select: { id: true, username: true, avatar: true },
         },

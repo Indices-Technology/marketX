@@ -1,5 +1,11 @@
+/** Minimal shape every stored product must have. Superset types (ProductDetail, list items) are compatible. */
+interface StoredProduct {
+  id: number
+  [key: string]: unknown
+}
+
 export const useProductStore = defineStore('product', () => {
-  const products = ref<Map<number, any>>(new Map())
+  const products = ref<Map<number, StoredProduct>>(new Map())
   const sellerProducts = ref<Map<string, number[]>>(new Map()) // storeSlug -> productIds
   const isLoading = ref(false)
   const error = ref<string | null>(null)
@@ -11,7 +17,7 @@ export const useProductStore = defineStore('product', () => {
     return ids.map((id) => products.value.get(id)).filter(Boolean)
   }
 
-  const addProducts = (newProducts: any[], storeSlug?: string) => {
+  const addProducts = (newProducts: StoredProduct[], storeSlug?: string) => {
     newProducts.forEach((p) => products.value.set(p.id, p))
     if (storeSlug) {
       const existing = sellerProducts.value.get(storeSlug) || []
@@ -22,7 +28,7 @@ export const useProductStore = defineStore('product', () => {
     }
   }
 
-  const setProduct = (product: any) => products.value.set(product.id, product)
+  const setProduct = (product: StoredProduct) => products.value.set(product.id, product)
 
   const removeProduct = (id: number) => {
     products.value.delete(id)

@@ -67,7 +67,7 @@
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <NuxtLink
         to="/admin/reports"
-        class="group flex items-center gap-4 rounded-xl border border-gray-100 bg-white p-4 transition-colors hover:border-rose-200 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-rose-800"
+        class="group flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-4 transition-colors hover:border-rose-200 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-rose-800"
       >
         <div
           class="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 transition-colors group-hover:bg-rose-100 dark:bg-rose-900/20 dark:group-hover:bg-rose-900/40"
@@ -93,7 +93,7 @@
 
       <NuxtLink
         to="/admin/sellers?status=pending"
-        class="group flex items-center gap-4 rounded-xl border border-gray-100 bg-white p-4 transition-colors hover:border-purple-200 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-purple-800"
+        class="group flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-4 transition-colors hover:border-purple-200 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-purple-800"
       >
         <div
           class="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-50 transition-colors group-hover:bg-purple-100 dark:bg-purple-900/20 dark:group-hover:bg-purple-900/40"

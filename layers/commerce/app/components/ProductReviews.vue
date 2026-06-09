@@ -74,7 +74,7 @@
       <!-- Write form (verified buyer) -->
       <div
         v-else
-        class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
+        class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
       >
         <p class="mb-4 text-sm font-bold text-gray-900 dark:text-neutral-100">
           Rate your purchase
@@ -144,7 +144,7 @@
       <div
         v-for="review in reviews"
         :key="review.id"
-        class="rounded-2xl border border-gray-100 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"
+        class="rounded-2xl border border-gray-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"
       >
         <div class="flex items-start gap-3">
           <!-- Avatar -->

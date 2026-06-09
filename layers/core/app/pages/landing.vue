@@ -4,7 +4,7 @@
   >
     <!-- ── Nav ─────────────────────────────────────────────── -->
     <nav
-      class="fixed z-50 w-full border-b border-gray-100 bg-white/80 backdrop-blur-xl"
+      class="fixed z-50 w-full border-b border-gray-200 bg-white/80 backdrop-blur-xl"
     >
       <div
         class="mx-auto flex h-16 max-w-7xl items-center justify-between px-5"
@@ -172,7 +172,7 @@
               </div>
               <!-- App bar -->
               <div
-                class="flex h-12 items-center justify-between border-b border-gray-100 px-5"
+                class="flex h-12 items-center justify-between border-b border-gray-200 px-5"
               >
                 <span class="text-sm font-black lowercase italic text-brand"
                   >MarketX.</span
@@ -294,7 +294,7 @@
     </section>
 
     <!-- ── Marquee logos / trust ──────────────────────────────── -->
-    <div class="overflow-hidden border-y border-gray-100 bg-slate-50 py-8">
+    <div class="overflow-hidden border-y border-gray-200 bg-slate-50 py-8">
       <div class="marquee-track flex items-center whitespace-nowrap">
         <span
           v-for="brand in trustItems"
@@ -374,7 +374,7 @@
             class="group rounded-3xl border border-slate-100 bg-white p-8 transition-all hover:border-brand/30 hover:shadow-2xl"
           >
             <div
-              class="mb-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-50 text-2xl transition-all group-hover:scale-110 group-hover:bg-purple-600"
+              class="mb-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-gray-50 text-2xl transition-all group-hover:scale-110 group-hover:bg-brand/10 dark:bg-neutral-800"
             >
               🧠
             </div>
@@ -609,7 +609,7 @@
     <section id="affiliate" class="px-5 py-24">
       <div class="mx-auto max-w-7xl">
         <div
-          class="overflow-hidden rounded-3xl bg-gradient-to-br from-purple-600 via-purple-500 to-pink-500 shadow-2xl"
+          class="overflow-hidden rounded-3xl bg-gradient-to-br from-brand to-[#c41230] shadow-2xl"
         >
           <div class="grid items-center gap-0 lg:grid-cols-2">
             <!-- Left copy -->
@@ -646,7 +646,7 @@
 
               <NuxtLink
                 to="/user-register"
-                class="inline-flex items-center gap-3 rounded-2xl bg-white px-10 py-4 font-black text-purple-600 shadow-2xl shadow-black/20 transition-all hover:scale-[1.03] active:scale-[0.98]"
+                class="inline-flex items-center gap-3 rounded-2xl bg-white px-10 py-4 font-black text-brand shadow-2xl shadow-black/20 transition-all hover:scale-[1.03] active:scale-[0.98]"
               >
                 Start earning — it's free
                 <span class="text-base">→</span>
@@ -813,7 +813,7 @@
         </div>
 
         <div
-          class="flex flex-col items-center justify-between gap-3 border-t border-gray-100 pt-6 sm:flex-row"
+          class="flex flex-col items-center justify-between gap-3 border-t border-gray-200 pt-6 sm:flex-row"
         >
           <span
             class="text-[10px] font-black uppercase tracking-widest text-gray-300"

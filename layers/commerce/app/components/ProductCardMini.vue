@@ -1,6 +1,6 @@
 <template>
   <div
-    class="group relative flex cursor-pointer flex-col overflow-hidden rounded-xl border border-gray-100 bg-white transition-all duration-300 hover:shadow-md hover:shadow-gray-200/50 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:shadow-black/50"
+    class="group relative flex cursor-pointer flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:shadow-md hover:shadow-gray-200/50 dark:border-neutral-800 dark:bg-neutral-900 dark:shadow-none dark:hover:shadow-black/50"
     @click="$emit('open-detail', product)"
   >
     <!-- ─── MEDIA BLOCK ─────────────────────────────────────────────────── -->

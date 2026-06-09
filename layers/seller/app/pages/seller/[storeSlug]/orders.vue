@@ -44,14 +44,14 @@
 
     <!-- Orders table -->
     <div v-else-if="orders.length" class="space-y-4">
-      <div
+      <BaseCard
         v-for="order in orders"
         :key="order.id"
-        class="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
+        no-padding
       >
         <!-- Order header -->
         <div
-          class="flex flex-wrap items-start justify-between gap-3 border-b border-gray-100 px-5 py-4 dark:border-neutral-800"
+          class="flex flex-wrap items-start justify-between gap-3 border-b border-gray-200 px-5 py-4 dark:border-neutral-800"
         >
           <div>
             <p
@@ -65,38 +65,41 @@
           </div>
           <div class="flex flex-wrap items-center gap-2">
             <!-- Payment badge for POD -->
-            <span
-              v-if="order.paymentMethod === 'pay_on_delivery'"
-              class="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-            >
-              POD
-            </span>
-            <span
-              class="rounded-full px-2.5 py-1 text-[11px] font-semibold"
-              :class="statusColor(order.status)"
-            >
-              {{ order.status }}
-            </span>
+            <BaseBadge v-if="order.paymentMethod === 'pay_on_delivery'" status="success" size="sm">POD</BaseBadge>
+            <BaseBadge :status="order.status" :label="order.status" size="sm" />
 
             <!-- POD: Confirm Cash Received (only when SHIPPED) -->
-            <button
+            <BaseButton
               v-if="order.paymentMethod === 'pay_on_delivery' && order.status === 'SHIPPED'"
+              variant="success"
+              size="sm"
               @click="confirmCash(order.id)"
-              class="rounded-lg bg-emerald-600 px-3 py-1 text-xs font-bold text-white transition hover:bg-emerald-700"
             >
               Cash Received
-            </button>
+            </BaseButton>
 
             <!-- POD: Refuse Delivery (CONFIRMED or SHIPPED) -->
-            <button
+            <BaseButton
               v-if="order.paymentMethod === 'pay_on_delivery' && ['CONFIRMED', 'SHIPPED'].includes(order.status)"
+              variant="danger"
+              size="sm"
               @click="refuseDelivery(order.id)"
-              class="rounded-lg border border-red-200 px-3 py-1 text-xs font-bold text-red-500 transition hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/20"
             >
               Refused
-            </button>
+            </BaseButton>
 
-            <!-- Regular orders: status update dropdown (skip CONFIRMED for paid orders) -->
+            <!-- PENDING: confirm or cancel -->
+            <select
+              v-if="order.status === 'PENDING'"
+              @change="(e) => updateStatus(order.id, (e.target as HTMLSelectElement).value)"
+              class="rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs text-gray-700 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
+            >
+              <option value="" disabled selected>Action</option>
+              <option value="CONFIRMED">Confirm Order</option>
+              <option value="CANCELLED">Cancel</option>
+            </select>
+
+            <!-- Regular orders: status update dropdown -->
             <select
               v-if="order.paymentMethod !== 'pay_on_delivery' && order.status === 'CONFIRMED'"
               @change="(e) => updateStatus(order.id, (e.target as HTMLSelectElement).value)"
@@ -121,7 +124,7 @@
 
         <!-- Customer info -->
         <div
-          class="flex items-center gap-3 border-b border-gray-100 px-5 py-3 dark:border-neutral-800"
+          class="flex items-center gap-3 border-b border-gray-200 px-5 py-3 dark:border-neutral-800"
         >
           <img
             :src="order.user?.avatar || ''"
@@ -188,7 +191,7 @@
             {{ formatPrice(order.totalAmount + (order.shippingCost || 0)) }}
           </p>
         </div>
-      </div>
+      </BaseCard>
     </div>
 
     <!-- Empty -->
@@ -214,52 +217,31 @@
     </div>
 
     <!-- Tracking modal -->
-    <div
-      v-if="trackingModal"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+    <BaseModal
+      :model-value="!!trackingModal"
+      title="Add Tracking Info"
+      max-width="sm"
+      @update:model-value="(v) => !v && (trackingModal = null)"
     >
-      <div
-        class="w-full max-w-sm space-y-4 rounded-2xl bg-white p-6 dark:bg-neutral-900"
-      >
-        <h3 class="text-base font-semibold text-gray-900 dark:text-neutral-100">
-          Add Tracking Info
-        </h3>
-        <div>
-          <label class="mb-1 block text-xs font-medium text-gray-500"
-            >Courier / Shipper</label
-          >
-          <input
-            v-model="trackingForm.shipper"
-            placeholder="DHL, FedEx, etc."
-            class="input-field"
-          />
-        </div>
-        <div>
-          <label class="mb-1 block text-xs font-medium text-gray-500"
-            >Tracking Number</label
-          >
-          <input
-            v-model="trackingForm.trackingNumber"
-            placeholder="1Z999AA10123456784"
-            class="input-field"
-          />
-        </div>
-        <div class="flex gap-3">
-          <button
-            @click="trackingModal = null"
-            class="flex-1 rounded-xl border border-gray-200 py-3 text-sm font-medium dark:border-neutral-700"
-          >
-            Cancel
-          </button>
-          <button
-            @click="saveTracking"
-            class="flex-1 rounded-xl bg-brand py-3 text-sm font-semibold text-white"
-          >
-            Save
-          </button>
-        </div>
+      <div class="space-y-4">
+        <BaseInput
+          v-model="trackingForm.shipper"
+          label="Courier / Shipper"
+          placeholder="DHL, FedEx, etc."
+        />
+        <BaseInput
+          v-model="trackingForm.trackingNumber"
+          label="Tracking Number"
+          placeholder="1Z999AA10123456784"
+        />
       </div>
-    </div>
+      <template #footer>
+        <div class="flex gap-3">
+          <BaseButton variant="secondary" class="flex-1" @click="trackingModal = null">Cancel</BaseButton>
+          <BaseButton variant="primary" class="flex-1" @click="saveTracking">Save</BaseButton>
+        </div>
+      </template>
+    </BaseModal>
   </div>
 </template>
 
@@ -267,6 +249,11 @@
 import { useOrderApi } from '~~/layers/commerce/app/services/order.api'
 import { useNotificationStore } from '~~/layers/profile/app/stores/notification.store'
 import { notify } from '@kyvg/vue3-notification'
+import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
+import BaseBadge from '~~/layers/ui/app/components/BaseBadge.vue'
+import BaseModal from '~~/layers/ui/app/components/BaseModal.vue'
+import BaseInput from '~~/layers/ui/app/components/BaseInput.vue'
+import BaseCard from '~~/layers/ui/app/components/BaseCard.vue'
 
 definePageMeta({ middleware: 'auth', layout: 'store-layout' })
 
@@ -362,21 +349,6 @@ const saveTracking = async () => {
   }
 }
 
-const statusColor = (status: string) =>
-  ({
-    PENDING:
-      'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400',
-    CONFIRMED:
-      'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400',
-    SHIPPED:
-      'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400',
-    DELIVERED:
-      'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
-    CANCELLED: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
-    RETURNED: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400',
-  })[status] ||
-  'bg-gray-100 dark:bg-neutral-800 text-gray-600 dark:text-neutral-400'
-
 const formatPrice = (cents: number) =>
   new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(
     cents / 100,
@@ -402,9 +374,6 @@ watch(
 </script>
 
 <style scoped>
-.input-field {
-  @apply w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100;
-}
 .scrollbar-hide {
   scrollbar-width: none;
   -ms-overflow-style: none;

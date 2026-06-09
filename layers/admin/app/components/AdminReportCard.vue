@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-white dark:bg-neutral-900 border border-gray-100 dark:border-neutral-800 rounded-xl p-4 space-y-3">
+  <div class="bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-xl p-4 space-y-3">
     <!-- Header row -->
     <div class="flex items-start gap-3">
       <div class="flex-1 min-w-0">

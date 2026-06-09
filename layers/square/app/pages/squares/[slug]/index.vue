@@ -123,7 +123,7 @@
 
           <!-- Stats row -->
           <div
-            class="mt-4 flex items-center gap-5 border-b border-gray-100 pb-4 dark:border-neutral-800"
+            class="mt-4 flex items-center gap-5 border-b border-gray-200 pb-4 dark:border-neutral-800"
           >
             <div class="text-center">
               <p class="text-lg font-black text-gray-900 dark:text-neutral-100">
@@ -191,7 +191,7 @@
         <div class="mt-5">
           <!-- Tab bar — horizontally scrollable on mobile -->
           <div
-            class="scrollbar-none mb-4 flex gap-0 overflow-x-auto border-b border-gray-100 dark:border-neutral-800"
+            class="scrollbar-none mb-4 flex gap-0 overflow-x-auto border-b border-gray-200 dark:border-neutral-800"
           >
             <button
               v-for="t in tabs"
@@ -294,7 +294,7 @@
                 :class="
                   a.isPinned
                     ? 'border-amber-200 dark:border-amber-700/40'
-                    : 'border-gray-100 dark:border-neutral-800'
+                    : 'border-gray-200 dark:border-neutral-800'
                 "
               >
                 <!-- Pinned badge -->
@@ -363,7 +363,7 @@
                 v-for="seller in sellers"
                 :key="seller.id"
                 :to="`/sellers/profile/${seller.store_slug}`"
-                class="group flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white transition-all hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900"
+                class="group flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white transition-all hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900"
               >
                 <!-- Store logo / placeholder -->
                 <div
@@ -457,7 +457,7 @@
                     v-for="item in chunk"
                     :key="item.id"
                     :to="`/post/${item.id}`"
-                    class="flex items-start gap-3 rounded-xl border border-gray-100 p-3 transition-colors hover:bg-gray-50 dark:border-neutral-800 dark:hover:bg-neutral-900"
+                    class="flex items-start gap-3 rounded-xl border border-gray-200 p-3 transition-colors hover:bg-gray-50 dark:border-neutral-800 dark:hover:bg-neutral-900"
                   >
                     <img
                       v-if="item.author?.avatar"

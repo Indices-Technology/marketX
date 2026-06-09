@@ -7,17 +7,11 @@
     </h2>
 
     <div>
-      <label
-        class="mb-1 block text-sm font-medium text-gray-700 dark:text-neutral-300"
-      >
-        Product Title *
-      </label>
-      <input
+      <BaseInput
         v-model="form.title"
-        type="text"
-        required
+        label="Product Title *"
         placeholder="e.g. Vintage Denim Jacket"
-        class="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
+        required
       />
     </div>
 
@@ -78,7 +72,7 @@
 
     <!-- Affiliate Commission -->
     <div
-      class="rounded-lg border border-purple-100 bg-purple-50 p-4 dark:border-purple-800/30 dark:bg-purple-900/10"
+      class="rounded-lg border border-brand/20 bg-brand/5 p-4 dark:border-brand/30 dark:bg-brand/10"
     >
       <label
         class="mb-1 block text-sm font-medium text-gray-700 dark:text-neutral-300"
@@ -100,7 +94,7 @@
       />
       <p
         v-if="form.affiliateCommission && form.affiliateCommission > 0"
-        class="mt-1.5 text-xs text-purple-600 dark:text-purple-400"
+        class="mt-1.5 text-xs text-brand dark:text-brand/80"
       >
         Marketers will see: "Earn ₦{{
           Number(form.affiliateCommission).toLocaleString()
@@ -111,15 +105,10 @@
 
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <div>
-        <label
-          class="mb-1 block text-sm font-medium text-gray-700 dark:text-neutral-300"
-          >SKU</label
-        >
-        <input
+        <BaseInput
           v-model="form.SKU"
-          type="text"
+          label="SKU"
           placeholder="Optional"
-          class="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
         />
       </div>
       <div>
@@ -141,6 +130,7 @@
 
 <script setup lang="ts">
 import HtmlDescriptionEditor from '~~/layers/seller/app/components/HtmlDescriptionEditor.vue'
+import BaseInput from '~~/layers/ui/app/components/BaseInput.vue'
 
 defineProps<{
   form: {
