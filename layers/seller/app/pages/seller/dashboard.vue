@@ -132,9 +132,11 @@
             >
               <img
                 v-if="seller.store_logo"
-                :src="seller.store_logo"
+                :src="imgAvatar(seller.store_logo)"
                 :alt="seller.store_name"
                 class="h-full w-full object-cover"
+                loading="lazy"
+                decoding="async"
               />
               <div
                 v-else
@@ -240,6 +242,7 @@
 <script setup lang="ts">
 import { useSellerManagement } from '~~/layers/seller/app/composables/useSellerManagement'
 import { useProduct } from '~~/layers/commerce/app/composables/useProduct'
+import { imgAvatar } from '~~/layers/core/app/utils/cloudinary'
 import { useSeo } from '~~/layers/core/app/composables/useSeo'
 
 definePageMeta({ middleware: 'auth', layout: 'store-layout' })

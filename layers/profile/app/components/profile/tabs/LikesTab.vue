@@ -58,10 +58,11 @@
           >
             <img
               v-if="firstMedia(post)?.type === 'IMAGE'"
-              :src="firstMedia(post)!.url"
+              :src="imgThumb(firstMedia(post)!.url)"
               :alt="post.caption || 'Liked post'"
               class="h-full w-full object-cover"
               loading="lazy"
+              decoding="async"
             />
             <img
               v-else-if="firstMedia(post)?.type === 'VIDEO'"
@@ -189,12 +190,13 @@
             <div
               class="relative aspect-[3/4] overflow-hidden bg-gray-100 dark:bg-neutral-800"
             >
-              <img
+              <BaseImage
                 v-if="product.media?.[0]?.url"
                 :src="product.media[0].url"
                 :alt="product.title"
-                class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                loading="lazy"
+                :width="300"
+                :height="400"
+                class="h-full w-full transition-transform duration-300 group-hover:scale-105"
               />
               <div
                 v-else
@@ -268,7 +270,7 @@ import { usePost } from '~~/layers/social/app/composables/usePost'
 import PostDetailModal from '~~/layers/social/app/components/modals/PostDetailModal.vue'
 import { useProductApi } from '~~/layers/commerce/app/services/product.api'
 import { useCurrency } from '~~/layers/core/app/composables/useCurrency'
-import { videoThumb } from '~~/layers/core/app/utils/cloudinary'
+import { videoThumb, imgThumb } from '~~/layers/core/app/utils/cloudinary'
 import type { IFeedItem } from '~~/layers/feed/app/types/feed.types'
 
 const props = defineProps<{ username: string }>()

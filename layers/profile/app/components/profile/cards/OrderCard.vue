@@ -20,11 +20,16 @@
     <!-- Items -->
     <div class="space-y-3 p-4">
       <div v-for="item in order.orderItem" :key="item.id" class="flex gap-3">
-        <img
-          :src="item.variant?.product?.media?.[0]?.url || ''"
-          :alt="item.variant?.product?.title || 'Product'"
-          class="h-16 w-16 rounded-lg bg-gray-100 object-cover dark:bg-neutral-800"
-        />
+        <div class="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-neutral-800">
+          <BaseImage
+            v-if="item.variant?.product?.media?.[0]?.url"
+            :src="item.variant.product.media[0].url"
+            :alt="item.variant?.product?.title || 'Product'"
+            :width="64"
+            :height="64"
+            class="h-full w-full"
+          />
+        </div>
         <div class="min-w-0 flex-1">
           <p
             class="truncate text-sm font-medium text-gray-900 dark:text-neutral-100"

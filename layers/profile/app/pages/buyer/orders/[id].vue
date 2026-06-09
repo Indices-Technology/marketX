@@ -85,10 +85,16 @@
               :key="item.id"
               class="flex items-start gap-3 p-4"
             >
-              <img
-                :src="item.variant?.product?.media?.[0]?.url || ''"
-                class="h-16 w-16 shrink-0 rounded-xl bg-gray-100 object-cover dark:bg-neutral-800"
-              />
+              <div class="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-gray-100 dark:bg-neutral-800">
+                <BaseImage
+                  v-if="item.variant?.product?.media?.[0]?.url"
+                  :src="item.variant.product.media[0].url"
+                  alt=""
+                  :width="64"
+                  :height="64"
+                  class="h-full w-full"
+                />
+              </div>
               <div class="min-w-0 flex-1">
                 <p
                   class="truncate text-sm font-medium text-gray-900 dark:text-neutral-100"

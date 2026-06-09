@@ -244,9 +244,11 @@
               >
                 <img
                   v-if="seller.store_logo"
-                  :src="seller.store_logo"
+                  :src="imgAvatar(seller.store_logo)"
                   :alt="seller.store_name"
                   class="h-full w-full object-cover"
+                  loading="lazy"
+                  decoding="async"
                 />
                 <div
                   v-else
@@ -334,6 +336,7 @@ import type { IProduct } from '~~/layers/commerce/app/types/commerce.types'
 import ProductCardMini from '~~/layers/commerce/app/components/ProductCardMini.vue'
 import DiscoverCategoryGrid from '~~/layers/commerce/app/components/discover/CategoryGrid.vue'
 import { useDiscoverFilters } from '~~/layers/commerce/app/composables/useDiscoverFilters'
+import { imgAvatar } from '~~/layers/core/app/utils/cloudinary'
 
 const emit = defineEmits<{
   'open-detail': [product: IProduct]

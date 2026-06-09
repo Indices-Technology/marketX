@@ -60,11 +60,13 @@
         >
           <!-- Image -->
           <div class="relative aspect-square w-full overflow-hidden bg-gray-100 dark:bg-neutral-700">
-            <img
+            <BaseImage
               v-if="product.media?.[0]?.url"
               :src="product.media[0].url"
               :alt="product.title"
-              class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              :width="400"
+              :height="400"
+              class="h-full w-full transition-transform duration-300 group-hover:scale-105"
             />
             <div v-else class="flex h-full w-full items-center justify-center">
               <Icon name="mdi:image-outline" size="32" class="text-gray-300" />

@@ -371,10 +371,12 @@
                 :src="
                   product.media[0].type === 'VIDEO'
                     ? videoThumb(product.media[0].url)
-                    : product.media[0].url
+                    : imgThumb(product.media[0].url)
                 "
                 :alt="product.title"
                 class="h-full w-full object-cover"
+                loading="lazy"
+                decoding="async"
               />
               <div
                 v-else
@@ -429,7 +431,7 @@ import { useSellerApi } from '~~/layers/seller/app/services/seller.services'
 import { useProduct } from '~~/layers/commerce/app/composables/useProduct'
 import { useOrderApi } from '~~/layers/commerce/app/services/order.api'
 import { useWalletApi } from '~~/layers/commerce/app/services/wallet.api'
-import { videoThumb } from '~~/layers/core/app/utils/cloudinary'
+import { videoThumb, imgThumb } from '~~/layers/core/app/utils/cloudinary'
 import BaseBadge from '~~/layers/ui/app/components/BaseBadge.vue'
 
 definePageMeta({ middleware: 'auth', layout: 'store-layout' })

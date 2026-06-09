@@ -90,9 +90,11 @@
             >
               <img
                 v-if="seller.store_logo"
-                :src="seller.store_logo"
+                :src="imgAvatar(seller.store_logo)"
                 :alt="seller.store_name"
                 class="h-full w-full object-cover"
+                loading="lazy"
+                decoding="async"
               />
               <div
                 v-else
@@ -187,6 +189,7 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { useSellerManagement } from '~~/layers/seller/app/composables/useSellerManagement'
+import { imgAvatar } from '~~/layers/core/app/utils/cloudinary'
 
 const MAX_STORES = 5
 

@@ -43,11 +43,13 @@
         <div
           class="relative h-20 overflow-hidden bg-brand"
         >
-          <img
+          <BaseImage
             v-if="seller.store_banner"
             :src="seller.store_banner"
             :alt="seller.store_name"
-            class="h-full w-full object-cover opacity-80"
+            :width="400"
+            :height="80"
+            class="h-full w-full opacity-80"
           />
         </div>
         <div class="relative -mt-6 px-3 pb-4">
@@ -56,9 +58,11 @@
           >
             <img
               v-if="seller.store_logo"
-              :src="seller.store_logo"
+              :src="imgAvatar(seller.store_logo)"
               :alt="seller.store_name"
               class="h-full w-full object-cover"
+              loading="lazy"
+              decoding="async"
             />
             <div
               v-else
@@ -107,6 +111,7 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import type { Category } from '~~/shared/types/category'
 import CategoryPills from '~~/layers/commerce/app/components/CategoryPills.vue'
 import { useDiscoverFilters } from '~~/layers/commerce/app/composables/useDiscoverFilters'
+import { imgAvatar } from '~~/layers/core/app/utils/cloudinary'
 
 const props = defineProps<{
   searchInput: string

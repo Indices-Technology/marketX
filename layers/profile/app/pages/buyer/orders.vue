@@ -56,8 +56,10 @@
                   <img
                     v-for="(item, i) in order.orderItem.slice(0, 2)"
                     :key="i"
-                    :src="item.variant?.product?.media?.[0]?.url || ''"
+                    :src="item.variant?.product?.media?.[0]?.url ? imgThumb(item.variant.product.media[0].url) : ''"
                     class="h-9 w-9 rounded-lg border-2 border-white bg-gray-100 object-cover dark:border-neutral-800"
+                    loading="lazy"
+                    decoding="async"
                   />
                 </div>
                 <div>
@@ -213,8 +215,10 @@
               <img
                 v-for="(item, i) in order.orderItem.slice(0, 3)"
                 :key="i"
-                :src="item.variant?.product?.media?.[0]?.url || ''"
+                :src="item.variant?.product?.media?.[0]?.url ? imgThumb(item.variant.product.media[0].url) : ''"
                 class="h-14 w-14 rounded-xl bg-gray-100 object-cover dark:bg-neutral-800"
+                loading="lazy"
+                decoding="async"
               />
               <div
                 v-if="order.orderItem.length > 3"
@@ -334,6 +338,7 @@
 <script setup lang="ts">
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import { useSeo } from '~~/layers/core/app/composables/useSeo'
+import { imgThumb } from '~~/layers/core/app/utils/cloudinary'
 import RightSideNavBuyerOrders from '~~/layers/core/app/layouts/children/RightSideNavBuyerOrders.vue'
 import { useOrder } from '~~/layers/commerce/app/composables/useOrder'
 import { useOrderApi } from '~~/layers/commerce/app/services/order.api'

@@ -57,12 +57,14 @@
             :src="videoThumb(item.url)"
             class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
+            decoding="async"
           />
           <img
             v-else
-            :src="item.url"
+            :src="imgThumb(item.url)"
             class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
+            decoding="async"
           />
 
           <!-- Hover overlay -->
@@ -135,8 +137,9 @@
             />
             <img
               v-else
-              :src="lightboxItem.url"
+              :src="imgDetail(lightboxItem.url)"
               class="max-h-[80vh] w-full rounded-xl object-contain"
+              decoding="async"
             />
 
             <!-- Info bar -->
@@ -169,6 +172,7 @@
 
 <script setup lang="ts">
 import { useProfileApi } from '~~/layers/profile/app/services/profile.api'
+import { videoThumb, imgThumb, imgDetail } from '~~/layers/core/app/utils/cloudinary'
 
 interface MediaItem {
   id: string

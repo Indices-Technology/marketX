@@ -61,10 +61,11 @@
           >
             <img
               v-if="firstMedia(post)?.type === 'IMAGE'"
-              :src="firstMedia(post)!.url"
+              :src="imgThumb(firstMedia(post)!.url)"
               :alt="post.caption || 'Saved post'"
               class="h-full w-full object-cover"
               loading="lazy"
+              decoding="async"
             />
             <video
               v-else-if="firstMedia(post)?.type === 'VIDEO'"
@@ -191,12 +192,13 @@
             <div
               class="relative aspect-[3/4] overflow-hidden bg-gray-100 dark:bg-neutral-800"
             >
-              <img
+              <BaseImage
                 v-if="product.media?.[0]?.url"
                 :src="product.media[0].url"
                 :alt="product.title"
-                class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                loading="lazy"
+                :width="300"
+                :height="400"
+                class="h-full w-full transition-transform duration-300 group-hover:scale-105"
               />
               <div
                 v-else
@@ -256,6 +258,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from '#imports'
+import { imgThumb } from '~~/layers/core/app/utils/cloudinary'
 import { usePost } from '~~/layers/social/app/composables/usePost'
 import { usePostStore } from '~~/layers/social/app/store/post.store'
 import PostDetailModal from '~~/layers/social/app/components/modals/PostDetailModal.vue'

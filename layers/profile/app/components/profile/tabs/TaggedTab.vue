@@ -31,9 +31,11 @@
           <!-- Post Image/Video -->
           <img
             v-if="post.media?.[0]?.type === 'image'"
-            :src="post.media[0].url"
+            :src="imgThumb(post.media[0].url)"
             :alt="post.caption"
             class="h-full w-full object-cover"
+            loading="lazy"
+            decoding="async"
           />
           <video
             v-else-if="post.media?.[0]?.type === 'video'"
@@ -93,6 +95,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from '#imports'
+import { imgThumb } from '~~/layers/core/app/utils/cloudinary'
 import { usePostApi } from '~~/layers/social/app/services/post.api'
 import PostDetailModal from '~~/layers/social/app/components/modals/PostDetailModal.vue'
 import type { IPost } from '~~/layers/social/app/types/post.types'

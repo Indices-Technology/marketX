@@ -81,11 +81,13 @@
           <div
             class="relative h-20 overflow-hidden bg-gradient-to-br from-brand to-brand-dark"
           >
-            <img
+            <BaseImage
               v-if="seller.store_banner"
               :src="seller.store_banner"
               :alt="seller.store_name"
-              class="h-full w-full object-cover opacity-80"
+              :width="400"
+              :height="80"
+              class="h-full w-full opacity-80"
             />
           </div>
 
@@ -96,9 +98,11 @@
             >
               <img
                 v-if="seller.store_logo"
-                :src="seller.store_logo"
+                :src="imgAvatar(seller.store_logo)"
                 :alt="seller.store_name"
                 class="h-full w-full object-cover"
+                loading="lazy"
+                decoding="async"
               />
               <div
                 v-else
@@ -157,6 +161,7 @@
 import RightSideNavSeller from '~~/layers/core/app/layouts/children/RightSideNavSeller.vue'
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import { useSeo } from '~~/layers/core/app/composables/useSeo'
+import { imgAvatar } from '~~/layers/core/app/utils/cloudinary'
 
 useSeo().setSellersPage()
 

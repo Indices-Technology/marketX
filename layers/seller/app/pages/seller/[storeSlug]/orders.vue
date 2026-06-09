@@ -127,8 +127,15 @@
           class="flex items-center gap-3 border-b border-gray-200 px-5 py-3 dark:border-neutral-800"
         >
           <img
-            :src="order.user?.avatar || ''"
+            v-if="order.user?.avatar"
+            :src="imgAvatar(order.user.avatar)"
             class="h-8 w-8 shrink-0 rounded-full bg-gray-100 object-cover dark:bg-neutral-800"
+            loading="lazy"
+            decoding="async"
+          />
+          <div
+            v-else
+            class="h-8 w-8 shrink-0 rounded-full bg-gray-100 dark:bg-neutral-800"
           />
           <div class="min-w-0">
             <p
@@ -150,10 +157,16 @@
             :key="item.id"
             class="flex shrink-0 items-start gap-2"
           >
-            <img
-              :src="item.variant?.product?.media?.[0]?.url || ''"
-              class="h-12 w-12 rounded-lg bg-gray-100 object-cover dark:bg-neutral-800"
-            />
+            <div class="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-neutral-800">
+              <BaseImage
+                v-if="item.variant?.product?.media?.[0]?.url"
+                :src="item.variant.product.media[0].url"
+                alt=""
+                :width="48"
+                :height="48"
+                class="h-full w-full"
+              />
+            </div>
             <div class="min-w-0">
               <p
                 class="w-28 truncate text-xs font-medium text-gray-800 dark:text-neutral-200"
@@ -248,6 +261,7 @@
 <script setup lang="ts">
 import { useOrderApi } from '~~/layers/commerce/app/services/order.api'
 import { useSeo } from '~~/layers/core/app/composables/useSeo'
+import { imgAvatar } from '~~/layers/core/app/utils/cloudinary'
 import { useNotificationStore } from '~~/layers/profile/app/stores/notification.store'
 import { notify } from '@kyvg/vue3-notification'
 import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'

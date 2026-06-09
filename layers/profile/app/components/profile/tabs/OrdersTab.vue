@@ -42,8 +42,10 @@
                 <img
                   v-for="(item, i) in order.orderItem.slice(0, 2)"
                   :key="i"
-                  :src="item.variant?.product?.media?.[0]?.url || ''"
+                  :src="item.variant?.product?.media?.[0]?.url ? imgThumb(item.variant.product.media[0].url) : ''"
                   class="h-9 w-9 rounded-lg border-2 border-white bg-gray-100 object-cover dark:border-neutral-800"
+                  loading="lazy"
+                  decoding="async"
                 />
               </div>
               <div>
@@ -173,6 +175,7 @@
 import { useRouter } from 'vue-router'
 import OrderCard from '../cards/OrderCard.vue'
 import { useOrder } from '~~/layers/commerce/app/composables/useOrder'
+import { imgThumb } from '~~/layers/core/app/utils/cloudinary'
 import { useOrderApi } from '~~/layers/commerce/app/services/order.api'
 import { useSellerManagement } from '~~/layers/seller/app/composables/useSellerManagement'
 import { useCurrency } from '~~/layers/core/app/composables/useCurrency'

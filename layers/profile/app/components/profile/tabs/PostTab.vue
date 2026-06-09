@@ -43,10 +43,11 @@
           <!-- Thumbnail -->
           <img
             v-if="firstMedia(post)?.type === 'IMAGE'"
-            :src="firstMedia(post)!.url"
+            :src="imgThumb(firstMedia(post)!.url)"
             :alt="post.caption || 'Post'"
             class="h-full w-full object-cover"
             loading="lazy"
+            decoding="async"
           />
           <img
             v-else-if="firstMedia(post)?.type === 'VIDEO'"
@@ -153,7 +154,7 @@ import { usePostStore } from '~~/layers/social/app/store/post.store'
 import { usePost } from '~~/layers/social/app/composables/usePost'
 import PostDetailModal from '~~/layers/social/app/components/modals/PostDetailModal.vue'
 import PostEditModal from '~~/layers/social/app/components/modals/PostEditModal.vue'
-import { videoThumb } from '~~/layers/core/app/utils/cloudinary'
+import { videoThumb, imgThumb } from '~~/layers/core/app/utils/cloudinary'
 import type { IFeedItem } from '~~/layers/feed/app/types/feed.types'
 
 const props = defineProps<{
