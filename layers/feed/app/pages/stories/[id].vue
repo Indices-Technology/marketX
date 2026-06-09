@@ -126,8 +126,11 @@
 
 <script setup lang="ts">
 import { useStoryApi } from '~~/layers/feed/app/services/story.api'
+import { useSeo } from '~~/layers/core/app/composables/useSeo'
 
 definePageMeta({ middleware: 'auth' })
+
+useSeo().setPrivatePage('Story')
 
 const route = useRoute()
 const router = useRouter()

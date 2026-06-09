@@ -95,8 +95,11 @@
 
 <script setup lang="ts">
 import Avatar from '~~/layers/profile/app/components/Avatar.vue'
+import { useSeo } from '~~/layers/core/app/composables/useSeo'
 
 definePageMeta({ middleware: 'auth', layout: 'store-layout' })
+
+useSeo().setInboxPage()
 
 const route = useRoute()
 const router = useRouter()

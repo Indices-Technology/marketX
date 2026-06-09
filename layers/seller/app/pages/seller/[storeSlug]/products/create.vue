@@ -301,6 +301,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
+import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { useRoute, useRouter } from 'vue-router'
 import { useProduct } from '~~/layers/commerce/app/composables/useProduct'
 import { useMediaUpload } from '~~/layers/core/app/composables/useMediaUpload'
@@ -323,6 +324,8 @@ import ProductSocialCaptions from '~~/layers/seller/app/components/product-form/
 
 
 definePageMeta({ middleware: 'auth', layout: 'store-layout' })
+
+useSeo().setPrivatePage('Add Product')
 
 const route = useRoute()
 const router = useRouter()

@@ -794,7 +794,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { useRoute } from 'vue-router'
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import ProductCardMini from '~~/layers/commerce/app/components/ProductCardMini.vue'
@@ -835,6 +836,10 @@ const pageLoading = ref(true)
 const loadError = ref(false)
 const activeTab = ref('wall')
 const seller = computed(() => currentSeller.value)
+
+watch(seller, (s) => {
+  if (s) useSeo().setStorePage(s)
+}, { immediate: true })
 
 const isFollowing = ref(false)
 const followLoading = ref(false)

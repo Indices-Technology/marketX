@@ -584,6 +584,7 @@
 
 <script setup lang="ts">
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
+import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { useSellerManagement } from '~~/layers/seller/app/composables/useSellerManagement'
 import { useMediaUpload } from '~~/layers/core/app/composables/useMediaUpload'
 import { SUPPORTED_CURRENCIES } from '~~/shared/utils/currency'
@@ -591,6 +592,8 @@ import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 import BaseInput from '~~/layers/ui/app/components/BaseInput.vue'
 
 definePageMeta({ middleware: 'auth' })
+
+useSeo().setPrivatePage('Open Your Store')
 
 const SHIP_COUNTRIES = [
   { code: 'NG', name: 'Nigeria' },

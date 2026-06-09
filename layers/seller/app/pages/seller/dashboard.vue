@@ -240,8 +240,11 @@
 <script setup lang="ts">
 import { useSellerManagement } from '~~/layers/seller/app/composables/useSellerManagement'
 import { useProduct } from '~~/layers/commerce/app/composables/useProduct'
+import { useSeo } from '~~/layers/core/app/composables/useSeo'
 
 definePageMeta({ middleware: 'auth', layout: 'store-layout' })
+
+useSeo().setDashboardPage()
 
 const router = useRouter()
 const {

@@ -122,11 +122,14 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '~~/layers/core/app/stores/auth.store'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 
 defineOptions({ name: 'OAuthAuthorizePage' })
+
+useSeo().setPrivatePage('Authorize')
 
 const route = useRoute()
 const authStore = useAuthStore()

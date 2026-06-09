@@ -423,6 +423,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
+import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { useSellerManagement } from '~~/layers/seller/app/composables/useSellerManagement'
 import { useSellerApi } from '~~/layers/seller/app/services/seller.services'
 import { useProduct } from '~~/layers/commerce/app/composables/useProduct'
@@ -432,6 +433,10 @@ import { videoThumb } from '~~/layers/core/app/utils/cloudinary'
 import BaseBadge from '~~/layers/ui/app/components/BaseBadge.vue'
 
 definePageMeta({ middleware: 'auth', layout: 'store-layout' })
+
+watch(() => seller.value?.store_name, (name) => {
+  useSeo().setDashboardPage(name ?? undefined)
+}, { immediate: true })
 
 const route = useRoute()
 const storeSlug = computed(() => route.params.storeSlug as string)

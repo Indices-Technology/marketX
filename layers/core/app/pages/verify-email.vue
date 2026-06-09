@@ -125,6 +125,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { useRoute } from 'nuxt/app'
 import { useAuth } from '../composables/useAuth'
 import AuthLayout from '../layouts/AuthLayout.vue'
@@ -133,6 +134,8 @@ definePageMeta({
   layout: false,
   middleware: 'guest',
 })
+
+useSeo().setPrivatePage('Verify Email')
 
 const route = useRoute()
 const router = useRouter()

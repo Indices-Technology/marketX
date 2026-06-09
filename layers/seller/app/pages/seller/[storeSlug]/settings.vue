@@ -607,6 +607,7 @@
 
 <script setup lang="ts">
 import { useSellerManagement } from '~~/layers/seller/app/composables/useSellerManagement'
+import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { useMediaUpload } from '~~/layers/core/app/composables/useMediaUpload'
 import { SUPPORTED_CURRENCIES } from '~~/shared/utils/currency'
 
@@ -636,6 +637,8 @@ const SHIP_FROM_COUNTRIES = [
 ]
 
 definePageMeta({ middleware: 'auth', layout: 'store-layout' })
+
+useSeo().setSettingsPage()
 
 const route = useRoute()
 const storeSlug = computed(() => route.params.storeSlug as string)

@@ -260,6 +260,42 @@ export const useSeo = () => {
 
   // ── Static / legal pages ─────────────────────────────────────────────────
 
+  const setLandingPage = () => {
+    const desc = `${siteName} — The all-in-one platform for everyday business in Africa. Discover stores near you, buy local, and sell to the world.`
+    useSeoMeta({
+      title: siteName,
+      description: desc,
+      ogTitle: `${siteName} — Your Business, Fully Alive`,
+      ogDescription: desc,
+      ogImage: defaultImage,
+      ogUrl: baseURL,
+    })
+  }
+
+  const setPostPage = (post: {
+    caption?: string | null
+    mediaUrl?: string | null
+    username?: string | null
+  }) => {
+    const author = post.username ? `@${post.username}` : 'a seller'
+    const desc = post.caption?.slice(0, 160) || `Post by ${author} on ${siteName}.`
+    useSeoMeta({
+      title: post.caption?.slice(0, 60) || `Post by ${author}`,
+      description: desc,
+      ogTitle: `Post by ${author} | ${siteName}`,
+      ogDescription: desc,
+      ogImage: post.mediaUrl || defaultImage,
+      ogType: 'article',
+    })
+  }
+
+  const setPrivatePage = (title: string) => {
+    useSeoMeta({
+      title,
+      robots: 'noindex',
+    })
+  }
+
   const setAboutPage = () => {
     const desc = `Learn about ${siteName} — the all-in-one platform for everyday business in Africa. Our story, our mission, our team.`
     useSeoMeta({
@@ -302,6 +338,7 @@ export const useSeo = () => {
     defaults,
     // Public
     setHomePage,
+    setLandingPage,
     setDiscoverPage,
     setMapPage,
     setReelsPage,
@@ -312,8 +349,9 @@ export const useSeo = () => {
     setStorePage,
     setSellerProfilePage,
     setProfilePage,
-    // Product
+    // Product / post
     setProductPage,
+    setPostPage,
     // Auth
     setLoginPage,
     setRegisterPage,
@@ -323,6 +361,7 @@ export const useSeo = () => {
     setDashboardPage,
     setInboxPage,
     setSettingsPage,
+    setPrivatePage,
     // Static
     setAboutPage,
     setHelpPage,

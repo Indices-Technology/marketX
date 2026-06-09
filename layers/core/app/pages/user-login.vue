@@ -197,6 +197,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { definePageMeta, useRoute } from '#imports'
 import { useAuth } from '~~/layers/core/app/composables/useAuth'
 import { useAuthApi } from '~~/layers/core/app/services/auth.api'
@@ -207,6 +208,8 @@ definePageMeta({
   layout: false,
   middleware: 'guest',
 })
+
+useSeo().setLoginPage()
 
 const route = useRoute()
 const {

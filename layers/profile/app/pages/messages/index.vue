@@ -209,10 +209,13 @@
 <script setup lang="ts">
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import ConversationItem from '../../components/ConversationItem.vue'
+import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { useSocialApi } from '../../services/social.api'
 import { useSearchApi } from '~~/layers/core/app/services/search.api'
 
 definePageMeta({ middleware: 'auth' })
+
+useSeo().setInboxPage()
 
 const router = useRouter()
 const socialApi = useSocialApi()

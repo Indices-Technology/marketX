@@ -366,6 +366,10 @@
 import { ref, computed } from 'vue'
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import RightSideNavLinks from '~~/layers/core/app/layouts/children/RightSideNavLinks.vue'
+import { useSeo } from '~~/layers/core/app/composables/useSeo'
+
+useSeo().setHelpPage()
+
 const config = useRuntimeConfig()
 
 // State

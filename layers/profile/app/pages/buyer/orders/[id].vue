@@ -217,6 +217,7 @@
 <script setup lang="ts">
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import { useOrderApi } from '~~/layers/commerce/app/services/order.api'
+import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { extractErrorMessage } from '~~/layers/core/app/utils/errors'
 import { notify } from '@kyvg/vue3-notification'
 import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
@@ -224,6 +225,8 @@ import BaseBadge from '~~/layers/ui/app/components/BaseBadge.vue'
 import BaseCard from '~~/layers/ui/app/components/BaseCard.vue'
 
 definePageMeta({ middleware: 'auth' })
+
+useSeo().setOrdersPage()
 
 const route = useRoute()
 const orderApi = useOrderApi()

@@ -97,6 +97,7 @@
 
 <script setup lang="ts">
 import type { IProduct } from '~~/layers/commerce/app/types/commerce.types'
+import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import ProductCardMini from '~~/layers/commerce/app/components/ProductCardMini.vue'
 import ProductDetailModal from '~~/layers/commerce/app/components/modals/ProductDetailModal.vue'

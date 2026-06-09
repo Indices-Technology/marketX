@@ -185,6 +185,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
+import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { useRoute } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
@@ -194,6 +195,8 @@ definePageMeta({
   layout: false,
   middleware: 'guest',
 })
+
+useSeo().setPrivatePage('Resend Verification')
 
 const route = useRoute()
 

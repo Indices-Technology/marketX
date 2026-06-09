@@ -106,6 +106,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { useRoute, useRouter } from 'vue-router'
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import PostDetails from '~~/layers/social/app/components/PostDetails.vue'
@@ -121,6 +122,14 @@ const { isLoading, error, getPostById, normalizePost } = usePost()
 const postId = computed(() => route.params.id as string)
 const post = ref<IFeedItem | null>(null)
 const currentIndex = ref(0)
+
+watch(post, (p) => {
+  if (p) useSeo().setPostPage({
+    caption: p.caption,
+    mediaUrl: p.mediaItems?.[0]?.url ?? (p as any).media?.[0]?.url,
+    username: p.user?.username,
+  })
+}, { immediate: true })
 
 const mediaItems = computed(() => {
   if (!post.value) return []

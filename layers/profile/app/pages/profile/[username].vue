@@ -161,6 +161,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
+import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { useRoute, useRouter } from 'vue-router'
 import { useProfileStore } from '../../stores/profile.store'
 import { useSellerStore } from '~~/layers/seller/app/store/seller.store'
@@ -216,6 +217,10 @@ const profile = computed<IProfile | undefined>(() => {
   if (isOwnProfile.value) return profileStore.me ?? undefined
   return profileStore.publicProfiles.get(username.value) as IProfile | undefined
 })
+
+watch(profile, (p) => {
+  if (p) useSeo().setProfilePage({ username: p.username, bio: p.bio, avatar: p.avatar })
+}, { immediate: true })
 
 // stats MUST be reactive — getProfileStats(username) can change when username changes
 const stats = computed(() => profileStore.getProfileStats(username.value))

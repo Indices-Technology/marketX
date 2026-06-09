@@ -170,10 +170,13 @@
 
 <script setup lang="ts">
 import { useProduct } from '~~/layers/commerce/app/composables/useProduct'
+import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { extractErrorMessage } from '~~/layers/core/app/utils/errors'
 import SellerProductCard from '~~/layers/seller/app/components/SellerProductCard.vue'
 
 definePageMeta({ middleware: 'auth', layout: 'store-layout' })
+
+useSeo().setPrivatePage('Products')
 
 const route = useRoute()
 const storeSlug = computed(() => route.params.storeSlug as string)

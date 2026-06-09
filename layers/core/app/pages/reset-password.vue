@@ -173,6 +173,7 @@
 
 <script setup lang="ts">
 import { reactive, ref, onMounted, computed } from 'vue'
+import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { useRoute } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 import PasswordStrengthMeter from '../components/PasswordStrengthMeter.vue'
@@ -183,6 +184,8 @@ definePageMeta({
   layout: false,
   middleware: 'guest',
 })
+
+useSeo().setPrivatePage('Reset Password')
 
 const route = useRoute()
 

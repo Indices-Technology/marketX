@@ -247,6 +247,7 @@
 
 <script setup lang="ts">
 import { useOrderApi } from '~~/layers/commerce/app/services/order.api'
+import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { useNotificationStore } from '~~/layers/profile/app/stores/notification.store'
 import { notify } from '@kyvg/vue3-notification'
 import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
@@ -256,6 +257,8 @@ import BaseInput from '~~/layers/ui/app/components/BaseInput.vue'
 import BaseCard from '~~/layers/ui/app/components/BaseCard.vue'
 
 definePageMeta({ middleware: 'auth', layout: 'store-layout' })
+
+useSeo().setOrdersPage()
 
 const route = useRoute()
 const orderApi = useOrderApi()

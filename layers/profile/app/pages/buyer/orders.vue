@@ -333,6 +333,7 @@
 
 <script setup lang="ts">
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
+import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import RightSideNavBuyerOrders from '~~/layers/core/app/layouts/children/RightSideNavBuyerOrders.vue'
 import { useOrder } from '~~/layers/commerce/app/composables/useOrder'
 import { useOrderApi } from '~~/layers/commerce/app/services/order.api'

@@ -831,7 +831,10 @@
 </template>
 
 <script setup lang="ts">
+import { useSeo } from '~~/layers/core/app/composables/useSeo'
 definePageMeta({ layout: false })
+
+useSeo().setLandingPage()
 
 const tickerItems = [
   'Social commerce for Africa',

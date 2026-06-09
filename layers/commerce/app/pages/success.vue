@@ -83,8 +83,11 @@
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import RightSideNavBuyerOrders from '~~/layers/core/app/layouts/children/RightSideNavBuyerOrders.vue'
 import { useCartStore } from '~~/layers/commerce/app/stores/cart.store'
+import { useSeo } from '~~/layers/core/app/composables/useSeo'
 
 const cartStore = useCartStore()
+
+useSeo().setPrivatePage('Order Confirmed')
 
 // Clear the cart on successful payment
 onMounted(() => {
