@@ -75,6 +75,33 @@ export const imgDetail = (url: string | null | undefined) =>
   cloudinaryUrl(url, { width: 1080, quality: 'auto' })
 
 /**
+ * Category thumbnail — handles both Cloudinary uploads and Unsplash seed URLs.
+ * For Cloudinary: injects fill/crop transforms.
+ * For Unsplash: rewrites the w/h params directly on the CDN URL (no proxy needed).
+ * @param size - pixel dimension for both width and height (square crop), default 64
+ */
+export function catThumb(url: string | null | undefined, size = 64): string {
+  if (!url) return ''
+  if (url.includes('cloudinary.com')) {
+    return cloudinaryUrl(url, { width: size, height: size, crop: 'fill' })
+  }
+  if (url.includes('unsplash.com')) {
+    try {
+      const u = new URL(url)
+      u.searchParams.set('w', String(size))
+      u.searchParams.set('h', String(size))
+      u.searchParams.set('fit', 'crop')
+      u.searchParams.set('auto', 'format')
+      u.searchParams.set('q', '80')
+      return u.toString()
+    } catch {
+      return url
+    }
+  }
+  return url
+}
+
+/**
  * LQIP — Low Quality Image Placeholder.
  * 20 px wide, auto-compressed. Loads in < 100 ms even on 3G.
  * Use as an inline CSS background that shows instantly while the real image fetches.

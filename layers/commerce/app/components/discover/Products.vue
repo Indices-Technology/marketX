@@ -24,57 +24,33 @@
       </button>
     </div>
 
-    <div
-      v-if="productsLoading && !products.length"
-      class="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+    <ProductMasonryGrid
+      :products="products"
+      :loading="productsLoading"
+      :has-more="productHasMore"
+      @open-detail="emit('open-detail', $event)"
+      @load-more="loadData()"
     >
-      <div
-        v-for="n in 10"
-        :key="n"
-        class="aspect-[4/5] animate-pulse rounded-2xl bg-gray-100 dark:bg-neutral-800"
-      />
-    </div>
-
-    <div
-      v-else-if="!productsLoading && !products.length"
-      class="py-24 text-center"
-    >
-      <Icon
-        name="mdi:text-search"
-        size="48"
-        class="mx-auto mb-3 text-gray-300 dark:text-neutral-600"
-      />
-      <p class="text-sm text-gray-500 dark:text-neutral-400">
-        No products found{{ props.searchInput ? ` for "${props.searchInput}"` : '' }}
-      </p>
-      <button
-        v-if="props.searchInput"
-        class="mt-3 rounded-full border border-gray-200 px-4 py-1.5 text-xs font-semibold transition-colors hover:bg-gray-50 dark:border-neutral-700 dark:hover:bg-neutral-800"
-        @click="emit('clear-search')"
-      >
-        Clear search
-      </button>
-    </div>
-
-    <div
-      v-else
-      class="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
-    >
-      <ProductCardMini
-        v-for="product in products"
-        :key="product.id"
-        :product="product"
-        @open-detail="emit('open-detail', $event)"
-      />
-    </div>
-
-    <div ref="productTrigger" class="mt-6 h-10" />
-    <div
-      v-if="productsLoading && products.length"
-      class="flex justify-center py-8"
-    >
-      <Icon name="eos-icons:loading" size="24" class="text-brand" />
-    </div>
+      <template #empty>
+        <div class="py-24 text-center">
+          <Icon
+            name="mdi:text-search"
+            size="48"
+            class="mx-auto mb-3 text-gray-300 dark:text-neutral-600"
+          />
+          <p class="text-sm text-gray-500 dark:text-neutral-400">
+            No products found{{ props.searchInput ? ` for "${props.searchInput}"` : '' }}
+          </p>
+          <button
+            v-if="props.searchInput"
+            class="mt-3 rounded-full border border-gray-200 px-4 py-1.5 text-xs font-semibold transition-colors hover:bg-gray-50 dark:border-neutral-700 dark:hover:bg-neutral-800"
+            @click="emit('clear-search')"
+          >
+            Clear search
+          </button>
+        </div>
+      </template>
+    </ProductMasonryGrid>
   </div>
 </template>
 
@@ -82,8 +58,8 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import type { IProduct } from '~~/layers/commerce/app/types/commerce.types'
 import type { Category } from '~~/shared/types/category'
-import ProductCardMini from '~~/layers/commerce/app/components/ProductCardMini.vue'
 import CategoryPills from '~~/layers/commerce/app/components/CategoryPills.vue'
+import ProductMasonryGrid from '~~/layers/commerce/app/components/ProductMasonryGrid.vue'
 import { useProduct } from '~~/layers/commerce/app/composables/useProduct'
 import { useDiscoverFilters } from '~~/layers/commerce/app/composables/useDiscoverFilters'
 
@@ -114,7 +90,6 @@ const productFilter = ref('all')
 const products = ref<IProduct[]>([])
 const productsTotal = ref(0)
 const productsLoading = ref(false)
-const productTrigger = ref<HTMLElement | null>(null)
 let productsGen = 0
 
 const productHasMore = computed(() => products.value.length < productsTotal.value)
@@ -176,23 +151,6 @@ watch(
 
 onMounted(() => {
   loadData()
-
-  const observer = new IntersectionObserver(
-    (entries) => {
-      if (entries[0]?.isIntersecting && productHasMore.value) loadData()
-    },
-    { rootMargin: '400px' },
-  )
-
-  watch(
-    productTrigger,
-    (el) => {
-      if (el) observer.observe(el)
-    },
-    { immediate: true },
-  )
-
-  onUnmounted(() => observer.disconnect())
 })
 
 onUnmounted(() => {

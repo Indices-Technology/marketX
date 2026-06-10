@@ -10,7 +10,7 @@
         class="discover-sticky-header -mx-2 border-b border-gray-200 bg-white/90 px-4 pb-3 pt-4 backdrop-blur-xl sm:-mx-4 dark:border-neutral-800 dark:bg-neutral-950/90"
         :style="{ top: discoverStickyTop }"
       >
-        <div class="mb-3 flex items-center justify-between gap-3">
+        <div class="mb-3 flex items-center gap-2">
           <h1
             class="text-xl font-extrabold tracking-tight text-gray-900 dark:text-neutral-100"
           >
@@ -37,6 +37,41 @@
               <Icon name="mdi:close" size="13" />
             </button>
           </div>
+          <!-- Mobile filter button — sidebar is hidden on small screens -->
+          <button
+            class="relative lg:hidden flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition"
+            :class="hasActiveFilters
+              ? 'border-brand/40 bg-brand/5 text-brand dark:border-brand/30 dark:bg-brand/10'
+              : 'border-gray-200 bg-white text-gray-600 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300'"
+            aria-label="Open filters"
+            @click="filterSheetOpen = true"
+          >
+            <Icon name="mdi:tune-variant" size="16" />
+            <span
+              v-if="hasActiveFilters"
+              class="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-brand"
+            />
+          </button>
+        </div>
+
+        <!-- Active filter chips -->
+        <div v-if="activeFilterChips.length" class="mb-2 flex flex-wrap gap-1.5">
+          <button
+            v-for="chip in activeFilterChips"
+            :key="chip.key"
+            class="inline-flex items-center gap-1 rounded-full bg-brand/10 py-1 pl-2.5 pr-1.5 text-[11px] font-semibold text-brand transition hover:bg-brand/15 dark:bg-brand/15"
+            @click="chip.clear()"
+          >
+            {{ chip.label }}
+            <Icon name="mdi:close" size="10" class="opacity-70" />
+          </button>
+          <button
+            v-if="activeFilterChips.length > 1"
+            class="px-1 py-1 text-[11px] font-semibold text-gray-400 transition hover:text-brand dark:text-neutral-500"
+            @click="resetFilters(activeTab)"
+          >
+            Clear all
+          </button>
         </div>
 
         <!-- Tab Bar -->
@@ -128,6 +163,13 @@
       @close="selectedProduct = null"
     />
 
+    <!-- Mobile filter bottom sheet -->
+    <BaseModal v-model="filterSheetOpen" title="Filters" no-padding>
+      <div class="px-5 pb-8 pt-4">
+        <RightSideNavDiscoverFilter />
+      </div>
+    </BaseModal>
+
     <template #right-sidebar>
       <RightSideNavDiscoverFilter />
     </template>
@@ -139,6 +181,7 @@ import type { Category } from '~~/shared/types/category'
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import ProductDetailModal from '~~/layers/commerce/app/components/modals/ProductDetailModal.vue'
 import RightSideNavDiscoverFilter from '~~/layers/commerce/app/components/RightSideNavDiscoverFilter.vue'
+import BaseModal from '~~/layers/ui/app/components/BaseModal.vue'
 import DiscoverTrending from '~~/layers/commerce/app/components/discover/Trending.vue'
 import DiscoverSquares from '~~/layers/commerce/app/components/discover/Squares.vue'
 import DiscoverFresh from '~~/layers/commerce/app/components/discover/Fresh.vue'
@@ -184,9 +227,45 @@ const TABS = [
   { key: 'tags',     label: 'Tags',        icon: 'mdi:tag-outline' },
 ] as const
 
-const { activeTab, selectedCategoryId } = useDiscoverFilters()
+const { activeTab, selectedCategoryId, filters, hasActiveFilters, resetFilters } = useDiscoverFilters()
 const searchInput = ref('')
 const pendingTagName = ref<string | null>(null)
+const filterSheetOpen = ref(false)
+
+const SORT_LABEL: Record<string, string> = {
+  popular: 'Most popular',
+  price_asc: 'Low to high',
+  price_desc: 'High to low',
+}
+
+const activeFilterChips = computed<Array<{ key: string; label: string; clear: () => void }>>(() => {
+  const chips: Array<{ key: string; label: string; clear: () => void }> = []
+  const t = activeTab.value
+  const f = filters
+
+  if (t === 'products' || t === 'fresh') {
+    const tf = t === 'products' ? f.products : f.fresh
+    if (tf.sortBy !== 'newest') chips.push({ key: 'sort', label: SORT_LABEL[tf.sortBy] ?? tf.sortBy, clear: () => { tf.sortBy = 'newest' } })
+    if (tf.minPrice !== null) chips.push({ key: 'min', label: `From ₦${tf.minPrice.toLocaleString()}`, clear: () => { tf.minPrice = null } })
+    if (tf.maxPrice !== null) chips.push({ key: 'max', label: `To ₦${tf.maxPrice.toLocaleString()}`, clear: () => { tf.maxPrice = null } })
+  } else if (t === 'deals') {
+    if (f.deals.minDiscount > 0) chips.push({ key: 'discount', label: `${f.deals.minDiscount}%+ off`, clear: () => { f.deals.minDiscount = 0 } })
+    if (f.deals.maxPrice !== null) chips.push({ key: 'max', label: `To ₦${f.deals.maxPrice.toLocaleString()}`, clear: () => { f.deals.maxPrice = null } })
+  } else if (t === 'preloved') {
+    if (f.preloved.minPrice !== null) chips.push({ key: 'min', label: `From ₦${f.preloved.minPrice.toLocaleString()}`, clear: () => { f.preloved.minPrice = null } })
+    if (f.preloved.maxPrice !== null) chips.push({ key: 'max', label: `To ₦${f.preloved.maxPrice.toLocaleString()}`, clear: () => { f.preloved.maxPrice = null } })
+  } else if (t === 'sellers' && f.sellers.hasDeals) {
+    chips.push({ key: 'deals', label: 'Has deals', clear: () => { f.sellers.hasDeals = false } })
+  } else if ((t === 'trending' || t === 'browse') && f.trending.timeRange !== 'all') {
+    const labels: Record<string, string> = { today: 'Today', week: 'This week', month: 'This month' }
+    chips.push({ key: 'time', label: labels[f.trending.timeRange] ?? f.trending.timeRange, clear: () => { f.trending.timeRange = 'all' } })
+  } else if (t === 'tags' && f.tags.sort !== 'popular') {
+    chips.push({ key: 'sort', label: 'Newest tags', clear: () => { f.tags.sort = 'popular' } })
+  } else if (t === 'squares' && f.squares.minMembers !== null) {
+    chips.push({ key: 'members', label: `${f.squares.minMembers}+ sellers`, clear: () => { f.squares.minMembers = null } })
+  }
+  return chips
+})
 
 const searchPlaceholder = computed(() => {
   const map: Record<string, string> = {

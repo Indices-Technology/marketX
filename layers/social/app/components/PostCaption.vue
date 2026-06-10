@@ -32,11 +32,11 @@ const rendered = computed(() => {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
 
-  // 2. Hashtags → brand-coloured links
+  // 2. Hashtags → brand-coloured links to the Tags tab on discover
   const withTags = escaped.replace(
     /(?<!\w)#([a-zA-Z][a-zA-Z0-9_]{0,29})/g,
     (_, tag) =>
-      `<a href="/discover?tab=all&amp;q=%23${encodeURIComponent(tag.toLowerCase())}" class="text-brand font-medium hover:underline">#${tag}</a>`,
+      `<a href="/discover?tab=tags&amp;tagName=${encodeURIComponent(tag.toLowerCase())}" class="text-brand font-medium hover:underline">#${tag}</a>`,
   )
 
   // 3. Mentions → profile/store links (uses mentions map if available, falls back to seller profile)

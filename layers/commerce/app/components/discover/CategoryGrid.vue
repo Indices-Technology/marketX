@@ -58,6 +58,7 @@
 import { computed, nextTick } from 'vue'
 import { useDiscoverFilters } from '~~/layers/commerce/app/composables/useDiscoverFilters'
 import { useLayoutData } from '~~/layers/core/app/composables/useLayoutData'
+import { getCategoryVisual } from '~~/layers/commerce/app/utils/categoryIconMap'
 
 const { activeTab, selectedCategoryId } = useDiscoverFilters()
 const { data: layoutData } = useLayoutData()
@@ -76,66 +77,58 @@ const CATEGORIES: CategoryDef[] = [
   {
     slug: 'electronics',
     label: 'Electronics',
-    icon: 'mdi:cellphone',
-    gradient: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
     matchTerms: ['electronic', 'phone', 'gadget', 'tech', 'computer', 'mobile', 'device', 'laptop'],
     targetTab: 'products',
+    ...getCategoryVisual('electronics'),
   },
   {
     slug: 'fashion',
     label: 'Fashion',
-    icon: 'mdi:hanger',
-    gradient: 'linear-gradient(135deg, #ec4899, #be185d)',
     matchTerms: ['fashion', 'cloth', 'wear', 'apparel', 'dress', 'shoe', 'bag', 'style'],
     targetTab: 'products',
+    ...getCategoryVisual('fashion'),
   },
   {
     slug: 'home',
     label: 'Home',
-    icon: 'mdi:home-variant-outline',
-    gradient: 'linear-gradient(135deg, #f97316, #c2410c)',
     matchTerms: ['home', 'furniture', 'interior', 'kitchen', 'living', 'decor', 'house'],
     targetTab: 'products',
+    ...getCategoryVisual('home'),
   },
   {
     slug: 'beauty',
     label: 'Beauty',
-    icon: 'mdi:face-woman-outline',
-    gradient: 'linear-gradient(135deg, #a855f7, #7c3aed)',
     matchTerms: ['beauty', 'cosmetic', 'makeup', 'skin', 'hair', 'fragrance', 'personal'],
     targetTab: 'products',
+    ...getCategoryVisual('beauty'),
   },
   {
     slug: 'food',
     label: 'Food',
-    icon: 'mdi:food-fork-drink',
-    gradient: 'linear-gradient(135deg, #22c55e, #15803d)',
     matchTerms: ['food', 'drink', 'grocery', 'snack', 'beverage', 'eat', 'restaurant'],
     targetTab: 'products',
+    ...getCategoryVisual('food'),
   },
   {
     slug: 'sports',
     label: 'Sports',
-    icon: 'mdi:dumbbell',
-    gradient: 'linear-gradient(135deg, #06b6d4, #0e7490)',
     matchTerms: ['sport', 'fitness', 'gym', 'exercise', 'outdoor', 'health', 'athletic'],
     targetTab: 'products',
+    ...getCategoryVisual('sports'),
   },
   {
     slug: 'services',
     label: 'Services',
-    icon: 'mdi:tools',
-    gradient: 'linear-gradient(135deg, #6366f1, #4338ca)',
     matchTerms: ['service', 'repair', 'install', 'consult', 'professional', 'hire'],
     targetTab: 'products',
+    ...getCategoryVisual('services'),
   },
   {
     slug: 'preloved',
     label: 'Pre-loved',
-    icon: 'mdi:recycle',
-    gradient: 'linear-gradient(135deg, #f59e0b, #b45309)',
     matchTerms: ['preloved', 'thrift', 'second', 'used', 'vintage', 'pre-owned'],
     targetTab: 'preloved',
+    ...getCategoryVisual('preloved'),
   },
 ]
 

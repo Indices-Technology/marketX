@@ -72,7 +72,7 @@ function emitNumber(eventName: 'update:min' | 'update:max', event: Event) {
 }
 
 .price-input-wrap {
-  @apply flex min-h-12 w-full items-center rounded-xl border border-gray-200 bg-white px-3 shadow-sm shadow-gray-200/40 transition focus-within:border-brand/40 focus-within:ring-2 focus-within:ring-brand/10 dark:border-neutral-800 dark:bg-neutral-900 dark:shadow-none;
+  @apply flex w-full items-center rounded-lg border border-gray-200 bg-white px-3 transition focus-within:border-brand/40 focus-within:ring-2 focus-within:ring-brand/10 dark:border-neutral-800 dark:bg-neutral-900;
 }
 
 .price-input {

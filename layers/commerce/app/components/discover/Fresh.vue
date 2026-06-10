@@ -8,50 +8,27 @@
       @update:model-value="emit('update:selectedCategory', $event)"
     />
 
-    <div
-      v-if="freshLoading && !freshProducts.length"
-      class="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+    <ProductMasonryGrid
+      :products="freshProducts"
+      :loading="freshLoading"
+      :has-more="freshHasMore"
+      show-age
+      @open-detail="emit('open-detail', $event)"
+      @load-more="loadData()"
     >
-      <div
-        v-for="n in 10"
-        :key="n"
-        class="aspect-[4/5] animate-pulse rounded-2xl bg-gray-100 dark:bg-neutral-800"
-      />
-    </div>
-
-    <div
-      v-else-if="!freshLoading && !freshProducts.length"
-      class="py-24 text-center"
-    >
-      <Icon
-        name="mdi:lightning-bolt-outline"
-        size="48"
-        class="mx-auto mb-3 text-gray-300 dark:text-neutral-600"
-      />
-      <p class="text-sm text-gray-500 dark:text-neutral-400">
-        No fresh drops yet{{ props.searchInput ? ` for "${props.searchInput}"` : '' }}
-      </p>
-    </div>
-
-    <div
-      v-else
-      class="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
-    >
-      <ProductCardMini
-        v-for="product in freshProducts"
-        :key="product.id"
-        :product="product"
-        @open-detail="emit('open-detail', $event)"
-      />
-    </div>
-
-    <div ref="freshTrigger" class="mt-6 h-10" />
-    <div
-      v-if="freshLoading && freshProducts.length"
-      class="flex justify-center py-8"
-    >
-      <Icon name="eos-icons:loading" size="24" class="text-brand" />
-    </div>
+      <template #empty>
+        <div class="py-24 text-center">
+          <Icon
+            name="mdi:lightning-bolt-outline"
+            size="48"
+            class="mx-auto mb-3 text-gray-300 dark:text-neutral-600"
+          />
+          <p class="text-sm text-gray-500 dark:text-neutral-400">
+            No fresh drops yet{{ props.searchInput ? ` for "${props.searchInput}"` : '' }}
+          </p>
+        </div>
+      </template>
+    </ProductMasonryGrid>
   </div>
 </template>
 
@@ -59,8 +36,8 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import type { IProduct } from '~~/layers/commerce/app/types/commerce.types'
 import type { Category } from '~~/shared/types/category'
-import ProductCardMini from '~~/layers/commerce/app/components/ProductCardMini.vue'
 import CategoryPills from '~~/layers/commerce/app/components/CategoryPills.vue'
+import ProductMasonryGrid from '~~/layers/commerce/app/components/ProductMasonryGrid.vue'
 import { useProduct } from '~~/layers/commerce/app/composables/useProduct'
 import { useDiscoverFilters } from '~~/layers/commerce/app/composables/useDiscoverFilters'
 
@@ -82,7 +59,6 @@ const PROD_LIMIT = 24
 const freshProducts = ref<IProduct[]>([])
 const freshTotal = ref(0)
 const freshLoading = ref(false)
-const freshTrigger = ref<HTMLElement | null>(null)
 let freshGen = 0
 
 const freshHasMore = computed(() => freshProducts.value.length < freshTotal.value)
@@ -139,26 +115,7 @@ watch(
   { deep: true },
 )
 
-onMounted(() => {
-  loadData()
-
-  const observer = new IntersectionObserver(
-    (entries) => {
-      if (entries[0]?.isIntersecting && freshHasMore.value) loadData()
-    },
-    { rootMargin: '400px' },
-  )
-
-  watch(
-    freshTrigger,
-    (el) => {
-      if (el) observer.observe(el)
-    },
-    { immediate: true },
-  )
-
-  onUnmounted(() => observer.disconnect())
-})
+onMounted(() => loadData())
 
 onUnmounted(() => {
   if (debounceTimer) clearTimeout(debounceTimer)
