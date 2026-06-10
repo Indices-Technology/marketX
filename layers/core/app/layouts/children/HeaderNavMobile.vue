@@ -2,29 +2,35 @@
   <header
     class="mobile-header border-b border-gray-200/60 bg-white/80 backdrop-blur-md dark:border-neutral-800/60 dark:bg-neutral-900/80"
   >
-    <div class="flex h-14 items-center justify-between px-4">
-      <!-- Logo -->
-      <NuxtLink to="/" class="flex items-center gap-2">
+    <div class="flex h-14 items-center gap-2 px-3">
+      <!-- Logo icon only -->
+      <NuxtLink to="/" class="shrink-0">
         <div
           class="flex h-8 w-8 items-center justify-center rounded-xl bg-brand shadow-md shadow-brand/25"
         >
           <span class="text-xs font-black italic text-white">MX</span>
         </div>
-        <span
-          class="text-lg font-black tracking-tight text-gray-900 dark:text-neutral-100"
-          >{{ $config.public.siteName || 'MarketX' }}</span
-        >
       </NuxtLink>
 
+      <!-- Search pill — takes remaining space -->
+      <button
+        class="flex flex-1 items-center gap-2 rounded-full border border-gray-200 bg-gray-100 px-3 py-2 text-left dark:border-neutral-700 dark:bg-neutral-800"
+        aria-label="Search"
+        @click="$emit('open-search')"
+      >
+        <Icon name="mdi:magnify" size="18" class="shrink-0 text-gray-400 dark:text-neutral-500" />
+        <span class="flex-1 truncate text-sm text-gray-400 dark:text-neutral-500">Search products, stores…</span>
+      </button>
+
       <!-- Actions -->
-      <div class="flex items-center gap-2">
+      <div class="flex shrink-0 items-center gap-1">
         <button
           aria-label="Cart"
           class="header-button"
           @click="$emit('open-cart')"
         >
           <div class="relative">
-            <Icon name="mdi:shopping-outline" size="26" />
+            <Icon name="mdi:shopping-outline" size="24" />
             <span
               v-if="cartCount > 0"
               class="absolute -right-1 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-brand px-0.5 text-[9px] font-bold text-white"
@@ -32,9 +38,6 @@
             >
           </div>
         </button>
-        <NuxtLink to="/map" class="header-button" aria-label="Near Me">
-          <Icon name="mdi:map-marker-radius-outline" size="24" />
-        </NuxtLink>
 
         <ClientOnly>
           <button
@@ -60,7 +63,7 @@ import { computed } from 'vue'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import { useNotificationStore } from '~~/layers/profile/app/stores/notification.store'
 
-defineEmits(['open-notifications', 'open-cart'])
+defineEmits(['open-notifications', 'open-cart', 'open-search'])
 
 const profileStore = useProfileStore()
 const notificationStore = useNotificationStore()

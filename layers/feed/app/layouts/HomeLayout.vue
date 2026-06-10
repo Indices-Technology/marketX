@@ -9,6 +9,7 @@
     <HeaderNavMobile
       @open-notifications="showNotificationOverlay = true"
       @open-cart="showCart = true"
+      @open-search="showSearchOverlay = true"
     />
   </div>
 
