@@ -151,6 +151,13 @@ export class SellerApiClient extends BaseApiClient {
       skipAuth: true,
     })
   }
+
+  async getAnalytics(storeSlug: string, days: 7 | 30 | 90): Promise<any> {
+    return this.request(`/api/seller/analytics/${storeSlug}`, {
+      method: 'GET',
+      params: { days },
+    })
+  }
 }
 
 /**

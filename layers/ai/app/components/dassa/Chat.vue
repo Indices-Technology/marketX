@@ -99,6 +99,7 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, onMounted } from 'vue'
 import { useDassaChat } from '../../composables/useDassaChat'
+import { useDassaPanel } from '../../composables/useDassaPanel'
 import { useCurrency } from '~~/layers/core/app/composables/useCurrency'
 import { useDassaSocket } from '../../composables/useDassaSocket'
 import type { DassaProductItem } from '../../composables/useDassaChat'
@@ -146,6 +147,19 @@ watch(
     await nextTick()
     if (scrollEl.value) scrollEl.value.scrollTop = scrollEl.value.scrollHeight
   },
+)
+
+// Fire pending product context message once connected
+const { pendingMessage, takePending } = useDassaPanel()
+watch(
+  [isConnected, pendingMessage],
+  ([connected]) => {
+    if (connected && pendingMessage.value) {
+      const msg = takePending()
+      if (msg) nextTick(() => send(msg))
+    }
+  },
+  { immediate: true },
 )
 
 onMounted(() => {

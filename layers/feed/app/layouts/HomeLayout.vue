@@ -282,6 +282,7 @@ import { useNavVisibility } from '~~/layers/core/app/composables/useNavVisibilit
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import { useSellerStore } from '~~/layers/seller/app/store/seller.store'
 import { useShareModal } from '~~/layers/social/app/composables/useShareModal'
+import { useDassaPanel } from '~~/layers/ai/app/composables/useDassaPanel'
 
 // ─── Stores & Composables ───────────────────────────────────────────────────
 const route = useRoute()
@@ -408,7 +409,7 @@ const showStoryModal = ref(false)
 const showQuickProductModal = ref(false)
 const showSearchOverlay = ref(false)
 const showNotificationOverlay = ref(false)
-const showAI = ref(false)
+const { isOpen: showAI } = useDassaPanel()
 const showCart = ref(false)
 const dismissSellerBanner = ref(false)
 

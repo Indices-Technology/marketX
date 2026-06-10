@@ -64,6 +64,14 @@
             <span>Messages</span>
           </NuxtLink>
           <NuxtLink
+            :to="`/seller/${storeSlug}/analytics`"
+            class="seller-nav-link"
+            active-class="active"
+          >
+            <Icon name="mdi:chart-line" size="22" />
+            <span>Analytics</span>
+          </NuxtLink>
+          <NuxtLink
             :to="`/seller/${storeSlug}/settings`"
             class="seller-nav-link"
             active-class="active"
@@ -165,12 +173,12 @@
           <span>Orders</span>
         </NuxtLink>
         <NuxtLink
-          :to="`/seller/${storeSlug}/messages`"
+          :to="`/seller/${storeSlug}/analytics`"
           class="mobile-tab"
           active-class="mobile-tab-active"
         >
-          <Icon name="mdi:message-outline" size="24" />
-          <span>Messages</span>
+          <Icon name="mdi:chart-line" size="24" />
+          <span>Analytics</span>
         </NuxtLink>
         <NuxtLink
           :to="`/seller/${storeSlug}/settings`"

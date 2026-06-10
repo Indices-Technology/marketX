@@ -158,35 +158,218 @@
               />
             </button>
           </div>
+
+          <!-- Delivery & Deals card — fills empty left-column space on desktop -->
+          <div
+            class="rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-neutral-800 dark:bg-neutral-800/50"
+          >
+            <p
+              class="mb-3 text-[11px] font-bold uppercase tracking-widest text-gray-400 dark:text-neutral-500"
+            >
+              Delivery & Payment
+            </p>
+
+            <div class="space-y-3">
+              <!-- POD -->
+              <div
+                v-if="product.seller?.pod_enabled"
+                class="flex items-start gap-2.5"
+              >
+                <div
+                  class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30"
+                >
+                  <Icon
+                    name="mdi:truck-delivery-outline"
+                    size="15"
+                    class="text-emerald-600 dark:text-emerald-400"
+                  />
+                </div>
+                <div>
+                  <p
+                    class="text-sm font-semibold text-gray-800 dark:text-neutral-200"
+                  >
+                    Pay on Delivery available
+                  </p>
+                  <p
+                    v-if="podZones.length"
+                    class="mt-0.5 text-[11px] text-gray-500 dark:text-neutral-400"
+                  >
+                    {{ podZones.slice(0, 4).join(', ')
+                    }}{{ podZones.length > 4 ? ` +${podZones.length - 4} more` : '' }}
+                  </p>
+                  <p
+                    v-if="product.seller.pod_delivery_days"
+                    class="text-[11px] text-gray-500 dark:text-neutral-400"
+                  >
+                    Delivered in {{ product.seller.pod_delivery_days }}–{{
+                      product.seller.pod_delivery_days + 2
+                    }}
+                    days
+                  </p>
+                </div>
+              </div>
+
+              <!-- Bulk / volume offers -->
+              <template v-if="product.offers?.length">
+                <div
+                  v-for="offer in product.offers"
+                  :key="offer.id"
+                  class="flex items-start gap-2.5"
+                >
+                  <div
+                    class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand/10"
+                  >
+                    <Icon
+                      name="mdi:tag-multiple-outline"
+                      size="15"
+                      class="text-brand"
+                    />
+                  </div>
+                  <div>
+                    <p
+                      class="text-sm font-semibold text-gray-800 dark:text-neutral-200"
+                    >
+                      {{
+                        offer.label ||
+                        `Buy ${offer.minQuantity}+, save ${offer.discount}%`
+                      }}
+                    </p>
+                    <p
+                      v-if="offer.label"
+                      class="mt-0.5 text-[11px] text-gray-500 dark:text-neutral-400"
+                    >
+                      Buy {{ offer.minQuantity }}+ units to qualify
+                    </p>
+                  </div>
+                </div>
+              </template>
+
+              <div class="border-t border-gray-200 dark:border-neutral-700" />
+
+              <!-- Trust lines -->
+              <div class="space-y-2">
+                <div
+                  v-for="tip in trustTips"
+                  :key="tip.text"
+                  class="flex items-center gap-2 text-[12px] text-gray-500 dark:text-neutral-400"
+                >
+                  <Icon
+                    :name="tip.icon"
+                    size="13"
+                    class="shrink-0 text-gray-400 dark:text-neutral-500"
+                  />
+                  {{ tip.text }}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- ── Product Info ── -->
         <div class="flex flex-col gap-5">
-          <!-- Seller -->
-          <NuxtLink
-            :to="`/sellers/profile/${product.seller?.store_slug}`"
-            class="flex w-max items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-3 py-1.5 transition-colors hover:border-brand dark:border-neutral-700 dark:bg-neutral-800"
+          <!-- Seller card -->
+          <div
+            v-if="product.seller"
+            class="rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-neutral-800 dark:bg-neutral-800/50"
           >
-            <img
-              v-if="product.seller?.store_logo"
-              :src="imgAvatar(product.seller.store_logo)"
-              class="h-5 w-5 rounded-full object-cover"
-              loading="lazy"
-              decoding="async"
-            />
-            <Icon
-              v-else
-              name="mdi:store-outline"
-              size="14"
-              class="text-gray-500"
-            />
-            <span
-              class="text-xs font-semibold text-gray-700 dark:text-neutral-300"
-              >{{
-                product.seller?.store_name || product.seller?.store_slug
-              }}</span
-            >
-          </NuxtLink>
+            <div class="flex items-start gap-3">
+              <!-- Avatar -->
+              <NuxtLink :to="`/sellers/profile/${product.seller.store_slug}`">
+                <img
+                  v-if="product.seller.store_logo"
+                  :src="imgAvatar(product.seller.store_logo)"
+                  class="h-12 w-12 rounded-xl object-cover"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <div
+                  v-else
+                  class="flex h-12 w-12 items-center justify-center rounded-xl bg-brand/10"
+                >
+                  <Icon name="mdi:store-outline" size="22" class="text-brand" />
+                </div>
+              </NuxtLink>
+
+              <!-- Info -->
+              <div class="min-w-0 flex-1">
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <NuxtLink
+                    :to="`/sellers/profile/${product.seller.store_slug}`"
+                    class="text-sm font-bold text-gray-900 hover:text-brand dark:text-neutral-100"
+                  >
+                    {{ product.seller.store_name || product.seller.store_slug }}
+                  </NuxtLink>
+                  <span
+                    v-if="product.seller.is_verified"
+                    class="flex items-center gap-0.5 rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+                  >
+                    <Icon name="mdi:check-decagram" size="10" />
+                    Verified
+                  </span>
+                  <span
+                    v-if="product.seller.isPremium"
+                    class="rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
+                  >
+                    Premium
+                  </span>
+                </div>
+                <div
+                  class="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[11px] text-gray-500 dark:text-neutral-400"
+                >
+                  <!-- Rating -->
+                  <span
+                    v-if="product.seller.averageRating"
+                    class="flex items-center gap-0.5"
+                  >
+                    <Icon name="mdi:star" size="11" class="text-amber-400" />
+                    {{ product.seller.averageRating.toFixed(1) }}
+                    <span class="opacity-60"
+                      >({{ product.seller.totalReviews }})</span
+                    >
+                  </span>
+                  <!-- Location -->
+                  <span
+                    v-if="product.seller.locationLabel || product.seller.store_location"
+                    class="flex items-center gap-0.5"
+                  >
+                    <Icon name="mdi:map-marker-outline" size="11" />
+                    {{ product.seller.locationLabel || product.seller.store_location }}
+                  </span>
+                  <!-- Member since -->
+                  <span class="flex items-center gap-0.5">
+                    <Icon name="mdi:calendar-outline" size="11" />
+                    Since {{ sellerMemberSince }}
+                  </span>
+                  <!-- POD badge -->
+                  <span
+                    v-if="product.seller.pod_enabled"
+                    class="flex items-center gap-0.5 text-emerald-600 dark:text-emerald-400"
+                  >
+                    <Icon name="mdi:truck-delivery-outline" size="11" />
+                    Pay on delivery
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="mt-3 flex gap-2">
+              <NuxtLink
+                :to="`/sellers/profile/${product.seller.store_slug}`"
+                class="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-gray-200 py-2 text-xs font-semibold text-gray-700 transition-colors hover:border-brand hover:text-brand dark:border-neutral-700 dark:text-neutral-300"
+              >
+                <Icon name="mdi:store-outline" size="14" />
+                View Store
+              </NuxtLink>
+              <NuxtLink
+                :to="`/messages?seller=${product.seller.store_slug}`"
+                class="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-brand px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#d81b36]"
+              >
+                <Icon name="mdi:message-outline" size="14" />
+                Chat with Seller
+              </NuxtLink>
+            </div>
+          </div>
 
           <!-- Title & price -->
           <div>
@@ -195,6 +378,15 @@
             >
               {{ product.title }}
             </h1>
+            <!-- View count -->
+            <p
+              v-if="product.viewCount > 0"
+              class="mt-1 flex items-center gap-1 text-[11px] text-gray-400 dark:text-neutral-500"
+            >
+              <Icon name="mdi:eye-outline" size="12" />
+              {{ product.viewCount.toLocaleString() }}
+              {{ product.viewCount === 1 ? 'view' : 'views' }}
+            </p>
             <div class="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <span class="text-2xl font-bold text-brand">{{
                 formatProductPrice(discountedPrice, 'NGN')
@@ -301,7 +493,7 @@
             </BaseButton>
           </div>
 
-          <!-- Share / Copy link -->
+          <!-- Share / Copy link / Ask Dasah -->
           <div class="flex gap-2">
             <BaseButton variant="secondary" size="sm" class="flex-1 touch-manipulation" @click="copyLink">
               <Icon :name="copied ? 'mdi:check' : 'mdi:link-variant'" size="15" class="mr-1" />
@@ -310,6 +502,9 @@
             <BaseButton variant="secondary" size="sm" class="flex-1 touch-manipulation" @click="handleShare">
               <Icon name="mdi:share-variant-outline" size="15" class="mr-1" />
               Share
+            </BaseButton>
+            <BaseButton variant="secondary" size="sm" class="touch-manipulation px-3" title="Ask Dasah about this product" @click="askDasah">
+              <Icon name="mdi:robot-happy-outline" size="16" />
             </BaseButton>
           </div>
 
@@ -358,6 +553,51 @@
               v-html="safeDescription"
             />
           </div>
+
+          <!-- Product details grid -->
+          <div
+            v-if="productDetails.length"
+            class="rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-neutral-800 dark:bg-neutral-800/50"
+          >
+            <p
+              class="mb-3 text-[11px] font-bold uppercase tracking-widest text-gray-400 dark:text-neutral-500"
+            >
+              Details
+            </p>
+            <dl class="grid grid-cols-2 gap-x-4 gap-y-3">
+              <template v-for="attr in productDetails" :key="attr.label">
+                <div>
+                  <dt
+                    class="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-neutral-500"
+                  >
+                    {{ attr.label }}
+                  </dt>
+                  <dd
+                    class="mt-0.5 text-sm font-medium text-gray-800 dark:text-neutral-200"
+                  >
+                    {{ attr.value }}
+                  </dd>
+                </div>
+              </template>
+            </dl>
+            <!-- Tags -->
+            <div v-if="productTags.length" class="mt-3 border-t border-gray-200 pt-3 dark:border-neutral-700">
+              <dt
+                class="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-neutral-500"
+              >
+                Tags
+              </dt>
+              <div class="flex flex-wrap gap-1.5">
+                <span
+                  v-for="tag in productTags"
+                  :key="tag"
+                  class="rounded-full bg-brand/10 px-2.5 py-0.5 text-[11px] font-medium text-brand"
+                >
+                  #{{ tag }}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -395,6 +635,7 @@ import {
 import { notify } from '@kyvg/vue3-notification'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
+import { useDassaPanel } from '~~/layers/ai/app/composables/useDassaPanel'
 
 const route = useRoute()
 const slug = computed(() => route.params.slug as string)
@@ -463,6 +704,64 @@ watch(
     }
   },
   { immediate: true },
+)
+
+// Delivery card
+const podZones = computed<string[]>(() => {
+  const z = product.value?.seller?.pod_zones
+  if (!z) return []
+  return Array.isArray(z) ? z : []
+})
+
+const trustTips = [
+  { icon: 'mdi:shield-check-outline', text: 'Secure checkout — payments are encrypted' },
+  { icon: 'mdi:eye-check-outline', text: 'Inspect item before paying on delivery' },
+  { icon: 'mdi:cash-refund', text: 'Buyer protection on all orders' },
+  { icon: 'mdi:account-check-outline', text: 'Only pay when satisfied' },
+]
+
+// Ask Dasah
+const { openWith: openDassaWith } = useDassaPanel()
+const askDasah = () => {
+  if (!product.value) return
+  openDassaWith(
+    `I'm looking at "${product.value.title}" priced at ${formatProductPrice(discountedPrice.value, 'NGN')}. Can you tell me about it and is it worth buying?`,
+  )
+}
+
+// Seller card — member since
+const sellerMemberSince = computed(() => {
+  const d = product.value?.seller?.created_at
+  if (!d) return ''
+  return new Date(d).toLocaleDateString('en-NG', { month: 'short', year: 'numeric' })
+})
+
+// Product attributes for the details grid
+const CONDITION_LABELS: Record<string, string> = {
+  NEW_WITH_TAGS: 'New with tags',
+  LIKE_NEW: 'Like new',
+  GOOD: 'Good',
+  FAIR: 'Fair',
+  POOR: 'Poor',
+}
+
+const productDetails = computed(() => {
+  if (!product.value) return []
+  const attrs: { label: string; value: string }[] = []
+  if (product.value.condition)
+    attrs.push({ label: 'Condition', value: CONDITION_LABELS[product.value.condition] ?? product.value.condition })
+  if (product.value.isThrift)
+    attrs.push({ label: 'Type', value: 'Pre-loved / Thrift' })
+  const cats = (product.value.category ?? []).map((c: any) => c.category?.name).filter(Boolean)
+  if (cats.length)
+    attrs.push({ label: 'Category', value: cats.join(', ') })
+  if (product.value.soldCount > 0)
+    attrs.push({ label: 'Units sold', value: product.value.soldCount.toLocaleString() })
+  return attrs
+})
+
+const productTags = computed(() =>
+  (product.value?.tags ?? []).map((t: any) => t.tag?.name ?? t.name).filter(Boolean),
 )
 
 // Description — sanitize before v-html to prevent XSS from seller-supplied content

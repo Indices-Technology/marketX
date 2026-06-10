@@ -10,6 +10,7 @@ import { auditQueue } from '~~/server/queues/audit.queue'
 import { notificationQueue } from '~~/server/queues/notification.queue'
 import { emailQueue } from '~~/server/queues/email.queue'
 import { buildNewOrderSellerEmail } from '~~/server/utils/email/emailService'
+import { analyticsService } from './analytics.service'
 
 export interface PlaceOrderInput {
   items: Array<{ variantId: number; quantity: number }>
@@ -211,6 +212,18 @@ export const orderService = {
 
     // Clear cart and fire audit outside the transaction (non-critical)
     await cartRepository.clearCart(userId)
+
+    // Fire-and-forget: sync sales to daily analytics aggregates
+    Promise.all(
+      variantRows.map((variant, i) => {
+        const item = enrichedItems[i]
+        if (!variant || !item) return Promise.resolve()
+        const storeSlug = variant.product.seller.store_slug
+        return analyticsService
+          .trackSale(variant.product.id, storeSlug, item.quantity, item.price, item.affiliateCut)
+          .catch(() => {})
+      }),
+    ).catch(() => {})
 
     auditQueue.enqueue({
       userId,

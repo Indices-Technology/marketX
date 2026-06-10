@@ -199,8 +199,9 @@ import { useAuthStore } from '~~/layers/core/app/stores/auth.store'
 
 import DassaChat from '~~/layers/ai/app/components/dassa/Chat.vue'
 
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useChat } from '~~/layers/profile/app/composables/useChat'
+import { useDassaPanel } from '~~/layers/ai/app/composables/useDassaPanel'
 
 const props = defineProps<{ isOpen: boolean; bannerVisible?: boolean }>()
 const emit = defineEmits(['open', 'close'])
@@ -240,6 +241,15 @@ const formatTime = (date?: string | null) => {
   if (diff < 86400) return `${Math.floor(diff / 3600)}h`
   return `${Math.floor(diff / 86400)}d`
 }
+
+// Switch to AI tab and open panel when a pending product message arrives
+const { pendingMessage } = useDassaPanel()
+watch(pendingMessage, (msg) => {
+  if (msg) {
+    activeTab.value = 'ai'
+    emit('open')
+  }
+})
 
 const open = () => {
   emit('open')

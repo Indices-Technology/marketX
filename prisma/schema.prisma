@@ -206,6 +206,7 @@ model Products {
   updated_at     DateTime            @updatedAt @db.Timestamptz(6)
   soldCount      Int                 @default(0)
   viewCount      Int                 @default(0)
+  cartCount      Int                 @default(0)
   averageRating  Float?
   totalReviews   Int                 @default(0)
   isFeatured     Boolean             @default(false)
@@ -257,12 +258,32 @@ model Products {
   moderationStatus ModerationStatus @default(ACTIVE)
   reportCount      Int              @default(0)
 
+  analytics      ProductAnalytics[]
+
   @@index([sellerId])
   @@index([status, created_at(sort: Desc)])  // feed/shop queries: WHERE status='PUBLISHED' ORDER BY created_at DESC
   @@index([status, isDeal, created_at(sort: Desc)])  // shop-today deal filter
   @@index([status, showInFeed, created_at(sort: Desc)])  // home feed product injection
   @@index([status, isThrift, created_at(sort: Desc)])  // pre-loved feed
   @@index([moderationStatus])
+}
+
+model ProductAnalytics {
+  id            Int      @id @default(autoincrement())
+  productId     Int
+  storeSlug     String
+  date          DateTime @db.Date
+  views         Int      @default(0)
+  impressions   Int      @default(0)
+  orders        Int      @default(0)
+  unitsSold     Int      @default(0)
+  revenue       Float    @default(0)
+  affiliatePaid Float    @default(0)
+
+  product       Products @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, date])
+  @@index([storeSlug, date])
 }
 
 model ProductVariant {

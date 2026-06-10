@@ -471,6 +471,7 @@ import { useAuthStore } from '~~/layers/core/app/stores/auth.store'
 import { useLayoutData } from '~~/layers/core/app/composables/useLayoutData'
 import { useRightSidebarData, type SidebarSeller } from '~~/layers/core/app/composables/useRightSidebarData'
 import { useSocialApi } from '~~/layers/profile/app/services/social.api'
+import { useDassaPanel } from '~~/layers/ai/app/composables/useDassaPanel'
 import { imgThumb } from '~~/layers/core/app/utils/cloudinary'
 import Avatar from '~~/layers/profile/app/components/Avatar.vue'
 import StoreAvatar from '~~/layers/profile/app/components/StoreAvatar.vue'
@@ -494,6 +495,10 @@ const {
 } = useRightSidebarData()
 
 const activeTab = ref<'discover' | 'ai'>('discover')
+
+// Switch to AI tab when a product question is queued from any page
+const { pendingMessage } = useDassaPanel()
+watch(pendingMessage, (msg) => { if (msg) activeTab.value = 'ai' })
 
 // Who to follow: use fetched featuredSellers when available, fall back to layout topSellers immediately
 const topSellers = computed(() => layoutData.value?.topSellers ?? [])

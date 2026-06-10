@@ -1,3 +1,5 @@
+import { analyticsService } from '~~/layers/commerce/server/services/analytics.service'
+
 // POST /api/products/[id]/view — increment view count (no auth required)
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
@@ -11,6 +13,8 @@ export default defineEventHandler(async (event) => {
       where: { id: numId },
       data: { viewCount: { increment: 1 } },
     })
+    // Fire-and-forget: sync to daily analytics aggregate
+    analyticsService.trackView(numId).catch(() => {})
     return { success: true }
   } catch {
     return { success: false }

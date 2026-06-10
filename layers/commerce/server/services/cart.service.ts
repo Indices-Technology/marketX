@@ -54,6 +54,7 @@ export const cartService = {
         id: true,
         stock: true,
         price: true,
+        productId: true,
         product: { select: { price: true, discount: true } },
       },
     })
@@ -89,6 +90,12 @@ export const cartService = {
       .catch((e: Error) =>
         logger.warn('Audit log failed', { action: 'cart', error: e.message }),
       )
+
+    // Fire-and-forget: bump denormalized cart interest counter on the product
+    prisma.products
+      .update({ where: { id: variant.productId }, data: { cartCount: { increment: 1 } } })
+      .catch(() => {})
+
     return item
   },
 

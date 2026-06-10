@@ -55,6 +55,28 @@
         variant(s)
       </p>
 
+      <!-- Analytics stats (seller-only) -->
+      <div
+        v-if="product.viewCount || product.soldCount || product.cartCount"
+        class="mt-1.5 flex items-center gap-2 text-[10px] text-gray-500 dark:text-neutral-400"
+      >
+        <span v-if="product.viewCount" class="flex items-center gap-0.5">
+          <Icon name="mdi:eye-outline" size="10" />
+          {{ fmtCount(product.viewCount) }}
+        </span>
+        <span
+          v-if="product.soldCount"
+          class="flex items-center gap-0.5 text-emerald-600 dark:text-emerald-400"
+        >
+          <Icon name="mdi:shopping-outline" size="10" />
+          {{ fmtCount(product.soldCount) }} sold
+        </span>
+        <span v-if="product.cartCount" class="flex items-center gap-0.5">
+          <Icon name="mdi:cart-outline" size="10" />
+          {{ fmtCount(product.cartCount) }}
+        </span>
+      </div>
+
       <!-- Tags -->
       <div v-if="product.tags?.length" class="mt-1.5 flex flex-wrap gap-1">
         <span
@@ -102,6 +124,12 @@
 <script setup lang="ts">
 import { imgThumb, videoThumb } from '~~/layers/core/app/utils/cloudinary'
 const { formatPrice } = useCurrency()
+
+function fmtCount(n: number) {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`
+  return String(n)
+}
 
 defineProps<{
   product: any
