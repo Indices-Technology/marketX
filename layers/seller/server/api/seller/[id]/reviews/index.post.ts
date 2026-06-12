@@ -92,7 +92,7 @@ export default defineEventHandler(async (event) => {
       actorId: user.id,
       message: `You received a ${body.rating}-star review on ${storeName}.`,
     })
-    prisma.user.findUnique({ where: { id: seller.profileId }, select: { email: true } })
+    prisma.profile.findUnique({ where: { id: seller.profileId }, select: { email: true } })
       .then((su) => {
         if (!su?.email) return
         const { subject, html, text } = buildReviewReceivedEmail(storeName, body.rating, body.title)

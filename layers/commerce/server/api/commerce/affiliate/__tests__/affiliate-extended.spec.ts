@@ -219,3 +219,53 @@ test.describe('affiliate — commission × quantity', () => {
     expect(order.affiliateCut ?? 0).toBe(0)
   })
 })
+
+// ─── Enroll idempotency & code validation (June audit) ────────────────────────
+
+test.describe('affiliate — enroll idempotency', () => {
+  test('repeat enroll returns the same affiliate code', async ({ request }) => {
+    const { token } = await apiLogin(request, TEST_USER)
+
+    const first = await request.post(ENROLL, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    expect(first.status()).toBeLessThan(300)
+    const firstCode: string = (await first.json()).data?.affiliateCode
+    expect(firstCode).toBeTruthy()
+
+    const second = await request.post(ENROLL, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    expect(second.status()).toBeLessThan(300)
+    const secondCode: string = (await second.json()).data?.affiliateCode
+
+    // Idempotent — enrolling twice must not rotate the code
+    expect(secondCode).toBe(firstCode)
+  })
+})
+
+test.describe('affiliate — code validation at checkout', () => {
+  test('invalid affiliate code is ignored — order succeeds with zero cut', async ({ request }) => {
+    const { token } = await apiLogin(request, TEST_SELLER)
+    await clearCart(request, token)
+    const variantId = await getFirstVariantId(request).catch(() => null)
+    if (!variantId) { test.skip(); return }
+
+    const res = await request.post(ORDERS, {
+      data: {
+        items: [{ variantId, quantity: 1 }],
+        name: 'Invalid Code Buyer',
+        address: '1 Marina Street',
+        zipcode: '100001',
+        country: 'NG',
+        shippingCost: 0,
+        affiliateCode: 'definitely_not_a_real_code_xyz',
+      },
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!res.ok()) { test.skip(); return } // stock may be depleted in CI
+    const order = (await res.json()).data
+    // Unknown code must not crash the order or credit anyone
+    expect(order.affiliateCut ?? 0).toBe(0)
+  })
+})

@@ -1,6 +1,7 @@
 // FILE PATH: server/layers/seller/schemas/seller.schema.ts
 
 import { z } from 'zod'
+import { safeHttpUrl } from '~~/shared/utils/safeUrl'
 
 /**
  * Seller Profile Schemas
@@ -62,7 +63,7 @@ export const createSellerProfileSchema = z.object({
     (val) => (typeof val === 'string' ? val.trim() || undefined : val),
     z
       .string()
-      .url('Website must be a valid URL, e.g. https://yourstore.com')
+      .refine(safeHttpUrl, 'Website must be an http(s) URL, e.g. https://yourstore.com')
       .optional(),
   ),
 
@@ -130,7 +131,7 @@ export const updateSellerProfileSchema = z
       (val) => (typeof val === 'string' ? val.trim() || undefined : val),
       z
         .string()
-        .url('Website must be a valid URL, e.g. https://yourstore.com')
+        .refine(safeHttpUrl, 'Website must be an http(s) URL, e.g. https://yourstore.com')
         .optional(),
     ),
 

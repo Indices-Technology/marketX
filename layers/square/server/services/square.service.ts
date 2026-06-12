@@ -93,7 +93,9 @@ export const squareService = {
       status: 'ACTIVE' as const,
       ...(type && { type }),
       ...(city && { city: { contains: city, mode: 'insensitive' as const } }),
-      ...(state && { state: { contains: state, mode: 'insensitive' as const } }),
+      ...(state && {
+        state: { contains: state, mode: 'insensitive' as const },
+      }),
       ...(search && {
         OR: [
           { name: { contains: search, mode: 'insensitive' as const } },
@@ -105,17 +107,22 @@ export const squareService = {
 
     const rows = await prisma.square.findMany({
       where,
-      select: { ...SQUARE_CARD_SELECT, _count: { select: { followers: true } } },
+      select: {
+        ...SQUARE_CARD_SELECT,
+        _count: { select: { followers: true } },
+      },
       orderBy: [{ type: 'asc' }, { memberCount: 'desc' }],
       take: limit + 1,
       skip: offset,
     })
 
     const hasMore = rows.length > limit
-    const squares = (hasMore ? rows.slice(0, limit) : rows).map(({ _count, ...s }) => ({
-      ...s,
-      followerCount: _count.followers,
-    }))
+    const squares = (hasMore ? rows.slice(0, limit) : rows).map(
+      ({ _count, ...s }) => ({
+        ...s,
+        followerCount: _count.followers,
+      }),
+    )
 
     return { squares, hasMore, limit, offset }
   },
@@ -131,7 +138,8 @@ export const squareService = {
       },
     })
 
-    if (!square) throw createError({ statusCode: 404, statusMessage: 'Square not found' })
+    if (!square)
+      throw createError({ statusCode: 404, statusMessage: 'Square not found' })
     if (square.status !== 'ACTIVE')
       throw createError({ statusCode: 404, statusMessage: 'Square not found' })
 
@@ -143,7 +151,9 @@ export const squareService = {
         : null,
       userId
         ? prisma.squareOfficer.findUnique({
-            where: { squareId_profileId: { squareId: square.id, profileId: userId } },
+            where: {
+              squareId_profileId: { squareId: square.id, profileId: userId },
+            },
             select: { role: true },
           })
         : null,
@@ -167,7 +177,10 @@ export const squareService = {
       where: { OR: [{ slug: data.slug }, { name: data.name }] },
     })
     if (exists)
-      throw createError({ statusCode: 409, statusMessage: 'A Square with that name or slug already exists' })
+      throw createError({
+        statusCode: 409,
+        statusMessage: 'A Square with that name or slug already exists',
+      })
 
     const square = await prisma.square.create({
       data: {
@@ -193,7 +206,8 @@ export const squareService = {
 
   async updateSquare(slug: string, data: UpdateSquareInput) {
     const square = await prisma.square.findUnique({ where: { slug } })
-    if (!square) throw createError({ statusCode: 404, statusMessage: 'Square not found' })
+    if (!square)
+      throw createError({ statusCode: 404, statusMessage: 'Square not found' })
 
     const updated = await prisma.square.update({
       where: { slug },
@@ -217,7 +231,9 @@ export const squareService = {
    *  - Cannot join a Square they're already in
    */
   async joinSquare(sellerId: string, squareSlug: string) {
-    const square = await prisma.square.findUnique({ where: { slug: squareSlug } })
+    const square = await prisma.square.findUnique({
+      where: { slug: squareSlug },
+    })
     if (!square || square.status !== 'ACTIVE')
       throw createError({ statusCode: 404, statusMessage: 'Square not found' })
 
@@ -226,7 +242,10 @@ export const squareService = {
       where: { squareId_sellerId: { squareId: square.id, sellerId } },
     })
     if (existing)
-      throw createError({ statusCode: 409, statusMessage: 'Already a member of this Square' })
+      throw createError({
+        statusCode: 409,
+        statusMessage: 'Already a member of this Square',
+      })
 
     const allMemberships = await prisma.squareMembership.findMany({
       where: { sellerId, status: { in: ['ACTIVE', 'PENDING'] } },
@@ -244,7 +263,8 @@ export const squareService = {
       if (square.type === 'GEOGRAPHIC')
         throw createError({
           statusCode: 400,
-          statusMessage: 'You can only join a Geographic Square as your primary Square',
+          statusMessage:
+            'You can only join a Geographic Square as your primary Square',
         })
       if (secondaryCount >= 2)
         throw createError({
@@ -262,7 +282,10 @@ export const squareService = {
       },
     })
 
-    return { membership, square: { id: square.id, name: square.name, slug: square.slug } }
+    return {
+      membership,
+      square: { id: square.id, name: square.name, slug: square.slug },
+    }
   },
 
   /**
@@ -277,8 +300,11 @@ export const squareService = {
     input: MembershipActionInput,
     isPlatformAdmin = false,
   ) {
-    const square = await prisma.square.findUnique({ where: { slug: squareSlug } })
-    if (!square) throw createError({ statusCode: 404, statusMessage: 'Square not found' })
+    const square = await prisma.square.findUnique({
+      where: { slug: squareSlug },
+    })
+    if (!square)
+      throw createError({ statusCode: 404, statusMessage: 'Square not found' })
 
     // Platform admins bypass the officer check
     if (!isPlatformAdmin) {
@@ -290,14 +316,20 @@ export const squareService = {
         },
       })
       if (!officer)
-        throw createError({ statusCode: 403, statusMessage: 'Only a Chairman or Secretary can manage memberships' })
+        throw createError({
+          statusCode: 403,
+          statusMessage: 'Only a Chairman or Secretary can manage memberships',
+        })
     }
 
     const membership = await prisma.squareMembership.findUnique({
       where: { squareId_sellerId: { squareId: square.id, sellerId } },
     })
     if (!membership)
-      throw createError({ statusCode: 404, statusMessage: 'Membership not found' })
+      throw createError({
+        statusCode: 404,
+        statusMessage: 'Membership not found',
+      })
 
     const newStatus =
       input.action === 'APPROVE'
@@ -339,11 +371,15 @@ export const squareService = {
             data: { squareId: square.id },
           })
           await tx.post.updateMany({
-            where: { authorId: (await tx.sellerProfile.findUnique({ where: { id: sellerId }, select: { profileId: true } }))!.profileId },
+            where: {
+              authorId: (await tx.sellerProfile.findUnique({
+                where: { id: sellerId },
+                select: { profileId: true },
+              }))!.profileId,
+            },
             data: { squareId: square.id },
           })
         }
-
       }
 
       return [updated]
@@ -381,7 +417,8 @@ export const squareService = {
     const square = await prisma.square.findUnique({
       where: { slug: squareSlug, status: 'ACTIVE' },
     })
-    if (!square) throw createError({ statusCode: 404, statusMessage: 'Square not found' })
+    if (!square)
+      throw createError({ statusCode: 404, statusMessage: 'Square not found' })
 
     // Idempotent — only increment counter on a new follow
     const existing = await prisma.userSquareFollow.findUnique({
@@ -401,8 +438,11 @@ export const squareService = {
   },
 
   async unfollowSquare(userId: string, squareSlug: string) {
-    const square = await prisma.square.findUnique({ where: { slug: squareSlug } })
-    if (!square) throw createError({ statusCode: 404, statusMessage: 'Square not found' })
+    const square = await prisma.square.findUnique({
+      where: { slug: squareSlug },
+    })
+    if (!square)
+      throw createError({ statusCode: 404, statusMessage: 'Square not found' })
 
     const existing = await prisma.userSquareFollow.findUnique({
       where: { userId_squareId: { userId, squareId: square.id } },
@@ -424,19 +464,35 @@ export const squareService = {
 
   // ── Officers ────────────────────────────────────────────────────────────────
 
-  async addOfficer(callerProfileId: string, squareSlug: string, input: AddOfficerInput) {
-    const square = await prisma.square.findUnique({ where: { slug: squareSlug } })
-    if (!square) throw createError({ statusCode: 404, statusMessage: 'Square not found' })
+  async addOfficer(
+    callerProfileId: string,
+    squareSlug: string,
+    input: AddOfficerInput,
+  ) {
+    const square = await prisma.square.findUnique({
+      where: { slug: squareSlug },
+    })
+    if (!square)
+      throw createError({ statusCode: 404, statusMessage: 'Square not found' })
 
     // Only Chairman can appoint officers
     const caller = await prisma.squareOfficer.findFirst({
-      where: { squareId: square.id, profileId: callerProfileId, role: 'CHAIRMAN' },
+      where: {
+        squareId: square.id,
+        profileId: callerProfileId,
+        role: 'CHAIRMAN',
+      },
     })
     if (!caller)
-      throw createError({ statusCode: 403, statusMessage: 'Only the Chairman can appoint officers' })
+      throw createError({
+        statusCode: 403,
+        statusMessage: 'Only the Chairman can appoint officers',
+      })
 
     const officer = await prisma.squareOfficer.upsert({
-      where: { squareId_profileId: { squareId: square.id, profileId: input.profileId } },
+      where: {
+        squareId_profileId: { squareId: square.id, profileId: input.profileId },
+      },
       create: {
         squareId: square.id,
         profileId: input.profileId,
@@ -455,7 +511,8 @@ export const squareService = {
       where: { slug: squareSlug },
       select: { id: true },
     })
-    if (!square) throw createError({ statusCode: 404, statusMessage: 'Square not found' })
+    if (!square)
+      throw createError({ statusCode: 404, statusMessage: 'Square not found' })
 
     return prisma.squareOfficer.findMany({
       where: { squareId: square.id },
@@ -468,25 +525,48 @@ export const squareService = {
     })
   },
 
-  async removeOfficer(callerProfileId: string, squareSlug: string, targetProfileId: string) {
-    const square = await prisma.square.findUnique({ where: { slug: squareSlug }, select: { id: true } })
-    if (!square) throw createError({ statusCode: 404, statusMessage: 'Square not found' })
+  async removeOfficer(
+    callerProfileId: string,
+    squareSlug: string,
+    targetProfileId: string,
+  ) {
+    const square = await prisma.square.findUnique({
+      where: { slug: squareSlug },
+      select: { id: true },
+    })
+    if (!square)
+      throw createError({ statusCode: 404, statusMessage: 'Square not found' })
 
     const caller = await prisma.squareOfficer.findFirst({
-      where: { squareId: square.id, profileId: callerProfileId, role: 'CHAIRMAN' },
+      where: {
+        squareId: square.id,
+        profileId: callerProfileId,
+        role: 'CHAIRMAN',
+      },
     })
     if (!caller)
-      throw createError({ statusCode: 403, statusMessage: 'Only the Chairman can remove officers' })
+      throw createError({
+        statusCode: 403,
+        statusMessage: 'Only the Chairman can remove officers',
+      })
 
     const target = await prisma.squareOfficer.findUnique({
-      where: { squareId_profileId: { squareId: square.id, profileId: targetProfileId } },
+      where: {
+        squareId_profileId: { squareId: square.id, profileId: targetProfileId },
+      },
     })
-    if (!target) throw createError({ statusCode: 404, statusMessage: 'Officer not found' })
+    if (!target)
+      throw createError({ statusCode: 404, statusMessage: 'Officer not found' })
     if (target.role === 'CHAIRMAN')
-      throw createError({ statusCode: 400, statusMessage: 'Cannot remove the Chairman' })
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Cannot remove the Chairman',
+      })
 
     await prisma.squareOfficer.delete({
-      where: { squareId_profileId: { squareId: square.id, profileId: targetProfileId } },
+      where: {
+        squareId_profileId: { squareId: square.id, profileId: targetProfileId },
+      },
     })
 
     return { removed: true }
@@ -525,8 +605,13 @@ export const squareService = {
       const price = item.variant.price ?? product.price
       const discount = product.discount ?? 0
       // Amount in kobo to match walletService units
-      const amountKobo = Math.round(price * (1 - discount / 100) * item.quantity * 100)
-      sellerAmounts.set(sellerId, (sellerAmounts.get(sellerId) ?? 0) + amountKobo)
+      const amountKobo = Math.round(
+        price * (1 - discount / 100) * item.quantity * 100,
+      )
+      sellerAmounts.set(
+        sellerId,
+        (sellerAmounts.get(sellerId) ?? 0) + amountKobo,
+      )
     }
 
     await Promise.allSettled(
@@ -557,7 +642,11 @@ export const squareService = {
 
     const square = await prisma.square.findUnique({
       where: { id: seller.primarySquareId },
-      select: { id: true, associationCutPercent: true, wallet: { select: { id: true } } },
+      select: {
+        id: true,
+        associationCutPercent: true,
+        wallet: { select: { id: true } },
+      },
     })
     if (!square?.wallet) return null
 

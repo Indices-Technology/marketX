@@ -145,6 +145,9 @@ export const productRepository = {
       productData.socialCaptions = data.socialCaptions
     if (data.showInFeed) productData.showInFeed = true
     if (data.showInReels) productData.showInReels = true
+    if (data.isDeal) productData.isDeal = true
+    if (data.dealEndsAt !== undefined) productData.dealEndsAt = data.dealEndsAt
+    if (data.condition !== undefined) productData.condition = data.condition
 
     if (data.categoryIds?.length) {
       productData.category = {
@@ -370,6 +373,9 @@ export const productRepository = {
       updateData.affiliateCommission = data.affiliateCommission
     if (data.socialCaptions !== undefined)
       updateData.socialCaptions = data.socialCaptions
+    if (data.isDeal !== undefined) updateData.isDeal = data.isDeal
+    if (data.dealEndsAt !== undefined) updateData.dealEndsAt = data.dealEndsAt
+    if (data.condition !== undefined) updateData.condition = data.condition
     if (data.categoryIds !== undefined) {
       updateData.category = {
         deleteMany: {},
@@ -419,6 +425,18 @@ export const productRepository = {
         .map((v) => v.id)
       if (toDelete.length) {
         await prisma.productVariant.deleteMany({ where: { id: { in: toDelete } } })
+      }
+
+      // Protected variants (in an order/cart) can't be deleted — zero their stock
+      // so a size the seller removed can no longer be purchased
+      const toZero = currentVariants
+        .filter((v) => protectedIds.has(v.id) && !submittedSizes.has(v.size ?? ''))
+        .map((v) => v.id)
+      if (toZero.length) {
+        await prisma.productVariant.updateMany({
+          where: { id: { in: toZero } },
+          data: { stock: 0 },
+        })
       }
 
       // Upsert each submitted variant: update if the size already exists, create if new

@@ -95,7 +95,7 @@ export default defineEventHandler(async (event) => {
           orderId: id,
           message: buyerMsg,
         })
-        prisma.user.findUnique({ where: { id: order.userId }, select: { email: true } })
+        prisma.profile.findUnique({ where: { id: order.userId }, select: { email: true } })
           .then((buyer) => {
             if (!buyer?.email) return
             const { subject, html, text } = buildOrderStatusEmail(id, body.status, {

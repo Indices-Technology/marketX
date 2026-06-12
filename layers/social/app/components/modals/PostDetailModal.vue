@@ -50,17 +50,13 @@
             class="relative hidden h-full shrink-0 items-center justify-center bg-black sm:flex sm:w-[56%]"
           >
             <!-- Media item -->
-            <video
+            <VideoPlayer
               v-if="currentMedia?.type === 'VIDEO'"
-              ref="videoRef"
               :key="currentMedia.url"
               :src="currentMedia.url"
               :poster="currentMedia.thumbnailUrl"
-              class="h-full w-full object-contain"
-              controls
-              autoplay
-              muted
-              playsinline
+              :autoplay="true"
+              class="h-full w-full"
             />
             <img
               v-else
@@ -152,16 +148,13 @@
               v-if="hasMedia && currentMedia?.url"
               class="sticky top-0 z-0 h-[44vh] shrink-0 bg-black sm:hidden"
             >
-              <video
+              <VideoPlayer
                 v-if="currentMedia.type === 'VIDEO'"
                 :key="currentMedia.url + '-mob-video'"
                 :src="currentMedia.url"
                 :poster="currentMedia.thumbnailUrl"
-                class="h-full w-full object-contain"
-                controls
-                autoplay
-                muted
-                playsinline
+                :autoplay="true"
+                class="h-full w-full"
               />
               <img
                 v-else-if="currentMedia?.url"
@@ -269,6 +262,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue'
+import VideoPlayer from '~~/layers/core/app/components/VideoPlayer.vue'
 import PostDetails from '../PostDetails.vue'
 import type { IFeedItem } from '~~/layers/feed/app/types/feed.types'
 

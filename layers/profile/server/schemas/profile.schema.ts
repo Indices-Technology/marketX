@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { safeHttpUrl } from '~~/shared/utils/safeUrl'
 
 // Update user profile
 export const updateProfileSchema = z.object({
@@ -24,7 +25,7 @@ export const updateProfileSchema = z.object({
           'linkedin',
           'facebook',
         ]),
-        url: z.string().url('Invalid URL'),
+        url: z.string().refine(safeHttpUrl, 'Link must be an http(s) URL'),
       }),
     )
     .optional(),

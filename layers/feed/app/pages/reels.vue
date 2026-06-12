@@ -92,10 +92,10 @@
           />
         </div>
 
-        <!-- Infinite Scroll Sentinel -->
+        <!-- Infinite Scroll Sentinel — NOT a snap target intentionally -->
         <div
           ref="sentinelRef"
-          class="flex h-20 w-full snap-start items-center justify-center bg-transparent"
+          class="flex h-20 w-full items-center justify-center bg-transparent"
         >
           <Icon
             v-if="isFetching && hasMore"
@@ -159,18 +159,28 @@ const fetchReels = async (reset = false) => {
     const targetOffset = reset ? 0 : offset.value
     const res = await fetchReelsApi(LIMIT, targetOffset)
 
-    // Adapt to whatever your API specifically returns
     const incoming: IFeedItem[] = res?.data ?? res?.items ?? []
 
     if (reset) {
       reels.value = incoming
       offset.value = LIMIT
     } else {
-      // Deduplicate to be safe
       const existingIds = new Set(reels.value.map((r) => r.id))
       const newItems = incoming.filter((r) => !existingIds.has(r.id))
+      const prevCount = reels.value.length
       reels.value.push(...newItems)
       offset.value += newItems.length
+
+      // Anchor to the first new slide so snap-scroll doesn't chase the sentinel
+      if (newItems.length > 0 && containerRef.value) {
+        await nextTick()
+        const slides =
+          containerRef.value.querySelectorAll<HTMLElement>('.reel-slide')
+        const firstNew = slides[prevCount]
+        if (firstNew) {
+          containerRef.value.scrollTop = firstNew.offsetTop
+        }
+      }
     }
 
     hasMore.value = res?.meta?.hasMore ?? incoming.length === LIMIT
@@ -194,46 +204,60 @@ const openComments = (reel: IFeedItem) => {
 }
 
 // ─── OBSERVERS (Auto-play & Infinite Scroll) ──────────────────────────
+// Two separate observers: slides use a 0.6 threshold for play/pause;
+// sentinel uses rootMargin so it fires while the user is still on the last
+// slide — items pre-load before the sentinel is ever in view.
 let feedObserver: IntersectionObserver | null = null
+let sentinelObserver: IntersectionObserver | null = null
 
 const setupObservers = () => {
-  if (feedObserver) feedObserver.disconnect()
+  feedObserver?.disconnect()
+  sentinelObserver?.disconnect()
   if (!containerRef.value) return
 
+  // Slide observer — drives active index / auto-play
   feedObserver = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
-          // 1. Infinite Scroll: If Sentinel comes into view
-          if (entry.target === sentinelRef.value) {
-            if (hasMore.value && !isFetching.value) {
-              fetchReels()
-            }
-          }
-          // 2. Active Reel: If a video slide comes into view (60% visible)
-          else {
-            const idx = entry.target.getAttribute('data-index')
-            if (idx !== null) {
-              activeIndex.value = parseInt(idx, 10)
-            }
+          const idx = entry.target.getAttribute('data-index')
+          if (idx !== null) {
+            activeIndex.value = parseInt(idx, 10)
           }
         }
       })
     },
     {
-      root: containerRef.value, // Must be the scroll container!
-      threshold: 0.6, // 60% of the video must be visible to trigger auto-play
+      root: containerRef.value,
+      threshold: 0.6,
     },
   )
 
-  // Observe Sentinel
-  if (sentinelRef.value) {
-    feedObserver.observe(sentinelRef.value)
-  }
+  // Sentinel observer — triggers when the last slide is active (100% rootMargin
+  // extends detection one full viewport below, so it fires from the last slide)
+  sentinelObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting && hasMore.value && !isFetching.value) {
+          fetchReels()
+        }
+      })
+    },
+    {
+      root: containerRef.value,
+      rootMargin: '0px 0px 100% 0px',
+      threshold: 0,
+    },
+  )
 
-  // Observe Video Slides
+  // Observe slides
   const slides = containerRef.value.querySelectorAll('.reel-slide')
   slides.forEach((slide) => feedObserver?.observe(slide))
+
+  // Observe sentinel
+  if (sentinelRef.value) {
+    sentinelObserver.observe(sentinelRef.value)
+  }
 }
 
 // ─── LIFECYCLE ────────────────────────────────────────────────────────
@@ -253,7 +277,8 @@ watch(
 )
 
 onUnmounted(() => {
-  if (feedObserver) feedObserver.disconnect()
+  feedObserver?.disconnect()
+  sentinelObserver?.disconnect()
 })
 </script>
 

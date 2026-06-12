@@ -65,6 +65,7 @@ model Profile {
   squareMembershipsVerified SquareMembership[] @relation("SquareMembershipVerifier")
   squarePayoutRequests   SquarePayout[]       @relation("SquarePayoutRequests")
   squareAnnouncements    SquareAnnouncement[] @relation("AnnouncementAuthor")
+  squareRequests         SquareRequest[]      @relation("SquareRequestBuyer")
   sellerReviews          SellerReview[]       @relation("SellerReviewAuthor")
 
   // ── Moderation ────────────────────────────────────────────────────────────
@@ -126,6 +127,7 @@ model SellerProfile {
   /// Denormalised for fast feed queries — mirrors the SquareMembership where isPrimary = true
   primarySquareId   String?           @db.Uuid
   squareMemberships SquareMembership[] @relation("SellerSquareMemberships")
+  squareOffers      SquareOffer[]      @relation("SquareOfferSeller")
   media                 Media[]                @relation("MediaSeller")
   products              Products[]             @relation("SellerProducts")
   profile               Profile                @relation("SellerProfile", fields: [profileId], references: [id], onDelete: Cascade)
@@ -251,6 +253,7 @@ model Products {
   variants       ProductVariant[]
   offers         ProductOffer[]
   reviews        Review[]            @relation("ProductReviews")
+  squareOffers   SquareOffer[]
   seller         SellerProfile       @relation("SellerProducts", fields: [sellerId], references: [id], onDelete: Cascade)
   shares         Share[]             @relation("ProductShare")
   stories        Story[]
@@ -985,6 +988,7 @@ model Square {
   posts         Post[]               @relation("SquarePosts")
   products      Products[]           @relation("SquareProducts")
   announcements SquareAnnouncement[]
+  requests      SquareRequest[]
 
   @@index([type, status])
   @@index([city, state])
@@ -1118,6 +1122,72 @@ model SquareAnnouncement {
   @@index([squareId, isPinned])
 }
 
+/// A buyer's structured "looking for" request posted into a Square. Sellers in
+/// the Square respond with SquareOffers (an existing product). The buyer's
+/// contact is never exposed — completion happens on-platform via checkout.
+model SquareRequest {
+  id               String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  squareId         String              @db.Uuid
+  buyerId          String              @db.Uuid
+  categoryId       Int?
+  title            String              // ≤80, validated in Zod; may be masked by content guard
+  budgetMin        Int?                // kobo
+  budgetMax        Int?                // kobo
+  condition        String?             // NEW_WITH_TAGS | LIKE_NEW | GOOD | FAIR | POOR | null = any
+  sizeSpec         String?
+  deliverTo        String?             // state / area for shipping feasibility
+  note             String?             // ≤300, content-guard masked
+  referencePhotoUrl String?
+  visibility       String              @default("square") // square | followed | public
+  respondersOnlyVerified Boolean        @default(false)
+  isAnonymous      Boolean             @default(false)
+  status           SquareRequestStatus @default(OPEN)
+  expiresAt        DateTime            @db.Timestamptz(6)
+  created_at       DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime            @updatedAt @db.Timestamptz(6)
+
+  square Square        @relation(fields: [squareId], references: [id], onDelete: Cascade)
+  buyer  Profile       @relation("SquareRequestBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
+  offers SquareOffer[]
+
+  @@index([squareId, status])
+  @@index([buyerId])
+  @@index([expiresAt])
+}
+
+/// A seller's response to a SquareRequest — always an existing product, never
+/// free contact. The buyer accepts one, which routes them to on-platform checkout.
+model SquareOffer {
+  id         String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  requestId  String            @db.Uuid
+  sellerId   String            @db.Uuid
+  productId  Int
+  variantId  Int?
+  message    String?           // ≤200, content-guard masked
+  status     SquareOfferStatus @default(PENDING)
+  created_at DateTime          @default(now()) @db.Timestamptz(6)
+
+  request SquareRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  seller  SellerProfile @relation("SquareOfferSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+  product Products      @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([requestId, sellerId, productId]) // one offer per product per seller per request
+  @@index([requestId])
+}
+
+enum SquareRequestStatus {
+  OPEN
+  FULFILLED
+  EXPIRED
+  CLOSED
+}
+
+enum SquareOfferStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
 enum SquareType {
   GEOGRAPHIC // anchored to a real physical market e.g. Computer Village
   CATEGORY   // online-first / dispersed sellers e.g. Ankara & Fabrics
@@ -1199,6 +1269,8 @@ enum NotificationType {
   SQUARE_ANNOUNCEMENT
   SQUARE_MEMBERSHIP_APPROVED
   SQUARE_MEMBERSHIP_REJECTED
+  SQUARE_REQUEST
+  SQUARE_OFFER
 }
 
 enum VisibilityType {

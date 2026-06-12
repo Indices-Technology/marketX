@@ -47,7 +47,7 @@ export const chatService = {
       conversationId: conversation.id,
       message: 'Started a new conversation with you.',
     })
-    prisma.user.findUnique({ where: { id: targetId }, select: { email: true } })
+    prisma.profile.findUnique({ where: { id: targetId }, select: { email: true } })
       .then((recipient) => {
         if (!recipient?.email) return
         const { subject, html, text } = buildNewConversationEmail('Someone')
@@ -106,7 +106,7 @@ export const chatService = {
         conversationId: conversation.id,
         message: `A customer started a conversation with ${store.store_name || 'your store'}.`,
       })
-      const storeOwner = await prisma.user.findUnique({
+      const storeOwner = await prisma.profile.findUnique({
         where: { id: store.profileId },
         select: { email: true },
       })

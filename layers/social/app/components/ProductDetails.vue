@@ -8,16 +8,13 @@
         <div
           class="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-100 via-white to-gray-50 px-3 py-3 dark:from-neutral-950 dark:via-neutral-900 dark:to-neutral-900"
         >
-          <video
+          <VideoPlayer
             v-if="currentMedia?.normalizedType === 'VIDEO'"
             :key="`${currentMedia.url}-video`"
             :src="currentMedia.url"
             :poster="currentMedia.thumbnailUrl"
-            class="max-h-full w-full max-w-full rounded-2xl object-contain"
-            controls
-            autoplay
-            playsinline
-            muted
+            :autoplay="true"
+            class="max-h-full w-full max-w-full rounded-2xl overflow-hidden"
           />
           <img
             v-else
@@ -310,6 +307,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import VideoPlayer from '~~/layers/core/app/components/VideoPlayer.vue'
 import { useCart } from '~~/layers/commerce/app/composables/useCart'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import { notify } from '@kyvg/vue3-notification'

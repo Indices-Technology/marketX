@@ -47,13 +47,11 @@
                   @click="currentItem?.type !== 'VIDEO' && (isZoomed = true)"
                 >
                   <!-- Video player -->
-                  <video
+                  <VideoPlayer
                     v-if="currentItem?.type === 'VIDEO'"
                     :src="currentItem.url"
-                    class="h-full w-full object-contain"
-                    controls
-                    playsinline
                     preload="metadata"
+                    class="h-full w-full"
                   />
                   <!-- Image -->
                   <img
@@ -663,13 +661,12 @@
         </div>
 
         <!-- Media: video or image -->
-        <video
+        <VideoPlayer
           v-if="currentItem?.type === 'VIDEO'"
           :src="currentItem.url"
-          class="max-h-[90vh] max-w-[92vw] object-contain drop-shadow-2xl"
-          controls
-          autoplay
-          playsinline
+          :autoplay="true"
+          class="max-h-[90vh] max-w-[92vw] drop-shadow-2xl"
+          style="aspect-ratio: 9/16"
         />
         <img
           v-else
@@ -739,6 +736,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import VideoPlayer from '~~/layers/core/app/components/VideoPlayer.vue'
 import DOMPurify from 'dompurify'
 import type {
   IProduct,

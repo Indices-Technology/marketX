@@ -1,14 +1,23 @@
 <template>
   <HomeLayout :narrow-feed="false" :hide-right-sidebar="true">
     <!-- Loading skeleton -->
-    <div v-if="pending" class="max-w-5xl animate-pulse px-3 py-4 sm:px-6 sm:py-6">
+    <div
+      v-if="pending || status === 'idle'"
+      class="max-w-5xl animate-pulse px-3 py-4 sm:px-6 sm:py-6"
+    >
       <!-- Mobile: stacked; Desktop: 2-col -->
       <div class="flex flex-col gap-8 lg:flex-row">
         <!-- Image gallery -->
         <div class="flex flex-col gap-2 lg:w-[480px] lg:shrink-0">
-          <div class="aspect-square w-full rounded-2xl bg-gray-100 dark:bg-neutral-800" />
+          <div
+            class="aspect-square w-full rounded-2xl bg-gray-100 dark:bg-neutral-800"
+          />
           <div class="flex gap-2">
-            <div v-for="i in 4" :key="i" class="h-16 w-16 rounded-lg bg-gray-100 dark:bg-neutral-800" />
+            <div
+              v-for="i in 4"
+              :key="i"
+              class="h-16 w-16 rounded-lg bg-gray-100 dark:bg-neutral-800"
+            />
           </div>
         </div>
         <!-- Details -->
@@ -22,16 +31,18 @@
             <div class="h-4 w-4/6 rounded bg-gray-100 dark:bg-neutral-800" />
           </div>
           <div class="flex gap-3 pt-2">
-            <div class="h-12 flex-1 rounded-xl bg-gray-100 dark:bg-neutral-800" />
+            <div
+              class="h-12 flex-1 rounded-xl bg-gray-100 dark:bg-neutral-800"
+            />
             <div class="h-12 w-12 rounded-xl bg-gray-100 dark:bg-neutral-800" />
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Not found (status=error on 404, or success with null data) -->
+    <!-- Not found — only after fetch has actually completed -->
     <div
-      v-else-if="!pending && !product"
+      v-else-if="status !== 'idle' && !pending && !product"
       class="flex min-h-[60vh] flex-col items-center justify-center gap-4 text-center"
     >
       <Icon
@@ -73,13 +84,11 @@
                 : undefined
             "
           >
-            <video
+            <VideoPlayer
               v-if="mediaItems[currentIndex]?.type === 'VIDEO'"
-              :src="videoFeedUrl(mediaItems[currentIndex]!.url)"
-              class="h-full w-full object-contain"
-              controls
-              preload="metadata"
-              playsinline
+              :src="mediaItems[currentIndex]!.url"
+              :poster="videoThumb(mediaItems[currentIndex]!.url)"
+              class="h-full w-full"
             />
             <img
               v-else
@@ -195,7 +204,9 @@
                     class="mt-0.5 text-[11px] text-gray-500 dark:text-neutral-400"
                   >
                     {{ podZones.slice(0, 4).join(', ')
-                    }}{{ podZones.length > 4 ? ` +${podZones.length - 4} more` : '' }}
+                    }}{{
+                      podZones.length > 4 ? ` +${podZones.length - 4} more` : ''
+                    }}
                   </p>
                   <p
                     v-if="product.seller.pod_delivery_days"
@@ -243,6 +254,48 @@
                   </div>
                 </div>
               </template>
+
+              <!-- Shipping cost row -->
+              <div class="flex items-center gap-2.5">
+                <div
+                  class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gray-100 dark:bg-neutral-700"
+                >
+                  <Icon
+                    name="mdi:package-variant-closed"
+                    size="15"
+                    class="text-gray-500 dark:text-neutral-400"
+                  />
+                </div>
+                <div>
+                  <p
+                    class="text-sm font-semibold text-gray-800 dark:text-neutral-200"
+                  >
+                    Shipping calculated at checkout
+                  </p>
+                  <p class="text-[11px] text-gray-500 dark:text-neutral-400">
+                    Based on your delivery address
+                  </p>
+                </div>
+              </div>
+
+              <!-- No POD note -->
+              <div
+                v-if="!product.seller?.pod_enabled"
+                class="flex items-center gap-2.5"
+              >
+                <div
+                  class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gray-100 dark:bg-neutral-700"
+                >
+                  <Icon
+                    name="mdi:truck-remove-outline"
+                    size="15"
+                    class="text-gray-400 dark:text-neutral-500"
+                  />
+                </div>
+                <p class="text-sm text-gray-500 dark:text-neutral-400">
+                  Pay on Delivery not available
+                </p>
+              </div>
 
               <div class="border-t border-gray-200 dark:border-neutral-700" />
 
@@ -329,11 +382,17 @@
                   </span>
                   <!-- Location -->
                   <span
-                    v-if="product.seller.locationLabel || product.seller.store_location"
+                    v-if="
+                      product.seller.locationLabel ||
+                      product.seller.store_location
+                    "
                     class="flex items-center gap-0.5"
                   >
                     <Icon name="mdi:map-marker-outline" size="11" />
-                    {{ product.seller.locationLabel || product.seller.store_location }}
+                    {{
+                      product.seller.locationLabel ||
+                      product.seller.store_location
+                    }}
                   </span>
                   <!-- Member since -->
                   <span class="flex items-center gap-0.5">
@@ -485,25 +544,54 @@
               variant="primary"
               class="flex-1 touch-manipulation py-3.5"
               :loading="addingToCart"
-              :disabled="addingToCart || !selectedVariantId || selectedVariant?.stock === 0"
+              :disabled="
+                addingToCart ||
+                !selectedVariantId ||
+                selectedVariant?.stock === 0
+              "
               @click="handleAddToCart"
             >
-              <Icon v-if="!addingToCart" name="mdi:cart-plus" size="16" class="mr-1" />
+              <Icon
+                v-if="!addingToCart"
+                name="mdi:cart-plus"
+                size="16"
+                class="mr-1"
+              />
               {{ addingToCart ? 'Adding…' : 'Add to Cart' }}
             </BaseButton>
           </div>
 
           <!-- Share / Copy link / Ask Dasah -->
           <div class="flex gap-2">
-            <BaseButton variant="secondary" size="sm" class="flex-1 touch-manipulation" @click="copyLink">
-              <Icon :name="copied ? 'mdi:check' : 'mdi:link-variant'" size="15" class="mr-1" />
+            <BaseButton
+              variant="secondary"
+              size="sm"
+              class="flex-1 touch-manipulation"
+              @click="copyLink"
+            >
+              <Icon
+                :name="copied ? 'mdi:check' : 'mdi:link-variant'"
+                size="15"
+                class="mr-1"
+              />
               {{ copied ? 'Copied!' : 'Copy link' }}
             </BaseButton>
-            <BaseButton variant="secondary" size="sm" class="flex-1 touch-manipulation" @click="handleShare">
+            <BaseButton
+              variant="secondary"
+              size="sm"
+              class="flex-1 touch-manipulation"
+              @click="handleShare"
+            >
               <Icon name="mdi:share-variant-outline" size="15" class="mr-1" />
               Share
             </BaseButton>
-            <BaseButton variant="secondary" size="sm" class="touch-manipulation px-3" title="Ask Dasah about this product" @click="askDasah">
+            <BaseButton
+              variant="secondary"
+              size="sm"
+              class="touch-manipulation px-3"
+              title="Ask Dasah about this product"
+              @click="askDasah"
+            >
               <Icon name="mdi:robot-happy-outline" size="16" />
             </BaseButton>
           </div>
@@ -530,8 +618,17 @@
               >
                 {{ affiliateUrl }}
               </span>
-              <BaseButton variant="primary" size="xs" class="shrink-0" @click="copyAffiliateLink">
-                <Icon :name="copiedAffiliate ? 'mdi:check' : 'mdi:content-copy'" size="13" class="mr-1" />
+              <BaseButton
+                variant="primary"
+                size="xs"
+                class="shrink-0"
+                @click="copyAffiliateLink"
+              >
+                <Icon
+                  :name="copiedAffiliate ? 'mdi:check' : 'mdi:content-copy'"
+                  size="13"
+                  class="mr-1"
+                />
                 {{ copiedAffiliate ? 'Copied!' : 'Copy' }}
               </BaseButton>
             </div>
@@ -581,7 +678,10 @@
               </template>
             </dl>
             <!-- Tags -->
-            <div v-if="productTags.length" class="mt-3 border-t border-gray-200 pt-3 dark:border-neutral-700">
+            <div
+              v-if="productTags.length"
+              class="mt-3 border-t border-gray-200 pt-3 dark:border-neutral-700"
+            >
               <dt
                 class="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-neutral-500"
               >
@@ -613,56 +713,61 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { useSeo } from '~~/layers/core/app/composables/useSeo'
-import { useViewTracker } from '~~/layers/core/app/composables/useViewTracker'
-import { computed, onMounted, ref, watch } from 'vue'
 import DOMPurify from 'dompurify'
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
+import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
+import VideoPlayer from '~~/layers/core/app/components/VideoPlayer.vue'
 import ProductReviews from '~~/layers/commerce/app/components/ProductReviews.vue'
+import { useProductApi } from '~~/layers/commerce/app/services/product.api'
 import { useCart } from '~~/layers/commerce/app/composables/useCart'
 import { useAffiliate } from '~~/layers/commerce/app/composables/useAffiliate'
-import { useProductApi } from '~~/layers/commerce/app/services/product.api'
 import { formatProductPrice } from '~~/shared/utils/currency'
 import {
   videoThumb,
-  videoFeedUrl,
   imgDetail,
   imgThumb,
   imgAvatar,
   imgLqip,
 } from '~~/layers/core/app/utils/cloudinary'
-import { notify } from '@kyvg/vue3-notification'
+import { useSeo } from '~~/layers/core/app/composables/useSeo'
+import { useViewTracker } from '~~/layers/core/app/composables/useViewTracker'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
-import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 import { useDassaPanel } from '~~/layers/ai/app/composables/useDassaPanel'
+import { useShareModal } from '~~/layers/social/app/composables/useShareModal'
+import { notify } from '@kyvg/vue3-notification'
+import type { Category } from '~~/shared/types/category'
+import type { Tag } from '~~/shared/types/tag'
 
+// ── Route ────────────────────────────────────────────────────────────────────
 const route = useRoute()
 const slug = computed(() => route.params.slug as string)
+
+// ── Stores / composables ─────────────────────────────────────────────────────
+const profileStore = useProfileStore()
 const { captureAffiliateRef, affiliateCode, isEnrolled, fetchAffiliateStatus } =
   useAffiliate()
-const profileStore = useProfileStore()
+const { openWith: openDassaWith } = useDassaPanel()
+const { openShare } = useShareModal()
+const { setProductPage } = useSeo()
+const { trackProduct } = useViewTracker()
 
-// Capture ?ref= from URL on every product page load (30-day TTL)
 onMounted(() => {
   captureAffiliateRef()
-  // Only fetch affiliate status when logged in — the API returns 401 for guests
-  // and BaseApiClient.handleError would redirect to /user-login before the .catch fires
-  if (profileStore.isLoggedIn) {
-    fetchAffiliateStatus().catch(() => {})
-  }
+  // 401 for guests — only fetch when logged in
+  if (profileStore.isLoggedIn) fetchAffiliateStatus().catch(() => {})
 })
 
-// Fetch product by slug
-const { data, pending } = await useLazyAsyncData(
+// ── Data fetch ───────────────────────────────────────────────────────────────
+const { data, pending, status } = await useLazyAsyncData(
   `product-${slug.value}`,
   () => useProductApi().getProductBySlug(slug.value),
   { server: false },
 )
-
 const product = computed(() => data.value?.data ?? null)
 
-// Gallery
+// ── Gallery ──────────────────────────────────────────────────────────────────
 const currentIndex = ref(0)
 const mediaItems = computed(() =>
   (product.value?.media ?? []).filter(
@@ -670,8 +775,6 @@ const mediaItems = computed(() =>
   ),
 )
 
-// Reset gallery index when product changes + track view once loaded
-const { trackProduct } = useViewTracker()
 watch(
   () => product.value?.id,
   (id) => {
@@ -680,7 +783,7 @@ watch(
   },
 )
 
-// Variants
+// ── Variants ─────────────────────────────────────────────────────────────────
 const selectedVariantId = ref<number | null>(null)
 const selectedVariant = computed(
   () =>
@@ -694,7 +797,7 @@ const discountedPrice = computed(() => {
   return disc > 0 ? Math.round(base * (1 - disc / 100)) : base
 })
 
-// Auto-select first available variant
+// Auto-select first available variant when product loads
 watch(
   product,
   (p) => {
@@ -706,37 +809,36 @@ watch(
   { immediate: true },
 )
 
-// Delivery card
+// ── Delivery card ────────────────────────────────────────────────────────────
 const podZones = computed<string[]>(() => {
   const z = product.value?.seller?.pod_zones
-  if (!z) return []
   return Array.isArray(z) ? z : []
 })
 
 const trustTips = [
-  { icon: 'mdi:shield-check-outline', text: 'Secure checkout — payments are encrypted' },
-  { icon: 'mdi:eye-check-outline', text: 'Inspect item before paying on delivery' },
+  {
+    icon: 'mdi:shield-check-outline',
+    text: 'Secure checkout — payments are encrypted',
+  },
+  {
+    icon: 'mdi:eye-check-outline',
+    text: 'Inspect item before paying on delivery',
+  },
   { icon: 'mdi:cash-refund', text: 'Buyer protection on all orders' },
   { icon: 'mdi:account-check-outline', text: 'Only pay when satisfied' },
 ]
 
-// Ask Dasah
-const { openWith: openDassaWith } = useDassaPanel()
-const askDasah = () => {
-  if (!product.value) return
-  openDassaWith(
-    `I'm looking at "${product.value.title}" priced at ${formatProductPrice(discountedPrice.value, 'NGN')}. Can you tell me about it and is it worth buying?`,
-  )
-}
-
-// Seller card — member since
+// ── Seller ───────────────────────────────────────────────────────────────────
 const sellerMemberSince = computed(() => {
   const d = product.value?.seller?.created_at
   if (!d) return ''
-  return new Date(d).toLocaleDateString('en-NG', { month: 'short', year: 'numeric' })
+  return new Date(d).toLocaleDateString('en-NG', {
+    month: 'short',
+    year: 'numeric',
+  })
 })
 
-// Product attributes for the details grid
+// ── Product details grid ─────────────────────────────────────────────────────
 const CONDITION_LABELS: Record<string, string> = {
   NEW_WITH_TAGS: 'New with tags',
   LIKE_NEW: 'Like new',
@@ -749,28 +851,40 @@ const productDetails = computed(() => {
   if (!product.value) return []
   const attrs: { label: string; value: string }[] = []
   if (product.value.condition)
-    attrs.push({ label: 'Condition', value: CONDITION_LABELS[product.value.condition] ?? product.value.condition })
+    attrs.push({
+      label: 'Condition',
+      value:
+        CONDITION_LABELS[product.value.condition] ?? product.value.condition,
+    })
   if (product.value.isThrift)
     attrs.push({ label: 'Type', value: 'Pre-loved / Thrift' })
-  const cats = (product.value.category ?? []).map((c: any) => c.category?.name).filter(Boolean)
-  if (cats.length)
-    attrs.push({ label: 'Category', value: cats.join(', ') })
+  const cats = (product.value.category ?? [])
+    .map((c: { category: Category | null }) => c.category?.name)
+    .filter(Boolean)
+  if (cats.length) attrs.push({ label: 'Category', value: cats.join(', ') })
   if (product.value.soldCount > 0)
-    attrs.push({ label: 'Units sold', value: product.value.soldCount.toLocaleString() })
+    attrs.push({
+      label: 'Units sold',
+      value: product.value.soldCount.toLocaleString(),
+    })
   return attrs
 })
 
 const productTags = computed(() =>
-  (product.value?.tags ?? []).map((t: any) => t.tag?.name ?? t.name).filter(Boolean),
+  (product.value?.tags ?? [])
+    .map((t: { tag: Tag | null }) => t.tag?.name)
+    .filter(Boolean),
 )
 
-// Description — sanitize before v-html to prevent XSS from seller-supplied content
+// ── Description ──────────────────────────────────────────────────────────────
+// Raw on SSR (no script execution risk in static HTML), sanitized on client.
 const safeDescription = computed(() => {
-  if (!product.value?.description || !import.meta.client) return ''
+  if (!product.value?.description) return ''
+  if (!import.meta.client) return product.value.description
   return DOMPurify.sanitize(product.value.description)
 })
 
-// Cart
+// ── Cart ─────────────────────────────────────────────────────────────────────
 const qty = ref(1)
 const addingToCart = ref(false)
 const { addToCart } = useCart()
@@ -786,7 +900,7 @@ const handleAddToCart = async () => {
   }
 }
 
-// Share
+// ── Share ────────────────────────────────────────────────────────────────────
 const copied = ref(false)
 const copiedAffiliate = ref(false)
 
@@ -796,17 +910,14 @@ const baseProductUrl = computed(() =>
     : `/product/${slug.value}`,
 )
 
-// Plain URL for non-affiliate sharing or SEO
-const productUrl = baseProductUrl
-
-// Affiliate link — only built when user is enrolled
-const affiliateUrl = computed(() => {
-  if (!isEnrolled.value || !affiliateCode.value) return null
-  return `${baseProductUrl.value}?ref=${affiliateCode.value}`
-})
+const affiliateUrl = computed(() =>
+  isEnrolled.value && affiliateCode.value
+    ? `${baseProductUrl.value}?ref=${affiliateCode.value}`
+    : null,
+)
 
 const copyLink = async () => {
-  await navigator.clipboard.writeText(productUrl.value).catch(() => {})
+  await navigator.clipboard.writeText(baseProductUrl.value).catch(() => {})
   copied.value = true
   setTimeout(() => {
     copied.value = false
@@ -822,18 +933,19 @@ const copyAffiliateLink = async () => {
   }, 2000)
 }
 
-const handleShare = async () => {
-  if (navigator.share) {
-    await navigator
-      .share({ title: product.value?.title, url: productUrl.value })
-      .catch(() => {})
-  } else {
-    await copyLink()
-  }
+// Routes through HomeLayout's ShareModal for consistent UX
+const handleShare = () =>
+  openShare(baseProductUrl.value, product.value?.title ?? '')
+
+// ── Ask Dasah ────────────────────────────────────────────────────────────────
+const askDasah = () => {
+  if (!product.value) return
+  openDassaWith(
+    `I'm looking at "${product.value.title}" priced at ${formatProductPrice(discountedPrice.value, 'NGN')}. Can you tell me about it and is it worth buying?`,
+  )
 }
 
-// SEO — setProductPage handles all meta via useSeoMeta; no raw useHead needed
-const { setProductPage } = useSeo()
+// ── SEO ──────────────────────────────────────────────────────────────────────
 watch(
   product,
   (p) => {

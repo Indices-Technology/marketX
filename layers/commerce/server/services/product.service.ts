@@ -83,7 +83,7 @@ export const productService = {
     }
 
     // Notify seller's followers of the new listing — fire-and-forget
-    if (validated.status === 'ACTIVE') {
+    if (validated.status === 'PUBLISHED') {
       prisma.follow
         .findMany({
           where: { followingId: sellerId, followingType: 'SELLER' },
@@ -405,7 +405,7 @@ export const productService = {
         productId,
         message: `You received a ${data.rating}-star review on "${product?.title}".`,
       })
-      const sellerUser = await prisma.user.findUnique({
+      const sellerUser = await prisma.profile.findUnique({
         where: { id: sellerProfileId },
         select: { email: true },
       })

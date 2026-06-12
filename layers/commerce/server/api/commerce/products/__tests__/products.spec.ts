@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { apiLogin, TEST_SELLER, TEST_USER, uniqueEmail, uniqueUsername } from '../../../../../../../tests/helpers/auth'
+import { apiLogin, TEST_SELLER, TEST_USER } from '../../../../../../../tests/helpers/auth'
 
 const LIST = '/api/commerce/products'
 const BY_SLUG = (slug: string) => `/api/commerce/products/by-slug/${slug}`
@@ -84,16 +84,9 @@ test.describe('POST /api/commerce/products — auth guard', () => {
   })
 
   test('rejects user with no seller profile', async ({ request }) => {
-    // Register a fresh user — guaranteed no seller profile.
-    // Skip if rate-limited (register limit is 3/hr by IP; auth suite may exhaust it first).
-    const email = uniqueEmail()
-    const username = uniqueUsername()
-    const regRes = await request.post('/api/auth/register', {
-      data: { email, username, password: 'ValidPass123!', confirmPassword: 'ValidPass123!' },
-    })
-    test.skip(regRes.status() === 429, 'IP register rate-limit exhausted by auth test suite')
-
-    const { token } = await apiLogin(request, { email, password: 'ValidPass123!' })
+    // chidi is a seeded, verified buyer with no seller profile (TEST_USER/ada owns a store).
+    // (A freshly registered user can no longer log in — email verification gates login.)
+    const { token } = await apiLogin(request, { email: 'chidi@peppr.test', password: 'test1234' })
     const res = await request.post(LIST, {
       data: { title: 'Buyer Product Attempt', price: 1000 },
       headers: { Authorization: `Bearer ${token}` },

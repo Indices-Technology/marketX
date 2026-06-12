@@ -160,14 +160,14 @@
           <!-- Links -->
           <div class="flex flex-wrap items-center gap-3 text-[12px]">
             <a
-              v-if="profile.profileUrl"
-              :href="profile.profileUrl"
+              v-if="safeProfileUrl"
+              :href="safeProfileUrl"
               target="_blank"
               rel="noopener noreferrer"
               class="flex items-center gap-1 text-brand hover:underline"
             >
               <Icon name="mdi:link-variant" size="13" />
-              {{ profile.profileUrl.replace(/^https?:\/\//, '').split('/')[0] }}
+              {{ safeProfileUrl.replace(/^https?:\/\//, '').split('/')[0] }}
             </a>
             <span
               v-if="profile.stateOfResidence"
@@ -187,6 +187,7 @@
 import { computed } from 'vue'
 import type { IProfile, IProfileStats } from '../../types/profile.types'
 import { imgAvatar } from '~~/layers/core/app/utils/cloudinary'
+import { safeExternalUrl } from '~~/shared/utils/safeUrl'
 
 const props = defineProps<{
   profile: IProfile
@@ -195,6 +196,9 @@ const props = defineProps<{
   isFollowing: boolean
   isFollowLoading?: boolean
 }>()
+
+// Render-time guard against javascript:/data: URLs in user-set profile links
+const safeProfileUrl = computed(() => safeExternalUrl(props.profile?.profileUrl))
 
 defineEmits([
   'edit',

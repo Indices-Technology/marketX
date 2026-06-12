@@ -305,23 +305,40 @@ export const walletService = {
       )
 
     const wallet = await walletRepository.getOrCreateWallet(sellerId)
-    if (wallet.balance < amount) {
-      throw new UserError(
-        'INSUFFICIENT_BALANCE',
-        'Insufficient wallet balance',
-        400,
-      )
-    }
 
-    await walletRepository.decrementBalance(wallet.id, amount)
-    const payout = await walletRepository.createPayout(wallet.id, {
-      amount,
-      bank_account: bankAccount,
-    })
-    await walletRepository.createTransaction(wallet.id, {
-      amount,
-      type: 'DEBIT',
-      description: `Withdrawal request #${payout.id.slice(0, 8)}`,
+    // Atomic conditional decrement — eliminates the read-check-decrement race.
+    // Two concurrent withdrawals can't both pass: the second updateMany matches
+    // zero rows once the balance drops below the requested amount.
+    const payout = await prisma.$transaction(async (tx) => {
+      const result = await tx.sellerWallet.updateMany({
+        where: { id: wallet.id, balance: { gte: amount } },
+        data: { balance: { decrement: amount } },
+      })
+      if (result.count === 0) {
+        throw new UserError(
+          'INSUFFICIENT_BALANCE',
+          'Insufficient wallet balance',
+          400,
+        )
+      }
+
+      const created = await tx.payout.create({
+        data: {
+          walletId: wallet.id,
+          amount,
+          status: 'PENDING',
+          bank_account: bankAccount,
+        },
+      })
+      await tx.transaction.create({
+        data: {
+          walletId: wallet.id,
+          amount,
+          type: 'DEBIT',
+          description: `Withdrawal request #${created.id.slice(0, 8)}`,
+        },
+      })
+      return created
     })
 
     auditQueue.enqueue({

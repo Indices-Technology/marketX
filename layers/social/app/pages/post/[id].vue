@@ -34,14 +34,12 @@
             v-if="hasMedia"
             class="relative flex min-h-[360px] items-center justify-center bg-black md:min-h-0 md:w-[58%]"
           >
-            <video
+            <VideoPlayer
               v-if="currentMedia?.type === 'VIDEO'"
               :key="currentMedia.url"
               :src="currentMedia.url"
               :poster="currentMedia.thumbnailUrl"
-              class="h-full max-h-[72vh] w-full object-contain md:max-h-none"
-              controls
-              playsinline
+              class="h-full max-h-[72vh] w-full md:max-h-none"
             />
             <img
               v-else-if="currentMedia?.type === 'IMAGE'"
@@ -106,6 +104,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import VideoPlayer from '~~/layers/core/app/components/VideoPlayer.vue'
 import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { useRoute, useRouter } from 'vue-router'
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'

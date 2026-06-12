@@ -70,8 +70,8 @@
         <!-- Product image thumbnail -->
         <div class="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-white/10">
           <img
-            v-if="taggedProduct.media?.[0]?.url || taggedProduct.thumbnail"
-            :src="taggedProduct.media?.[0]?.url || taggedProduct.thumbnail"
+            v-if="productThumb"
+            :src="productThumb"
             :alt="taggedProduct.title || ''"
             class="h-full w-full object-cover"
             loading="lazy"
@@ -106,10 +106,7 @@
           ? `/sellers/profile/${reel.product?.seller?.store_slug || reel.author?.username}`
           : `/profile/${reel.author?.username}`">
           <img
-            :src="
-              reel.author?.avatar ||
-              `https://api.dicebear.com/7.x/avataaars/svg?seed=${reel.author?.username}`
-            "
+            :src="authorAvatar"
             class="h-12 w-12 rounded-full border-2 border-white bg-neutral-800 object-cover shadow-lg"
           />
         </NuxtLink>
@@ -186,7 +183,7 @@
       <!-- Mute Toggle — hidden when bg music owns the audio -->
       <button
         v-if="!reel.bgMusic"
-        @click.stop="isMuted = !isMuted"
+        @click.stop="soundEnabled = !soundEnabled"
         class="mt-2 flex flex-col items-center gap-1"
       >
         <div
@@ -252,10 +249,12 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { useState } from '#imports'
 import type { IFeedItem } from '~~/layers/feed/app/types/feed.types'
 import { usePostStore } from '~~/layers/social/app/store/post.store'
 import { usePost } from '~~/layers/social/app/composables/usePost'
-import { useSettings } from '~~/layers/profile/app/composables/useSettings' // Adjust path if needed
+import { imgThumb, imgAvatar } from '~~/layers/core/app/utils/cloudinary'
+import { useCurrency } from '~~/layers/core/app/composables/useCurrency'
 
 const props = defineProps<{
   reel: IFeedItem
@@ -272,9 +271,10 @@ const videoEl = ref<HTMLVideoElement | null>(null)
 const musicEl = ref<HTMLAudioElement | null>(null)
 const isPlaying = ref(false)
 const progress = ref(0)
-const { settings } = useSettings() // Assuming this manages global app settings
-// If reel has bg music, video stays silent and music provides the audio
-const isMuted = ref(!!(props.reel.bgMusic) || (settings.value?.autoMute ?? false))
+// Global sound state — same key as VideoPlayer; unmuting once carries across all reels
+const soundEnabled = useState('feed-sound-enabled', () => false)
+// Reels with bgMusic keep the video track silent (audio is the separate <audio> element)
+const isMuted = computed(() => !!(props.reel.bgMusic) || !soundEnabled.value)
 
 // Stores & Actions
 const postStore = usePostStore()
@@ -291,6 +291,29 @@ const taggedProduct = computed(
 )
 const isLiked = computed(() => postStore.isPostLiked(props.reel.id))
 const localLikeCount = ref(props.reel.likeCount || 0)
+
+// Product float thumbnail — first non-VIDEO media, Cloudinary-optimised
+const productThumb = computed(() => {
+  const p = taggedProduct.value
+  if (!p) return ''
+  const firstImage = (p as any).media?.find(
+    (m: any) => String(m.type ?? '').toUpperCase() !== 'VIDEO',
+  )
+  const url = firstImage?.url ?? (p as any).thumbnail ?? null
+  return url ? imgThumb(url) : ''
+})
+
+// Author avatar — prefer store_logo for seller reels
+const authorAvatar = computed(() => {
+  const raw =
+    (props.reel.author?.role === 'seller'
+      ? (props.reel.product as any)?.seller?.store_logo
+      : null) ?? props.reel.author?.avatar
+  return (
+    imgAvatar(raw) ||
+    `https://api.dicebear.com/7.x/avataaars/svg?seed=${props.reel.author?.username}`
+  )
+})
 
 // ─── PRODUCT FLOAT-UP ─────────────────────────────────────────────────
 const showProductFloat = ref(false)
@@ -318,7 +341,7 @@ const showUnmuteHint = ref(false)
 let unmuteHintTimer: ReturnType<typeof setTimeout> | null = null
 
 const tapToUnmute = () => {
-  isMuted.value = false
+  soundEnabled.value = true
   showUnmuteHint.value = false
 }
 

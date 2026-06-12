@@ -256,8 +256,63 @@
             </button>
           </div>
 
+          <!-- ── REQUESTS tab ───────────────────────────────────────────────── -->
+          <div v-if="activeTab === 'requests'" class="space-y-3">
+            <!-- Compose CTA -->
+            <div class="flex items-center justify-between gap-2">
+              <div>
+                <p class="font-display text-base font-bold text-gray-900 dark:text-neutral-100">
+                  Buyer requests
+                </p>
+                <p class="text-[12px] text-gray-400 dark:text-neutral-500">
+                  Looking for something? Ask the sellers in this Square.
+                </p>
+              </div>
+              <BaseButton
+                v-if="isFollowing"
+                size="sm"
+                variant="primary"
+                @click="composerOpen = true"
+              >
+                <Icon name="mdi:plus" size="16" /> Post a request
+              </BaseButton>
+              <BaseButton
+                v-else
+                size="sm"
+                variant="secondary"
+                :loading="followLoading"
+                @click="toggleFollow"
+              >
+                Follow to post
+              </BaseButton>
+            </div>
+
+            <div v-if="requestsLoading && !requests.length" class="space-y-2">
+              <BaseSkeleton v-for="i in 3" :key="i" shape="block" height="120px" />
+            </div>
+
+            <BaseEmptyState
+              v-else-if="!requests.length"
+              icon="mdi:tag-search-outline"
+              title="No requests yet"
+              description="Be the first to tell sellers what you're looking for."
+            />
+
+            <SquareRequestCard
+              v-for="req in requests"
+              :key="req.id"
+              :request="req"
+              :slug="slug"
+              :is-owner="req.buyer?.id === profileStore.userId || req.buyerId === profileStore.userId"
+              :can-respond="isSeller"
+              @respond="onRespond"
+              @close-request="onCloseRequest"
+              @accepted="onOfferAccepted"
+            />
+          </div>
+
           <!-- ── ANNOUNCEMENTS tab ──────────────────────────────────────────── -->
-          <div v-if="activeTab === 'announcements'" class="space-y-3">
+          <div v-else-if="activeTab === 'announcements'" class="space-y-3">
             <!-- Officer post form -->
             <div
               v-if="square.isOfficer"
@@ -549,6 +604,30 @@
       :loading="detailLoading"
       @close="selectedProduct = null"
     />
+
+    <!-- Buyer request composer -->
+    <SquareRequestComposer
+      v-if="composerOpen && square"
+      :slug="slug"
+      :square-name="square.name"
+      @close="composerOpen = false"
+      @created="onRequestCreated"
+    />
+
+    <!-- Seller responds — pick an existing product (or quick-add a new one) -->
+    <SquareRespondModal
+      v-if="respondModalOpen"
+      @close="respondModalOpen = false"
+      @select="onPickProduct"
+      @quick-add="onQuickAddFromRespond"
+    />
+
+    <!-- Quick-add fallback when the seller has no suitable existing product -->
+    <QuickProductModal
+      :is-open="quickAddOpen"
+      @posted="onQuickAdded"
+      @close="quickAddOpen = false"
+    />
   </HomeLayout>
 </template>
 
@@ -558,9 +637,18 @@ import FeedProductShelf from '~~/layers/feed/app/components/FeedProductShelf.vue
 import FeedSortBar from '~~/layers/feed/app/components/FeedSortBar.vue'
 import PostListCard from '~~/layers/social/app/components/PostListCard.vue'
 import ProductDetailModal from '~~/layers/commerce/app/components/modals/ProductDetailModal.vue'
+import QuickProductModal from '~~/layers/commerce/app/components/modals/QuickProductModal.vue'
+import SquareRequestCard from '~~/layers/square/app/components/SquareRequestCard.vue'
+import SquareRequestComposer from '~~/layers/square/app/components/SquareRequestComposer.vue'
+import SquareRespondModal from '~~/layers/square/app/components/SquareRespondModal.vue'
+import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
+import BaseSkeleton from '~~/layers/ui/app/components/BaseSkeleton.vue'
+import BaseEmptyState from '~~/layers/ui/app/components/BaseEmptyState.vue'
 import { useProductDetail } from '~~/layers/commerce/app/composables/useProductDetail'
 import { useSquareApi } from '~~/layers/square/app/services/square.api'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
+import { useCart } from '~~/layers/commerce/app/composables/useCart'
+import { notify } from '@kyvg/vue3-notification'
 import { useMediaUpload } from '~~/layers/core/app/composables/useMediaUpload'
 import {
   computed,
@@ -685,11 +773,12 @@ const tabs = [
   { key: 'all', label: 'All' },
   { key: 'posts', label: 'Posts' },
   { key: 'products', label: 'Products' },
+  { key: 'requests', label: 'Requests' },
   { key: 'sellers', label: 'Sellers' },
   { key: 'announcements', label: '📢 Announcements' },
 ]
 const activeTab = ref<
-  'all' | 'posts' | 'products' | 'sellers' | 'announcements'
+  'all' | 'posts' | 'products' | 'requests' | 'sellers' | 'announcements'
 >('all')
 
 // ── Feed ──────────────────────────────────────────────────────────────────────
@@ -909,11 +998,106 @@ const postAnnouncement = async () => {
   }
 }
 
+// ── Buyer requests / seller offers ────────────────────────────────────────────
+const isSeller = computed(() => profileStore.me?.role === 'seller')
+const requests = ref<any[]>([])
+const requestsLoading = ref(false)
+const composerOpen = ref(false)
+const respondModalOpen = ref(false)
+const quickAddOpen = ref(false)
+const respondingRequestId = ref<string | null>(null)
+const { addToCart } = useCart()
+
+const bumpOfferCount = (requestId: string) => {
+  const target = requests.value.find((r) => r.id === requestId)
+  if (target) target._count = { ...(target._count ?? {}), offers: (target._count?.offers ?? 0) + 1 }
+}
+
+const sendOffer = async (requestId: string, productId: number, variantId?: number | null) => {
+  try {
+    await squareApi.createOffer(square.value.slug, requestId, { productId, variantId: variantId ?? null })
+    notify({ type: 'success', text: 'Offer sent to the buyer' })
+    bumpOfferCount(requestId)
+  } catch (e: any) {
+    notify({ type: 'error', text: e?.data?.statusMessage || 'Could not send offer' })
+  }
+}
+
+const loadRequests = async () => {
+  if (!square.value) return
+  requestsLoading.value = true
+  try {
+    const res = await squareApi.getRequests(square.value.slug, { status: 'OPEN', limit: 30 })
+    requests.value = res.data?.requests ?? []
+  } catch {
+    /* silent */
+  } finally {
+    requestsLoading.value = false
+  }
+}
+
+const onRequestCreated = (request: any) => {
+  requests.value.unshift(request)
+}
+
+const onCloseRequest = async (request: any) => {
+  try {
+    await squareApi.closeRequest(square.value.slug, request.id)
+    requests.value = requests.value.filter((r) => r.id !== request.id)
+  } catch {
+    /* silent */
+  }
+}
+
+const onRespond = (request: any) => {
+  respondingRequestId.value = request.id
+  respondModalOpen.value = true
+}
+
+// Seller picked an existing product from the picker
+const onPickProduct = async (product: any) => {
+  respondModalOpen.value = false
+  const requestId = respondingRequestId.value
+  respondingRequestId.value = null
+  if (!requestId || !product?.id) return
+  await sendOffer(requestId, product.id, product.variants?.[0]?.id)
+}
+
+// Seller chose "Quick add new" inside the picker → open QuickProductModal
+const onQuickAddFromRespond = () => {
+  respondModalOpen.value = false
+  quickAddOpen.value = true
+}
+
+// QuickProductModal finished creating a new product → offer it
+const onQuickAdded = async (product: any) => {
+  quickAddOpen.value = false
+  const requestId = respondingRequestId.value
+  respondingRequestId.value = null
+  if (!requestId || !product?.id) return
+  await sendOffer(requestId, product.id, product.variants?.[0]?.id)
+}
+
+const onOfferAccepted = async (payload: { productId: number; variantId?: number | null }) => {
+  if (!payload?.variantId) {
+    notify({ type: 'warn', text: 'Pick a variant on the product page to check out' })
+    return
+  }
+  try {
+    await addToCart(payload.variantId, 1)
+    notify({ type: 'success', text: 'Added to cart — complete your purchase' })
+    router.push('/checkout')
+  } catch {
+    notify({ type: 'error', text: 'Could not add to cart' })
+  }
+}
+
 // ── Tab switching — lazy load ─────────────────────────────────────────────────
 watch(activeTab, (tab) => {
   if (tab === 'sellers' && !sellers.value.length) loadSellers()
   else if (tab === 'announcements' && !announcements.value.length)
     loadAnnouncements()
+  else if (tab === 'requests') loadRequests()
   else if (['all', 'posts', 'products'].includes(tab)) loadFeed(true)
 })
 

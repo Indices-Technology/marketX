@@ -635,9 +635,11 @@ const submit = async () => {
     if (bgMusicResult.value) payload.bgMusic = { url: bgMusicResult.value.url, public_id: bgMusicResult.value.public_id, name: bgMusicResult.value.name }
     if (hasAiCaptions.value) payload.socialCaptions = { ...aiCaptions }
 
-    await createProduct(payload)
+    const created = await createProduct(payload)
     submitted.value = true
-    emit('posted')
+    // Emit the created product so callers (e.g. square offers) can act on it.
+    // Existing listeners that ignore the argument are unaffected.
+    emit('posted', created)
     setTimeout(() => close(), 800)
   } catch (e: unknown) {
     submitError.value = extractErrorMessage(e, 'Failed to create product')

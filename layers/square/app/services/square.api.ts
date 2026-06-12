@@ -69,6 +69,55 @@ export class SquareApiClient extends BaseApiClient {
     })
   }
 
+  // ── Buyer requests / seller offers ────────────────────────────────────────────
+
+  async getRequests(
+    slug: string,
+    params: { status?: string; limit?: number; offset?: number },
+  ): Promise<any> {
+    return this.request(`/api/squares/${slug}/requests`, {
+      method: 'GET',
+      params: params as any,
+    })
+  }
+
+  async createRequest(slug: string, body: Record<string, unknown>): Promise<any> {
+    return this.request(`/api/squares/${slug}/requests`, { method: 'POST', body })
+  }
+
+  async getRequest(slug: string, requestId: string): Promise<any> {
+    return this.request(`/api/squares/${slug}/requests/${requestId}`, { method: 'GET' })
+  }
+
+  async closeRequest(slug: string, requestId: string): Promise<any> {
+    return this.request(`/api/squares/${slug}/requests/${requestId}`, {
+      method: 'DELETE',
+    })
+  }
+
+  async createOffer(
+    slug: string,
+    requestId: string,
+    body: { productId: number; variantId?: number | null; message?: string | null },
+  ): Promise<any> {
+    return this.request(`/api/squares/${slug}/requests/${requestId}/offers`, {
+      method: 'POST',
+      body,
+    })
+  }
+
+  async actOnOffer(
+    slug: string,
+    requestId: string,
+    offerId: string,
+    action: 'ACCEPT' | 'DECLINE',
+  ): Promise<any> {
+    return this.request(
+      `/api/squares/${slug}/requests/${requestId}/offers/${offerId}`,
+      { method: 'PATCH', body: { action } },
+    )
+  }
+
   // ── Follow ───────────────────────────────────────────────────────────────────
 
   async followSquare(slug: string): Promise<any> {

@@ -51,7 +51,7 @@ export default defineEventHandler(async (event) => {
       }
       if (!sellers.size) return
 
-      const sellerUsers = await prisma.user.findMany({
+      const sellerUsers = await prisma.profile.findMany({
         where: { id: { in: [...sellers.keys()] } },
         select: { id: true, email: true },
       })

@@ -1,5 +1,5 @@
 <template>
-  <div class="py-10">
+  <div class="py-10" data-testid="discover-filters">
     <!-- Header -->
     <div class="mb-4 flex items-center justify-between">
       <!-- <p class="text-[13px] font-bold text-gray-700 dark:text-neutral-200">

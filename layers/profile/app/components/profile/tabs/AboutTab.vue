@@ -19,7 +19,7 @@
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
       <!-- Website -->
       <div
-        v-if="profile.profileUrl"
+        v-if="safeProfileUrl"
         class="rounded-xl border border-gray-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"
       >
         <div class="flex items-start gap-3">
@@ -37,11 +37,12 @@
               Profile Url
             </p>
             <a
-              :href="profile.profileUrl"
+              :href="safeProfileUrl"
               target="_blank"
+              rel="noopener noreferrer"
               class="break-all text-brand hover:underline"
             >
-              {{ profile.profileUrl }}
+              {{ safeProfileUrl }}
             </a>
           </div>
         </div>
@@ -187,12 +188,16 @@
 import { computed } from 'vue'
 import type { IProfile } from '~~/layers/profile/app/types/profile.types'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
+import { safeExternalUrl } from '~~/shared/utils/safeUrl'
 
 const props = defineProps<{
   profile: IProfile | Partial<IProfile>
 }>()
 
 const profileStore = useProfileStore()
+
+// Render-time guard against javascript:/data: URLs in user-set profile links
+const safeProfileUrl = computed(() => safeExternalUrl(props.profile?.profileUrl))
 
 const showEmail = computed(() => {
   // Only show email on own profile

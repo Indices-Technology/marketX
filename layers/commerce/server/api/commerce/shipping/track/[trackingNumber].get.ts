@@ -23,7 +23,16 @@ export default defineEventHandler(async (event) => {
   const country = providerHint === 'sendbox' ? 'NG' : 'US'
   const provider = getShippingProvider(country)
 
-  const result = await provider.trackShipment(trackingNumber, carrier)
-
-  return { success: true, data: result }
+  try {
+    const result = await provider.trackShipment(trackingNumber, carrier)
+    return { success: true, data: result }
+  } catch (error: unknown) {
+    logger.logError('[shipping/track] provider failure', error, {
+      requestId: event.context?.requestId,
+    })
+    throw createError({
+      statusCode: 502,
+      message: 'Tracking is temporarily unavailable — please try again later',
+    })
+  }
 })

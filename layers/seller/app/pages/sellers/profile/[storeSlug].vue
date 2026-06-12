@@ -189,8 +189,8 @@
                 <Icon name="mdi:share-variant-outline" size="18" />
               </button>
               <a
-                v-if="seller.store_website"
-                :href="seller.store_website"
+                v-if="safeStoreWebsite"
+                :href="safeStoreWebsite"
                 target="_blank"
                 rel="noopener"
                 class="rounded-xl border border-gray-200 bg-white p-2.5 text-gray-600 transition-colors hover:bg-gray-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
@@ -278,8 +278,8 @@
                 Joined {{ formatDate(seller.created_at) }}
               </span>
               <a
-                v-if="seller.store_website"
-                :href="seller.store_website"
+                v-if="safeStoreWebsite"
+                :href="safeStoreWebsite"
                 target="_blank"
                 rel="noopener"
                 class="flex items-center gap-1 text-brand hover:underline sm:hidden"
@@ -693,7 +693,7 @@
               </div>
 
               <div
-                v-if="seller.store_website"
+                v-if="safeStoreWebsite"
                 class="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"
               >
                 <div
@@ -708,7 +708,7 @@
                     Website
                   </p>
                   <a
-                    :href="seller.store_website"
+                    :href="safeStoreWebsite"
                     target="_blank"
                     rel="noopener"
                     class="block truncate text-sm font-bold text-brand hover:underline"
@@ -801,6 +801,7 @@ import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import ProductCardMini from '~~/layers/commerce/app/components/ProductCardMini.vue'
 import ProductDetailModal from '~~/layers/commerce/app/components/modals/ProductDetailModal.vue'
 import { imgAvatar, cloudinaryUrl } from '~~/layers/core/app/utils/cloudinary'
+import { safeExternalUrl } from '~~/shared/utils/safeUrl'
 import ProductMarketModal from '~~/layers/commerce/app/components/modals/ProductMarketModal.vue'
 import { useSellerManagement } from '~~/layers/seller/app/composables/useSellerManagement'
 import { useProduct } from '~~/layers/commerce/app/composables/useProduct'
@@ -836,6 +837,9 @@ const pageLoading = ref(true)
 const loadError = ref(false)
 const activeTab = ref('wall')
 const seller = computed(() => currentSeller.value)
+// Render-time guard — neutralizes any javascript:/data: URL persisted before
+// input validation was tightened (stored-XSS defense-in-depth)
+const safeStoreWebsite = computed(() => safeExternalUrl(seller.value?.store_website))
 
 watch(seller, (s) => {
   if (s) useSeo().setStorePage(s)

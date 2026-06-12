@@ -124,8 +124,9 @@ export async function getFirstProductSlug(
 }
 
 /**
- * Returns the first variant ID for a product that exists in the test DB.
- * Uses getFirstProductSlug so the slug is always valid.
+ * Returns the first IN-STOCK variant ID for a product that exists in the test DB.
+ * Uses getFirstProductSlug so the slug is always valid. Falls back to the first
+ * variant when everything is sold out (callers asserting stock errors still work).
  */
 export async function getFirstVariantId(
   request: APIRequestContext,
@@ -134,7 +135,8 @@ export async function getFirstVariantId(
   const resolvedSlug = slug ?? await getFirstProductSlug(request)
   const res = await request.get(`/api/commerce/products/by-slug/${resolvedSlug}`)
   const body = await res.json()
-  const id = body.data?.variants?.[0]?.id
+  const variants: Array<{ id: number; stock: number }> = body.data?.variants ?? []
+  const id = variants.find((v) => v.stock > 0)?.id ?? variants[0]?.id
   if (!id) throw new Error(`No variant found for slug "${resolvedSlug}"`)
   return id as number
 }

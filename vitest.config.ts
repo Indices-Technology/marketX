@@ -49,6 +49,7 @@ export default defineConfig({
     include: [
       'layers/**/app/**/__tests__/**/*.spec.ts',
       'layers/**/server/utils/__tests__/**/*.spec.ts',
+      'shared/**/__tests__/**/*.spec.ts',
     ],
   },
   resolve: {

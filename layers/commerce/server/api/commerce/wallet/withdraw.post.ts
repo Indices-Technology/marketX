@@ -49,7 +49,16 @@ export default defineEventHandler(async (event) => {
 
     // Deduct platform + transfer fees from the requested gross amount
     const gross = Number(amount)
-    const { net, platformFee, transferFee } = calculatePayout(gross)
+    const { net, platformFee, transferFee, totalFees } = calculatePayout(gross)
+
+    // Reject withdrawals the fees would fully consume — wallet would be
+    // debited while the seller receives nothing
+    if (net <= 0)
+      throw new UserError(
+        'AMOUNT_TOO_SMALL',
+        `Amount must exceed the ${totalFees / 100} NGN in fees`,
+        400,
+      )
 
     const ipAddress =
       getHeader(event, 'x-forwarded-for') || getClientIP(event) || 'unknown'
