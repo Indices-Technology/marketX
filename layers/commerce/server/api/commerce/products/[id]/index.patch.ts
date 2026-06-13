@@ -1,4 +1,5 @@
-﻿import { productService } from '~~/layers/commerce/server/services/product.service'
+﻿import { ZodError } from 'zod'
+import { productService } from '~~/layers/commerce/server/services/product.service'
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
 import { getClientIP } from '~~/server/layers/shared/utils/security'
@@ -38,6 +39,16 @@ export default defineEventHandler(async (event) => {
   } catch (error: unknown) {
     if (error instanceof UserError)
       throw createError({ statusCode: error.status, statusMessage: error.message })
+    if (error instanceof ZodError) {
+      const issue = error.errors[0]
+      const field = issue?.path?.join('.')
+      const msg = issue
+        ? field
+          ? `${field}: ${issue.message}`
+          : issue.message
+        : 'Validation error'
+      throw createError({ statusCode: 422, statusMessage: msg })
+    }
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
     logger.logError('[PATCH /api/commerce/products/:id]', error, { requestId: event.context?.requestId })
     throw createError({ statusCode: 500, statusMessage: 'Internal server error' })

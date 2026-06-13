@@ -304,7 +304,7 @@
               :request="req"
               :slug="slug"
               :is-owner="req.buyer?.id === profileStore.userId || req.buyerId === profileStore.userId"
-              :can-respond="isSeller"
+              :can-respond="viewerIsMember"
               @respond="onRespond"
               @close-request="onCloseRequest"
               @accepted="onOfferAccepted"
@@ -523,6 +523,53 @@
 
           <!-- ── FEED tabs (all / posts / products) ─────────────────────────── -->
           <div v-else>
+            <!-- "Buyers looking for" demand strip — All tab only -->
+            <div
+              v-if="activeTab === 'all' && requestsPreview.length"
+              class="mb-4 rounded-2xl border border-gray-100 bg-white p-3 dark:border-neutral-800 dark:bg-neutral-900"
+            >
+              <div class="mb-2 flex items-center justify-between">
+                <div class="flex items-center gap-1.5">
+                  <span class="h-2 w-2 rounded-full bg-green-500" />
+                  <p
+                    class="text-xs font-bold uppercase tracking-widest text-brand"
+                  >
+                    Buyers looking for
+                  </p>
+                </div>
+                <button
+                  class="text-[12px] font-semibold text-gray-400 transition-colors hover:text-brand"
+                  @click="activeTab = 'requests'"
+                >
+                  See all →
+                </button>
+              </div>
+              <div class="scrollbar-none flex gap-2 overflow-x-auto pb-1">
+                <button
+                  v-for="req in requestsPreview"
+                  :key="req.id"
+                  class="flex w-44 shrink-0 flex-col gap-1 rounded-xl border border-gray-100 bg-gray-50 p-2.5 text-left transition-colors hover:border-brand/40 hover:bg-brand/5 dark:border-neutral-800 dark:bg-neutral-800/40"
+                  @click="activeTab = 'requests'"
+                >
+                  <p
+                    class="line-clamp-2 text-[13px] font-semibold text-gray-900 dark:text-neutral-100"
+                  >
+                    {{ req.title }}
+                  </p>
+                  <p class="text-[11px] text-gray-400 dark:text-neutral-500">
+                    {{
+                      req.buyer?.username ? `@${req.buyer.username}` : 'A buyer'
+                    }}
+                    <span v-if="req._count?.offers">
+                      · {{ req._count.offers }} offer{{
+                        req._count.offers === 1 ? '' : 's'
+                      }}
+                    </span>
+                  </p>
+                </button>
+              </div>
+            </div>
+
             <div v-if="feedLoading && !feedItems.length" class="space-y-4">
               <div
                 v-for="n in 4"
@@ -999,9 +1046,28 @@ const postAnnouncement = async () => {
 }
 
 // ── Buyer requests / seller offers ────────────────────────────────────────────
-const isSeller = computed(() => profileStore.me?.role === 'seller')
+// "Respond with product" requires an ACTIVE membership in THIS square (matches the
+// offer API gate). The page's square data comes from an SSR useFetch that is NOT
+// authenticated (token is in localStorage), so isMember is unreliable there — we
+// refetch via the authenticated squareApi client when the Requests tab opens.
+const viewerIsMember = ref<boolean>(false)
 const requests = ref<any[]>([])
+const requestsPreview = ref<any[]>([])
 const requestsLoading = ref(false)
+
+// Compact "Buyers looking for" strip on the All tab — newest open requests
+const loadRequestsPreview = async () => {
+  if (!square.value) return
+  try {
+    const res = await squareApi.getRequests(square.value.slug, {
+      status: 'OPEN',
+      limit: 6,
+    })
+    requestsPreview.value = res.data?.requests ?? []
+  } catch {
+    /* silent — strip is non-critical */
+  }
+}
 const composerOpen = ref(false)
 const respondModalOpen = ref(false)
 const quickAddOpen = ref(false)
@@ -1025,6 +1091,14 @@ const sendOffer = async (requestId: string, productId: number, variantId?: numbe
 
 const loadRequests = async () => {
   if (!square.value) return
+  // Resolve viewer membership via the AUTHENTICATED client (SSR useFetch is anon)
+  if (profileStore.isLoggedIn)
+    squareApi
+      .getSquare(square.value.slug)
+      .then((r: { data?: { isMember?: boolean } }) => {
+        viewerIsMember.value = !!r?.data?.isMember
+      })
+      .catch(() => {})
   requestsLoading.value = true
   try {
     const res = await squareApi.getRequests(square.value.slug, { status: 'OPEN', limit: 30 })
@@ -1098,14 +1172,20 @@ watch(activeTab, (tab) => {
   else if (tab === 'announcements' && !announcements.value.length)
     loadAnnouncements()
   else if (tab === 'requests') loadRequests()
-  else if (['all', 'posts', 'products'].includes(tab)) loadFeed(true)
+  else if (['all', 'posts', 'products'].includes(tab)) {
+    loadFeed(true)
+    if (tab === 'all') loadRequestsPreview()
+  }
 })
 
 // Initial load
 watch(
   square,
   (sq) => {
-    if (sq) loadFeed()
+    if (sq) {
+      loadFeed()
+      loadRequestsPreview() // All is the default tab
+    }
   },
   { immediate: true },
 )

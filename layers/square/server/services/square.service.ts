@@ -143,7 +143,7 @@ export const squareService = {
     if (square.status !== 'ACTIVE')
       throw createError({ statusCode: 404, statusMessage: 'Square not found' })
 
-    const [followRow, officerRow] = await Promise.all([
+    const [followRow, officerRow, memberRow] = await Promise.all([
       userId
         ? prisma.userSquareFollow.findUnique({
             where: { userId_squareId: { userId, squareId: square.id } },
@@ -157,6 +157,18 @@ export const squareService = {
             select: { role: true },
           })
         : null,
+      // Is any of the viewer's stores an ACTIVE member of this square?
+      // Drives the "Respond with product" affordance — must match the offer gate.
+      userId
+        ? prisma.squareMembership.findFirst({
+            where: {
+              squareId: square.id,
+              status: 'ACTIVE',
+              seller: { profileId: userId },
+            },
+            select: { id: true },
+          })
+        : null,
     ])
 
     const { _count, ...squareData } = square
@@ -167,6 +179,7 @@ export const squareService = {
       isFollowing: !!followRow,
       isOfficer: !!officerRow,
       officerRole: officerRow?.role ?? null,
+      isMember: !!memberRow,
     }
   },
 

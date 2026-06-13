@@ -493,8 +493,17 @@ the core constraint (sellers must not DM-and-boycott the platform):
   accept/decline IDOR, duplicate 409, rate-limit 429); `contentGuard.spec.ts` 9/9;
   `square-requests.spec.ts` E2E (composer renders, tab works). Squares API regression 34/34
 - **UI**: `SquareRequestComposer.vue`, `SquareRequestCard.vue`, `SquareOfferItem.vue`,
-  new Requests tab on `squares/[slug]/index.vue`. Design-system compliant (Base* components,
-  Sora headings, brand CTA, buyer-protection copy)
+  `SquareRespondModal.vue` (existing-product picker + quick-add fallback), new Requests tab
+  on `squares/[slug]/index.vue`. Design-system compliant (Base* components, Sora headings,
+  brand CTA, buyer-protection copy). Seller status detected via owned stores
+  (`useSellerManagement`), not the `role` string (seed sellers default to role 'user')
+- **Multi-store-safe offers**: `createOffer` resolves the seller FROM the product
+  (`getProductWithSeller`) and checks ownership + that store's square membership — so a
+  seller with multiple stores is validated against the correct store, not an arbitrary first one
+- **Discovery**: a compact "Buyers looking for" demand strip (newest 6 open requests,
+  horizontal scroll, green live-dot, "See all →") sits at the top of the **All** tab so
+  buyer demand surfaces where everyone lands — tapping through to the Requests tab. Not
+  interleaved into the content feed
 - **v1 scope notes**: guard-rail auto-flag only (no review queue); product-only offers
   (no free quotes); sellers feed one primary square, buyers follow many
 
