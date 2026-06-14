@@ -15,11 +15,11 @@
         </button>
       </div>
 
-      <div v-if="isLoading" class="py-20 text-center">
+      <div v-if="pending" class="py-20 text-center">
         <Icon name="eos-icons:loading" size="32" class="text-brand" />
       </div>
 
-      <div v-else-if="error || !post" class="py-20 text-center">
+      <div v-else-if="!post" class="py-20 text-center">
         <p class="text-brand-dark dark:text-brand-light">Post not found</p>
       </div>
 
@@ -116,11 +116,14 @@ import type { IFeedItem } from '~~/layers/feed/app/types/feed.types'
 
 const route = useRoute()
 const router = useRouter()
-const { isLoading, error, getPostById, normalizePost } = usePost()
+const { getPostById, normalizePost } = usePost()
 
 const postId = computed(() => route.params.id as string)
 const post = ref<IFeedItem | null>(null)
 const currentIndex = ref(0)
+// Local pending guard — starts true so the not-found branch never flashes before
+// the fetch (which only runs in onMounted, after first paint) has completed.
+const pending = ref(true)
 
 watch(post, (p) => {
   if (p) useSeo().setPostPage({
@@ -149,8 +152,17 @@ watch(
 )
 
 onMounted(async () => {
-  if (!postId.value) return
-  const fetchedPost = await getPostById(postId.value)
-  post.value = normalizePost(fetchedPost)
+  if (!postId.value) {
+    pending.value = false
+    return
+  }
+  try {
+    const fetchedPost = await getPostById(postId.value)
+    post.value = fetchedPost ? normalizePost(fetchedPost) : null
+  } catch {
+    post.value = null
+  } finally {
+    pending.value = false
+  }
 })
 </script>

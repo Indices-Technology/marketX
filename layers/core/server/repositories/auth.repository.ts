@@ -39,25 +39,19 @@ export const authRepository = {
 
     if (!record) return null
 
-    // Check if expired
-    if (new Date() > record.expires_at) {
-      // Clean up expired token
-      await prisma.emailVerificationToken
-        .delete({ where: { token } })
-        .catch(() => null)
-      return null
-    }
-
-    // Check if already used
-    if (record.used_at) return null
-
-    // 1. Mark token as used
-    await prisma.emailVerificationToken.update({
-      where: { token },
+    // Atomically claim the token only if still unused AND not expired — same
+    // single-use + expiry guarantee as the password-reset path, race-safe.
+    const claimed = await prisma.emailVerificationToken.updateMany({
+      where: {
+        id: record.id,
+        used_at: null,
+        expires_at: { gt: new Date() },
+      },
       data: { used_at: new Date() },
     })
+    if (claimed.count === 0) return null
 
-    // 2. Mark user profile as verified (Missing method restored)
+    // Mark the user profile as verified
     await prisma.profile.update({
       where: { id: record.user_id },
       data: { email_verified: true },
@@ -112,13 +106,22 @@ export const authRepository = {
 
     if (!record) return null
 
-    // Mark this token as used
-    await prisma.passwordResetToken.update({
-      where: { id: record.id },
+    // Atomically claim the token ONLY if still unused AND not expired. This one
+    // conditional update enforces single-use + expiry and is race-safe (two
+    // concurrent resets with the same token can't both win — the loser matches
+    // zero rows). Previously neither check was applied, so expired tokens still
+    // worked and a used token could be replayed to reset the password again.
+    const claimed = await prisma.passwordResetToken.updateMany({
+      where: {
+        id: record.id,
+        used_at: null,
+        expires_at: { gt: new Date() },
+      },
       data: { used_at: new Date() },
     })
+    if (claimed.count === 0) return null
 
-    // Invalidate other unused tokens for this user (Security Best Practice)
+    // Invalidate any other unused tokens for this user (single live token)
     await prisma.passwordResetToken.updateMany({
       where: {
         user_id: record.user_id,

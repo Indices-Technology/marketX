@@ -77,9 +77,23 @@ export default {
         'md': ['15px', { lineHeight: '22px' }],
       },
 
+      // ── Radius scale — "Crisp" (half of Tailwind defaults) ──────────────
+      // Each step is exactly half the stock value (lg 8→4, xl 12→6, 2xl 16→8…)
+      // so the UI reads crisp/intentional rather than pillowy/AI-generated,
+      // while keeping a gentle, consistent softness. `full` stays circular on
+      // purpose (avatars, pills, dots, icon buttons).
       borderRadius: {
-        card: '16px',
-        sheet: '24px',
+        none: '0px',
+        sm: '1px',
+        DEFAULT: '2px',
+        md: '3px',
+        lg: '4px',
+        xl: '6px',
+        '2xl': '8px',
+        '3xl': '12px',
+        card: '8px',
+        sheet: '12px',
+        full: '9999px',
       },
 
       boxShadow: {

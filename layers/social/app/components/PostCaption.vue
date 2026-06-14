@@ -1,16 +1,34 @@
 <template>
   <!-- eslint-disable vue/no-v-html -->
-  <span v-html="rendered" class="post-caption" />
+  <span v-html="rendered" class="post-caption" @click="onCaptionClick" />
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 
 const props = defineProps<{
   caption?: string | null
   mentions?: Array<{ type: 'seller' | 'user'; handle: string }> | null
   lineClamp?: number
 }>()
+
+const router = useRouter()
+
+// The hashtag/mention links are raw <a> tags inside v-html. A plain click would
+// (a) bubble up to the parent post card and open the post, AND (b) trigger a
+// full-page navigation — so on a slow network the post flashes open before the
+// profile/tags page loads. Intercept it: stop propagation and route client-side
+// straight to the destination.
+const onCaptionClick = (e: MouseEvent) => {
+  const anchor = (e.target as HTMLElement).closest('a')
+  if (!anchor) return // non-link text — let it bubble (opens the post as before)
+  const href = anchor.getAttribute('href')
+  if (!href) return
+  e.preventDefault()
+  e.stopPropagation()
+  router.push(href)
+}
 
 const rendered = computed(() => {
   const text = props.caption?.trim()

@@ -909,7 +909,7 @@ Track individual flows here. Update status as work progresses.
 | Color system | 9/10 | Well-defined tokens in tailwind.config.ts — `brand`, `navy`, `violet`, `mint`, `slate`, semantic surfaces |
 | Dark mode | 8/10 | Comprehensive light/dark pairs, ColorMode integration throughout |
 | Shadows | 7/10 | Brand-colored halos defined in config, but inconsistently applied |
-| Border radius | 7/10 | `rounded-2xl` / `rounded-xl` / `rounded-full` system works — some drift |
+| Border radius | 9/10 | **"Crisp" scale (June 2026)** — radius steps retuned to half the Tailwind defaults in `tailwind.config.ts` (`lg` 4px · `xl` 6px · `2xl` 8px · `card` 8px) to kill the pillowy AI-generated look while keeping a gentle softness. `rounded-full` kept circular for avatars/pills/dots. One change propagates app-wide |
 | Typography | 6/10 | Inter is good. Font sizes scattered: `text-[13px]`, `text-[11px]`, `text-[9px]` mixed with standard scale |
 | Spacing | 6/10 | Mostly Tailwind scale but custom pixel values mixed in |
 | Component consistency | 5/10 | No shared component layer — buttons, modals, cards reinvented per layer |
@@ -933,7 +933,7 @@ These patterns cause the site to read as AI-generated. Fix in priority order.
 Patterns that are **fine to keep**:
 - `backdrop-blur-md` on video reel overlays — functionally required for readability
 - `bg-gradient-to-t from-black/90` overlays on media — same reason
-- `rounded-2xl` cards — intentional and consistent
+- crisp card corners (Crisp radius scale) — `rounded-xl`/`2xl` now resolve to 6–8px, intentional
 - `brand: #F43F5E` coral red — distinctive, not the AI-purple
 
 ---
@@ -1087,9 +1087,9 @@ layers/ui/app/utils/
 
 - `backdrop-blur-md` / `bg-black/40` on video reel overlays — readability requirement
 - `bg-gradient-to-t from-black/90` on media cards — readability requirement
-- `rounded-2xl` as primary card radius — intentional, consistent
+- **Crisp radius scale** — named radius steps are half the Tailwind defaults (`lg` 4px · `xl` 6px · `2xl` 8px) via `tailwind.config.ts`. Do NOT reintroduce large pillowy corners on cards/containers. Keep `rounded-full` for avatars, pills, dots, icon buttons
 - `brand: #F43F5E` — distinctive color, keep as primary
-- `Inter` font — fine, remove `tracking-*` from headings only
+- Fonts: Sora (display) + Manrope (body) — remove `tracking-*` from headings only
 - Content-type color map in `PostCard.vue` (blue/amber/orange/pink/emerald per type) — intentional theming
 
 ---
