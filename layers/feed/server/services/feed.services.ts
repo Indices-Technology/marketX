@@ -63,8 +63,10 @@ export const feedService = {
         take: postLimit * CANDIDATE_FACTOR,
         skip: offset,
         orderBy: { created_at: 'desc' },
+        // Public discovery feed — never surface PRIVATE/FOLLOWERS-only posts
+        where: { visibility: 'PUBLIC' },
       }),
-      postRepository.count(),
+      postRepository.count({ visibility: 'PUBLIC' }),
       prisma.products.findMany({
         where: {
           status: 'PUBLISHED',

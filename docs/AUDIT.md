@@ -381,32 +381,32 @@ Priority order:
 |------|-------|-----------|------|--------|
 | Register new user | `/register` | `POST /api/auth/register` | duplicate email, weak password | not started |
 | Login email/password | `/login` | `POST /api/auth/login` | brute force, token handling | not started |
-| Logout | nav | `POST /api/auth/logout` | token not cleared | not started |
-| Refresh/restore session | app init | plugin + `GET /api/auth/session` | stale token | not started |
-| Verify email | email link | `GET /api/auth/verify-email` | replay, expired token | not started |
-| Resend verification | account | `POST /api/auth/resend-verification` | rate limit | not started |
-| Forgot password | `/forgot-password` | `POST /api/auth/forgot-password` | user enumeration | not started |
-| Reset password | email link | `POST /api/auth/reset-password` | expired/replayed token | not started |
-| Social OAuth redirect | `/login` | `GET /api/auth/oauth/:provider` | state param CSRF | not started |
-| Social OAuth callback | provider redirect | `GET /api/auth/oauth/:provider/callback` | account linking | not started |
-| Checkout OTP send | checkout | `POST /api/auth/checkout-otp/send` | rate limit | not started |
-| Checkout OTP verify | checkout | `POST /api/auth/checkout-otp/verify` | expiry, replay | not started |
-| Seller registration | `/sellers/create` | `POST /api/auth/register-seller` | duplicate store, ownership | not started |
+| Logout | nav | `POST /api/auth/logout` | token not cleared | passed with evidence |
+| Refresh/restore session | app init | `POST /api/auth/refresh-token` | stale/revoked token | passed with evidence |
+| Verify email | email link | `POST /api/auth/verify-email` | replay, expired token | passed with evidence |
+| Resend verification | account | `POST /api/auth/send-verification-email` | rate limit | passed with evidence |
+| Forgot password | `/forgot-password` | `POST /api/auth/forgot-password` | user enumeration | passed with evidence |
+| Reset password | email link | `POST /api/auth/reset-password` | expired/replayed token | passed with evidence |
+| Social OAuth redirect | `/login` | `GET /api/auth/oauth/:provider` | state param CSRF | passed with evidence |
+| Social OAuth callback | provider redirect | `GET /api/auth/oauth/:provider/callback` | account linking | passed with evidence |
+| Checkout OTP send | checkout | `POST /api/auth/checkout-otp/send` | rate limit | passed with evidence |
+| Checkout OTP verify | checkout | `POST /api/auth/checkout-otp/verify` | expiry, replay | passed with evidence |
+| Seller registration | `/sellers/create` | `POST /api/auth/register-seller` | duplicate store, ownership | passed with evidence |
 
 ### P0 — Posts & Feed
 
 | Flow | Entry | API Routes | Risk | Status |
 |------|-------|-----------|------|--------|
-| Create post (text/image/reel) | feed | `POST /api/posts` | media upload, content type | not started |
-| Edit own post | post menu | `PATCH /api/posts/:id` | ownership check | not started |
-| Delete own post | post menu | `DELETE /api/posts/:id` | ownership check | not started |
-| Like / unlike post | feed | `POST/DELETE /api/posts/:id/like` | duplicate like | not started |
-| Comment on post | post detail | `POST /api/posts/:id/comments` | auth required | not started |
-| @mention in post | post create | mentions API | notification triggered | not started |
-| View home feed (guest) | `/` | `GET /api/feed` | public only | not started |
-| View following feed (auth) | `/` | `GET /api/feed/following` | own content | not started |
-| View profile posts | `/u/:username` | `GET /api/profile/:username/posts` | private profile | not started |
-| Stories create/view/delete | feed | stories API | 24h expiry | not started |
+| Create post (text/image/reel) | feed | `POST /api/posts` | media upload, content type | passed with evidence |
+| Edit own post | post menu | `PATCH /api/posts/:id` | ownership check | passed with evidence |
+| Delete own post | post menu | `DELETE /api/posts/:id` | ownership check | passed with evidence |
+| Like / unlike post | feed | `POST/DELETE /api/posts/:id/like` | duplicate like | passed with evidence |
+| Comment on post | post detail | `POST /api/posts/:id/comments` | auth required | passed with evidence |
+| @mention in post | post create | mentions API | notification triggered | passed with evidence |
+| View home feed (guest) | `/` | `GET /api/feed/home` | public only | passed with evidence |
+| View following feed (auth) | `/` | `GET /api/feed/following` | own content | passed with evidence |
+| View profile posts | `/u/:username` | `GET /api/feed/user/:id` | private profile | passed with evidence |
+| Stories create/view/delete | feed | stories API | 24h expiry | passed with evidence |
 
 ### P1 — Messaging
 
@@ -425,8 +425,8 @@ Priority order:
 | Flow | Entry | API Routes | Risk | Status |
 |------|-------|-----------|------|--------|
 | Receive real-time notification | any | SSE `/api/notifications/stream` | auth, SSE disconnect | not started |
-| Mark notification read | notifications | `PATCH /api/notifications/:id` | other user's notification | not started |
-| Mark all read | notifications | `PATCH /api/notifications/read-all` | bulk ownership | not started |
+| Mark notification read | notifications | `PATCH /api/shared/notifications/:id` | other user's notification | passed with evidence |
+| Mark all read | notifications | `PATCH /api/shared/notifications/read-all` | bulk ownership | passed with evidence |
 | Notification for order event | order update | queue | delivery guarantee | not started |
 | Notification for @mention | post/comment | queue | delivery guarantee | not started |
 | Notification for follow | follow action | queue | dedup | not started |
@@ -441,8 +441,8 @@ Priority order:
 | View followers/following | profile | stats endpoints | private accounts | not started |
 | Search users/products/stores | search bar | `GET /api/search` | ordering, type filter | not started |
 | Seller profile page | `/sellers/:storeSlug` | seller profile APIs | data exposure | not started |
-| Map — view seller pins | `/map` | `GET /api/map/sellers` | location privacy | not started |
-| Map — filter by category/distance | `/map` | query params | radius performance | not started |
+| Map — view seller pins | `/map` | `GET /api/map/sellers` | location privacy | passed with evidence |
+| Map — filter by category/distance | `/map` | query params | radius performance | passed with evidence |
 
 ### P1 — Wall
 
@@ -512,10 +512,10 @@ the core constraint (sellers must not DM-and-boycott the platform):
 ## Social — UI/UX Checklist
 
 ### Auth Pages
-- [ ] Register: password strength indicator, email already taken error
-- [ ] Login: wrong password shows correct error (not 500), redirect after login works
-- [ ] Forgot/Reset: expired link shows clear error, not generic 500
-- [ ] Social OAuth: redirect URI shows correct provider branding
+- [x] Register: role chooser → account form; email-already-taken error returns 400 (API-tested)
+- [x] Login: wrong password shows a clear error (not 500), stays on /user-login (`auth.spec.ts`); full redirect-after-login left to manual (SSE makes it slow/flaky in E2E)
+- [x] Forgot/Reset: expired/invalid link returns a clean 400 with a clear message, not a 500 (`password-reset.spec.ts`)
+- [ ] Social OAuth: redirect URI shows correct provider branding — needs real OAuth creds (state-CSRF + error handling API-tested)
 
 ### Feed & Posts
 - [ ] Post composer: image/video upload progress visible
@@ -854,14 +854,19 @@ Track individual flows here. Update status as work progresses.
 | Register user | duplicate email | API | passed with evidence | Phase 1 tests |
 | Login | brute force | API | passed with evidence | Phase 1 tests |
 | Logout | token not cleared | API | passed with evidence | Phase 1 tests |
-| Verify email | replay, expiry | API | not started | |
-| Forgot/Reset password | user enumeration | API | not started | |
+| Verify email | replay, expiry | API + integration | passed with evidence | `verifyEmailToken` hardened to atomic claim (single-use + expiry, race-safe). `password-reset.spec.ts` covers garbage/missing token → 400 |
+| Reset token — expiry + single-use NOT enforced | replayed/expired reset token resets password | **bug found → fixed** | passed with evidence | **Critical**: `usePasswordResetToken` (the method on the live reset path) checked neither `expires_at` nor `used_at` — an expired reset link still worked and a used token could be replayed. The read-only `verifyPasswordResetToken` had the checks but was unused. Fixed with an atomic conditional claim (`used_at: null` + `expires_at > now`). Proven end-to-end by `tests/scripts/verify-reset-token.cjs`: valid→200, replay→400, expired→400 |
+| Forgot password — user enumeration | response reveals account existence | API | passed with evidence | Service returns identical "If email exists…" message + 200 for existing and non-existent emails. `password-reset.spec.ts` asserts both |
 | Checkout OTP send | rate limit | API | passed with evidence | `session.spec.ts` |
-| Checkout OTP verify | expiry, replay | API | not started | |
-| Seller registration | duplicate store | API | not started | |
-| Create post | media upload | API + E2E | not started | |
+| Checkout OTP verify | expiry, replay | API + code review | passed with evidence | Single-use + expiry enforced via `otpStore.verify` (Redis `getdel` = atomic consume-on-attempt). **Dev-parity fix**: in-memory fallback now also consumes on any attempt (was leaving the OTP in place on a wrong code → 6-digit brute-force in dev). `otp.spec.ts` covers verify negatives |
+| Seller registration | duplicate store, ownership | API | passed with evidence | `auth-extended.spec.ts` (7): dup slug → 409, reserved slug → 400, invalid slug format → 400, password mismatch → 400, short store name → 400, dup email → 400, missing fields → 400. Atomic user+seller txn, reserved-slug list |
+| Refresh token | stale/revoked token | API | passed with evidence | `auth-extended.spec.ts`: no cookie → 401, garbage cookie → 401. Service rejects revoked/expired sessions (401), rate-limited, rotates tokens, httpOnly |
+| OAuth state CSRF | login CSRF, open redirect | API | passed with evidence | `oauth.spec.ts` (5): callback rejects state≠cookie → 400, single-use state cookie, relative-only post-login redirect, provider whitelist |
+| Auth UI — login/register | wrong-pwd crash, render | E2E | passed with evidence | `tests/e2e/ui/auth.spec.ts` (4): login renders, wrong password shows error (no 500), empty submit validates, register role-chooser → account form |
+| Create post | media upload, content type | API | passed with evidence | `posts.spec.ts` CRUD flow (create/get/patch/comment); requires-at-least caption/content/media validation |
 | Like/unlike post | duplicate like | API | passed with evidence | Phase 5 gap-fill |
-| Post IDOR (edit/delete) | ownership | API | not started | |
+| Post IDOR (edit/delete) | ownership | API | passed with evidence | `updatePost`/`deletePost` check `post.authorId !== userId → 403`. `posts-visibility.spec.ts`: second user PATCH → 403, DELETE → 403, owner edit → 200 |
+| Feed visibility leak | PRIVATE/FOLLOWERS posts in public feeds | **bug found → fixed** | passed with evidence | **Privacy leak**: `postRepository.getPosts`/`count` filtered `moderationStatus` + `wallTargetType` but NOT `visibility` — so PRIVATE & FOLLOWERS-only posts surfaced in the public home, discover, square, and user feeds (visible to guests). Fixed across 5 surfaces: home + discover + squares + public user feed → `visibility: 'PUBLIC'`; following feeds (×2) → `PUBLIC`+`FOLLOWERS` (never PRIVATE). `posts-visibility.spec.ts`: PRIVATE post absent from home/discover/user feed, PUBLIC present |
 | Start conversation | duplicate conv | API | passed with evidence | `chat.spec.ts` |
 | Message IDOR | other user's convo | API | passed with evidence | `chat-messages.spec.ts` |
 | Delete conversation | ownership | API | passed with evidence | `chat-messages.spec.ts` gap-fill |
@@ -870,12 +875,17 @@ Track individual flows here. Update status as work progresses.
 | Search result ordering | type filter | API | passed with evidence | `search.spec.ts` (destructuring fixed) |
 | Seller profile `$fetch` refactor | raw fetch | code review | passed with evidence | replaced with service clients |
 | Square officer management | chairman-only | API | passed with evidence | `squares-extended.spec.ts` gap-fill |
-| Map location privacy | coordinate exposure | manual | not started | |
+| Map location privacy | coordinate exposure | code review + API | passed with evidence | `getAllGeoSellers` AND `searchSellers` both filter `hideLocation: false` (ghost-mode sellers excluded on list + search paths). Coords shown are opt-in seller *business* locations. `map.spec.ts` covers the endpoint contract |
+| Notification mark-read/delete IDOR | mark another user's notification | **bug found → fixed** | passed with evidence | `markAsRead` enforces ownership (`notification.userId !== userId → 403`). **Bug**: read-all, mark-read, and delete routes caught the `requireAuth` 401 and rethrew it as **500** (H3-error swallow) — added passthrough + logging to all 3. `notifications.spec.ts`: auth guards (401), invalid id → 400, unknown → 404, cross-user → 403/404 |
+| Profile edit URL scheme guard | javascript: link via profile | API | passed with evidence | `PATCH /api/profile` rejects `javascript:` in `links[].url` (Zod `safeHttpUrl` from the earlier XSS fix), accepts valid https. `profile.spec.ts` |
 | Wall shoutout create (store) | auth, body length | API | not started | `POST /api/wall/store/:slug` |
 | Wall shoutout delete (author + owner) | ownership | API | not started | `DELETE /api/wall/:type/:slug/:postId` |
 | Wall feed contamination fix | wall posts in home/following feed | code review | passed with evidence | `wallTargetType: null` filter added to all post.repository queries |
 | Reviews eligibility `profileId` bug | Unknown argument | code review | passed with evidence | `eligibility.get.ts` — `profileId` → `userId` on `Orders.findFirst` |
 | Embedding column `Unsupported()` fix | `db push` drops pgvector column | code review | passed with evidence | `embedding Unsupported("vector(1536)")?` added to schema; column restored via raw SQL |
+| @mention notification | trigger on post create | API + code review | passed with evidence | `createPost` enqueues `MENTION` per mentioned user (self-skip + dedup, includes postId/actorId). Mentions search API tested (`mentions.spec.ts`, 4). Delivery via shared BullMQ queue (Redis-dependent infra) |
+| Stories create/view/delete | 24h expiry, delete IDOR | API | passed with evidence | `stories.spec.ts` (5): auth guard, mediaUrl required, ~24h `expiresAt`, active-only list (`expiresAt > now`), delete IDOR (other user → 403, owner → 200) |
+| BaseImage unresolved component | broken images on 10 pages | bug fix | passed with evidence | `<BaseImage>` relied on auto-import that doesn't resolve at runtime in this project — added explicit `import` to all 10 consumers (sellers, deals, pre-loved, fresh-drops, saved/likes tabs, order cards, checkout summary). `sellers-baseimage.spec.ts` asserts no unresolved-component warning |
 
 ## AI Tracker
 

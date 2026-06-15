@@ -221,6 +221,7 @@
 </template>
 
 <script setup lang="ts">
+import BaseImage from '~~/layers/ui/app/components/BaseImage.vue'
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import { useOrderApi } from '~~/layers/commerce/app/services/order.api'
 import { useSeo } from '~~/layers/core/app/composables/useSeo'

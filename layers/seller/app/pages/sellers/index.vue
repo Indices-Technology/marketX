@@ -158,6 +158,7 @@
 </template>
 
 <script setup lang="ts">
+import BaseImage from '~~/layers/ui/app/components/BaseImage.vue'
 import RightSideNavSeller from '~~/layers/core/app/layouts/children/RightSideNavSeller.vue'
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import { useSeo } from '~~/layers/core/app/composables/useSeo'

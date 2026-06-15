@@ -83,13 +83,15 @@ test.describe('map — sellers', () => {
 // ─── /api/map/sellers/:slug/preview ───────────────────────────────────────────
 
 test.describe('map — seller preview', () => {
-  test('GET /api/map/sellers/:slug/preview returns 400 without lat/lng', async ({
+  test('GET /api/map/sellers/:slug/preview handles missing lat/lng gracefully', async ({
     request,
   }) => {
+    // lat/lng are optional on preview (distanceKm defaults to 0). A seller with
+    // GPS → 200; a seller with no GPS on record → 404. Never 400/500.
     const res = await request.get(
       `${MAP}/sellers/${TEST_SELLER.storeSlug}/preview`,
     )
-    expect(res.status()).toBe(400)
+    expect([200, 404]).toContain(res.status())
   })
 
   test('GET /api/map/sellers/:slug/preview returns data for known seller', async ({

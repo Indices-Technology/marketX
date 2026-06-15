@@ -238,7 +238,14 @@ export const postRepository = {
 
   async getPostsByAuthorIds(authorIds: string[], options: any) {
     return await prisma.post.findMany({
-      where: { authorId: { in: authorIds }, moderationStatus: 'ACTIVE', wallTargetType: null },
+      // Following feed: a follower may see PUBLIC and FOLLOWERS posts, never
+      // PRIVATE (which is author-only).
+      where: {
+        authorId: { in: authorIds },
+        moderationStatus: 'ACTIVE',
+        wallTargetType: null,
+        visibility: { in: ['PUBLIC', 'FOLLOWERS'] },
+      },
       take: options.limit,
       skip: options.offset,
       orderBy: { created_at: 'desc' },
@@ -250,8 +257,10 @@ export const postRepository = {
     return await prisma.post.delete({ where: { id: postId } })
   },
 
-  async count() {
-    return await prisma.post.count({ where: { moderationStatus: 'ACTIVE', wallTargetType: null } })
+  async count(where: any = {}) {
+    return await prisma.post.count({
+      where: { moderationStatus: 'ACTIVE', wallTargetType: null, ...where },
+    })
   },
 
   // ========== COMMENTS ==========

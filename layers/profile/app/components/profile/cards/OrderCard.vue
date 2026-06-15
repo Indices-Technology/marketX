@@ -122,6 +122,7 @@
 </template>
 
 <script setup lang="ts">
+import BaseImage from '~~/layers/ui/app/components/BaseImage.vue'
 import { useOrderApi } from '~~/layers/commerce/app/services/order.api'
 import BaseBadge from '~~/layers/ui/app/components/BaseBadge.vue'
 import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'

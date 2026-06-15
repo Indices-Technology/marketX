@@ -259,6 +259,7 @@
 </template>
 
 <script setup lang="ts">
+import BaseImage from '~~/layers/ui/app/components/BaseImage.vue'
 import { useOrderApi } from '~~/layers/commerce/app/services/order.api'
 import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { imgAvatar } from '~~/layers/core/app/utils/cloudinary'

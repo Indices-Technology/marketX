@@ -162,6 +162,22 @@ test.describe('profile — own profile', () => {
     expect(res.status()).toBe(400)
   })
 
+  test('PATCH /api/profile rejects a javascript: link (URL scheme guard)', async ({ request }) => {
+    const res = await request.patch(PROFILE, {
+      headers: { Authorization: `Bearer ${token}` },
+      data: { links: [{ type: 'website', url: 'javascript:alert(document.cookie)' }] },
+    })
+    expect(res.status()).toBe(400)
+  })
+
+  test('PATCH /api/profile accepts a valid https link', async ({ request }) => {
+    const res = await request.patch(PROFILE, {
+      headers: { Authorization: `Bearer ${token}` },
+      data: { links: [{ type: 'website', url: 'https://example.com' }] },
+    })
+    expect(res.status()).toBeLessThan(300)
+  })
+
   test('GET /api/profile/settings returns settings object', async ({ request }) => {
     const res = await request.get(`${PROFILE}/settings`, {
       headers: { Authorization: `Bearer ${token}` },

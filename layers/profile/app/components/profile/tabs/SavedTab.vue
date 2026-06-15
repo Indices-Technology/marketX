@@ -256,6 +256,7 @@
 </template>
 
 <script setup lang="ts">
+import BaseImage from '~~/layers/ui/app/components/BaseImage.vue'
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from '#imports'
 import { imgThumb } from '~~/layers/core/app/utils/cloudinary'

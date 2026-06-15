@@ -263,6 +263,7 @@
 </template>
 
 <script setup lang="ts">
+import BaseImage from '~~/layers/ui/app/components/BaseImage.vue'
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from '#imports'
 import { usePostStore } from '~~/layers/social/app/store/post.store'

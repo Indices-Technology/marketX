@@ -15,8 +15,11 @@ export default defineEventHandler(async (event): Promise<IFeedResponse> => {
   }
 
   try {
+    // Unauthenticated public view of a user's posts → PUBLIC only. Owner-aware
+    // viewing (sees own PRIVATE/FOLLOWERS posts) goes through the authed
+    // profile-posts path (post.service.getUserPosts), not this endpoint.
     const posts = await prisma.post.findMany({
-      where: { authorId: userId, moderationStatus: 'ACTIVE' },
+      where: { authorId: userId, moderationStatus: 'ACTIVE', visibility: 'PUBLIC' },
       take: limit,
       skip: offset,
       orderBy: { created_at: 'desc' },
@@ -34,7 +37,7 @@ export default defineEventHandler(async (event): Promise<IFeedResponse> => {
     })
 
     const items = posts.map(normalizePost)
-    const total = await prisma.post.count({ where: { authorId: userId, moderationStatus: 'ACTIVE' } })
+    const total = await prisma.post.count({ where: { authorId: userId, moderationStatus: 'ACTIVE', visibility: 'PUBLIC' } })
 
     return {
       items,

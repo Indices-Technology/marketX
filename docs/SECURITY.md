@@ -189,7 +189,7 @@ wired** — it would be redundant for header auth.
 | 1 | Auth token in `localStorage` (XSS-readable) | Medium | Consider httpOnly-cookie migration |
 | 2 | File-upload server-side type/size validation unverified | Medium | Verify or add |
 | 3 | Refresh-token cookie CSRF-reachability | Medium | Confirm header/sameSite pairing |
-| 4 | Password reset / email verify / OAuth `state` untested | Medium | July (Social pillar) |
+| ~~4~~ | ~~OAuth `state` param CSRF untested~~ — **verified defended** (callback rejects state≠cookie; `oauth.spec.ts`) | — | done |
 | 5 | `SENDBOX_WEBHOOK_SECRET` placeholder | High (breaks tracking) | Set real value in prod env |
 | 6 | Rate-limit Redis mandatory in prod | Low | Infra config |
 
@@ -207,5 +207,17 @@ wired** — it would be redundant for header auth.
 - [x] `v-html` sinks sanitized (DOMPurify / escape-first)
 - [x] `:href` script-scheme injection blocked (input + render guard)
 - [x] SQL injection (Prisma-only)
+- [x] Password-reset token single-use + expiry (atomic claim; bug found + fixed June 2026)
+- [x] Email-verification token single-use + expiry (atomic claim)
+- [x] Forgot-password no user enumeration (identical response for existing/absent email)
+- [x] OAuth `state` CSRF (callback rejects state ≠ httpOnly cookie; single-use; relative-only redirect)
+- [x] Checkout OTP single-use + expiry (Redis `getdel` atomic consume; dev fallback aligned to consume-on-attempt)
+- [x] Refresh token revocation/expiry enforced (revoked/expired session → 401, rate-limited, rotated, httpOnly)
+- [x] Seller registration: duplicate store/email/username rejected, reserved-slug list, atomic user+seller txn
+- [x] Post visibility: PRIVATE/FOLLOWERS posts never leak to public feeds (home/discover/squares/user → PUBLIC; following → PUBLIC+FOLLOWERS); bug found + fixed June 2026
+- [x] Post edit/delete IDOR: `authorId === userId` enforced server-side
+- [x] Notification mark-read/delete IDOR: `notification.userId === userId` enforced; H3 401-swallow fixed on 3 routes (June 2026)
+- [x] Map location privacy: `hideLocation` (ghost mode) excluded on list + search paths
+- [x] Profile-edit URL scheme guard: `javascript:`/`data:` links rejected (Zod `safeHttpUrl`)
 - [x] Rate limiting on auth, uploads, reads
 - [x] No secrets in logs; structured error logging with requestId

@@ -28,7 +28,11 @@ export default defineEventHandler(async (event): Promise<IFeedResponse> => {
 
       // +1 trick: eliminates the COUNT query
       const postsPlusOne = await prisma.post.findMany({
-        where: { authorId: { in: followingIds }, moderationStatus: 'ACTIVE' },
+        where: {
+          authorId: { in: followingIds },
+          moderationStatus: 'ACTIVE',
+          visibility: { in: ['PUBLIC', 'FOLLOWERS'] }, // never PRIVATE (author-only)
+        },
         take: limit + 1,
         skip: offset,
         orderBy: { created_at: 'desc' },

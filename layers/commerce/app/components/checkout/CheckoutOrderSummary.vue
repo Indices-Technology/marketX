@@ -64,6 +64,7 @@
 </template>
 
 <script setup lang="ts">
+import BaseImage from '~~/layers/ui/app/components/BaseImage.vue'
 import { useCurrency } from '~~/layers/core/app/composables/useCurrency'
 import type { ICartItem } from '~~/layers/commerce/app/types/commerce.types'
 import type { SupportedCurrency } from '~~/shared/utils/currency'

@@ -26,6 +26,9 @@ export default defineEventHandler(async (event) => {
         statusMessage: error.message,
       })
     }
+    // Pass through H3 errors (e.g. requireAuth 401) — don't bury them as 500
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error
+    logger.logError('[PATCH /api/shared/notifications/:id]', error, { requestId: event.context?.requestId })
     throw createError({ statusCode: 500, statusMessage: 'Server error' })
   }
 })

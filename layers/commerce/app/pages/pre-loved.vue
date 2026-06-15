@@ -106,6 +106,7 @@
 </template>
 
 <script setup lang="ts">
+import BaseImage from '~~/layers/ui/app/components/BaseImage.vue'
 import { ref } from 'vue'
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import { useFeedApi } from '~~/layers/feed/app/services/feed.api'

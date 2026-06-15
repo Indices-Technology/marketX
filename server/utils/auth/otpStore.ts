@@ -58,16 +58,15 @@ export const otpStore = {
       return entry
     }
 
-    // In-memory fallback
+    // In-memory fallback. Consume the entry on ANY verify attempt to match the
+    // Redis getdel semantics above — otherwise a wrong code leaves the OTP in
+    // place and the 6-digit code is brute-forceable (dev-only, but keep parity).
     const key = email.toLowerCase()
     const entry = _store.get(key)
     if (!entry) return null
-    if (Date.now() > entry.expiresAt) {
-      _store.delete(key)
-      return null
-    }
-    if (entry.code !== code) return null
     _store.delete(key)
+    if (Date.now() > entry.expiresAt) return null
+    if (entry.code !== code) return null
     return entry
   },
 
