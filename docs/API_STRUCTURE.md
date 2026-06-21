@@ -4,8 +4,8 @@
 > Base URL: `/api`
 
 > **Machine-readable contract (params + response shapes):** an OpenAPI spec is
-> served at **`/_openapi.json`**, with interactive docs at **`/_scalar`**
-> (Scalar) and **`/_swagger`** (Swagger UI). Point your client codegen
+> served at **`/api/openapi.json`**, with interactive docs at **`/api/scalar`**
+> (Scalar) and **`/api/swagger`** (Swagger UI). Point your client codegen
 > (Retrofit/Kotlin, etc.) at the JSON.
 > This markdown is the human **map** (what exists + auth level); the OpenAPI
 > spec is the authoritative per-route detail, generated from the handlers via

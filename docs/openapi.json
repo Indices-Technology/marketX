@@ -5027,10 +5027,10 @@
         }
       }
     },
-    "/_openapi.json": {
+    "/api/openapi.json": {
       "get": {
         "tags": [
-          "Internal"
+          "API Routes"
         ],
         "parameters": [],
         "responses": {
@@ -5040,10 +5040,10 @@
         }
       }
     },
-    "/_scalar": {
+    "/api/scalar": {
       "get": {
         "tags": [
-          "Internal"
+          "API Routes"
         ],
         "parameters": [],
         "responses": {
@@ -5053,10 +5053,10 @@
         }
       }
     },
-    "/_swagger": {
+    "/api/swagger": {
       "get": {
         "tags": [
-          "Internal"
+          "API Routes"
         ],
         "parameters": [],
         "responses": {

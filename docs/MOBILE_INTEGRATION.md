@@ -4,8 +4,8 @@
 > consumer of the MarketX API. Pair this with:
 > - **[API_STRUCTURE.md](./API_STRUCTURE.md)** — the route map (what exists + auth level)
 > - **[openapi.json](./openapi.json)** — machine-readable contract for codegen
-> - Live interactive docs: `…/_scalar?key=<secret>` (Scalar UI) or
->   `…/_swagger?key=<secret>` (Swagger UI). The docs are gated by a shared
+> - Live interactive docs: `…/api/scalar?key=<secret>` (Scalar UI) or
+>   `…/api/swagger?key=<secret>` (Swagger UI). The docs are gated by a shared
 >   secret — ask the MarketX team for it. The **API itself is not gated**; the
 >   key only unlocks the documentation pages.
 
@@ -163,7 +163,7 @@ openapi-generator-cli generate -i openapi.json -g kotlin -o ./marketx-client
 > **Coverage:** the **Auth** domain is fully specced (params, bodies, responses).
 > Other domains currently appear as paths only — refer to API_STRUCTURE.md for
 > those until annotation rolls out (in progress). Treat `openapi.json` as a
-> snapshot; the live `…/_openapi.json` is authoritative once deployed.
+> snapshot; the live `…/api/openapi.json` is authoritative once deployed.
 
 ---
 
@@ -171,10 +171,10 @@ openapi-generator-cli generate -i openapi.json -g kotlin -o ./marketx-client
 
 These are on the **MarketX team**, not the mobile dev:
 
-1. **Deploy this branch to staging** so `…/_openapi.json` and `…/_scalar` are live
-   (staging currently runs an older build — those routes 301 right now). Set
-   `OPENAPI_DOCS_SECRET` in the staging environment as part of the deploy.
-2. ~~Gate the docs routes.~~ **Done** — `/_openapi.json`, `/_scalar`, `/_swagger`
+1. **Deploy this branch to staging** so `…/api/openapi.json` and `…/api/scalar` are
+   live. Requires `nitro.openAPI.production: true` (set) **and** redeploying the
+   staging server, plus setting `OPENAPI_DOCS_SECRET` in the staging environment.
+2. ~~Gate the docs routes.~~ **Done** — `/api/openapi.json`, `/api/scalar`, `/api/swagger`
    require `OPENAPI_DOCS_SECRET` (via `?key=`, `x-docs-key` header, or the cookie
    the UI sets after `?key=`). Gate is off when the secret is unset (local dev).
    The API and app are unaffected.

@@ -15,7 +15,7 @@
 
 import { getQuery, getRequestHeader, getCookie, setCookie, createError } from 'h3'
 
-const DOC_ROUTES = ['/_openapi.json', '/_scalar', '/_swagger']
+const DOC_ROUTES = ['/api/openapi.json', '/api/scalar', '/api/swagger']
 const COOKIE_NAME = 'docs_key'
 
 export default defineEventHandler((event) => {

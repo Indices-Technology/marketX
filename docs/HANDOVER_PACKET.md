@@ -30,13 +30,13 @@
 |---|---|---|---|
 | 1 | `API_STRUCTURE.md` | Route map + auth levels | ✅ Ready |
 | 2 | `MOBILE_INTEGRATION.md` | How to consume the API (auth, errors, realtime, base URL) | ✅ Ready |
-| 3 | `openapi.json` + live `/_scalar?key=…` | Machine-readable contract for codegen (gated) | ✅ Ready (Auth fully specced; rest rolling out) |
+| 3 | `openapi.json` + live `/api/scalar?key=…` | Machine-readable contract for codegen (gated) | ✅ Ready (Auth fully specced; rest rolling out) |
 | 4 | `API_READINESS.md` | Milestone-by-milestone readiness + v1 definition | ✅ Ready |
 | 5 | `ARCHITECTURE.md` *(optional)* | Backend background | ✅ Available — trim secrets before sharing |
 
 **Access to provide alongside the docs:**
 - Staging base URL: `https://marketx.indicestech.com/api`
-- Docs secret for `/_scalar` (share privately): `[STAGING OPENAPI_DOCS_SECRET]`
+- Docs secret for `/api/scalar` (share privately): `[STAGING OPENAPI_DOCS_SECRET]`
 - Test accounts (buyer, seller) + seed data: `[provide]`
 - Client GitHub repo invite (App lives here from day 1): `[repo]`
 - Designs / Figma: `[link]`

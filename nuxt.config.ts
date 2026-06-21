@@ -252,9 +252,18 @@ export default defineNuxtConfig({
       openAPI: true,
     },
     // OpenAPI contract for API consumers (e.g. the native/mobile client).
-    // Spec served at /_openapi.json; interactive docs at /_scalar and /_docs.
+    // Spec:  /api/openapi.json   ·   Docs:  /api/scalar  &  /api/swagger
+    // `production: true` is REQUIRED for these to exist in a production build
+    // (staging runs env=production); without it Nitro registers them in dev only.
     // Route detail comes from `defineRouteMeta({ openAPI: {...} })` in handlers.
+    // All three are gated by OPENAPI_DOCS_SECRET (server/middleware/01.docs-auth.ts).
     openAPI: {
+      production: true,
+      route: '/api/openapi.json',
+      ui: {
+        scalar: { route: '/api/scalar' },
+        swagger: { route: '/api/swagger' },
+      },
       meta: {
         title: 'MarketX API',
         description:
@@ -299,8 +308,8 @@ export default defineNuxtConfig({
       // app-wide CSP above blocks that, so relax it ONLY on these doc routes —
       // the rest of the app keeps the strict policy. The spec itself is fetched
       // same-origin (connect-src 'self').
-      '/_scalar': { headers: { 'Content-Security-Policy': OPENAPI_DOC_CSP } },
-      '/_swagger': { headers: { 'Content-Security-Policy': OPENAPI_DOC_CSP } },
+      '/api/scalar': { headers: { 'Content-Security-Policy': OPENAPI_DOC_CSP } },
+      '/api/swagger': { headers: { 'Content-Security-Policy': OPENAPI_DOC_CSP } },
     },
   },
 
