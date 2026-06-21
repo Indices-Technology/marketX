@@ -22,6 +22,17 @@ const schema = z.object({
   shippingCost: z.number().int().min(0).default(0),
   shippingZone: z.string().optional(),
   estimatedDays: z.string().optional(),
+  shippingBreakdown: z
+    .array(
+      z.object({
+        storeSlug: z.string(),
+        amount: z.number().int().min(0),
+        carrier: z.string().optional(),
+        service: z.string().optional(),
+        estimatedDays: z.string().optional(),
+      }),
+    )
+    .optional(),
   currency: z.string().default('NGN'),
   callback_url: z.string().url().optional(),
   affiliateCode: z.string().optional(),
@@ -35,8 +46,8 @@ export default defineEventHandler(async (event) => {
       getHeader(event, 'x-forwarded-for') || getClientIP(event) || 'unknown'
     const userAgent = getHeader(event, 'user-agent') || 'unknown'
 
-    // 1. Create the order (PENDING, UNPAID)
-    const order = await orderService.placeOrder(
+    // 1. Create the orders (one per seller, PENDING/UNPAID, shared group)
+    const group = await orderService.placeOrder(
       user.id,
       {
         ...body,
@@ -46,9 +57,9 @@ export default defineEventHandler(async (event) => {
       userAgent,
     )
 
-    // 2. Build a unique Paystack reference and persist it
-    const reference = `stylex_${order.id}_${Date.now()}`
-    await orderRepository.setPaymentRef(order.id, reference)
+    // 2. One Paystack reference for the whole purchase, set on every order
+    const reference = `stylex_${group.purchaseGroupId.slice(0, 8)}_${Date.now()}`
+    await orderRepository.setPaymentRefForGroup(group.purchaseGroupId, reference)
 
     // 3. Initialize Paystack transaction
     // Priority: email from checkout form → account email (if real TLD) → generated placeholder
@@ -61,19 +72,22 @@ export default defineEventHandler(async (event) => {
     const email = isRealEmail(body.email) ? body.email
       : isRealEmail(user.email) ? user.email
       : `user_${user.id}@checkout.marketx.app`
+    // Charge the whole purchase: items + shipping across all per-seller orders.
+    const amount = group.itemsTotal + group.shippingTotal
     const ps = await paystack.initializeTransaction({
       email,
-      amount: order.totalAmount + body.shippingCost,
+      amount,
       reference,
       currency: body.currency,
-      metadata: { orderId: order.id, userId: user.id },
+      metadata: { purchaseGroupId: group.purchaseGroupId, userId: user.id },
       callback_url: body.callback_url,
     })
 
     return {
       success: true,
       data: {
-        orderId: order.id,
+        purchaseGroupId: group.purchaseGroupId,
+        orderIds: group.orders.map((o) => o.id),
         reference,
         authorizationUrl: ps.data.authorization_url,
         accessCode: ps.data.access_code,

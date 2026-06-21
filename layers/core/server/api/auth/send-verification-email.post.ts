@@ -14,6 +14,31 @@ const schema = z.object({
  * Accepts { email } in the body and resends the verification link.
  * Used by the /resend-verification page for unverified / guest users.
  */
+defineRouteMeta({
+  openAPI: {
+    tags: ['Auth'],
+    summary: 'Resend the email-verification link',
+    description:
+      'Public. Responds identically whether or not the account exists / is ' +
+      'already verified — no account enumeration.',
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['email'],
+            properties: { email: { type: 'string', format: 'email' } },
+          },
+        },
+      },
+    },
+    responses: {
+      200: { description: '{ success, message }' },
+      400: { description: 'Invalid email' },
+    },
+  },
+})
 export default defineEventHandler(async (event) => {
   try {
     const body = await readBody(event)

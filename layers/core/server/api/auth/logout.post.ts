@@ -9,6 +9,18 @@ import {
 import { authService } from '../../services/auth.service'
 import { authRepository } from '../../repositories/auth.repository'
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Auth'],
+    summary: 'Log out / revoke the current session',
+    description:
+      'Revokes the session tied to the refresh-token cookie and clears auth ' +
+      'cookies. Native clients should additionally discard their stored tokens.',
+    responses: {
+      200: { description: '{ success, message }' },
+    },
+  },
+})
 export default defineEventHandler(async (event) => {
   try {
     const ipAddress =

@@ -79,6 +79,8 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { imgAvatar } from '~~/layers/core/app/utils/cloudinary'
+import { usePostApi } from '~~/layers/social/app/services/post.api'
+import { useProductApi } from '~~/layers/commerce/app/services/product.api'
 
 interface Liker {
   id: string
@@ -94,6 +96,8 @@ const props = defineProps<{
 
 defineEmits<{ close: [] }>()
 
+const postApi = usePostApi()
+const productApi = useProductApi()
 const likers = ref<Liker[]>([])
 const total = ref(0)
 const loading = ref(false)
@@ -113,15 +117,18 @@ async function fetchLikers(reset = false) {
   else loadingMore.value = true
 
   try {
-    const url =
-      props.type === 'post'
-        ? `/api/posts/${props.targetId}/likes`
-        : `/api/commerce/products/${props.targetId}/likes`
-
-    const res = await $fetch<{
+    const res = (await (props.type === 'post'
+      ? postApi.getPostLikes(String(props.targetId), {
+          limit,
+          offset: offset.value,
+        })
+      : productApi.getProductLikes(Number(props.targetId), {
+          limit,
+          offset: offset.value,
+        }))) as {
       success: boolean
       data: { likes: Array<{ profile?: Liker; user?: Liker }>; total: number }
-    }>(url, { query: { limit, offset: offset.value } })
+    }
 
     const rows = res.data.likes.map((l) => l.profile ?? l.user!)
     likers.value.push(...rows)

@@ -5,9 +5,9 @@
 // exercised — rates.post.ts falls back gracefully and is covered in shipping.spec.ts.
 import { test, expect } from '@playwright/test'
 import type { APIRequestContext } from '@playwright/test'
-import { apiLogin, TEST_USER, TEST_SELLER } from '../../../../../../../tests/helpers/auth'
+import { apiLogin, TEST_USER, TEST_SELLER } from '../../../../../../tests/helpers/auth'
 
-const CREATE = '/api/commerce/shipping/create'
+const CREATE = '/api/shipping/create'
 const WEBHOOK_SENDBOX = '/api/commerce/shipping/webhook/sendbox'
 const WEBHOOK_SHIPPO = '/api/commerce/shipping/webhook/shippo'
 const ORDERS = '/api/commerce/orders'
@@ -80,7 +80,7 @@ async function archiveProduct(
 
 // ─── Create shipment — auth & state guards ────────────────────────────────────
 
-test.describe('POST /api/commerce/shipping/create — guards', () => {
+test.describe('POST /api/shipping/create — guards', () => {
   let ctx: Awaited<ReturnType<typeof setupOrder>>
 
   test.beforeAll(async ({ request }) => {

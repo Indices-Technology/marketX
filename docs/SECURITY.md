@@ -182,13 +182,57 @@ wired** — it would be redundant for header auth.
 
 ---
 
+## 8. Mobile / native-client auth
+
+The web and native (Android/iOS) clients share one token-issuing core but use
+**two deliberately different transports**. This is not a regression of the web
+posture (items #1/#3) — the browser-specific threats those items defend against
+do not exist on a native client.
+
+| | Web | Native |
+|---|---|---|
+| Access token | `Authorization: Bearer` header, kept in `localStorage` | `Authorization: Bearer` header, kept in OS Keystore-backed encrypted storage |
+| Refresh token | httpOnly + `sameSite:strict` cookie (JS can't read it) | `X-Refresh-Token` header / body, kept in Keystore-backed encrypted storage |
+| Refresh endpoint | reads the cookie; rotated token returned **in the cookie only** | reads the header/body; rotated token returned **in the response body** |
+
+**Why this is safe on native:**
+- **No XSS surface (item #1 is browser-only).** There is no DOM and no on-origin
+  JS sandbox, so the `localStorage`-exfiltration path that makes XSS the #1 web
+  risk does not apply. Tokens live in `EncryptedSharedPreferences` (Android) /
+  Keychain (iOS), readable only by the app's own process.
+- **No CSRF reachability (closes item #3 for native).** A header/body token is
+  never auto-attached cross-site the way a cookie is, and the refresh token is a
+  high-entropy secret an attacker cannot forge. The native path never touches
+  the CSRF-reachable cookie branch.
+- **Rotation + revocation preserved unchanged.** `refreshAccessToken` rotates
+  the refresh token and invalidates the old one on every call
+  (`auth.service.ts`); sessions are individually revocable and bound to
+  device + IP via the `Session` table. A 7-day refresh token in app storage is
+  acceptable precisely because it is rotating, per-device, and server-side
+  revocable.
+
+**Endpoint contract** (`layers/core/server/api/auth/refresh-token.ts`): the
+handler branches on `fromCookie`. Cookie callers (web) get **only** the access
+token in the body — the rotated refresh token stays in the httpOnly cookie,
+never exposed to JS. Header/body callers (native) get the rotated refresh token
+in the body, because rotation just invalidated the one they sent.
+
+> **Native transport hardening (mobile dev's responsibility — specify in the
+> mobile integration guide):** TLS required, certificate pinning recommended to
+> the API domain, tokens never written to logs/crash reports, and native OAuth
+> via PKCE + deep-link redirect (do **not** consume the web cookie-bridge
+> `GET /api/auth/session`, which exists only to hand httpOnly OAuth cookies back
+> to web JS).
+
+---
+
 ## Open items before a security sign-off
 
 | # | Item | Severity | Owner action |
 |---|------|----------|--------------|
 | 1 | Auth token in `localStorage` (XSS-readable) | Medium | Consider httpOnly-cookie migration |
 | 2 | File-upload server-side type/size validation unverified | Medium | Verify or add |
-| 3 | Refresh-token cookie CSRF-reachability | Medium | Confirm header/sameSite pairing |
+| 3 | Refresh-token cookie CSRF-reachability (web) | Medium | Web path still cookie + `sameSite:strict`; confirm pairing. Native path is header/body — not CSRF-reachable (see §8) |
 | ~~4~~ | ~~OAuth `state` param CSRF untested~~ — **verified defended** (callback rejects state≠cookie; `oauth.spec.ts`) | — | done |
 | 5 | `SENDBOX_WEBHOOK_SECRET` placeholder | High (breaks tracking) | Set real value in prod env |
 | 6 | Rate-limit Redis mandatory in prod | Low | Infra config |
@@ -217,6 +261,12 @@ wired** — it would be redundant for header auth.
 - [x] Post visibility: PRIVATE/FOLLOWERS posts never leak to public feeds (home/discover/squares/user → PUBLIC; following → PUBLIC+FOLLOWERS); bug found + fixed June 2026
 - [x] Post edit/delete IDOR: `authorId === userId` enforced server-side
 - [x] Notification mark-read/delete IDOR: `notification.userId === userId` enforced; H3 401-swallow fixed on 3 routes (June 2026)
+- [x] Square buyer-request notifications: `SQUARE_REQUEST`/`SQUARE_OFFER` correctly typed (typeMap was downgrading them to `GENERAL`; fixed + delivery verified end-to-end June 2026)
+- [x] Chat IDOR: conversation read/send/delete gated on participant-or-store-owner; third party → 403. Store-owner 403-on-own-conversation bug fixed (sellerSelect lacked `profileId`); message-delete `senderId === userId`. Pusher channel auth rejects any channel but caller's own `private-user-{id}` (`chat-security.spec.ts`, June 2026)
+- [x] Public profile data exposure: `GET /api/profile/:username` whitelists public seller fields — no raw GPS lat/long (honors `hideLocation`), no shipFrom origin address/phone, no verification status/reason, no email (bug found + fixed June 2026; `search.spec.ts`)
+- [x] Search PII/enumeration: user search neither matches nor returns `email`; product search scoped to PUBLISHED; post search scoped to PUBLIC + ACTIVE moderation (no private/removed leak) (bug found + fixed June 2026)
+- [x] Self-follow + duplicate-follow rejected server-side (`socialService.followUser` → 400)
+- [x] Wall shoutouts: create requires auth + follows 1–1000 char Zod; delete authorized to author OR wall owner only (validates post belongs to that wall) → cross-party 403; timeline never surfaces non-PUBLIC/removed posts; `WALL_SHOUTOUT` notification correctly typed (was downgraded to `GENERAL`; fixed June 2026; `wall.spec.ts`)
 - [x] Map location privacy: `hideLocation` (ghost mode) excluded on list + search paths
 - [x] Profile-edit URL scheme guard: `javascript:`/`data:` links rejected (Zod `safeHttpUrl`)
 - [x] Rate limiting on auth, uploads, reads

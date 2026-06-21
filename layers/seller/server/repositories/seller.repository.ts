@@ -218,6 +218,8 @@ export const sellerRepository = {
       pod_enabled?: boolean
       pod_zones?: string[]
       pod_delivery_days?: number
+      // BYOS
+      shippingConfig?: Record<string, unknown> | null
     },
   ): Promise<any> {
     // Verify ownership
@@ -281,6 +283,8 @@ export const sellerRepository = {
         ...(data.pod_enabled !== undefined && { pod_enabled: data.pod_enabled }),
         ...(data.pod_zones !== undefined && { pod_zones: data.pod_zones }),
         ...(data.pod_delivery_days !== undefined && { pod_delivery_days: data.pod_delivery_days }),
+        // BYOS (bring-your-own-shipping) config
+        ...(data.shippingConfig !== undefined && { shippingConfig: data.shippingConfig }),
       },
     })
   },

@@ -163,9 +163,11 @@ import RightSideNavSeller from '~~/layers/core/app/layouts/children/RightSideNav
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { imgAvatar } from '~~/layers/core/app/utils/cloudinary'
+import { useSellerApi } from '~~/layers/seller/app/services/seller.services'
 
 useSeo().setSellersPage()
 
+const sellerApi = useSellerApi()
 const LIMIT = 12
 
 const sellers = ref<any[]>([])
@@ -192,12 +194,10 @@ const load = async (reset = false) => {
   else isLoadingMore.value = true
 
   try {
-    const res = await $fetch<any>('/api/seller/featured', {
-      params: {
-        limit: LIMIT,
-        offset: sellers.value.length,
-        search: searchQuery.value || undefined,
-      },
+    const res = await sellerApi.getFeaturedSellers({
+      limit: LIMIT,
+      offset: sellers.value.length,
+      search: searchQuery.value || undefined,
     })
     if (res?.data) {
       sellers.value.push(...res.data)

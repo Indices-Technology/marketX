@@ -4,17 +4,10 @@
     <!-- Logo -->
     <NuxtLink
       to="/"
-      class="mb-6 flex shrink-0 items-center justify-center gap-2.5 xl:justify-start"
+      class="mb-6 flex shrink-0 items-center justify-center xl:justify-start"
     >
-      <div
-        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand shadow-lg shadow-brand/25"
-      >
-        <span class="text-sm font-black italic text-white">MX</span>
-      </div>
-      <span
-        class="hidden text-xl font-black tracking-tight text-gray-900 xl:inline dark:text-white"
-      >
-        {{ $config.public.siteName || 'MarketX' }}
+      <span class="brand-wordmark hidden xl:inline-flex" aria-label="MarketX">
+        <span>Market</span><span class="brand-x">X</span>
       </span>
     </NuxtLink>
 
@@ -484,5 +477,27 @@ onUnmounted(() => document.removeEventListener('click', onClickOutside, true))
 .nav-scroll {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+.brand-wordmark {
+  align-items: baseline;
+  font-family: Sora, Manrope, system-ui, sans-serif;
+  font-size: 1.24rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1;
+  color: rgb(17 24 39);
+}
+
+:global(.dark) .brand-wordmark,
+:global(.theme-dark-mode) .brand-wordmark {
+  color: white;
+}
+
+.brand-x {
+  margin-left: 1px;
+  color: #f43f5e;
+  font-style: italic;
+  transform: translateY(-0.03em) skewX(-8deg);
 }
 </style>

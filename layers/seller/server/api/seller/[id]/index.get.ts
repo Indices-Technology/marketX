@@ -2,6 +2,32 @@ import { defineEventHandler } from 'h3'
 import { optionalAuth } from '~~/server/layers/shared/middleware/requireAuth'
 import { sellerService } from '../../../services/seller.services'
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Seller'],
+    summary: 'Get a seller/store by slug',
+    description:
+      'Despite the `{id}` path name, this expects the **store slug** (e.g. ' +
+      '`hadronpower`), NOT a UUID. Public: returns only active stores; the ' +
+      'owner (authenticated) also sees their own inactive store. ' +
+      'See also `GET /seller/by-slug/{slug}`.',
+    parameters: [
+      {
+        in: 'path',
+        name: 'id',
+        required: true,
+        schema: { type: 'string' },
+        description: 'Store slug — the URL handle (e.g. `hadronpower`), not an id.',
+        example: 'hadronpower',
+      },
+    ],
+    responses: {
+      200: { description: '{ success, message, data: SellerProfile }' },
+      400: { description: 'Slug missing' },
+      404: { description: 'Seller profile not found (no active store with that slug)' },
+    },
+  },
+})
 export default defineEventHandler(async (event) => {
   try {
     const slug = getRouterParam(event, 'id')

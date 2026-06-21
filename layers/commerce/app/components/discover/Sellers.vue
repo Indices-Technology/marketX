@@ -110,6 +110,7 @@ import type { Category } from '~~/shared/types/category'
 import CategoryPills from '~~/layers/commerce/app/components/CategoryPills.vue'
 import { useDiscoverFilters } from '~~/layers/commerce/app/composables/useDiscoverFilters'
 import { imgAvatar } from '~~/layers/core/app/utils/cloudinary'
+import { useSellerApi } from '~~/layers/seller/app/services/seller.services'
 
 const props = defineProps<{
   searchInput: string
@@ -122,6 +123,7 @@ const emit = defineEmits<{
 }>()
 
 const { filters: discoverFilters } = useDiscoverFilters()
+const sellerApi = useSellerApi()
 
 const formatNum = (n: number) => {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
@@ -148,14 +150,12 @@ const loadData = async (reset = false) => {
   sellersLoading.value = true
   const gen = sellersGen
   try {
-    const res = await $fetch<any>('/api/seller/featured', {
-      params: {
-        limit: 20,
-        offset: sellers.value.length,
-        search: props.searchInput.trim() || undefined,
-        categorySlug: props.selectedCategory || undefined,
-        hasDeals: discoverFilters.sellers.hasDeals || undefined,
-      },
+    const res = await sellerApi.getFeaturedSellers({
+      limit: 20,
+      offset: sellers.value.length,
+      search: props.searchInput.trim() || undefined,
+      categorySlug: props.selectedCategory || undefined,
+      hasDeals: discoverFilters.sellers.hasDeals || undefined,
     })
     if (gen !== sellersGen) return
     if (res?.data) {

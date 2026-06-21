@@ -5,7 +5,7 @@
     <h2
       class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-neutral-400"
     >
-      Shipping
+      {{ storeName ? `Ships from ${storeName}` : 'Shipping' }}
     </h2>
 
     <!-- Loading -->
@@ -138,7 +138,7 @@
 import { useCurrency } from '~~/layers/core/app/composables/useCurrency'
 import type { SupportedCurrency } from '~~/shared/utils/currency'
 import type { ShippingCalculation } from '~~/layers/commerce/app/composables/useShipping'
-import type { IShipmentRate } from '~~/server/utils/shipping/types'
+import type { IShipmentRate } from '~~/layers/shipping/server/legacy/types'
 
 const props = defineProps<{
   shippingCalculation: ShippingCalculation | null
@@ -149,6 +149,8 @@ const props = defineProps<{
   ratesError: string | null
   activeCountry: string
   activeCurrency: SupportedCurrency
+  /** When set (multi-seller cart), shown as the card header "Ships from {storeName}". */
+  storeName?: string
 }>()
 
 const emit = defineEmits<{

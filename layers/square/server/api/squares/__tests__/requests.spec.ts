@@ -265,3 +265,35 @@ test.describe('open-request rate limit', () => {
     for (const id of created) await request.delete(`${REQS}/${id}`, { headers })
   })
 })
+
+// ─── Notification delivery — a new request notifies member sellers ────────────
+
+test.describe('square request → SQUARE_REQUEST notification', () => {
+  test('member seller receives a correctly-typed SQUARE_REQUEST notification', async ({ request }) => {
+    const buyer = await authHeader(request, BUYER)
+    await request.post(FOLLOW, { headers: buyer })
+
+    const title = `Notif probe ${Date.now()}`
+    const reqRes = await request.post(REQS, { headers: buyer, data: { title } })
+    expect(reqRes.status()).toBe(200)
+    const requestId = (reqRes.ok() ? (await reqRes.json()).data?.id : null)
+
+    // TEST_SELLER (balogun-fabrics) is an ACTIVE member of this square → notified.
+    // Delivery is via the BullMQ worker (Upstash Redis) or the inline fallback
+    // when Redis is absent. Upstash REST round-trips add latency, so the poll
+    // window is generous — this asserts delivery + correct typing, not speed.
+    const sellerHeaders = await authHeader(request, TEST_SELLER)
+    await expect(async () => {
+      const res = await request.get('/api/shared/notifications?limit=30', { headers: sellerHeaders })
+      expect(res.status()).toBe(200)
+      const body = await res.json()
+      const list = body?.data?.notifications ?? body?.data ?? body?.notifications ?? []
+      const match = (Array.isArray(list) ? list : []).find(
+        (n: any) => n.type === 'SQUARE_REQUEST' && (n.message ?? '').includes(title),
+      )
+      expect(match, 'SQUARE_REQUEST notification not found').toBeTruthy()
+    }).toPass({ timeout: 30000, intervals: [1000, 2000, 3000] })
+
+    if (requestId) await request.delete(`${REQS}/${requestId}`, { headers: buyer })
+  })
+})

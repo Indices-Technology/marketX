@@ -126,12 +126,14 @@ import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '~~/layers/core/app/stores/auth.store'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
+import { useAuthApi } from '~~/layers/core/app/services/auth.api'
 
 defineOptions({ name: 'OAuthAuthorizePage' })
 
 useSeo().setPrivatePage('Authorize')
 
 const route = useRoute()
+const authApi = useAuthApi()
 const authStore = useAuthStore()
 const profileStore = useProfileStore()
 
@@ -181,17 +183,20 @@ async function approve() {
   approving.value = true
   errorMsg.value = null
   try {
-    const result = await $fetch<{ redirectUrl: string }>('/api/oauth/code', {
-      method: 'POST',
-      headers: authStore.accessToken
-        ? { Authorization: `Bearer ${authStore.accessToken}` }
-        : {},
-      body: {
+    const result = await authApi.createOAuthCode(
+      {
         client_id: clientId.value,
         redirect_uri: redirectUri.value,
         state: state.value,
       },
-    })
+      {
+        skipAuth: true,
+        silent: true,
+        headers: authStore.accessToken
+          ? { Authorization: `Bearer ${authStore.accessToken}` }
+          : {},
+      },
+    )
     window.location.assign(result.redirectUrl)
   } catch (e: any) {
     errorMsg.value = e?.data?.statusMessage ?? 'Authorization failed. Please try again.'
@@ -210,10 +215,10 @@ async function handleLogin() {
   loginLoading.value = true
   errorMsg.value = null
   try {
-    const result = await $fetch<{ accessToken: string; user: any }>('/api/auth/login', {
-      method: 'POST',
-      body: { email: email.value, password: password.value },
-    })
+    const result = await authApi.login(
+      { email: email.value, password: password.value },
+      { skipAuth: true, silent: true },
+    )
     authStore.setAccessToken(result.accessToken)
     // Immediately approve after successful login
     await approve()

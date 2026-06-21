@@ -80,6 +80,21 @@ export class ProductApiClient extends BaseApiClient {
     })
   }
 
+  /** Paginated list of profiles who liked a product. */
+  async getProductLikes(
+    id: number,
+    params: { limit?: number; offset?: number } = {},
+  ): Promise<any> {
+    const q = new URLSearchParams()
+    if (params.limit != null) q.set('limit', String(params.limit))
+    if (params.offset != null) q.set('offset', String(params.offset))
+    const qs = q.toString()
+    return this.request(
+      `/api/commerce/products/${id}/likes${qs ? `?${qs}` : ''}`,
+      { method: 'GET' },
+    )
+  }
+
   async getLikedProducts(params?: { limit?: number; offset?: number }) {
     const query = params
       ? '?' +

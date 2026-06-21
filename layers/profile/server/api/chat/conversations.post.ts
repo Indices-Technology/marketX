@@ -10,6 +10,18 @@ export default defineEventHandler(async (event) => {
     const user = await requireAuth(event)
     const body = await readBody(event)
 
+    const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    // Must target exactly one of: a store (storeId) or another user (targetId).
+    if (!body.storeId && !body.targetId)
+      throw new UserError('INVALID_TARGET', 'storeId or targetId is required', 400)
+    if (body.storeId && !UUID.test(String(body.storeId)))
+      throw new UserError('INVALID_TARGET', 'Invalid storeId', 400)
+    if (body.targetId && !UUID.test(String(body.targetId)))
+      throw new UserError('INVALID_TARGET', 'Invalid targetId', 400)
+    // No talking to yourself.
+    if (!body.storeId && body.targetId === user.id)
+      throw new UserError('INVALID_TARGET', 'Cannot start a conversation with yourself', 400)
+
     const ipAddress =
       getHeader(event, 'x-forwarded-for') || getClientIP(event) || 'unknown'
     const userAgent = getHeader(event, 'user-agent') || 'unknown'

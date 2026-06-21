@@ -297,12 +297,12 @@ export const chatService = {
       message,
     })
 
-    // 5. ALIGNED: Notification
-    if (recipientId !== 'ai-bot') {
+    // 5. ALIGNED: Notification — only when there is a real recipient
+    if (recipientId && recipientId !== 'ai-bot') {
       const sender = await profileRepository.findById(userId)
 
       notificationQueue.enqueue({
-        userId: recipientId as string,
+        userId: recipientId,
         type: 'MESSAGE',
         actorId: userId,
         message: `New message from ${sender?.username || 'someone'}`,

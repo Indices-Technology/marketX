@@ -23,7 +23,7 @@ export class OrderApiClient extends BaseApiClient {
   }
   async initializePayment(data: Record<string, unknown>): Promise<{
     success: boolean
-    data: { orderId: number; reference: string; authorizationUrl: string; accessCode: string }
+    data: { purchaseGroupId: string; orderIds: number[]; reference: string; authorizationUrl: string; accessCode: string }
   }> {
     return this.request('/api/commerce/payments/initialize', {
       method: 'POST',
@@ -57,14 +57,14 @@ export class OrderApiClient extends BaseApiClient {
   }
   async initializePayPal(data: Record<string, unknown>): Promise<{
     success: boolean
-    data: { orderId: number; paypalOrderId: string; approvalUrl: string; amountUSD: number }
+    data: { purchaseGroupId: string; orderIds: number[]; paypalOrderId: string; approvalUrl: string; amountUSD: number }
   }> {
     return this.request('/api/commerce/payments/paypal/create', {
       method: 'POST',
       body: data,
     })
   }
-  async capturePayPal(data: { orderId: number; paypalOrderId: string }) {
+  async capturePayPal(data: { paypalOrderId: string; orderId?: number }) {
     return this.request('/api/commerce/payments/paypal/capture', {
       method: 'POST',
       body: data,
@@ -77,7 +77,7 @@ export class OrderApiClient extends BaseApiClient {
   }
   async initializePOD(data: Record<string, unknown>): Promise<{
     success: boolean
-    data: { orderId: number; reference: string; authorizationUrl: string; accessCode: string; shippingCost: number; productAmount: number }
+    data: { purchaseGroupId: string; orderIds: number[]; reference: string; authorizationUrl: string; accessCode: string; shippingCost: number; productAmount: number }
   }> {
     return this.request('/api/commerce/payments/pod-initialize', {
       method: 'POST',

@@ -46,11 +46,20 @@ export default defineEventHandler(async (event): Promise<IFeedResponse> => {
           visibility: true,
           isProductPost: true,
           viewCount: true,
-          author: { select: { id: true, username: true, avatar: true, role: true } },
+          author: {
+            select: { id: true, username: true, avatar: true, role: true },
+          },
           media: {
             where: { isBgMusic: false },
-            select: { id: true, url: true, type: true, isBgMusic: true, altText: true,
-              musicTitle: true, musicArtist: true },
+            select: {
+              id: true,
+              url: true,
+              type: true,
+              isBgMusic: true,
+              altText: true,
+              musicTitle: true,
+              musicArtist: true,
+            },
             take: 4,
             orderBy: { created_at: 'asc' },
           },
@@ -80,13 +89,18 @@ export default defineEventHandler(async (event): Promise<IFeedResponse> => {
       const posts = hasMore ? postsPlusOne.slice(0, limit) : postsPlusOne
 
       return {
-        items: posts.map(normalizePost),
+        items: posts.map((post) => normalizePost(post as any)),
         meta: { limit, offset, hasMore },
       }
     })
   } catch (error) {
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
-    logger.logError('[GET /api/feed/following]', error, { requestId: event.context?.requestId })
-    throw createError({ statusCode: 500, statusMessage: 'Failed to fetch following feed' })
+    logger.logError('[GET /api/feed/following]', error, {
+      requestId: event.context?.requestId,
+    })
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Failed to fetch following feed',
+    })
   }
 })

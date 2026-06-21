@@ -10,6 +10,35 @@ import { authService } from '../../services/auth.service'
 import { resetPasswordSchema } from '../../schemas/auth.schemas'
 import { AuthError } from '../../types/auth.types'
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Auth'],
+    summary: 'Reset password with a token',
+    description:
+      'Consumes a single-use reset token, sets the new password, and revokes ' +
+      'all existing sessions. The user must log in again afterwards.',
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['token', 'password', 'confirmPassword'],
+            properties: {
+              token: { type: 'string' },
+              password: { type: 'string' },
+              confirmPassword: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      200: { description: '{ success, message }' },
+      400: { description: 'Invalid input or expired/used token' },
+    },
+  },
+})
 export default defineEventHandler(async (event) => {
   try {
     // 1. Parse and validate request body

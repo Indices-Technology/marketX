@@ -11,6 +11,19 @@ import { defineEventHandler, parseCookies } from 'h3'
  * Cookies are NOT deleted — they must remain so that POST /api/auth/refresh-token
  * can read the refreshToken cookie when the access token expires.
  */
+defineRouteMeta({
+  openAPI: {
+    tags: ['Auth'],
+    summary: 'Read tokens from OAuth cookies (web only)',
+    description:
+      'Web OAuth bridge: hands the httpOnly tokens set by the OAuth callback ' +
+      'back to client JS. **Native clients must not use this** — do native ' +
+      'OAuth with PKCE and receive tokens directly instead.',
+    responses: {
+      200: { description: '{ accessToken, refreshToken } (null when not set)' },
+    },
+  },
+})
 export default defineEventHandler((event) => {
   const cookies = parseCookies(event)
   const accessToken = cookies.accessToken ?? null

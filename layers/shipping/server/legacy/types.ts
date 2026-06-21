@@ -43,7 +43,7 @@ export interface IShipmentRate {
   /** Estimated delivery time description, e.g. "3-5 business days" */
   estimatedDays: string
   /** Which provider returned this rate */
-  provider: 'sendbox' | 'shippo'
+  provider: 'sendbox' | 'shippo' | 'self' | 'gig'
 }
 
 // ─── Create Shipment ──────────────────────────────────────────────────────────
@@ -102,7 +102,7 @@ export interface ITrackingResult {
 }
 
 // ─── Provider Interface (Strategy Pattern) ────────────────────────────────────
-// To swap providers: implement this interface and update server/utils/shipping/index.ts
+// To swap providers: implement this interface and update layers/shipping/server/legacy/router.ts
 
 export interface IShippingProvider {
   /** Identifier for logging / DB storage */

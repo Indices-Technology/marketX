@@ -22,19 +22,17 @@ export default defineEventHandler(async (event) => {
     const [users, stores, products, posts, tags] = await Promise.all([
       type === 'all' || type === 'users'
         ? prisma.profile.findMany({
+            // Never match or return email — searching by email substring would
+            // let anyone enumerate accounts, and returning it leaks PII to an
+            // unauthenticated caller (this route is optionalAuth).
             where: {
-              OR: [
-                { username: searchFilter },
-                { bio: searchFilter },
-                { email: searchFilter },
-              ],
+              OR: [{ username: searchFilter }, { bio: searchFilter }],
             },
             select: {
               id: true,
               username: true,
               avatar: true,
               bio: true,
-              email: true,
             },
             take: limit,
             skip: offset,
@@ -78,7 +76,11 @@ export default defineEventHandler(async (event) => {
 
       type === 'all' || type === 'posts'
         ? prisma.post.findMany({
+            // Public search must never surface PRIVATE/FOLLOWERS posts or
+            // removed/flagged content — mirror the feed visibility rules.
             where: {
+              visibility: 'PUBLIC',
+              moderationStatus: 'ACTIVE',
               OR: [{ caption: searchFilter }, { content: searchFilter }],
             },
             include: {

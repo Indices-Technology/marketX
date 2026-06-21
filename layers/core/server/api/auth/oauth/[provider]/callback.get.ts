@@ -15,6 +15,25 @@ type OAuthProvider = 'google' | 'facebook' | 'tiktok'
 
 const providers: OAuthProvider[] = ['google', 'facebook', 'tiktok']
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Auth'],
+    summary: 'OAuth provider callback (web only)',
+    description:
+      'Provider redirect target. Validates `state` against the httpOnly cookie ' +
+      '(rejects mismatch), provisions/links the account, sets auth cookies, and ' +
+      'redirects back into the app. Not called directly by clients.',
+    parameters: [
+      { in: 'path', name: 'provider', required: true, schema: { type: 'string', enum: ['google', 'facebook', 'tiktok'] } },
+      { in: 'query', name: 'code', required: false, schema: { type: 'string' } },
+      { in: 'query', name: 'state', required: false, schema: { type: 'string' } },
+    ],
+    responses: {
+      302: { description: 'Redirect into the app (or to an error page)' },
+      404: { description: 'Provider not supported' },
+    },
+  },
+})
 export default defineEventHandler(async (event) => {
   const provider = event.context.params?.provider as OAuthProvider | undefined
   if (!provider || !providers.includes(provider)) {

@@ -83,6 +83,9 @@ export default defineEventHandler(async (event) => {
     const shoutoutsWhere = {
       wallTargetType: type,
       wallTargetSlug: slug,
+      // Defense-in-depth: shoutouts are created PUBLIC, but never surface a
+      // non-public/edited one on the wall (mirrors the owner-posts filter).
+      visibility: 'PUBLIC' as const,
       moderationStatus: 'ACTIVE' as const,
     }
 

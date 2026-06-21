@@ -42,6 +42,20 @@ export class PostApiClient extends BaseApiClient {
     return this.request(`/api/posts/${id}`, { method: 'GET' })
   }
 
+  /** Paginated list of profiles who liked a post. */
+  async getPostLikes(
+    id: string,
+    params: { limit?: number; offset?: number } = {},
+  ): Promise<any> {
+    const q = new URLSearchParams()
+    if (params.limit != null) q.set('limit', String(params.limit))
+    if (params.offset != null) q.set('offset', String(params.offset))
+    const qs = q.toString()
+    return this.request(`/api/posts/${id}/likes${qs ? `?${qs}` : ''}`, {
+      method: 'GET',
+    })
+  }
+
   async likePost(id: string): Promise<any> {
     return this.request(`/api/posts/${id}/like`, { method: 'POST' })
   }

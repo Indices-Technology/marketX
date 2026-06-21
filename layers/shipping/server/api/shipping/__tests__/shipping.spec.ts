@@ -1,14 +1,14 @@
 import { test, expect } from '@playwright/test'
 
-const ZONES = '/api/commerce/shipping/zones'
-const CALCULATE = '/api/commerce/shipping/calculate'
-const RATES = '/api/commerce/shipping/rates'
-const TRACK = (num: string) => `/api/commerce/shipping/track/${num}`
+const ZONES = '/api/shipping/zones'
+const CALCULATE = '/api/shipping/calculate'
+const RATES = '/api/shipping/rates'
+const TRACK = (num: string) => `/api/shipping/track/${num}`
 
 // ─── Public endpoints ─────────────────────────────────────────────────────────
 
 test.describe('shipping — public endpoints', () => {
-  test('GET /api/commerce/shipping/zones returns active zones', async ({ request }) => {
+  test('GET /api/shipping/zones returns active zones', async ({ request }) => {
     const res = await request.get(ZONES)
     expect(res.status()).toBe(200)
     const body = await res.json()
@@ -16,7 +16,7 @@ test.describe('shipping — public endpoints', () => {
     expect(body.data).toBeInstanceOf(Array)
   })
 
-  test('POST /api/commerce/shipping/calculate returns cost for NG', async ({ request }) => {
+  test('POST /api/shipping/calculate returns cost for NG', async ({ request }) => {
     const res = await request.post(CALCULATE, {
       data: { countryCode: 'NG', weightKg: 1 },
     })
@@ -27,7 +27,7 @@ test.describe('shipping — public endpoints', () => {
     expect(body.data).toHaveProperty('estimatedDays')
   })
 
-  test('POST /api/commerce/shipping/calculate uses default weight when omitted', async ({ request }) => {
+  test('POST /api/shipping/calculate uses default weight when omitted', async ({ request }) => {
     const res = await request.post(CALCULATE, {
       data: { countryCode: 'US' },
     })
@@ -37,21 +37,21 @@ test.describe('shipping — public endpoints', () => {
     expect(typeof body.data.cost).toBe('number')
   })
 
-  test('POST /api/commerce/shipping/calculate returns 400 for invalid countryCode', async ({ request }) => {
+  test('POST /api/shipping/calculate returns 400 for invalid countryCode', async ({ request }) => {
     const res = await request.post(CALCULATE, {
       data: { countryCode: 'TOOLONG' },
     })
     expect(res.status()).toBe(400)
   })
 
-  test('POST /api/commerce/shipping/calculate returns 400 for missing countryCode', async ({ request }) => {
+  test('POST /api/shipping/calculate returns 400 for missing countryCode', async ({ request }) => {
     const res = await request.post(CALCULATE, {
       data: { weightKg: 1 },
     })
     expect(res.status()).toBe(400)
   })
 
-  test('POST /api/commerce/shipping/rates returns fallback when no from address', async ({ request }) => {
+  test('POST /api/shipping/rates returns fallback when no from address', async ({ request }) => {
     // When no storeSlug and no from provided, returns empty fallback
     const res = await request.post(RATES, {
       data: {
@@ -67,14 +67,14 @@ test.describe('shipping — public endpoints', () => {
     expect(body.data).toBeInstanceOf(Array)
   })
 
-  test('POST /api/commerce/shipping/rates returns 400 without to', async ({ request }) => {
+  test('POST /api/shipping/rates returns 400 without to', async ({ request }) => {
     const res = await request.post(RATES, {
       data: { parcel: { weight: 0.5 } },
     })
     expect(res.status()).toBe(400)
   })
 
-  test('GET /api/commerce/shipping/track/:number returns 4xx for unknown tracking number', async ({ request }) => {
+  test('GET /api/shipping/track/:number returns 4xx for unknown tracking number', async ({ request }) => {
     const res = await request.get(TRACK('UNKNOWN12345'))
     expect(res.status()).toBeGreaterThanOrEqual(400)
     expect(res.status()).toBeLessThan(600)

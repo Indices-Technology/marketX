@@ -22,6 +22,37 @@ import { AuthError } from '../../types/auth.types'
  * Body: { email: "user@example.com", password: "password123" }
  * Response: { success: true, accessToken: "...", refreshToken: "...", user: {...} }
  */
+defineRouteMeta({
+  openAPI: {
+    tags: ['Auth'],
+    summary: 'Email + password login',
+    description:
+      'Authenticates a user. Returns tokens in the body **and** sets httpOnly ' +
+      'cookies. Native clients read the body and store both tokens in ' +
+      'Keystore-backed encrypted storage.',
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['email', 'password'],
+            properties: {
+              email: { type: 'string', format: 'email' },
+              password: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      200: { description: '{ success, accessToken, refreshToken, user }' },
+      400: { description: 'Invalid input' },
+      401: { description: 'Invalid credentials or locked account' },
+      429: { description: 'Rate limit exceeded' },
+    },
+  },
+})
 export default defineEventHandler(async (event) => {
   try {
     // 1. Parse and validate request body

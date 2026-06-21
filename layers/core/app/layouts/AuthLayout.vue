@@ -12,12 +12,10 @@
       >
         <!-- Brand -->
         <div class="mb-8 flex items-center gap-3">
-          <NuxtLink to="/" class="flex items-center gap-2">
-            <div
-              class="flex h-10 w-10 items-center justify-center rounded-xl bg-brand"
-            >
-              <Icon name="mdi:hanger" class="h-6 w-6 text-white" />
-            </div>
+          <NuxtLink to="/" class="flex items-center">
+            <span class="brand-wordmark" aria-label="MarketX">
+              <span>Market</span><span class="brand-x">X</span>
+            </span>
           </NuxtLink>
         </div>
 
@@ -65,13 +63,9 @@
           <div class="max-w-xs space-y-4">
             <!-- Main Heading -->
             <div class="space-y-3">
-              <div class="inline-block">
-                <div
-                  class="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm"
-                >
-                  <Icon name="mdi:hanger" class="h-8 w-8 text-white" />
-                </div>
-              </div>
+              <p class="auth-wordmark" aria-label="MarketX">
+                <span>Market</span><span class="auth-wordmark-x">X</span>
+              </p>
               <h2 class="text-2xl font-bold leading-tight">
                 Discover Your Perfect Style
               </h2>
@@ -145,3 +139,46 @@ defineProps({
   },
 })
 </script>
+
+<style scoped>
+.brand-wordmark {
+  display: inline-flex;
+  align-items: baseline;
+  font-family: Sora, Manrope, system-ui, sans-serif;
+  font-size: 1.18rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1;
+  color: rgb(17 24 39);
+}
+
+:global(.dark) .brand-wordmark,
+:global(.theme-dark-mode) .brand-wordmark {
+  color: white;
+}
+
+.brand-x {
+  margin-left: 1px;
+  color: #f43f5e;
+  font-style: italic;
+  transform: translateY(-0.03em) skewX(-8deg);
+}
+
+.auth-wordmark {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  font-family: Sora, Manrope, system-ui, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.auth-wordmark-x {
+  color: white;
+  font-style: italic;
+  transform: translateY(-0.03em) skewX(-8deg);
+}
+</style>

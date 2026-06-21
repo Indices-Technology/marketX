@@ -424,10 +424,12 @@ import { useSocialApi } from '~~/layers/profile/app/services/social.api'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import type { IMapSeller, IMapSellerPreview, MapFilter } from '../types/map.types'
 import { openDirections } from '../utils/directions'
+import { useGeocode } from '~~/layers/core/app/composables/useGeocode'
 
 const router = useRouter()
 const profileStore = useProfileStore()
 const socialApi = useSocialApi()
+const { searchLocations } = useGeocode()
 
 const props = defineProps<{
   sellers: IMapSeller[]
@@ -522,12 +524,9 @@ const onLocationSearchInput = () => {
   locationTimer = setTimeout(async () => {
     locationSearchLoading.value = true
     try {
-      const res = await $fetch<any[]>(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=3`,
-        { headers: { 'Accept-Language': 'en', 'User-Agent': 'MarketX/1.0' } },
-      )
-      locationResults.value = (res ?? []).map((r: any) => ({
-        label: r.display_name as string,
+      const res = await searchLocations(q, 3)
+      locationResults.value = res.map((r) => ({
+        label: r.display_name,
         lat: Number(r.lat),
         lng: Number(r.lon),
       }))

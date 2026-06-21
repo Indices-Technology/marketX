@@ -58,49 +58,51 @@ export default defineEventHandler(async (event) => {
     const user = await requireAuth(event)
     const { reference } = schema.parse(await readBody(event))
 
-    // 1. Find the order
-    const order = await orderRepository.getOrderByPaymentRef(reference)
-    if (!order) throw new UserError('NOT_FOUND', 'Order not found for this reference', 404)
-    if (order.userId !== user.id) throw new UserError('FORBIDDEN', 'Access denied', 403)
-    if (order.paymentMethod !== 'pay_on_delivery')
+    // 1. Find all per-seller orders sharing this reference
+    const orders = await orderRepository.getOrdersByPaymentRef(reference)
+    if (!orders.length) throw new UserError('NOT_FOUND', 'Order not found for this reference', 404)
+    if (orders.some((o) => o.userId !== user.id)) throw new UserError('FORBIDDEN', 'Access denied', 403)
+    if (orders.some((o) => o.paymentMethod !== 'pay_on_delivery'))
       throw new UserError('INVALID_METHOD', 'Not a POD order', 400)
 
+    const orderIds = orders.map((o) => o.id)
+
     // 2. Idempotent
-    if (order.paymentStatus === 'SHIPPING_PAID') {
-      return { success: true, data: { status: 'already_confirmed', orderId: order.id } }
+    if (orders.every((o) => o.paymentStatus === 'SHIPPING_PAID')) {
+      return { success: true, data: { status: 'already_confirmed', orderIds } }
     }
 
-    // 3. Verify shipping payment with Paystack
+    // 3. Verify shipping payment with Paystack (one transaction for the purchase)
     const result = await paystack.verifyTransaction(reference)
 
     if (result.data.status !== 'success') {
-      await orderRepository.updatePaymentStatus(order.id, 'FAILED')
-      return { success: true, data: { status: result.data.status, orderId: order.id } }
+      await Promise.all(orders.map((o) => orderRepository.updatePaymentStatus(o.id, 'FAILED')))
+      return { success: true, data: { status: result.data.status, orderIds } }
     }
 
-    // 4. Atomic update — only the first concurrent caller (verify vs webhook) wins
-    const { count } = await prisma.orders.updateMany({
-      where: { id: order.id, paymentStatus: { notIn: ['SHIPPING_PAID', 'PAID', 'FAILED'] } },
-      data: { paymentStatus: 'SHIPPING_PAID', status: 'CONFIRMED' },
-    })
-
-    // 5. Notify sellers + buyer only if we made the state change
-    if (count > 0) {
-      const buyerName = user.username || user.email || 'a customer'
-      notifySellersPODConfirmed(order.id, buyerName).catch((e) =>
-        logger.error('POD verify: notify sellers failed', { orderId: order.id, error: e?.message ?? e }),
-      )
-      notifyBuyerPODConfirmed(order).catch((e) =>
-        logger.error('POD verify: notify buyer failed', { orderId: order.id, error: e?.message ?? e }),
-      )
-      // Buyer order confirmation email
-      if (user.email && !user.email.includes('@checkout.marketx.app')) {
-        const { subject, html, text } = buildOrderStatusEmail(order.id, 'CONFIRMED')
-        emailQueue.enqueue({ to: user.email, subject, html, text, type: 'ORDER_CONFIRMATION' })
+    // 4 & 5. Per order: atomic flip, then notify (once per order, vs webhook race)
+    const buyerName = user.username || user.email || 'a customer'
+    for (const order of orders) {
+      const { count } = await prisma.orders.updateMany({
+        where: { id: order.id, paymentStatus: { notIn: ['SHIPPING_PAID', 'PAID', 'FAILED'] } },
+        data: { paymentStatus: 'SHIPPING_PAID', status: 'CONFIRMED' },
+      })
+      if (count > 0) {
+        notifySellersPODConfirmed(order.id, buyerName).catch((e) =>
+          logger.error('POD verify: notify sellers failed', { orderId: order.id, error: e?.message ?? e }),
+        )
+        notifyBuyerPODConfirmed(order).catch((e) =>
+          logger.error('POD verify: notify buyer failed', { orderId: order.id, error: e?.message ?? e }),
+        )
       }
     }
+    // One buyer confirmation email for the purchase
+    if (user.email && !user.email.includes('@checkout.marketx.app')) {
+      const { subject, html, text } = buildOrderStatusEmail(orderIds[0]!, 'CONFIRMED')
+      emailQueue.enqueue({ to: user.email, subject, html, text, type: 'ORDER_CONFIRMATION' })
+    }
 
-    return { success: true, data: { status: 'shipping_paid', orderId: order.id } }
+    return { success: true, data: { status: 'shipping_paid', orderIds } }
   } catch (error: unknown) {
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
     if (error instanceof ZodError)

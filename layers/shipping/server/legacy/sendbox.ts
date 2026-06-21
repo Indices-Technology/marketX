@@ -6,7 +6,7 @@
  *
  * To replace with your own logistics platform:
  *   1. Create a new file (e.g. myplatform.ts) implementing IShippingProvider
- *   2. Update server/utils/shipping/index.ts to import + return it for Nigerian routes
+ *   2. Update layers/shipping/server/legacy/router.ts to import + return it for Nigerian routes
  */
 
 import type {

@@ -16,7 +16,21 @@ export default defineEventHandler(async (event) => {
       ipAddress,
       userAgent,
     )
-    return { success: true, data: result }
+    // A purchase now splits into one order per seller. Expose the full group,
+    // but spread the first order at the top level so single-order consumers
+    // (useOrder.placeOrder, `data.id`) keep working without a shape change.
+    const [first] = result.orders
+    return {
+      success: true,
+      data: {
+        ...first,
+        purchaseGroupId: result.purchaseGroupId,
+        orderIds: result.orders.map((o) => o.id),
+        orders: result.orders,
+        itemsTotal: result.itemsTotal,
+        shippingTotal: result.shippingTotal,
+      },
+    }
   } catch (error: unknown) {
     if (error instanceof UserError)
       throw createError({ statusCode: error.status, statusMessage: error.message })

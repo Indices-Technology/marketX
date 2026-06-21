@@ -93,4 +93,19 @@ test.describe('POST /api/auth/refresh-token', () => {
     })
     expect(res.status()).toBe(401)
   })
+
+  // Native transport (no cookie): token arrives via X-Refresh-Token header or body.
+  test('garbage X-Refresh-Token header → 401 (native transport wired)', async ({ request }) => {
+    const res = await request.post(REFRESH, {
+      headers: { 'X-Refresh-Token': 'not-a-real-token' },
+    })
+    expect(res.status()).toBe(401)
+  })
+
+  test('garbage refreshToken body → 401 (native transport wired)', async ({ request }) => {
+    const res = await request.post(REFRESH, {
+      data: { refreshToken: 'not-a-real-token' },
+    })
+    expect(res.status()).toBe(401)
+  })
 })

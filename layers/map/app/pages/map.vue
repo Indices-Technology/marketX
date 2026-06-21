@@ -244,8 +244,11 @@ import {
 } from '~~/layers/map/app/composables/useMapSellers'
 import type { IMapSeller, IMapSquare, MapFilter } from '~~/layers/map/app/types/map.types'
 import type { ViewMode } from '~~/layers/map/app/components/MapView.vue'
+import { useMapApi } from '~~/layers/map/app/services/map.api'
 
 definePageMeta({ layout: false })
+
+const mapApi = useMapApi()
 
 useSeoMeta({
   title: 'Near Me | MarketX',
@@ -293,7 +296,7 @@ const mapSquares = ref<IMapSquare[]>([])
 
 const fetchSquares = async () => {
   try {
-    const res = await $fetch<any>('/api/map/squares')
+    const res = await mapApi.getSquares()
     mapSquares.value = res?.data ?? []
   } catch {
     // non-critical — map still works without squares

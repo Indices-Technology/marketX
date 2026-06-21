@@ -17,6 +17,47 @@ const RESERVED_SLUGS = new Set([
   'admin', 'static', '_nuxt',
 ])
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Auth'],
+    summary: 'Register a user + store in one atomic flow',
+    description:
+      'Creates a `seller` account and its store, then auto-logs-in (tokens in ' +
+      'body + httpOnly cookies). Store slug: lowercase `[a-z0-9-]`, 3+ chars, ' +
+      'not reserved.',
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['email', 'username', 'password', 'confirmPassword', 'store_name', 'store_slug'],
+            properties: {
+              email: { type: 'string', format: 'email' },
+              username: { type: 'string' },
+              password: { type: 'string', minLength: 8 },
+              confirmPassword: { type: 'string' },
+              store_name: { type: 'string', minLength: 3 },
+              store_slug: { type: 'string', minLength: 3 },
+              store_description: { type: 'string' },
+              store_logo: { type: 'string' },
+              store_banner: { type: 'string' },
+              store_location: { type: 'string' },
+              store_phone: { type: 'string' },
+              store_currency: { type: 'string', default: 'NGN' },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      200: { description: '{ success, accessToken, refreshToken, user, store }' },
+      400: { description: 'Invalid input or duplicate email/username' },
+      409: { description: 'Store URL already taken' },
+      429: { description: 'Rate limit exceeded' },
+    },
+  },
+})
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
   const {

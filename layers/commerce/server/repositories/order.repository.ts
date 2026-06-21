@@ -125,8 +125,19 @@ export const orderRepository = {
     return prisma.orders.update({ where: { id }, data: { paymentRef } })
   },
 
+  /** Set the same payment reference on every per-seller order of a purchase group. */
+  async setPaymentRefForGroup(purchaseGroupId: string, paymentRef: string) {
+    return prisma.orders.updateMany({ where: { purchaseGroupId }, data: { paymentRef } })
+  },
+
+  // paymentRef is shared across a group → not unique → findFirst.
   async getOrderByPaymentRef(paymentRef: string) {
-    return prisma.orders.findUnique({ where: { paymentRef } })
+    return prisma.orders.findFirst({ where: { paymentRef } })
+  },
+
+  /** All per-seller orders that share a payment reference (one checkout). */
+  async getOrdersByPaymentRef(paymentRef: string) {
+    return prisma.orders.findMany({ where: { paymentRef }, orderBy: { id: 'asc' } })
   },
 
   async restoreStock(items: Array<{ variantId: number; quantity: number }>) {

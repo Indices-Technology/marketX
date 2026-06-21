@@ -4,6 +4,38 @@ import { registerSchema } from '../../schemas/auth.schemas'
 import { AuthError } from '../../types/auth.types'
 import { getClientIP } from '~~/server/layers/shared/utils/security'
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Auth'],
+    summary: 'Register a new user account',
+    description:
+      'Creates a `user` account and sends an email-verification link. ' +
+      'Username: 3–30 chars, `[a-zA-Z0-9_-]`. Password must meet complexity rules.',
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['email', 'username', 'password', 'confirmPassword'],
+            properties: {
+              email: { type: 'string', format: 'email' },
+              username: { type: 'string', minLength: 3, maxLength: 30 },
+              password: { type: 'string' },
+              confirmPassword: { type: 'string' },
+              role: { type: 'string', enum: ['user', 'seller'], default: 'user' },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      200: { description: '{ success, message, user }' },
+      400: { description: 'Invalid input (e.g. passwords do not match)' },
+      409: { description: 'Email or username already taken' },
+    },
+  },
+})
 export default defineEventHandler(async (event) => {
   try {
     const body = await readBody(event)

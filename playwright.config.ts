@@ -29,6 +29,9 @@ export default defineConfig({
     {
       name: 'api',
       testMatch: 'layers/**/server/**/__tests__/**/*.spec.ts',
+      // server/utils specs are Vitest unit tests — loading them under Playwright
+      // collides on @vitest/expect ("Cannot redefine Symbol($$jest-matchers-object)").
+      testIgnore: '**/server/utils/__tests__/**',
       // API tests use request fixture only — no browser needed
     },
     {

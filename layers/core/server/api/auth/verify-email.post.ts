@@ -3,6 +3,29 @@ import { verifyEmailSchema } from '../../schemas/auth.schemas'
 import { authService } from '../../services/auth.service'
 import { AuthError } from '../../types/auth.types'
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Auth'],
+    summary: 'Verify email with a token',
+    description: 'Consumes a single-use email-verification token.',
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['token'],
+            properties: { token: { type: 'string' } },
+          },
+        },
+      },
+    },
+    responses: {
+      200: { description: '{ success, message }' },
+      400: { description: 'Invalid or expired token' },
+    },
+  },
+})
 export default defineEventHandler(async (event) => {
   try {
     // 1. Parse and validate request body

@@ -1,7 +1,16 @@
 # MarketX — API Reference
 
-> Derived from `layers/*/server/api/` — last updated 2026-05-17.
+> Derived from `layers/*/server/api/` — last updated 2026-06-20.
 > Base URL: `/api`
+
+> **Machine-readable contract (params + response shapes):** an OpenAPI spec is
+> served at **`/_openapi.json`**, with interactive docs at **`/_scalar`**
+> (Scalar) and **`/_swagger`** (Swagger UI). Point your client codegen
+> (Retrofit/Kotlin, etc.) at the JSON.
+> This markdown is the human **map** (what exists + auth level); the OpenAPI
+> spec is the authoritative per-route detail, generated from the handlers via
+> `defineRouteMeta`. **Coverage:** the **Auth** domain is fully annotated as the
+> pilot; remaining domains are being rolled out the same way.
 
 ---
 
@@ -50,6 +59,27 @@
 | POST | `/auth/register-seller` | Upgrade account to seller during onboarding |
 | POST | `/auth/checkout-otp/send` | Send OTP for guest checkout |
 | POST | `/auth/checkout-otp/verify` | Verify guest checkout OTP |
+
+### Token lifecycle (web vs. native)
+
+`login` / `register` return `{ accessToken, refreshToken, user }` in the body
+**and** set httpOnly cookies. Use the access token as `Authorization: Bearer
+<accessToken>` on every protected request. It expires in 15 min; renew it via
+`/auth/refresh-token` before/when you get a `401`.
+
+The refresh endpoint accepts the refresh token over **two transports**:
+
+| Client | Send refresh token as | Response |
+|--------|-----------------------|----------|
+| Web (browser) | httpOnly `refreshToken` cookie (automatic) | `{ accessToken }` — rotated refresh token goes back in the cookie |
+| Native (mobile) | `X-Refresh-Token: <token>` header, or `{ "refreshToken": "<token>" }` body | `{ accessToken, refreshToken }` — **store the new refresh token**, the old one is now invalid |
+
+> **Native clients:** the refresh token rotates on every call — the token you
+> just sent is immediately invalidated. Always persist the `refreshToken` from
+> the response or the next refresh will `401`. Store both tokens in
+> Keystore-backed encrypted storage (Android `EncryptedSharedPreferences` /
+> iOS Keychain), never plain `SharedPreferences`. Do **not** call
+> `GET /auth/session` (web OAuth cookie bridge); use native OAuth with PKCE.
 
 ---
 
@@ -457,7 +487,8 @@ Both endpoints stream responses and require seller authentication.
 
 | Convention | Detail |
 |---|---|
-| Auth header | `Authorization: Bearer <token>` on protected routes |
+| Auth header | `Authorization: Bearer <accessToken>` on protected routes |
+| Token refresh | Web: httpOnly cookie. Native: `X-Refresh-Token` header / body — see [Token lifecycle](#token-lifecycle-web-vs-native) |
 | Pagination | `?limit=20&offset=0` → `{ data[], meta: { limit, offset, hasMore } }` |
 | `hasMore` | Derived via the +1 trick (fetch `limit+1`, slice to `limit`) — no `COUNT(*)`. `total` is absent on most list endpoints |
 | Errors | `{ statusCode, message }` — H3 standard error shape |

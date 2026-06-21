@@ -96,11 +96,13 @@
 <script setup lang="ts">
 import Avatar from '~~/layers/profile/app/components/Avatar.vue'
 import { useSeo } from '~~/layers/core/app/composables/useSeo'
+import { useSellerApi } from '~~/layers/seller/app/services/seller.services'
 
 definePageMeta({ middleware: 'auth', layout: 'store-layout' })
 
 useSeo().setInboxPage()
 
+const sellerApi = useSellerApi()
 const route = useRoute()
 const router = useRouter()
 const storeSlug = computed(() => route.params.storeSlug as string)
@@ -131,7 +133,7 @@ const loadMessages = async () => {
   if (!sellerId) return
   isLoading.value = true
   try {
-    const res = await $fetch<any>(`/api/seller/${sellerId}/messages`)
+    const res = await sellerApi.getSellerMessages(sellerId)
     conversations.value = res?.data?.conversations || []
     total.value = res?.data?.total || 0
   } catch {

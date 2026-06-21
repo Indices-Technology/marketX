@@ -412,13 +412,46 @@ Priority order:
 
 | Flow | Entry | API Routes | Risk | Status |
 |------|-------|-----------|------|--------|
-| Start conversation with seller | seller profile | `POST /api/chat/conversations` | creates duplicate | not started |
-| List conversations | messages page | `GET /api/chat/conversations` | other user's convos | not started |
-| View conversation messages | messages/:id | `GET /api/chat/conversations/:id/messages` | IDOR | not started |
-| Send message | messages/:id | `POST /api/chat/conversations/:id/messages` | Pusher/Soketi delivery | not started |
-| Delete conversation | messages | `DELETE /api/chat/conversations/:id` | ownership | not started |
-| Real-time message delivery | messages | Pusher channel | channel auth, fallback | not started |
+| Start conversation with seller | seller profile | `POST /api/chat/conversations` | creates duplicate | passed with evidence |
+| List conversations | messages page | `GET /api/chat/conversations` | other user's convos | passed with evidence |
+| View conversation messages | messages/:id | `GET /api/chat/conversations/:id/messages` | IDOR | passed with evidence |
+| Send message | messages/:id | `POST /api/chat/conversations/:id/messages` | Pusher/Soketi delivery | passed with evidence |
+| Delete conversation | messages | `DELETE /api/chat/conversations/:id` | ownership | passed with evidence |
+| Real-time message delivery | messages | Pusher channel | channel auth, fallback | passed with evidence |
 | Unread badge count | nav | SSE notifications | stale count | not started |
+
+**Messaging audit — findings & fixes (June 2026):**
+
+- 🔴 **Store owner 403'd on their own store conversation** (broken core flow — a
+  seller literally could not read or reply to buyer messages). `chatRepository`'s
+  `sellerSelect` omitted `profileId`, but `chatService.getConversation` authorizes
+  the owner via `seller?.profileId === userId` — which was always `undefined` → 403.
+  Fix: added `profileId` to `sellerSelect`. Verified: owner now reads + replies;
+  third-party IDOR still 403 (the added field did not weaken the guard).
+- 🟠 **Empty/missing message body → 500.** `createMessageSchema` existed but was
+  never wired; `body.text` flowed into the required `Message.content` column and
+  crashed. Fix: validate with `createMessageSchema.safeParse` in `messages.post.ts`
+  → clean 400 on empty/blank/oversized (≤5000) text.
+- 🟠 **Argument misalignment in `messages.post.ts`** — passed `body.type` as the 4th
+  arg, but `sendMessage`'s 4th param is `ipAddress`, so the audit log recorded
+  `body.type` as the IP and dropped the real user-agent. `Message` has no `type`
+  column (the schema field is vestigial). Fix: dropped `body.type` from the call.
+- 🟡 **Self-conversation** silently created (`targetId === self`) and unvalidated
+  `targetId`/`storeId` → crashes. Fix: `conversations.post.ts` requires a valid
+  UUID storeId/targetId and rejects self-targeting → 400.
+- 🟡 **Null-recipient notification** — `sendMessage` enqueued a `MESSAGE`
+  notification with `userId: null` when no recipient resolved. Fix: guard
+  `if (recipientId && recipientId !== 'ai-bot')`.
+- **Defended (verified, no change needed):** Pusher channel auth (`/api/pusher/auth`
+  rejects subscribing to any channel but the caller's own `private-user-{id}`);
+  conversation read/send/delete IDOR (participant-or-owner check); message-delete
+  ownership (`senderId === userId`); repository selects exclude `password_hash`.
+- **Tests:** `chat-security.spec.ts` (8 — owner read/reply, third-party IDOR ×2,
+  empty/blank body, no-target, self-convo) + existing `chat.spec.ts` /
+  `chat-messages.spec.ts` → **24/24 green**.
+- **Known gap (not a bug):** no mark-as-read / unread-count endpoint despite the
+  `Message.read` column — the unread badge is notification-driven, not message-driven.
+  Deferred (UX feature, not a security/correctness issue).
 
 ### P1 — Notifications
 
@@ -435,27 +468,83 @@ Priority order:
 
 | Flow | Entry | API Routes | Risk | Status |
 |------|-------|-----------|------|--------|
-| View own profile | `/u/:username` | `GET /api/profile/:username` | own vs other | not started |
-| Edit profile | account settings | `PATCH /api/profile` | media upload | not started |
-| Follow / unfollow user | profile | `POST/DELETE /api/profile/:username/follow` | self-follow | not started |
-| View followers/following | profile | stats endpoints | private accounts | not started |
-| Search users/products/stores | search bar | `GET /api/search` | ordering, type filter | not started |
-| Seller profile page | `/sellers/:storeSlug` | seller profile APIs | data exposure | not started |
+| View own profile | `/u/:username` | `GET /api/profile/:username` | own vs other | passed with evidence |
+| Edit profile | account settings | `PATCH /api/profile` | media upload | passed with evidence |
+| Follow / unfollow user | profile | `POST/DELETE /api/profile/:username/follow` | self-follow | passed with evidence |
+| View followers/following | profile | stats endpoints | private accounts | passed with evidence |
+| Search users/products/stores | search bar | `GET /api/search` | ordering, type filter | passed with evidence |
+| Seller profile page | `/sellers/:storeSlug` | seller profile APIs | data exposure | passed with evidence |
 | Map — view seller pins | `/map` | `GET /api/map/sellers` | location privacy | passed with evidence |
 | Map — filter by category/distance | `/map` | query params | radius performance | passed with evidence |
+
+**Profile & Discovery audit — findings & fixes (June 2026):**
+
+- 🔴 **Public profile leaked private seller data.** `GET /api/profile/:username`
+  spread the full `sellerProfile` row (repository used `include: { sellerProfile:
+  true }`) to any anonymous caller, exposing **raw GPS `latitude`/`longitude`
+  (bypassing `hideLocation` ghost-mode — the exact data the Map audit protected),
+  `shipFromAddress`/`shipFromPhone`/`shipFromZip` (seller's physical origin), and
+  internal `verification_status`/`verification_reason`**. Bank accounts/wallet are
+  separate relations (not loaded), so those were safe. Fix: whitelist public seller
+  fields in the route; coarse `city`/`state`/`locationLabel` only, nulled when
+  `hideLocation` is on; never raw lat/long. (`search.spec.ts` profile test)
+- 🔴 **Search leaked email + enabled account enumeration.** User search matched on
+  `email` substring and **returned the `email`** of every match to an
+  unauthenticated caller (`optionalAuth`). Anyone could `?q=gmail.com` to harvest
+  addresses. Fix: dropped `email` from both the `where` and the `select`.
+- 🟠 **Search bypassed post visibility + moderation.** Post search had no
+  `visibility`/`moderationStatus` filter, so PRIVATE/FOLLOWERS and removed posts
+  surfaced publicly — same leak class fixed in feeds. Fix: added
+  `visibility: 'PUBLIC'` + `moderationStatus: 'ACTIVE'`.
+- **Defended (verified, no change):** self-follow (`userId === target.id` → 400) and
+  duplicate-follow (→ 400) in `socialService.followUser`; product search already
+  scoped to `status: 'PUBLISHED'` (no draft leak); profile route uses an explicit
+  top-level allowlist (no `password_hash`/`email`).
+- **Tests:** `search.spec.ts` extended — user results omit email, no email
+  enumeration, PRIVATE post excluded from search, public profile omits
+  GPS/shipFrom/verification/email/profileId.
 
 ### P1 — Wall
 
 | Flow | Entry | API Routes | Risk | Status |
 |------|-------|-----------|------|--------|
-| View wall timeline (guest) | `/sellers/:storeSlug` | `GET /api/wall/store/:slug` | public posts visible, own posts not duplicated | not started |
-| View wall timeline (auth) | `/sellers/:storeSlug` | `GET /api/wall/store/:slug` | optionalAuth returns viewer context | not started |
-| Post shoutout on store wall | store profile | `POST /api/wall/store/:slug` | auth required, own wall blocked for users, 1000-char limit | not started |
-| Post shoutout on user wall | `/u/:username` | `POST /api/wall/user/:slug` | cannot post on own user wall | not started |
-| Delete shoutout (author) | wall post menu | `DELETE /api/wall/:type/:slug/:postId` | ownership: author only | not started |
-| Delete shoutout (wall owner) | wall post menu | `DELETE /api/wall/:type/:slug/:postId` | ownership: wall owner can remove any shoutout | not started |
-| Wall shoutout notification | post action | notification queue | `WALL_SHOUTOUT` type delivered to wall owner | not started |
+| View wall timeline (guest) | `/sellers/:storeSlug` | `GET /api/wall/store/:slug` | public posts visible, own posts not duplicated | passed with evidence |
+| View wall timeline (auth) | `/sellers/:storeSlug` | `GET /api/wall/store/:slug` | optionalAuth returns viewer context | passed with evidence |
+| Post shoutout on store wall | store profile | `POST /api/wall/store/:slug` | auth required, own wall blocked for users, 1000-char limit | passed with evidence |
+| Post shoutout on user wall | `/u/:username` | `POST /api/wall/user/:slug` | cannot post on own user wall | passed with evidence |
+| Delete shoutout (author) | wall post menu | `DELETE /api/wall/:type/:slug/:postId` | ownership: author only | passed with evidence |
+| Delete shoutout (wall owner) | wall post menu | `DELETE /api/wall/:type/:slug/:postId` | ownership: wall owner can remove any shoutout | passed with evidence |
+| Wall shoutout notification | post action | notification queue | `WALL_SHOUTOUT` type delivered to wall owner | passed with evidence |
 | Wall filter pill — Products | store profile | client-side filter | products tab still calls correct API | not started |
+
+**Wall audit — findings & fixes (June 2026):**
+
+- 🟠 **`WALL_SHOUTOUT` notification downgraded to `GENERAL`** — the type was missing
+  from both the `NotificationType` enum and `notificationService.typeMap`, so
+  `typeMap[type] || 'GENERAL'` silently downgraded it (same class as the
+  SQUARE_REQUEST bug). The wall owner still got notified, but generically — the UI
+  couldn't render/deep-link it as a wall event. Fix: added `WALL_SHOUTOUT` to the
+  enum (`prisma db push` + regenerate) and the typeMap. Verified end-to-end: owner
+  receives a `WALL_SHOUTOUT` notification carrying the shoutout's `postId`.
+- 🟡 **GET wall `shoutoutsWhere` lacked a visibility filter** — owner posts were
+  scoped to `visibility: PUBLIC` but shoutouts were not. Not currently exploitable
+  (the POST route hardcodes `visibility: 'PUBLIC'`), but an inconsistent
+  defense-in-depth gap; a future edit/path that changed a shoutout's visibility
+  would have leaked it. Fix: added `visibility: 'PUBLIC'` to the shoutout filter.
+- ⚙️ **Orphaned dev workers caused notification mis-typing.** Found ~9 stale
+  `nuxt dev`/BullMQ worker processes (from 6/10–6/15) still connected to the shared
+  Upstash queue, racing the current worker with pre-fix code — when a stale worker
+  won a job it stored `GENERAL`. Killed all orphans; a single clean worker now
+  drains the queue. (Dev-hygiene note, not a product bug — production runs one
+  worker pool. Likely the source of earlier intermittent notification flakiness.)
+- **Defended (verified, no change):** owner-posts visibility (`PUBLIC` + `ACTIVE`)
+  and shoutout/owner-post mutual exclusivity (no duplication — `wallTargetType: null`
+  vs non-null); shoutout create auth + self-user-wall block + 1–1000 char Zod;
+  delete authorization (author OR wall owner; validates the post belongs to that
+  wall; cross-party → 403).
+- **Tests:** `wall.spec.ts` (10 — visibility leak, guest view, shoutout auth/empty/
+  self-wall, delete IDOR ×3, typed notification). Notification test runs first to
+  avoid sibling-test queue backlog under dev Upstash latency.
 
 ### P1 — Squares
 
@@ -489,8 +578,13 @@ the core constraint (sellers must not DM-and-boycott the platform):
   unique `(requestId, sellerId, productId)` prevents duplicate offers
 - **Models**: `SquareRequest`, `SquareOffer` (+ `SquareRequestStatus`/`SquareOfferStatus`
   enums, `SQUARE_REQUEST`/`SQUARE_OFFER` notification types). Applied via `prisma db push`
-- **Tests**: `requests.spec.ts` 11/11 (follower gate, masking, membership, ownership IDOR,
-  accept/decline IDOR, duplicate 409, rate-limit 429); `contentGuard.spec.ts` 9/9;
+- **Notification delivery** — `notificationService.typeMap` was missing `SQUARE_REQUEST`/
+  `SQUARE_OFFER`, so requests/offers were silently downgraded to `GENERAL`
+  (`typeMap[type] || 'GENERAL'`). Added both mappings; verified end-to-end (buyer posts
+  request → member seller receives a correctly-typed `SQUARE_REQUEST` via the BullMQ worker)
+- **Tests**: `requests.spec.ts` 12/12 (follower gate, masking, membership, ownership IDOR,
+  accept/decline IDOR, duplicate 409, rate-limit 429, **typed notification delivery**);
+  `contentGuard.spec.ts` 9/9;
   `square-requests.spec.ts` E2E (composer renders, tab works). Squares API regression 34/34
 - **UI**: `SquareRequestComposer.vue`, `SquareRequestCard.vue`, `SquareOfferItem.vue`,
   `SquareRespondModal.vue` (existing-product picker + quick-add fallback), new Requests tab

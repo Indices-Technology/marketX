@@ -105,11 +105,13 @@ import BaseSelect from '~~/layers/ui/app/components/BaseSelect.vue'
 import BaseTextarea from '~~/layers/ui/app/components/BaseTextarea.vue'
 import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 import { useSquareApi } from '~~/layers/square/app/services/square.api'
+import { useProductApi } from '~~/layers/commerce/app/services/product.api'
 
 const props = defineProps<{ slug: string; squareName: string }>()
 const emit = defineEmits<{ close: []; created: [request: any] }>()
 
 const squareApi = useSquareApi()
+const productApi = useProductApi()
 
 const form = reactive({
   title: '',
@@ -139,7 +141,7 @@ const categoryOptions = ref<Array<{ label: string; value: number }>>([])
 
 onMounted(async () => {
   try {
-    const res: any = await $fetch('/api/commerce/categories')
+    const res: any = await productApi.getCategories()
     categoryOptions.value = (res?.data ?? []).map((c: { id: number; name: string }) => ({
       label: c.name,
       value: c.id,

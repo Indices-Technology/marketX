@@ -39,6 +39,11 @@ export class MapApiClient extends BaseApiClient {
       skipAuth: true,
     })
   }
+
+  /** Squares plotted on the map. */
+  async getSquares(): Promise<any> {
+    return this.request('/api/map/squares', { method: 'GET', skipAuth: true })
+  }
 }
 
 let instance: MapApiClient | null = null

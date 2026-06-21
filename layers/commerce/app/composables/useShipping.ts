@@ -1,7 +1,7 @@
 import type {
   IShipmentRate,
   ITrackingResult,
-} from '~~/server/utils/shipping/types'
+} from '~~/layers/shipping/server/legacy/types'
 
 export type { IShipmentRate, ITrackingResult }
 
@@ -31,7 +31,7 @@ export const useShipping = () => {
     isLoading.value = true
     try {
       const res = await $fetch<{ success: boolean; data: ShippingZone[] }>(
-        '/api/commerce/shipping/zones',
+        '/api/shipping/zones',
       )
       zones.value = res.data || []
     } catch {
@@ -49,7 +49,7 @@ export const useShipping = () => {
     isLoading.value = true
     try {
       const res = await $fetch<{ success: boolean; data: ShippingCalculation }>(
-        '/api/commerce/shipping/calculate',
+        '/api/shipping/calculate',
         { method: 'POST', body: { countryCode, weightKg } },
       )
       calculation.value = res.data
@@ -80,34 +80,50 @@ export const useShipping = () => {
   const isLoadingRates = ref(false)
   const ratesError = ref<string | null>(null)
 
-  const fetchLiveRates = async (payload: {
+  interface RatesPayload {
     storeSlug?: string
     from?: Record<string, string>
     to: Record<string, string>
     parcel: Record<string, number>
-  }) => {
+    /** Order subtotal in minor units (kobo) — for BYOS free-over thresholds. */
+    subtotalMinor?: number
+  }
+
+  /**
+   * Fetch rates for one seller and return them. The caller owns the resulting
+   * state — used by the multi-seller checkout, which tracks rates per seller
+   * group (so a component never has to call `$fetch` itself).
+   */
+  const fetchRatesFor = async (
+    payload: RatesPayload,
+  ): Promise<{ rates: IShipmentRate[]; error: string | null }> => {
+    try {
+      const res = await $fetch<{ success: boolean; data: IShipmentRate[] }>(
+        '/api/shipping/rates',
+        { method: 'POST', body: payload },
+      )
+      return { rates: res.data ?? [], error: null }
+    } catch (e: unknown) {
+      const err = e as Error & { data?: { message?: string } }
+      return { rates: [], error: err?.data?.message ?? 'Could not fetch shipping rates' }
+    }
+  }
+
+  const fetchLiveRates = async (payload: RatesPayload) => {
     isLoadingRates.value = true
     ratesError.value = null
     liveRates.value = []
     selectedRate.value = null
-    try {
-      const res = await $fetch<{ success: boolean; data: IShipmentRate[] }>(
-        '/api/commerce/shipping/rates',
-        { method: 'POST', body: payload },
+    const { rates, error } = await fetchRatesFor(payload)
+    liveRates.value = rates
+    ratesError.value = error
+    // Auto-select cheapest
+    if (rates.length > 0) {
+      selectedRate.value = rates.reduce((a, b) =>
+        a.amountNGN <= b.amountNGN ? a : b,
       )
-      liveRates.value = res.data
-      // Auto-select cheapest
-      if (liveRates.value.length > 0) {
-        selectedRate.value = liveRates.value.reduce((a, b) =>
-          a.amountNGN <= b.amountNGN ? a : b,
-        )
-      }
-    } catch (e: unknown) {
-      const err = e as Error & { data?: { message?: string } }
-      ratesError.value = err?.data?.message ?? 'Could not fetch shipping rates'
-    } finally {
-      isLoadingRates.value = false
     }
+    isLoadingRates.value = false
   }
 
   const trackShipment = async (
@@ -120,7 +136,7 @@ export const useShipping = () => {
       if (carrier) params.set('carrier', carrier)
       if (provider) params.set('provider', provider)
       const res = await $fetch<{ success: boolean; data: ITrackingResult }>(
-        `/api/commerce/shipping/track/${trackingNumber}?${params.toString()}`,
+        `/api/shipping/track/${trackingNumber}?${params.toString()}`,
       )
       return res.data
     } catch {
@@ -141,6 +157,7 @@ export const useShipping = () => {
     isLoadingRates,
     ratesError,
     fetchLiveRates,
+    fetchRatesFor,
     trackShipment,
   }
 }

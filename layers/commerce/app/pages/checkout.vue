@@ -72,17 +72,33 @@
         <!-- Delivery form: always visible — buyer can fill address while cart loads -->
         <CheckoutDelivery :form="form" @address-changed="onAddressChanged" />
 
-        <CheckoutShipping
-          :shipping-calculation="shippingCalculation"
-          :live-rates="liveRates"
-          :selected-rate="selectedRate"
-          :is-loading-rates="isLoadingRates"
-          :shipping-loading="shippingLoading"
-          :rates-error="ratesError"
-          :active-country="activeCountry"
-          :active-currency="activeCurrency"
-          @update:selected-rate="selectedRate = $event"
-        />
+        <div class="space-y-3">
+          <p
+            v-if="sellerGroups.length > 1"
+            class="px-1 text-[12px] font-medium text-gray-500 dark:text-neutral-400"
+          >
+            Ships in {{ sellerGroups.length }} packages
+          </p>
+          <CheckoutShipping
+            v-for="g in sellerGroups"
+            :key="g.slug"
+            :store-name="sellerGroups.length > 1 ? g.storeName : ''"
+            :shipping-calculation="shippingCalculation"
+            :live-rates="shipBySeller[g.slug]?.rates ?? []"
+            :selected-rate="shipBySeller[g.slug]?.selected ?? null"
+            :is-loading-rates="shipBySeller[g.slug]?.loading ?? false"
+            :shipping-loading="shippingLoading"
+            :rates-error="shipBySeller[g.slug]?.error ?? null"
+            :active-country="activeCountry"
+            :active-currency="activeCurrency"
+            @update:selected-rate="
+              (r) => {
+                const s = shipBySeller[g.slug]
+                if (s) s.selected = r
+              }
+            "
+          />
+        </div>
 
         <!-- Order Total -->
         <div
@@ -235,7 +251,8 @@ import { useRuntimeConfig } from '#app'
 import { useOrderApi } from '~~/layers/commerce/app/services/order.api'
 import { useAffiliate } from '~~/layers/commerce/app/composables/useAffiliate'
 import { useSeo } from '~~/app/composables/useSeo'
-import { useCartStore } from '~~/layers/commerce/app/stores/cart.store'
+import { useCartStore, effectiveUnitPrice } from '~~/layers/commerce/app/stores/cart.store'
+import type { IShipmentRate } from '~~/layers/shipping/server/legacy/types'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import { extractErrorMessage } from '~~/layers/core/app/utils/errors'
 import CheckoutAuthStep from '../components/checkout/CheckoutAuthStep.vue'
@@ -257,11 +274,7 @@ const {
   calculation: shippingCalculation,
   calculateShipping,
   isLoading: shippingLoading,
-  liveRates,
-  selectedRate,
-  isLoadingRates,
-  ratesError,
-  fetchLiveRates,
+  fetchRatesFor,
 } = useShipping()
 
 const {
@@ -296,42 +309,77 @@ const DEFAULT_PARCEL = { weightKg: 0.5, lengthCm: 20, widthCm: 15, heightCm: 5 }
 const activeCountry = computed(() => form.country)
 const activeCurrency = computed(() => getCurrencyForCountry(form.country))
 
-const primarySellerSlug = computed(() => {
-  const counts = new Map<string, number>()
-  for (const item of items.value) {
-    const slug = item.variant?.product?.seller?.store_slug
-    if (slug) counts.set(slug, (counts.get(slug) || 0) + (item.quantity || 1))
+// ── Per-seller shipping (multi-vendor) ──────────────────────────────────────
+// A cart can span several sellers; each ships its own parcel. We group the cart
+// by seller, quote each seller independently, and sum the chosen options.
+interface SellerGroup {
+  slug: string
+  storeName: string
+  subtotalMajor: number
+}
+const sellerGroups = computed<SellerGroup[]>(() => {
+  const map = new Map<string, SellerGroup>()
+  for (const it of items.value) {
+    const seller = it.variant?.product?.seller
+    const slug = seller?.store_slug
+    if (!slug) continue
+    const g =
+      map.get(slug) ??
+      { slug, storeName: seller?.store_name || 'Seller', subtotalMajor: 0 }
+    g.subtotalMajor += effectiveUnitPrice(it) * (it.quantity || 1)
+    map.set(slug, g)
   }
-  let max = 0
-  let primary = ''
-  for (const [slug, count] of counts) {
-    if (count > max) {
-      max = count
-      primary = slug
-    }
-  }
-  return primary || null
+  return [...map.values()]
 })
 
-const triggerLiveRates = async () => {
+interface SellerShip {
+  rates: IShipmentRate[]
+  selected: IShipmentRate | null
+  loading: boolean
+  error: string | null
+}
+const shipBySeller = reactive<Record<string, SellerShip>>({})
+
+const fetchSellerRates = async () => {
   if (!form.address || !form.county || !form.country) return
-  await fetchLiveRates({
-    storeSlug: primarySellerSlug.value || undefined,
-    to: {
-      name: form.name || 'Customer',
-      street1: form.address,
-      city: form.county,
-      state: form.state || form.county,
-      zip: form.zipcode || '000000',
-      country: form.country,
-    },
-    parcel: DEFAULT_PARCEL,
-  })
+  const to = {
+    name: form.name || 'Customer',
+    street1: form.address,
+    city: form.county,
+    state: form.state || form.county,
+    zip: form.zipcode || '000000',
+    country: form.country,
+  }
+  await Promise.all(
+    sellerGroups.value.map(async (g) => {
+      // Ensure the key exists, then read it back through the reactive proxy.
+      // (Mutating the raw object created in the `??` would bypass reactivity and
+      // leave `shippingCostMajor` frozen at its pre-rate fallback value.)
+      if (!shipBySeller[g.slug])
+        shipBySeller[g.slug] = { rates: [], selected: null, loading: false, error: null }
+      const s: SellerShip = shipBySeller[g.slug]!
+      s.loading = true
+      s.error = null
+      const { rates, error } = await fetchRatesFor({
+        storeSlug: g.slug,
+        to,
+        parcel: DEFAULT_PARCEL,
+        subtotalMinor: Math.round(g.subtotalMajor * 100),
+      })
+      s.rates = rates
+      s.error = error
+      // Pre-select the cheapest so a buyer can just pay; they can change it.
+      s.selected = rates.length
+        ? rates.reduce((a, b) => (a.amountNGN <= b.amountNGN ? a : b))
+        : null
+      s.loading = false
+    }),
+  )
 }
 
 const onAddressChanged = () => {
   calculateShipping(form.country)
-  triggerLiveRates()
+  fetchSellerRates()
 }
 
 const onAuthenticated = ({ name }: { name: string; isNewUser: boolean }) => {
@@ -339,10 +387,16 @@ const onAuthenticated = ({ name }: { name: string; isNewUser: boolean }) => {
   // CheckoutDelivery loads saved addresses in its own onMounted once isLoggedIn is true
 }
 
-const shippingCostMajor = computed((): number => {
-  if (selectedRate.value) return selectedRate.value.amountNGN
-  return (shippingCalculation.value?.cost ?? 0) / 100
-})
+/** Chosen shipping for one seller (major NGN): selected rate, else flat fallback. */
+const groupShippingMajor = (slug: string): number => {
+  const s = shipBySeller[slug]
+  if (s?.selected) return s.selected.amountNGN
+  return (shippingCalculation.value?.cost ?? 0) / 100 // flat fallback per parcel
+}
+
+const shippingCostMajor = computed((): number =>
+  sellerGroups.value.reduce((sum, g) => sum + groupShippingMajor(g.slug), 0),
+)
 
 const grandTotalMajor = computed(
   () => cartTotal.value + shippingCostMajor.value,
@@ -353,28 +407,51 @@ const grandTotalUSD = computed(
 )
 
 const shippingDisplay = computed(() => {
-  if (selectedRate.value) return fmtP(selectedRate.value.amountNGN)
-  if (!shippingCalculation.value) return '—'
-  return shippingCalculation.value.cost === 0
-    ? 'Free'
-    : fmtS(shippingCalculation.value.cost)
+  const c = shippingCostMajor.value
+  return c === 0 ? 'Free' : fmtP(c)
 })
+
+/** Per-seller shipping breakdown — sent with the order (Phase 2 splits on this). */
+const shippingBreakdown = computed(() =>
+  sellerGroups.value.map((g) => {
+    const sel = shipBySeller[g.slug]?.selected
+    return {
+      storeSlug: g.slug,
+      storeName: g.storeName,
+      carrier: sel?.carrier ?? 'Standard',
+      service: sel?.service ?? 'Flat',
+      provider: sel?.provider ?? null,
+      amount: Math.round(groupShippingMajor(g.slug) * 100), // kobo
+      estimatedDays:
+        sel?.estimatedDays ?? shippingCalculation.value?.estimatedDays ?? '',
+    }
+  }),
+)
 
 const fmtP = (majorNGN: number) => formatProduct(majorNGN, activeCurrency.value)
 const fmtPNGN = (majorNGN: number) => formatProductNGN(majorNGN)
 const fmtS = (kobo: number) => format(kobo, activeCurrency.value)
 const fmtNGN = (kobo: number) => formatNGN(kobo)
 
+// Every seller group must have a chosen option (or a flat fallback available),
+// and none still loading.
+const shippingReady = computed(
+  () =>
+    sellerGroups.value.length > 0 &&
+    sellerGroups.value.every((g) => {
+      const s = shipBySeller[g.slug]
+      return !s?.loading && (!!s?.selected || !!shippingCalculation.value)
+    }),
+)
+
 const isFormValid = computed(
   () =>
     hasFetchedOnce.value &&
     items.value.length > 0 &&
-    form.name.trim() &&
-    form.address.trim() &&
-    form.country &&
-    (!!selectedRate.value ||
-      !!shippingCalculation.value ||
-      isLoadingRates.value),
+    !!form.name.trim() &&
+    !!form.address.trim() &&
+    !!form.country &&
+    shippingReady.value,
 )
 
 const handleCheckout = async () => {
@@ -382,15 +459,13 @@ const handleCheckout = async () => {
   checkoutError.value = ''
   isSubmitting.value = true
 
-  const shippingCost = selectedRate.value
-    ? Math.round(selectedRate.value.amountNGN * 100)
-    : shippingCalculation.value?.cost ?? 0
-  const shippingZone = selectedRate.value
-    ? `${selectedRate.value.carrier} ${selectedRate.value.service}`
-    : shippingCalculation.value?.zoneName
-  const estimatedDays = selectedRate.value
-    ? selectedRate.value.estimatedDays
-    : shippingCalculation.value?.estimatedDays
+  const breakdown = shippingBreakdown.value
+  const shippingCost = breakdown.reduce((sum, b) => sum + b.amount, 0) // kobo total
+  const shippingZone =
+    breakdown.length === 1
+      ? `${breakdown[0]!.carrier} ${breakdown[0]!.service}`
+      : `${breakdown.length} parcels`
+  const estimatedDays = breakdown[0]?.estimatedDays
   const affiliateCode = getStoredRef() || undefined
 
   const orderPayload = {
@@ -407,6 +482,8 @@ const handleCheckout = async () => {
     shippingCost,
     shippingZone,
     estimatedDays,
+    // Per-seller shipping selections — backend stores this; Phase 2 splits on it.
+    shippingBreakdown: breakdown,
     ...(affiliateCode ? { affiliateCode } : {}),
   }
 

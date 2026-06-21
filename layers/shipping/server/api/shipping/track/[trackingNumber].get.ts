@@ -1,9 +1,9 @@
 /**
- * GET /api/commerce/shipping/track/:trackingNumber?carrier=DHL&provider=shippo
+ * GET /api/shipping/track/:trackingNumber?carrier=DHL&provider=shippo
  * Returns real-time tracking events for a shipment.
  */
 
-import { getShippingProvider } from '~~/server/utils/shipping'
+import { getShippingProvider } from '~~/layers/shipping/server/legacy/router'
 
 export default defineEventHandler(async (event) => {
   const trackingNumber = getRouterParam(event, 'trackingNumber')

@@ -586,6 +586,83 @@
           </template>
         </div>
 
+        <!-- Self / Own Delivery (BYOS) -->
+        <div class="space-y-4 rounded-2xl border border-gray-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-[14px] font-semibold text-gray-900 dark:text-neutral-100">Self / Own Delivery</h2>
+              <p class="mt-0.5 text-[12px] text-gray-400 dark:text-neutral-500">Deliver orders yourself (own rider / hand delivery) instead of, or alongside, a carrier. Shown as an option at checkout.</p>
+            </div>
+            <button
+              type="button"
+              @click="form.byos_enabled = !form.byos_enabled"
+              class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors"
+              :class="form.byos_enabled ? 'bg-brand' : 'bg-gray-200 dark:bg-neutral-700'"
+            >
+              <span
+                class="inline-block h-4 w-4 translate-x-1 transform rounded-full bg-white shadow transition-transform"
+                :class="form.byos_enabled ? 'translate-x-6' : 'translate-x-1'"
+              />
+            </button>
+          </div>
+
+          <template v-if="form.byos_enabled">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label class="mb-1.5 block text-[12px] font-semibold text-gray-600 dark:text-neutral-400">Flat delivery fee (₦)</label>
+                <input
+                  v-model.number="form.byos_flat"
+                  type="number" min="0" step="50"
+                  class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-[13px] text-gray-900 transition focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+                />
+                <p class="mt-0.5 text-[11px] text-gray-400">What the buyer pays for delivery. Leave 0 for free.</p>
+              </div>
+              <div>
+                <label class="mb-1.5 block text-[12px] font-semibold text-gray-600 dark:text-neutral-400">Free delivery over (₦)</label>
+                <input
+                  v-model.number="form.byos_freeOver"
+                  type="number" min="0" step="500"
+                  class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-[13px] text-gray-900 transition focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+                />
+                <p class="mt-0.5 text-[11px] text-gray-400">Order subtotal above this delivers free. 0 = off.</p>
+              </div>
+            </div>
+
+            <div>
+              <label class="mb-1.5 block text-[12px] font-semibold text-gray-600 dark:text-neutral-400">Delivery time (shown to buyer)</label>
+              <input
+                v-model="form.byos_eta"
+                type="text" maxlength="120" placeholder="e.g. 2–4 days (delivered by us)"
+                class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-[13px] text-gray-900 transition focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+              />
+            </div>
+
+            <div class="flex items-center justify-between rounded-xl border border-gray-200 px-3.5 py-3 dark:border-neutral-700">
+              <div>
+                <p class="text-[13px] font-medium text-gray-900 dark:text-neutral-100">Offer in-person pickup</p>
+                <p class="text-[11px] text-gray-400">A free "collect from seller" option at checkout.</p>
+              </div>
+              <button
+                type="button"
+                @click="form.byos_pickup = !form.byos_pickup"
+                class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors"
+                :class="form.byos_pickup ? 'bg-brand' : 'bg-gray-200 dark:bg-neutral-700'"
+              >
+                <span class="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform" :class="form.byos_pickup ? 'translate-x-6' : 'translate-x-1'" />
+              </button>
+            </div>
+            <div v-if="form.byos_pickup">
+              <label class="mb-1.5 block text-[12px] font-semibold text-gray-600 dark:text-neutral-400">Pickup note (optional)</label>
+              <input
+                v-model="form.byos_pickupNote"
+                type="text" maxlength="200" placeholder="e.g. Collect at Shop 12, Balogun Market, 10am–6pm"
+                class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-[13px] text-gray-900 transition focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+              />
+            </div>
+            <p class="text-[11px] text-gray-400">Funds are still held by MarketX and released to you when the buyer confirms receipt — buyer protection is unchanged.</p>
+          </template>
+        </div>
+
         <!-- Save -->
         <button
           type="submit"
@@ -609,7 +686,10 @@
 import { useSellerManagement } from '~~/layers/seller/app/composables/useSellerManagement'
 import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { useMediaUpload } from '~~/layers/core/app/composables/useMediaUpload'
+import { useGeocode } from '~~/layers/core/app/composables/useGeocode'
 import { SUPPORTED_CURRENCIES } from '~~/shared/utils/currency'
+
+const { reverseGeocode } = useGeocode()
 
 const NIGERIAN_STATES = [
   'Abia', 'Adamawa', 'Akwa Ibom', 'Anambra', 'Bauchi', 'Bayelsa', 'Benue',
@@ -685,6 +765,13 @@ const form = reactive({
   pod_enabled: false,
   pod_zones: [] as string[],
   pod_delivery_days: 3,
+  // Bring-your-own-shipping (BYOS) — money fields in major NGN
+  byos_enabled: false,
+  byos_flat: 0,
+  byos_freeOver: 0,
+  byos_pickup: false,
+  byos_pickupNote: '',
+  byos_eta: '',
 })
 
 const gettingLocation = ref(false)
@@ -700,9 +787,7 @@ const detectLocation = () => {
       form.longitude = lng
 
       try {
-        const geo = await $fetch<any>(
-          `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`,
-        )
+        const geo = await reverseGeocode(lat, lng)
         if (geo?.city && !form.city) form.city = geo.city
         if (geo?.principalSubdivision && !form.state) {
           // strip trailing " State" suffix common in Nigerian responses
@@ -756,6 +841,14 @@ const prefillForm = (s: any) => {
   form.pod_enabled = s.pod_enabled ?? false
   form.pod_zones = (s.pod_zones as string[]) ?? []
   form.pod_delivery_days = s.pod_delivery_days ?? 3
+  // BYOS (stored in kobo → display in naira)
+  const sc = (s.shippingConfig ?? {}) as Record<string, any>
+  form.byos_enabled = !!sc.selfEnabled
+  form.byos_flat = (sc.flatRateMinor ?? 0) / 100
+  form.byos_freeOver = (sc.freeOverMinor ?? 0) / 100
+  form.byos_pickup = !!sc.pickupEnabled
+  form.byos_pickupNote = sc.pickupNote ?? ''
+  form.byos_eta = sc.etaText ?? ''
 }
 
 const toggleZone = (state: string) => {
@@ -842,6 +935,20 @@ const handleSubmit = async () => {
       pod_enabled: form.pod_enabled,
       pod_zones: form.pod_zones,
       pod_delivery_days: form.pod_delivery_days,
+      // Bring-your-own-shipping (convert major NGN → kobo)
+      shippingConfig: form.byos_enabled
+        ? {
+            selfEnabled: true,
+            flatRateMinor: Math.max(0, Math.round(form.byos_flat * 100)),
+            freeOverMinor:
+              form.byos_freeOver > 0
+                ? Math.round(form.byos_freeOver * 100)
+                : undefined,
+            pickupEnabled: form.byos_pickup,
+            pickupNote: form.byos_pickupNote || undefined,
+            etaText: form.byos_eta || undefined,
+          }
+        : { selfEnabled: false },
     } as any)
     saveSuccess.value = true
     setTimeout(() => {

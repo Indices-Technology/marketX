@@ -539,11 +539,13 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useSquareApi } from '../../../services/square.api'
 import { useSquareAdmin } from '../../../composables/useSquareAdmin'
+import { useSearchApi } from '~~/layers/core/app/services/search.api'
 import { notify } from '@kyvg/vue3-notification'
 
 const route = useRoute()
 const slug = computed(() => route.params.slug as string)
 const squareApi = useSquareApi()
+const searchApi = useSearchApi()
 
 // ── Square data ───────────────────────────────────────────────────────────────
 
@@ -698,7 +700,7 @@ watch(officerSearch, (q) => {
   if (!q.trim() || q.length < 2) { officerSearchResults.value = []; return }
   searchDebounce = setTimeout(async () => {
     try {
-      const res = await $fetch<any>(`/api/search?q=${encodeURIComponent(q)}&type=users&limit=5`)
+      const res = await searchApi.search(q, 'users', 5)
       officerSearchResults.value = res.data?.users ?? []
     } catch {
       officerSearchResults.value = []

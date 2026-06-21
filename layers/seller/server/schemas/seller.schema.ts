@@ -197,6 +197,19 @@ export const updateSellerProfileSchema = z
     pod_enabled: z.boolean().optional(),
     pod_zones: z.array(z.string().min(1)).max(37).optional(),
     pod_delivery_days: z.number().int().min(1).max(30).optional(),
+    // ── Bring-your-own-shipping (BYOS) ───────────────────────────────────────
+    shippingConfig: z
+      .object({
+        selfEnabled: z.boolean().optional(),
+        flatRateMinor: z.number().int().min(0).max(100_000_00).optional(),
+        freeOverMinor: z.number().int().min(0).optional(),
+        pickupEnabled: z.boolean().optional(),
+        pickupNote: z.string().max(200).optional(),
+        etaText: z.string().max(120).optional(),
+        zoneRates: z.record(z.string(), z.number().int().min(0)).optional(),
+      })
+      .nullable()
+      .optional(),
   })
   .refine(
     (data) => Object.values(data).some((value) => value !== undefined),

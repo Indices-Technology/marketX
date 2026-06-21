@@ -1,4 +1,18 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+
+// Relaxed CSP for the OpenAPI doc routes only (/_scalar, /_swagger). These
+// pages load their UI bundle from jsdelivr; the spec is fetched same-origin.
+// Scoped via routeRules so the app-wide CSP stays strict.
+const OPENAPI_DOC_CSP = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
+  "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com",
+  "font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com",
+  "img-src 'self' data: https://cdn.jsdelivr.net",
+  "connect-src 'self' https://cdn.jsdelivr.net",
+  "worker-src 'self' blob:",
+].join('; ')
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
@@ -61,6 +75,7 @@ export default defineNuxtConfig({
     './layers/feed',
     './layers/seller',
     './layers/profile',
+    './layers/shipping',
     './layers/commerce',
     './layers/social',
     './layers/map',
@@ -234,6 +249,19 @@ export default defineNuxtConfig({
     experimental: {
       websocket: true,
       tasks: true,
+      openAPI: true,
+    },
+    // OpenAPI contract for API consumers (e.g. the native/mobile client).
+    // Spec served at /_openapi.json; interactive docs at /_scalar and /_docs.
+    // Route detail comes from `defineRouteMeta({ openAPI: {...} })` in handlers.
+    openAPI: {
+      meta: {
+        title: 'MarketX API',
+        description:
+          'Social commerce API. Auth via `Authorization: Bearer <accessToken>`; ' +
+          'see docs/API_STRUCTURE.md for the route map and token lifecycle.',
+        version: '1.0.0',
+      },
     },
     scheduledTasks: {
       '* * * * *': ['processQueues'],
@@ -267,6 +295,12 @@ export default defineNuxtConfig({
       '/_nuxt/**': {
         headers: { 'Cache-Control': 'public, max-age=31536000, immutable' },
       },
+      // OpenAPI UI (Scalar / Swagger) loads its bundle from jsdelivr. The
+      // app-wide CSP above blocks that, so relax it ONLY on these doc routes —
+      // the rest of the app keeps the strict policy. The spec itself is fetched
+      // same-origin (connect-src 'self').
+      '/_scalar': { headers: { 'Content-Security-Policy': OPENAPI_DOC_CSP } },
+      '/_swagger': { headers: { 'Content-Security-Policy': OPENAPI_DOC_CSP } },
     },
   },
 

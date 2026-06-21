@@ -1,13 +1,13 @@
 /**
- * POST /api/commerce/shipping/create
+ * POST /api/shipping/create
  * Book a shipment after an order is confirmed + paid.
  * Creates label, stores tracking info on the Order record.
  */
 
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
 import { prisma } from '~~/server/utils/db'
-import { getShippingProvider } from '~~/server/utils/shipping'
-import type { ICreateShipmentPayload } from '~~/server/utils/shipping'
+import { getShippingProvider } from '~~/layers/shipping/server/legacy/router'
+import type { ICreateShipmentPayload } from '~~/layers/shipping/server/legacy/types'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -96,7 +96,7 @@ export default defineEventHandler(async (event) => {
     return { success: true, data: result }
   } catch (error: unknown) {
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
-    logger.logError('[POST /api/commerce/shipping/create]', error, {
+    logger.logError('[POST /api/shipping/create]', error, {
       requestId: event.context?.requestId,
     })
     throw createError({ statusCode: 500, statusMessage: 'Internal server error' })

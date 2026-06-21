@@ -158,6 +158,28 @@ export class SellerApiClient extends BaseApiClient {
       params: { days },
     })
   }
+
+  /** Conversations for a seller's inbox. */
+  async getSellerMessages(sellerId: string): Promise<any> {
+    return this.request(`/api/seller/${sellerId}/messages`, { method: 'GET' })
+  }
+
+  /** Public discover feed of featured sellers (optionally filtered/searched). */
+  async getFeaturedSellers(
+    params: {
+      limit?: number
+      offset?: number
+      search?: string
+      categorySlug?: string
+      hasDeals?: boolean
+    } = {},
+  ): Promise<any> {
+    return this.request('/api/seller/featured', {
+      method: 'GET',
+      params: this.cleanParams(params),
+      skipAuth: true,
+    })
+  }
 }
 
 /**

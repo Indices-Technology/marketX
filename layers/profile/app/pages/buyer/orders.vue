@@ -181,12 +181,29 @@
       </div>
 
       <!-- Orders list -->
-      <div v-else-if="filteredOrders.length" class="space-y-4">
+      <div v-else-if="filteredOrders.length" class="space-y-6">
         <div
-          v-for="order in filteredOrders"
-          :key="order.id"
-          class="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
+          v-for="group in orderGroups"
+          :key="group.id"
+          class="space-y-2"
         >
+          <!-- Multi-seller purchase header ("ships in N packages") -->
+          <div
+            v-if="group.orders.length > 1"
+            class="flex items-center justify-between px-1"
+          >
+            <p class="text-xs font-semibold text-gray-600 dark:text-neutral-300">
+              Purchase · {{ group.orders.length }} shipments from different sellers
+            </p>
+            <p class="text-[11px] text-gray-400 dark:text-neutral-500">
+              {{ formatDate(group.orders[0].created_at) }}
+            </p>
+          </div>
+          <div
+            v-for="order in group.orders"
+            :key="order.id"
+            class="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
+          >
           <NuxtLink
             :to="`/buyer/orders/${order.id}`"
             class="block p-5 transition-colors hover:bg-gray-50 dark:hover:bg-neutral-800/50"
@@ -299,6 +316,7 @@
             <Icon name="mdi:check-circle" size="14" />
             Receipt confirmed — funds released to seller
           </div>
+        </div>
         </div>
       </div>
 
@@ -448,16 +466,13 @@ onMounted(async () => {
     }
   }
 
-  // PayPal redirect — ?paypal=success&token={paypalOrderId}&orderId={internalId}
+  // PayPal redirect — ?paypal=success&group={purchaseGroupId}&token={paypalOrderId}
+  // The PayPal `token` is the shared payment reference; capture works off it alone.
   const paypalReturn = route.query.paypal as string
   const ppToken = (route.query.token ?? route.query.paypalOrderId) as string
-  const ppOrderId = route.query.orderId as string
-  if (paypalReturn === 'success' && ppToken && ppOrderId) {
+  if (paypalReturn === 'success' && ppToken) {
     try {
-      await orderApi.capturePayPal({
-        orderId: parseInt(ppOrderId),
-        paypalOrderId: ppToken,
-      })
+      await orderApi.capturePayPal({ paypalOrderId: ppToken })
       paymentSuccess.value = true
     } catch {
       /* silent */
@@ -491,6 +506,19 @@ const loadOrders = async () => {
 const filteredOrders = computed(() => {
   if (activeStatus.value === 'ALL') return orders.value
   return orders.value.filter((o) => o.status === activeStatus.value)
+})
+
+// Group the per-seller orders of one checkout into a single "purchase".
+// Orders sharing a purchaseGroupId are shipments of the same purchase.
+const orderGroups = computed(() => {
+  const map = new Map<string, { id: string; orders: any[] }>()
+  for (const o of filteredOrders.value) {
+    const key = o.purchaseGroupId || `single-${o.id}`
+    const g = map.get(key) ?? { id: key, orders: [] }
+    g.orders.push(o)
+    map.set(key, g)
+  }
+  return [...map.values()]
 })
 
 const STATUS_TABS = [

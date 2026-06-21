@@ -10,6 +10,24 @@ type OAuthProvider = 'google' | 'facebook' | 'tiktok'
 
 const providers: OAuthProvider[] = ['google', 'facebook', 'tiktok']
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Auth'],
+    summary: 'Start an OAuth flow (web only)',
+    description:
+      'Redirects (302) to the provider consent screen and sets a `state` cookie. ' +
+      'Browser-only flow — native clients should use a provider SDK with PKCE.',
+    parameters: [
+      { in: 'path', name: 'provider', required: true, schema: { type: 'string', enum: ['google', 'facebook', 'tiktok'] } },
+      { in: 'query', name: 'redirectTo', required: false, schema: { type: 'string' }, description: 'Relative path to land on after login.' },
+    ],
+    responses: {
+      302: { description: 'Redirect to provider authorize URL' },
+      404: { description: 'Provider not supported' },
+      500: { description: 'Provider not configured on the server' },
+    },
+  },
+})
 export default defineEventHandler(async (event) => {
   const provider = event.context.params?.provider as OAuthProvider | undefined
   if (!provider || !providers.includes(provider)) {

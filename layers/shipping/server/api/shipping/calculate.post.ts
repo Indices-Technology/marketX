@@ -1,4 +1,4 @@
-// POST /api/commerce/shipping/calculate — returns shipping cost for a country
+// POST /api/shipping/calculate — returns shipping cost for a country
 import { z, ZodError } from 'zod'
 
 const schema = z.object({

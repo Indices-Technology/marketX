@@ -125,6 +125,11 @@ export class FeedApiClient extends BaseApiClient {
       skipAuth: true,
     })
   }
+
+  /** Discover "Trending" payload: products, tags, featured sellers, strips. */
+  async getTrending(): Promise<any> {
+    return this.request('/api/feed/trending', { method: 'GET', skipAuth: true })
+  }
 }
 
 // Singleton instance

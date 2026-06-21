@@ -46,46 +46,49 @@ export default defineEventHandler(async (event) => {
     const user = await requireAuth(event)
     const { reference } = schema.parse(await readBody(event))
 
-    // 1. Find the order by payment reference
-    const order = await orderRepository.getOrderByPaymentRef(reference)
-    if (!order) throw new UserError('NOT_FOUND', 'Order not found for this reference', 404)
-    if (order.userId !== user.id) throw new UserError('FORBIDDEN', 'Access denied', 403)
+    // 1. Find all per-seller orders sharing this payment reference
+    const orders = await orderRepository.getOrdersByPaymentRef(reference)
+    if (!orders.length) throw new UserError('NOT_FOUND', 'Order not found for this reference', 404)
+    if (orders.some((o) => o.userId !== user.id)) throw new UserError('FORBIDDEN', 'Access denied', 403)
+
+    const orderIds = orders.map((o) => o.id)
 
     // 2. Already confirmed — idempotent early return
-    if (order.paymentStatus === 'PAID') {
-      return { success: true, data: { status: 'already_paid', orderId: order.id } }
+    if (orders.every((o) => o.paymentStatus === 'PAID')) {
+      return { success: true, data: { status: 'already_paid', orderIds } }
     }
 
-    // 3. Verify with Paystack
+    // 3. Verify with Paystack (one transaction covers the whole purchase)
     const result = await paystack.verifyTransaction(reference)
 
     if (result.data.status === 'success') {
-      // Atomic update — only the first concurrent caller gets count > 0.
-      // If the webhook already processed this reference, count === 0 and we
-      // skip side effects to prevent double-crediting.
-      const { count } = await prisma.orders.updateMany({
-        where: { id: order.id, paymentStatus: { notIn: ['PAID', 'FAILED'] } },
-        data: { paymentStatus: 'PAID', status: 'CONFIRMED' },
-      })
-      if (count > 0) {
-        notifySellers(order.id, user.username || user.email || 'a customer')
-          .catch((e) => logger.error('Verify: notify sellers failed', { orderId: order.id, error: e?.message ?? e }))
-        walletService.creditSellersOnPayment(order.id)
-          .catch((e) => logger.error('Verify: wallet credit failed', { orderId: order.id, error: e?.message ?? e }))
-        squareService.creditAssociationsForOrder(order.id)
-          .catch((e) => logger.error('Verify: association credit failed', { orderId: order.id, error: e?.message ?? e }))
-        // Buyer order confirmation email
-        if (user.email && !user.email.includes('@checkout.marketx.app')) {
-          const { subject, html, text } = buildOrderStatusEmail(order.id, 'CONFIRMED')
-          emailQueue.enqueue({ to: user.email, subject, html, text, type: 'ORDER_CONFIRMATION' })
+      // Per order: atomic flip — only the first caller (vs the webhook) gets
+      // count > 0, so side effects run once per order (no double-crediting).
+      for (const o of orders) {
+        const { count } = await prisma.orders.updateMany({
+          where: { id: o.id, paymentStatus: { notIn: ['PAID', 'FAILED'] } },
+          data: { paymentStatus: 'PAID', status: 'CONFIRMED' },
+        })
+        if (count > 0) {
+          notifySellers(o.id, user.username || user.email || 'a customer')
+            .catch((e) => logger.error('Verify: notify sellers failed', { orderId: o.id, error: e?.message ?? e }))
+          walletService.creditSellersOnPayment(o.id)
+            .catch((e) => logger.error('Verify: wallet credit failed', { orderId: o.id, error: e?.message ?? e }))
+          squareService.creditAssociationsForOrder(o.id)
+            .catch((e) => logger.error('Verify: association credit failed', { orderId: o.id, error: e?.message ?? e }))
         }
       }
-      return { success: true, data: { status: 'paid', orderId: order.id } }
+      // One buyer confirmation email for the purchase
+      if (user.email && !user.email.includes('@checkout.marketx.app')) {
+        const { subject, html, text } = buildOrderStatusEmail(orderIds[0]!, 'CONFIRMED')
+        emailQueue.enqueue({ to: user.email, subject, html, text, type: 'ORDER_CONFIRMATION' })
+      }
+      return { success: true, data: { status: 'paid', orderIds } }
     }
 
-    // Payment failed or abandoned
-    await orderRepository.updatePaymentStatus(order.id, 'FAILED')
-    return { success: true, data: { status: result.data.status, orderId: order.id } }
+    // Payment failed or abandoned — fail every order in the group
+    await Promise.all(orders.map((o) => orderRepository.updatePaymentStatus(o.id, 'FAILED')))
+    return { success: true, data: { status: result.data.status, orderIds } }
   } catch (error: unknown) {
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
     if (error instanceof ZodError)

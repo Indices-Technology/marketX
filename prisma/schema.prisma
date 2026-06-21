@@ -123,6 +123,9 @@ model SellerProfile {
   pod_enabled        Boolean  @default(false)   // seller opts into POD
   pod_zones          Json?                       // string[] of eligible state names e.g. ["Lagos","Abuja"]
   pod_delivery_days  Int      @default(3)        // promised delivery window in days
+  // ── Bring-your-own-shipping (BYOS) — seller self-delivery config ──────────
+  /// SellerShippingConfig JSON: { selfEnabled, flatRateMinor?, freeOverMinor?, pickupEnabled?, pickupNote?, etaText?, zoneRates? }
+  shippingConfig     Json?
   // ── Squares ──────────────────────────────────────────────────────────────
   /// Denormalised for fast feed queries — mirrors the SquareMembership where isPrimary = true
   primarySquareId   String?           @db.Uuid
@@ -324,8 +327,13 @@ model Orders {
   userId          String         @db.Uuid
   /// Legacy Stripe reference — now used as generic payment reference
   stripeId        String         @unique
-  /// Paystack transaction reference (populated after payment init)
-  paymentRef      String?        @unique
+  /// Payment reference (populated after payment init). Shared across all the
+  /// per-seller orders of one checkout, so it is NOT unique.
+  paymentRef      String?
+  /// Groups the per-seller orders created from one checkout/payment.
+  purchaseGroupId String?        @db.Uuid
+  /// The chosen shipping option for this seller's parcel { carrier, service, amount, estimatedDays }.
+  shippingBreakdown Json?
   paymentStatus   PaymentStatus  @default(UNPAID)
   name            String
   address         String
@@ -358,6 +366,9 @@ model Orders {
   orderItem       OrderItem[]
   user            Profile        @relation("BuyerOrders", fields: [userId], references: [id])
   affiliate       Profile?       @relation("AffiliateOrders", fields: [affiliateUserId], references: [id])
+
+  @@index([paymentRef])
+  @@index([purchaseGroupId])
 }
 
 model OrderItem {
@@ -1271,6 +1282,7 @@ enum NotificationType {
   SQUARE_MEMBERSHIP_REJECTED
   SQUARE_REQUEST
   SQUARE_OFFER
+  WALL_SHOUTOUT
 }
 
 enum VisibilityType {

@@ -1,4 +1,4 @@
-// GET /api/commerce/shipping/zones — public list of active global shipping zones
+// GET /api/shipping/zones — public list of active global shipping zones
 
 export default defineEventHandler(async () => {
   const zones = await prisma.globalShippingZone.findMany({

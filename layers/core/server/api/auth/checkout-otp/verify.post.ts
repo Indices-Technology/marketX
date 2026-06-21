@@ -13,6 +13,35 @@ const schema = z.object({
   name: z.string().min(1).optional(),
 })
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Auth'],
+    summary: 'Verify a guest-checkout OTP',
+    description:
+      'Step 2 of inline checkout auth — verifies the 6-digit code, auto-registers ' +
+      'new users, issues tokens (body + httpOnly cookies).',
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['email', 'code'],
+            properties: {
+              email: { type: 'string', format: 'email' },
+              code: { type: 'string', minLength: 6, maxLength: 6 },
+              name: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      200: { description: '{ success, accessToken, refreshToken, user, ... }' },
+      400: { description: 'Invalid input or wrong/expired code' },
+    },
+  },
+})
 export default defineEventHandler(async (event) => {
   try {
     const parsed = schema.safeParse(await readBody(event))

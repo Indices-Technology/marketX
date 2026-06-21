@@ -6,7 +6,7 @@
  * Extends BaseApiClient for token injection, error handling, etc.
  */
 
-import { BaseApiClient } from './base.api'
+import { BaseApiClient, type ApiServiceOptions } from './base.api'
 import type {
   IAuthUser as User,
   IAuthResponse as LoginResponse,
@@ -55,13 +55,33 @@ export class AuthApiClient extends BaseApiClient {
    * @throws {Error} 429 - Rate limit exceeded
    * @throws {Error} 500 - Unexpected server error
    */
-  async login(data: {
-    email: string
-    password: string
-  }): Promise<LoginResponse> {
+  async login(
+    data: {
+      email: string
+      password: string
+    },
+    options: ApiServiceOptions = {},
+  ): Promise<LoginResponse> {
     return this.request('/api/auth/login', {
       method: 'POST',
       body: data,
+      ...options,
+    })
+  }
+
+  /**
+   * Exchange an approved authorization request for an OAuth code/redirect.
+   * Caller passes the bearer token + handles errors inline (oauth consent UI),
+   * so pass skipAuth/silent to opt out of the default 401 redirect behaviour.
+   */
+  async createOAuthCode(
+    data: { client_id: string; redirect_uri: string; state?: string },
+    options: ApiServiceOptions = {},
+  ): Promise<{ redirectUrl: string }> {
+    return this.request('/api/oauth/code', {
+      method: 'POST',
+      body: data,
+      ...options,
     })
   }
 

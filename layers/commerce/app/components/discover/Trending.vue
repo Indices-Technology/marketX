@@ -337,12 +337,14 @@ import ProductCardMini from '~~/layers/commerce/app/components/ProductCardMini.v
 import DiscoverCategoryGrid from '~~/layers/commerce/app/components/discover/CategoryGrid.vue'
 import { useDiscoverFilters } from '~~/layers/commerce/app/composables/useDiscoverFilters'
 import { imgAvatar } from '~~/layers/core/app/utils/cloudinary'
+import { useFeedApi } from '~~/layers/feed/app/services/feed.api'
 
 const emit = defineEmits<{
   'open-detail': [product: IProduct]
 }>()
 
 const { activeTab, filters: discoverFilters } = useDiscoverFilters()
+const feedApi = useFeedApi()
 
 const isBrowseTab = computed(() => activeTab.value === 'browse')
 
@@ -366,7 +368,7 @@ const loadTrending = async () => {
   trendingLoading.value = true
   stripsLoading.value = true
   try {
-    const res = await $fetch<any>('/api/feed/trending')
+    const res = await feedApi.getTrending()
     if (res?.data) {
       trendingProducts.value = res.data.trendingProducts ?? []
       trendingTags.value = res.data.trendingTags ?? []

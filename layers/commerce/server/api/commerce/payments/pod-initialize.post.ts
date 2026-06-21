@@ -25,6 +25,17 @@ const schema = z.object({
   shippingCost: z.number().int().min(1, 'Shipping fee is required for Pay on Delivery'),
   shippingZone: z.string().optional(),
   estimatedDays: z.string().optional(),
+  shippingBreakdown: z
+    .array(
+      z.object({
+        storeSlug: z.string(),
+        amount: z.number().int().min(0),
+        carrier: z.string().optional(),
+        service: z.string().optional(),
+        estimatedDays: z.string().optional(),
+      }),
+    )
+    .optional(),
   callback_url: z.string().url().optional(),
   affiliateCode: z.string().optional(),
 })
@@ -110,8 +121,8 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    // 2. Create the order (PENDING, UNPAID, paymentMethod: pay_on_delivery)
-    const order = await orderService.placeOrder(
+    // 2. Create the orders (one per seller, PENDING/UNPAID, pay_on_delivery)
+    const group = await orderService.placeOrder(
       user.id,
       {
         ...body,
@@ -121,39 +132,35 @@ export default defineEventHandler(async (event) => {
       userAgent,
     )
 
-    // 3. Debit platform fee from each seller's wallet before shipping is collected
+    // 3. Platform fee per seller (each order = one seller). item.price is the
+    //    line total incl. discounts. Track the seller's orderId for the ledger.
     const PLATFORM_FEE_PERCENT = parseFloat(process.env.PLATFORM_FEE_PERCENT ?? '5')
-
-    const orderItems = await prisma.orderItem.findMany({
-      where: { orderId: order.id },
-      include: {
-        variant: {
-          select: {
-            product: { select: { seller: { select: { id: true } } } },
-          },
-        },
-      },
-    })
-
-    // Aggregate fee per seller (item.price is the correct line total including all discounts)
-    const sellerFees = new Map<string, number>()
-    for (const item of orderItems) {
-      const sellerId = item.variant?.product?.seller?.id
-      if (!sellerId) continue
-      const fee = Math.round(item.price * PLATFORM_FEE_PERCENT / 100)
-      sellerFees.set(sellerId, (sellerFees.get(sellerId) ?? 0) + fee)
+    const sellerFees = new Map<string, { orderId: number; fee: number }>()
+    for (const ord of group.orders) {
+      for (const item of ord.orderItem) {
+        const sellerId = item.variant?.product?.seller?.id
+        if (!sellerId) continue
+        const fee = Math.round(item.price * PLATFORM_FEE_PERCENT / 100)
+        const cur = sellerFees.get(sellerId) ?? { orderId: ord.id, fee: 0 }
+        cur.fee += fee
+        sellerFees.set(sellerId, cur)
+      }
     }
+    const allItems = group.orders.flatMap((o) =>
+      o.orderItem.map((i: any) => ({ variantId: i.variantId, quantity: i.quantity })),
+    )
 
     // Check every seller has sufficient balance before debiting any
-    for (const [sellerId, fee] of sellerFees) {
+    for (const [sellerId, { fee }] of sellerFees) {
       const wallet = await walletRepository.getOrCreateWallet(sellerId)
       if (wallet.balance < fee) {
         const shortfallNGN = ((fee - wallet.balance) / 100).toFixed(2)
-        // Cancel the order and restore stock — buyer will see a clean error
-        await orderRepository.restoreStock(
-          orderItems.map((i) => ({ variantId: i.variantId, quantity: i.quantity })),
-        )
-        await prisma.orders.update({ where: { id: order.id }, data: { status: 'CANCELLED' } })
+        // Cancel the whole purchase + restore stock — buyer sees a clean error
+        await orderRepository.restoreStock(allItems)
+        await prisma.orders.updateMany({
+          where: { purchaseGroupId: group.purchaseGroupId },
+          data: { status: 'CANCELLED' },
+        })
         throw new UserError(
           'SELLER_INSUFFICIENT_WALLET',
           `One or more sellers cannot offer Pay on Delivery at this time (wallet shortfall: ₦${shortfallNGN}). Please choose a different payment method.`,
@@ -165,8 +172,8 @@ export default defineEventHandler(async (event) => {
     // 4. Build Paystack reference and initialize BEFORE debiting wallets.
     //    This way, if Paystack is unavailable the wallet balance is never touched
     //    and the buyer can safely retry.
-    const reference = `pod_ship_${order.id}_${Date.now()}`
-    await orderRepository.setPaymentRef(order.id, reference)
+    const reference = `pod_ship_${group.purchaseGroupId.slice(0, 8)}_${Date.now()}`
+    await orderRepository.setPaymentRefForGroup(group.purchaseGroupId, reference)
 
     const FAKE_TLDS = new Set(['test', 'demo', 'local', 'example', 'invalid', 'localhost'])
     const isPaystackEmail = (e: string | null | undefined): e is string => {
@@ -177,20 +184,20 @@ export default defineEventHandler(async (event) => {
     const email = isPaystackEmail(user.email) ? user.email : `user_${user.id}@checkout.marketx.app`
     const ps = await paystack.initializeTransaction({
       email,
-      amount: body.shippingCost, // shipping fee only — in kobo
+      amount: group.shippingTotal || body.shippingCost, // shipping fee only — kobo
       reference,
       currency: 'NGN',
       metadata: {
-        orderId: order.id,
+        purchaseGroupId: group.purchaseGroupId,
         userId: user.id,
         type: 'pod_shipping',
       },
       callback_url: body.callback_url,
     })
 
-    // 5. Paystack confirmed — now debit platform fees atomically
+    // 5. Paystack confirmed — now debit platform fees atomically (per seller)
     await prisma.$transaction(async (tx) => {
-      for (const [sellerId, fee] of sellerFees) {
+      for (const [sellerId, { orderId, fee }] of sellerFees) {
         const wallet = await tx.sellerWallet.findUniqueOrThrow({ where: { sellerId } })
         await tx.sellerWallet.update({
           where: { id: wallet.id },
@@ -201,8 +208,8 @@ export default defineEventHandler(async (event) => {
             walletId: wallet.id,
             amount: fee,
             type: 'PLATFORM_FEE_DEBIT',
-            description: `POD platform fee (${PLATFORM_FEE_PERCENT}%) — Order #${order.id}`,
-            orderId: order.id,
+            description: `POD platform fee (${PLATFORM_FEE_PERCENT}%) — Order #${orderId}`,
+            orderId,
           },
         })
       }
@@ -211,12 +218,13 @@ export default defineEventHandler(async (event) => {
     return {
       success: true,
       data: {
-        orderId: order.id,
+        purchaseGroupId: group.purchaseGroupId,
+        orderIds: group.orders.map((o) => o.id),
         reference,
         authorizationUrl: ps.data.authorization_url,
         accessCode: ps.data.access_code,
-        shippingCost: body.shippingCost,
-        productAmount: order.totalAmount,
+        shippingCost: group.shippingTotal || body.shippingCost,
+        productAmount: group.itemsTotal,
       },
     }
   } catch (error: unknown) {

@@ -21,6 +21,24 @@ export interface PlaceOrderInput {
   country: string
   paymentMethod?: string
   affiliateCode?: string
+  /** Total shipping in kobo — fallback when no per-seller breakdown is given. */
+  shippingCost?: number
+  /** Per-seller shipping selections from checkout — used to split shipping per order. */
+  shippingBreakdown?: Array<{
+    storeSlug: string
+    amount: number // kobo
+    carrier?: string
+    service?: string
+    estimatedDays?: string
+  }>
+}
+
+/** Result of placing an order — one purchase split into one order per seller. */
+export interface PlaceOrderResult {
+  purchaseGroupId: string
+  orders: any[]
+  itemsTotal: number // kobo (sum of order.totalAmount)
+  shippingTotal: number // kobo (sum of order.shippingCost)
 }
 
 export const orderService = {
@@ -72,7 +90,7 @@ export const orderService = {
                   where: { isActive: true },
                   orderBy: { minQuantity: 'desc' },
                 },
-                seller: { select: { id: true, profileId: true, store_name: true } },
+                seller: { select: { id: true, profileId: true, store_name: true, store_slug: true } },
               },
             },
           },
@@ -82,7 +100,17 @@ export const orderService = {
 
     let totalAmount = 0
     let totalAffiliateCut = 0
-    const enrichedItems: CreateOrderData['items'] = []
+    interface Line {
+      variantId: number
+      quantity: number
+      price: number
+      affiliateCut: number
+      productId: number
+      storeSlug: string
+      sellerProfileId: string
+      storeName: string
+    }
+    const lines: Line[] = []
 
     for (let i = 0; i < items.length; i++) {
       const item = items[i]!
@@ -122,181 +150,203 @@ export const orderService = {
         totalAffiliateCut += itemAffiliateCut
       }
 
-      enrichedItems.push({
+      const seller = variant.product.seller
+      lines.push({
         variantId: item.variantId,
         quantity: item.quantity,
         price: lineTotalKobo,
         affiliateCut: itemAffiliateCut,
+        productId: variant.product.id,
+        storeSlug: seller?.store_slug || `seller-${seller?.id ?? 'unknown'}`,
+        sellerProfileId: seller?.profileId || '',
+        storeName: seller?.store_name || 'Your Store',
       })
     }
 
-    // ── Atomic transaction: create order + decrement stock together ───────────
-    const order = await prisma.$transaction(async (tx) => {
-      // Decrement stock with a conditional UPDATE — single atomic operation that
-      // eliminates the read-check-decrement race. If another concurrent order already
-      // claimed the last unit, stock drops below quantity and updateMany returns count=0.
-      for (const item of enrichedItems) {
-        const result = await tx.productVariant.updateMany({
-          where: { id: item.variantId, stock: { gte: item.quantity } },
-          data: { stock: { decrement: item.quantity } },
-        })
-        if (result.count === 0) {
-          throw new UserError(
-            'INSUFFICIENT_STOCK',
-            `Stock unavailable for variant ${item.variantId}`,
-            400,
-          )
-        }
-      }
+    // ── Group lines by seller — one order per seller ──────────────────────────
+    const groups = new Map<string, Line[]>()
+    for (const ln of lines) {
+      const arr = groups.get(ln.storeSlug) ?? []
+      arr.push(ln)
+      groups.set(ln.storeSlug, arr)
+    }
 
-      const created = await tx.orders.create({
-        data: {
-          userId,
-          stripeId: `order_${Date.now()}_${userId.slice(0, 8)}`,
-          name,
-          address,
-          zipcode,
-          county: county || '',
-          country,
-          totalAmount,
-          paymentMethod: paymentMethod || 'card',
-          ...(affiliateUserId ? { affiliateUserId } : {}),
-          ...(totalAffiliateCut ? { affiliateCut: totalAffiliateCut } : {}),
-          orderItem: {
-            create: enrichedItems.map((item) => ({
-              variantId: item.variantId,
-              quantity: item.quantity,
-              price: item.price,
-              affiliateCut: item.affiliateCut,
-            })),
-          },
-        },
+    // Per-seller shipping (kobo) from the checkout breakdown. Fallback: assign the
+    // single shippingCost to the first group (legacy callers without a breakdown).
+    const breakdownMap = new Map<
+      string,
+      { amount: number; carrier?: string; service?: string; estimatedDays?: string }
+    >()
+    for (const b of data.shippingBreakdown ?? []) {
+      breakdownMap.set(b.storeSlug, {
+        amount: b.amount ?? 0,
+        carrier: b.carrier,
+        service: b.service,
+        estimatedDays: b.estimatedDays,
+      })
+    }
+    const hasBreakdown = breakdownMap.size > 0
+    const fallbackShipping = data.shippingCost ?? 0
+
+    const purchaseGroupId = crypto.randomUUID()
+    const orderInclude = {
+      orderItem: {
         include: {
-          orderItem: {
-            include: {
-              variant: {
+          variant: {
+            select: {
+              id: true,
+              size: true,
+              price: true,
+              product: {
                 select: {
                   id: true,
-                  size: true,
+                  title: true,
+                  slug: true,
                   price: true,
-                  product: {
-                    select: {
-                      id: true,
-                      title: true,
-                      slug: true,
-                      price: true,
-                      seller: {
-                        select: {
-                          id: true,
-                          profileId: true,
-                          store_slug: true,
-                          store_name: true,
-                        },
-                      },
-                      media: {
-                        take: 1,
-                        where: { isBgMusic: false },
-                        select: { id: true, url: true, type: true },
-                      },
-                    },
+                  seller: {
+                    select: { id: true, profileId: true, store_slug: true, store_name: true },
+                  },
+                  media: {
+                    take: 1,
+                    where: { isBgMusic: false },
+                    select: { id: true, url: true, type: true },
                   },
                 },
               },
             },
           },
         },
-      })
+      },
+    } as const
 
-      return created
+    // ── Atomic transaction: decrement stock + create one order per seller ─────
+    let shippingTotal = 0
+    const created = await prisma.$transaction(async (tx) => {
+      for (const ln of lines) {
+        const result = await tx.productVariant.updateMany({
+          where: { id: ln.variantId, stock: { gte: ln.quantity } },
+          data: { stock: { decrement: ln.quantity } },
+        })
+        if (result.count === 0) {
+          throw new UserError(
+            'INSUFFICIENT_STOCK',
+            `Stock unavailable for variant ${ln.variantId}`,
+            400,
+          )
+        }
+      }
+
+      const out: any[] = []
+      let idx = 0
+      for (const [storeSlug, groupLines] of groups) {
+        const groupTotal = groupLines.reduce((s, l) => s + l.price, 0)
+        const groupCut = groupLines.reduce((s, l) => s + l.affiliateCut, 0)
+        const bd = breakdownMap.get(storeSlug)
+        const groupShipping = hasBreakdown
+          ? bd?.amount ?? 0
+          : idx === 0
+            ? fallbackShipping
+            : 0
+        shippingTotal += groupShipping
+        const shippingZone = bd?.carrier
+          ? `${bd.carrier} ${bd.service ?? ''}`.trim()
+          : undefined
+
+        const ord = await tx.orders.create({
+          data: {
+            userId,
+            stripeId: `order_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
+            purchaseGroupId,
+            name,
+            address,
+            zipcode,
+            county: county || '',
+            country,
+            totalAmount: groupTotal,
+            shippingCost: groupShipping,
+            ...(shippingZone ? { shippingZone } : {}),
+            ...(bd?.estimatedDays ? { estimatedDays: bd.estimatedDays } : {}),
+            ...(bd ? { shippingBreakdown: bd as unknown as object } : {}),
+            paymentMethod: paymentMethod || 'card',
+            ...(affiliateUserId ? { affiliateUserId } : {}),
+            ...(groupCut ? { affiliateCut: groupCut } : {}),
+            orderItem: {
+              create: groupLines.map((l) => ({
+                variantId: l.variantId,
+                quantity: l.quantity,
+                price: l.price,
+                affiliateCut: l.affiliateCut,
+              })),
+            },
+          },
+          include: orderInclude,
+        })
+        out.push(ord)
+        idx++
+      }
+      return out
     })
 
-    // Clear cart and fire audit outside the transaction (non-critical)
+    // Clear cart + fire-and-forget side effects (non-critical, outside tx)
     await cartRepository.clearCart(userId)
 
-    // Fire-and-forget: sync sales to daily analytics aggregates
     Promise.all(
-      variantRows.map((variant, i) => {
-        const item = enrichedItems[i]
-        if (!variant || !item) return Promise.resolve()
-        const storeSlug = variant.product.seller.store_slug
-        return analyticsService
-          .trackSale(variant.product.id, storeSlug, item.quantity, item.price, item.affiliateCut)
-          .catch(() => {})
-      }),
+      lines.map((l) =>
+        analyticsService
+          .trackSale(l.productId, l.storeSlug, l.quantity, l.price, l.affiliateCut)
+          .catch(() => {}),
+      ),
     ).catch(() => {})
 
-    auditQueue.enqueue({
-      userId,
-      action: 'ORDER_PLACED',
-      resource: 'Orders',
-      resourceId: String(order.id),
-      reason: 'Placed new order',
-      changes: {
-        totalAmount,
-        itemCount: enrichedItems.length,
-        affiliateUserId,
-      },
-      ipAddress,
-      userAgent,
-    })
+    // Each created order belongs to exactly one seller (Map preserves insertion
+    // order, so created[idx] ↔ the idx-th seller group). Notify + audit per order.
+    const groupList = [...groups.values()]
+    created.forEach((ord, idx) => {
+      const groupLines = groupList[idx] ?? []
+      const sellerProfileId = groupLines[0]?.sellerProfileId
+      const storeName = groupLines[0]?.storeName ?? 'Your Store'
+      const itemCount = groupLines.reduce((s, l) => s + l.quantity, 0)
+      const subtotal = ord.totalAmount
 
-    // Notify each seller of their portion of the order — fire-and-forget
-    type SellerInfo = {
-      profileId: string
-      storeName: string
-      itemCount: number
-      subtotal: number
-    }
-    const sellerMap = new Map<string, SellerInfo>()
-    for (let i = 0; i < variantRows.length; i++) {
-      const seller = variantRows[i]?.product.seller
-      if (!seller?.profileId) continue
-      const profileId = seller.profileId
-      const existing = sellerMap.get(profileId)
-      const lineTotal = enrichedItems[i]?.price ?? 0
-      const qty = enrichedItems[i]?.quantity ?? 1
-      if (existing) {
-        existing.itemCount += qty
-        existing.subtotal += lineTotal
-      } else {
-        sellerMap.set(profileId, {
-          profileId,
-          storeName: seller.store_name ?? 'Your Store',
-          itemCount: qty,
-          subtotal: lineTotal,
-        })
-      }
-    }
+      auditQueue.enqueue({
+        userId,
+        action: 'ORDER_PLACED',
+        resource: 'Orders',
+        resourceId: String(ord.id),
+        reason: 'Placed new order',
+        changes: { totalAmount: ord.totalAmount, purchaseGroupId },
+        ipAddress,
+        userAgent,
+      })
 
-    for (const s of sellerMap.values()) {
+      if (!sellerProfileId) return
       notificationQueue.enqueue({
-        userId: s.profileId,
+        userId: sellerProfileId,
         type: 'ORDER',
-        message: `New order #${order.id} received — ${s.itemCount} item${s.itemCount !== 1 ? 's' : ''}, ₦${(s.subtotal / 100).toLocaleString('en-NG')}`,
-        orderId: order.id,
+        message: `New order #${ord.id} received — ${itemCount} item${itemCount !== 1 ? 's' : ''}, ₦${(subtotal / 100).toLocaleString('en-NG')}`,
+        orderId: ord.id,
       })
       prisma.profile
-        .findUnique({ where: { id: s.profileId }, select: { email: true } })
+        .findUnique({ where: { id: sellerProfileId }, select: { email: true } })
         .then((profile) => {
           if (!profile?.email) return
           const { subject, html, text } = buildNewOrderSellerEmail(
-            order.id,
-            s.itemCount,
-            s.subtotal,
-            s.storeName,
+            ord.id,
+            itemCount,
+            subtotal,
+            storeName,
           )
-          emailQueue.enqueue({
-            to: profile.email,
-            subject,
-            html,
-            text,
-            type: 'ORDER_CONFIRMATION',
-          })
+          emailQueue.enqueue({ to: profile.email, subject, html, text, type: 'ORDER_CONFIRMATION' })
         })
         .catch(() => {})
-    }
+    })
 
-    return order
+    return {
+      purchaseGroupId,
+      orders: created,
+      itemsTotal: totalAmount,
+      shippingTotal,
+    } satisfies PlaceOrderResult
   },
 
   async getUserOrders(userId: string, limit = 20, offset = 0) {

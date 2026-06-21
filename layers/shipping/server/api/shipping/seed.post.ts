@@ -1,4 +1,4 @@
-// POST /api/commerce/shipping/seed — one-time seed of global shipping zones (admin only)
+// POST /api/shipping/seed — one-time seed of global shipping zones (admin only)
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
 
 const ZONES = [

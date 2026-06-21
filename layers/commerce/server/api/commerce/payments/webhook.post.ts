@@ -62,11 +62,12 @@ export default defineEventHandler(async (event) => {
     const reference: string = data?.reference
     if (!reference) return { success: true }
 
-    const order = await prisma.orders.findUnique({
-      where: { paymentRef: reference },
-    })
+    // One reference is shared across all per-seller orders of a purchase.
+    const orders = await prisma.orders.findMany({ where: { paymentRef: reference } })
+    if (!orders.length) return { success: true }
 
-    if (order) {
+    let creditedAny = false
+    for (const order of orders) {
       if (order.paymentMethod === 'pay_on_delivery') {
         // POD: shipping fee payment — atomic update guards against duplicate delivery
         const { count } = await prisma.orders.updateMany({
@@ -83,6 +84,7 @@ export default defineEventHandler(async (event) => {
           data: { paymentStatus: 'PAID', status: 'CONFIRMED' },
         })
         if (count > 0) {
+          creditedAny = true
           notifySellers(order.id).catch((e) => logger.error('Webhook notify failed', { orderId: order.id, error: e?.message ?? e }))
           walletService
             .creditSellersOnPayment(order.id)
@@ -90,17 +92,20 @@ export default defineEventHandler(async (event) => {
           squareService
             .creditAssociationsForOrder(order.id)
             .catch((e) => logger.error('Webhook association credit failed', { orderId: order.id, error: e?.message ?? e }))
-          // Buyer confirmation email — fire-and-forget
-          prisma.user
-            .findUnique({ where: { id: order.userId }, select: { email: true } })
-            .then((buyer) => {
-              if (!buyer?.email || buyer.email.includes('@checkout.marketx.app')) return
-              const { subject, html, text } = buildOrderStatusEmail(order.id, 'CONFIRMED')
-              emailQueue.enqueue({ to: buyer.email, subject, html, text, type: 'ORDER_CONFIRMATION' })
-            })
-            .catch(() => {})
         }
       }
+    }
+
+    // One buyer confirmation email for the whole purchase — fire-and-forget
+    if (creditedAny) {
+      prisma.profile
+        .findUnique({ where: { id: orders[0]!.userId }, select: { email: true } })
+        .then((buyer) => {
+          if (!buyer?.email || buyer.email.includes('@checkout.marketx.app')) return
+          const { subject, html, text } = buildOrderStatusEmail(orders[0]!.id, 'CONFIRMED')
+          emailQueue.enqueue({ to: buyer.email, subject, html, text, type: 'ORDER_CONFIRMATION' })
+        })
+        .catch(() => {})
     }
   }
 

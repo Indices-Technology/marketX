@@ -88,11 +88,13 @@
 
 <script setup lang="ts">
 import { ref, watch, onUnmounted } from 'vue'
+import { useSearchApi } from '~~/layers/core/app/services/search.api'
 
 const props = defineProps<{
   searchInput: string
 }>()
 
+const searchApi = useSearchApi()
 const people = ref<any[]>([])
 const peopleLoading = ref(false)
 
@@ -103,9 +105,7 @@ const searchPeople = async (q: string) => {
   }
   peopleLoading.value = true
   try {
-    const res = await $fetch<any>('/api/search', {
-      params: { q: q.replace(/^@/, '').trim(), type: 'users', limit: 20 },
-    })
+    const res = await searchApi.search(q.replace(/^@/, '').trim(), 'users', 20)
     people.value = res?.data?.users ?? []
   } catch {
     people.value = []

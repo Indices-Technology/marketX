@@ -4,6 +4,31 @@ import { authService } from '../../services/auth.service'
 import { AuthError } from '../../types/auth.types'
 import { getClientIP } from '~~/server/layers/shared/utils/security'
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Auth'],
+    summary: 'Request a password-reset email',
+    description:
+      'Sends a reset link if the email exists. Always returns 200 with an ' +
+      'identical message — no account enumeration.',
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['email'],
+            properties: { email: { type: 'string', format: 'email' } },
+          },
+        },
+      },
+    },
+    responses: {
+      200: { description: '{ success, message }' },
+      400: { description: 'Invalid email' },
+    },
+  },
+})
 export default defineEventHandler(async (event) => {
   try {
     const body = await readBody(event)
@@ -35,7 +60,9 @@ export default defineEventHandler(async (event) => {
       })
     }
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
-    logger.logError('[POST /api/auth/forgot-password]', error, { requestId: event.context?.requestId })
+    logger.logError('[POST /api/auth/forgot-password]', error, {
+      requestId: event.context?.requestId,
+    })
     throw createError({
       statusCode: 500,
       statusMessage: 'Internal server error',

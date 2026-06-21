@@ -3,6 +3,7 @@
 // Captures funds and marks the internal order as PAID.
 import { z, ZodError } from 'zod'
 import { walletService } from '~~/layers/commerce/server/services/wallet.service'
+import { orderRepository } from '~~/layers/commerce/server/repositories/order.repository'
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
 import { notificationQueue } from '~~/server/queues/notification.queue'
@@ -10,8 +11,9 @@ import { emailQueue } from '~~/server/queues/email.queue'
 import { buildOrderStatusEmail } from '~~/server/utils/email/emailService'
 
 const schema = z.object({
-  orderId: z.number().int().positive(), // internal order ID
-  paypalOrderId: z.string().min(1), // token from PayPal return URL
+  // The PayPal order id is the shared payment reference across the purchase group.
+  paypalOrderId: z.string().min(1),
+  orderId: z.number().int().positive().optional(), // legacy, ignored
 })
 
 async function notifySellers(orderId: number) {
@@ -44,67 +46,57 @@ async function notifySellers(orderId: number) {
 export default defineEventHandler(async (event) => {
   try {
     const user = await requireAuth(event)
-    const { orderId, paypalOrderId } = schema.parse(await readBody(event))
+    const { paypalOrderId } = schema.parse(await readBody(event))
 
-    // 1. Load order and verify ownership
-    const order = await prisma.orders.findUnique({ where: { id: orderId } })
-    if (!order) throw new UserError('NOT_FOUND', 'Order not found', 404)
-    if (order.userId !== user.id)
+    // 1. Load all per-seller orders sharing this PayPal reference + verify ownership
+    const orders = await orderRepository.getOrdersByPaymentRef(paypalOrderId)
+    if (!orders.length) throw new UserError('NOT_FOUND', 'Order not found', 404)
+    if (orders.some((o) => o.userId !== user.id))
       throw new UserError('FORBIDDEN', 'Access denied', 403)
 
+    const orderIds = orders.map((o) => o.id)
+
     // 2. Idempotent — already paid
-    if (order.paymentStatus === 'PAID') {
-      return { success: true, data: { status: 'already_paid', orderId } }
+    if (orders.every((o) => o.paymentStatus === 'PAID')) {
+      return { success: true, data: { status: 'already_paid', orderIds } }
     }
 
-    // 3. Capture PayPal payment
+    // 3. Capture PayPal payment (one capture for the whole purchase)
     const result = await paypal.captureOrder(paypalOrderId)
 
     if (result.status === 'COMPLETED') {
-      // Atomic update — guards against duplicate captures or a racing webhook
-      const { count } = await prisma.orders.updateMany({
-        where: { id: order.id, paymentStatus: { notIn: ['PAID', 'FAILED'] } },
-        data: { paymentStatus: 'PAID', status: 'CONFIRMED' },
-      })
-      if (count > 0) {
-        notifySellers(order.id).catch((e) =>
-          logger.error('PayPal: notify sellers failed', {
-            orderId: order.id,
-            error: e?.message ?? e,
-          }),
-        )
-        walletService.creditSellersOnPayment(order.id).catch((e) =>
-          logger.error('PayPal: wallet credit failed', {
-            orderId: order.id,
-            error: e?.message ?? e,
-          }),
-        )
-        // Buyer confirmation email
-        if (user.email && !user.email.includes('@checkout.marketx.app')) {
-          const { subject, html, text } = buildOrderStatusEmail(
-            order.id,
-            'CONFIRMED',
+      for (const order of orders) {
+        // Atomic update — guards against duplicate captures or a racing webhook
+        const { count } = await prisma.orders.updateMany({
+          where: { id: order.id, paymentStatus: { notIn: ['PAID', 'FAILED'] } },
+          data: { paymentStatus: 'PAID', status: 'CONFIRMED' },
+        })
+        if (count > 0) {
+          notifySellers(order.id).catch((e) =>
+            logger.error('PayPal: notify sellers failed', { orderId: order.id, error: e?.message ?? e }),
           )
-          emailQueue.enqueue({
-            to: user.email,
-            subject,
-            html,
-            text,
-            type: 'ORDER_CONFIRMATION',
-          })
+          walletService.creditSellersOnPayment(order.id).catch((e) =>
+            logger.error('PayPal: wallet credit failed', { orderId: order.id, error: e?.message ?? e }),
+          )
         }
       }
-      return { success: true, data: { status: 'paid', orderId } }
+      // One buyer confirmation email for the purchase
+      if (user.email && !user.email.includes('@checkout.marketx.app')) {
+        const { subject, html, text } = buildOrderStatusEmail(orderIds[0]!, 'CONFIRMED')
+        emailQueue.enqueue({ to: user.email, subject, html, text, type: 'ORDER_CONFIRMATION' })
+      }
+      return { success: true, data: { status: 'paid', orderIds } }
     }
 
-    // Capture failed or pending
-    await prisma.orders.update({
-      where: { id: order.id },
-      data: { paymentStatus: 'FAILED' },
-    })
+    // Capture failed or pending — fail every order in the group
+    await Promise.all(
+      orders.map((o) =>
+        prisma.orders.update({ where: { id: o.id }, data: { paymentStatus: 'FAILED' } }),
+      ),
+    )
     return {
       success: true,
-      data: { status: result.status.toLowerCase(), orderId },
+      data: { status: result.status.toLowerCase(), orderIds },
     }
   } catch (error: unknown) {
     if (error && typeof error === 'object' && 'statusCode' in error) throw error

@@ -10,9 +10,13 @@ const profileSelect = {
   role: true,
 } as const
 
-/** Safe SellerProfile fields for conversation headers */
+/** Safe SellerProfile fields for conversation headers.
+ *  `profileId` (the store owner's user id) is required so the service can
+ *  authorize the owner as a conversation participant — without it the owner
+ *  is 403'd on their own store conversations. */
 const sellerSelect = {
   id: true,
+  profileId: true,
   store_name: true,
   store_slug: true,
   store_logo: true,
