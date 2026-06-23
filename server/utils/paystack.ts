@@ -73,7 +73,7 @@ export const paystack = {
     try {
       const res = await $fetch<PaystackInitResponse>(
         `${PAYSTACK_BASE}/transaction/initialize`,
-        { method: 'POST', headers: paystackHeaders(), body },
+        { method: 'POST', headers: paystackHeaders(), body, timeout: 15000 },
       )
       if (!res.status)
         throw new Error(res.message || 'Paystack initialization failed')
@@ -92,7 +92,7 @@ export const paystack = {
   async verifyTransaction(reference: string): Promise<PaystackVerifyResponse> {
     const res = await $fetch<PaystackVerifyResponse>(
       `${PAYSTACK_BASE}/transaction/verify/${encodeURIComponent(reference)}`,
-      { method: 'GET', headers: paystackHeaders() },
+      { method: 'GET', headers: paystackHeaders(), timeout: 15000 },
     )
     if (!res.status)
       throw new Error(res.message || 'Paystack verification failed')

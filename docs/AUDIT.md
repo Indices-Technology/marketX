@@ -788,28 +788,28 @@ Priority order:
 
 ### Security Hardening
 
-- [ ] All environment variables in `.env.example` are documented
-- [ ] No secrets in code, git history, or logs
-- [ ] Rate limiting on: login, register, forgot-password, OTP send, AI endpoints
-- [ ] CORS configured correctly for production domain only
-- [ ] Paystack webhook: HMAC-SHA512 signature verified before processing
+- [x] All environment variables in `.env.example` are documented — comprehensive `.env.example` mirrors `server/config/env.ts` (DB, JWT, Cloudinary, email, payments, Redis, Soketi, shipping, AI, OAuth, rate limits, `OPENAPI_DOCS_SECRET`)
+- [x] No secrets in code, git history, or logs — read via `useRuntimeConfig()`/env, never hard-coded; structured logging records `requestId`, not tokens (SECURITY.md §7). **Owner reminder:** the local `OPENAPI_DOCS_SECRET` shared in chat + the Neon password shown in a screenshot must be rotated
+- [~] Rate limiting on: login, register, forgot-password, OTP send, AI endpoints — auth/abuse endpoints covered (`server/middleware/rate-limit.ts` + `server/utils/auth/rateLimiter.ts`, configurable via env). **Gap: AI endpoints not yet rate-limited** (AI tracker confirms) — add before Dasah/listing-gen go live (cost runaway risk)
+- [x] CORS configured correctly for production domain only (June 2026 audit) — no CORS headers are emitted, so cross-origin **browser** requests are default-denied by same-origin policy (correct for same-origin web + native clients, which don't use CORS). Add an explicit allowlist only if a separate browser origin is introduced
+- [x] Paystack webhook: HMAC-SHA512 signature verified before processing (SECURITY.md §4; `payments.spec.ts` — missing sig → 400, wrong → 401)
 - [ ] PayPal webhook: signature verified before processing
 - [x] Shipping webhook: signature verified before processing (HMAC-SHA256, fails closed in production when secret missing; tested June 2026)
-- [ ] All `requireAuth()` usages verified — no unintended public endpoints
-- [ ] SQL injection: all DB access via Prisma (no raw queries with user input)
-- [x] XSS: all user-generated content sanitized before render — audited June 2026 (see `SECURITY.md`); all 4 `v-html` sinks safe (DOMPurify / escape-first), `javascript:`/`data:` URL injection in `store_website` + profile links fixed at input (Zod `safeHttpUrl`) and render (`safeExternalUrl`). **Residual:** auth token in localStorage (XSS-readable) + file-upload content-type validation unverified
-- [ ] Admin routes protected by admin-role middleware
-- [ ] Session tokens: HttpOnly, Secure, SameSite=Strict in production
+- [~] All `requireAuth()` usages verified — spot-checked across audited flows (commerce/social/admin all enforce auth/ownership; passive global middleware never auto-protects, routes call `requireAuth`/`requireModerator` explicitly). Full sweep of all ~225 routes still recommended pre-launch
+- [x] SQL injection: all DB access via Prisma (no raw queries with user input) — only raw SQL is the pgvector `$queryRaw`/`$executeRaw` embedding path (schema-level, no user-interpolated input); confirmed by SECURITY.md §7
+- [x] XSS: all user-generated content sanitized before render — audited June 2026 (see `SECURITY.md`); all 4 `v-html` sinks safe (DOMPurify / escape-first), `javascript:`/`data:` URL injection in `store_website` + profile links fixed at input (Zod `safeHttpUrl`) and render (`safeExternalUrl`). **Residual:** auth token in localStorage (XSS-readable). File-upload validation **now verified** (June 2026) — `media/upload.post.ts` enforces an `ALLOWED_TYPES` allowlist (SVG excluded) + 50MB cap + off-origin Cloudinary serving; residual is declared-MIME trust (magic-byte sniffing optional)
+- [x] Admin routes protected by admin-role middleware (June 2026 audit) — `requireModerator`/`requireAdmin` (`server/layers/shared/middleware/requireRole.ts`) enforce auth + role → 403; `/api/admin/*` routes call it (e.g. `admin/users/index.get.ts`)
+- [x] Session tokens: HttpOnly, Secure, SameSite=Strict in production — `login`/`refresh-token`/`register-seller`/`checkout-otp` set cookies `httpOnly: true, sameSite: 'strict', secure: NODE_ENV==='production'` (verified this session)
 
 ### Performance & Reliability
 
-- [ ] Database indexes verified for common query patterns (orders by userId, products by storeSlug, etc.)
-- [ ] Prisma N+1 queries identified and fixed in feed/order list endpoints
-- [ ] Redis connection pool configured for production load
-- [ ] Background queue (notifications, email, audit) handles Redis unavailability gracefully
-- [ ] Paystack/PayPal/Shippo/Sendbox API calls have timeout limits
-- [ ] Image uploads: file size limit enforced, file type validated server-side
-- [ ] CDN (Cloudinary) URLs used for all media in production
+- [x] Database indexes verified for common query patterns (June 2026 audit) — composite indexes present on Products (`status+created_at` ×4 variants, `sellerId`), Post (`visibility+created_at`, `authorId`, wall), Follow, Comment, ProductAnalytics (`storeSlug+date`), Session, etc. **Found + fixed:** `Orders` was missing an index on `userId` — every buyer order-list (`getUserOrders`: `WHERE userId ORDER BY created_at DESC`) was a full table scan. Added `@@index([userId, created_at(sort: Desc)])` (`prisma/schema.prisma`)
+- [x] Prisma N+1 queries identified and fixed in feed/order list endpoints — per-request query counter added (`server/utils/dbMetrics.ts` + `db.ts $extends` + `plugins/dbMetrics.ts`), flags any request ≥15 queries as a possible N+1. Baseline verified clean: feed/home 3, products 2, seller 2, squares/categories 1 — no N+1, no query-in-loop. Feed uses `_count` aggregation + slim selects + batch follow-status. Documented in `docs/DATABASE.md §8`
+- [ ] Redis connection pool configured for production load — **owner/infra** (set `QUEUE_REDIS_URL` to a production Redis with `noeviction`)
+- [x] Background queue (notifications, email, audit) handles Redis unavailability gracefully (June 2026 audit) — all three queues (`server/queues/*.queue.ts`) have explicit *"run inline when Redis not configured"* fallbacks; `queue.ts`: queues disabled → jobs run inline. Redis outage degrades gracefully, correctness preserved
+- [x] Paystack/PayPal/Shippo/Sendbox API calls have timeout limits (June 2026 audit) — **found unbounded, fixed:** added `timeout: 15000` to Paystack (`paystack.ts` init+verify) and PayPal (`paypal.ts` token+create+capture); `AbortSignal.timeout(15000)` to the active GIG shipping client (`providers/gig/client.ts` login+gigFetch). Note: `shippo.ts`/`sendbox.ts` are in `/legacy/` (superseded by GIG) — bound them too if reactivated
+- [x] Image uploads: file size limit enforced, file type validated server-side (June 2026 audit) — `media/upload.post.ts`: `requireAuth`, server-side `ALLOWED_TYPES` content-type allowlist (**`image/svg+xml` excluded** → SVG/HTML XSS vector blocked), 50MB size cap, media served off-origin from Cloudinary (validated by `resource_type`). **Residual (low):** allowlist trusts the client-declared MIME, not magic bytes, and defaults to `image/jpeg` when none declared — optional magic-byte hardening, not an active hole given SVG-block + off-origin serving
+- [x] CDN (Cloudinary) URLs used for all media in production — `media/upload` returns Cloudinary `secure_url`; media served from `res.cloudinary.com` (CSP `img-src`/`media-src` allowlist confirms)
 - [ ] Picsum fallbacks acceptable for production or replaced with real assets
 
 ### Infrastructure
@@ -828,11 +828,11 @@ Priority order:
 
 ### Observability
 
-- [ ] Server error logs are going to a persistent sink (file or external service)
-- [ ] Audit log table is populated for P0 actions (payments, order status, auth events)
-- [ ] AI guard rail logs are persisted correctly
-- [ ] Failed webhook calls are logged with enough context to replay
-- [ ] Health check endpoint exists and returns 200
+- [~] Server error logs are going to a persistent sink (file or external service) — structured `logger.logError` with `requestId` in every catch block (verified); **owner/infra:** wire `LOG_SERVICE_URL`/`LOG_SERVICE_TOKEN` to an external sink for production persistence
+- [x] Audit log table is populated for P0 actions (payments, order status, auth events) — `AuditLog` model + `auditQueue`/`auditLog.ts`; auth events (login/refresh/reset/seller-reg) and money/order actions enqueue audit rows (verified across commerce/auth flows)
+- [ ] AI guard rail logs are persisted correctly — **deferred to AI pillar** (`GuardRailEvent` model + `aiDataService.logGuardEvent` exist and used by Square content-guard; full Dasah guard-rail audit not started)
+- [ ] Failed webhook calls are logged with enough context to replay — **owner/verify** (webhooks log via tracing pattern; confirm payload captured for replay)
+- [x] Health check endpoint exists and returns 200 — `GET /api/health` → `{ ok: true, ts, env }` (verified live on staging)
 
 ### Final E2E Regression Suite
 

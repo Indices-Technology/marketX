@@ -1,8 +1,7 @@
 import { Pool } from 'pg'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '@prisma/client'
-
-const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | undefined }
+import { recordQuery } from './dbMetrics'
 
 function createClient() {
   const connectionString = process.env.DATABASE_URL
@@ -19,18 +18,31 @@ function createClient() {
     keepAliveInitialDelayMillis: 10_000,
   })
 
-  // Swallow idle-connection errors from Neon auto-suspend.
+  // Swallow idle-connection errors (e.g. the host dropping/suspending a socket).
   // Without this listener, Node.js throws an uncaughtException and crashes.
   pool.on('error', (err) => {
-    console.warn('[db] pg pool connection dropped (Neon suspend?):', err.message)
+    console.warn('[db] pg pool idle connection dropped:', err.message)
   })
 
   // Warm one connection on startup so the first request isn't cold
   pool.connect().then((c) => c.release()).catch(() => {})
 
   const adapter = new PrismaPg(pool)
-  return new PrismaClient({ adapter })
+
+  // Count every operation against the current request (see server/utils/dbMetrics.ts).
+  // Inert unless a per-request store is open, so production overhead is ~nil.
+  return new PrismaClient({ adapter }).$extends({
+    query: {
+      $allOperations({ operation, args, query }) {
+        recordQuery(operation)
+        return query(args)
+      },
+    },
+  })
 }
+
+type ExtendedPrisma = ReturnType<typeof createClient>
+const globalForPrisma = globalThis as unknown as { prisma: ExtendedPrisma | undefined }
 
 export const prisma = globalForPrisma.prisma ?? createClient()
 

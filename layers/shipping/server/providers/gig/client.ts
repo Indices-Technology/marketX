@@ -70,6 +70,7 @@ async function login(): Promise<string> {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email: c.email, password: c.password }),
+    signal: AbortSignal.timeout(15000),
   })
   if (!res.ok) throw new Error(`GIG login failed: ${res.status}`)
   const body: any = await res.json()
@@ -110,6 +111,7 @@ async function gigFetch<T = any>(
       'access-token': token,
       ...init.headers,
     },
+    signal: init.signal ?? AbortSignal.timeout(15000),
   })
   // Re-login only on a genuine auth failure (not business 401s like a bad id).
   if (res.status === 401 && retry) {

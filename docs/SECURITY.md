@@ -71,8 +71,13 @@ anyone who clicked their "Visit website" link.
 ### Residual XSS items (recommended before scale)
 - Move the auth token to an **httpOnly cookie** — would make stored XSS unable
   to read it, de-fanging the entire class. Larger change; highest-leverage.
-- **File-upload content-type validation** server-side is unverified — an
-  unvalidated SVG/HTML served from-origin is an XSS delivery path.
+- **File-upload content-type validation** — **verified (June 2026).**
+  `media/upload.post.ts` enforces a server-side `ALLOWED_TYPES` allowlist
+  (`image/svg+xml` excluded → the SVG/HTML XSS vector is blocked), a 50MB size
+  cap, and `requireAuth`. Media is served off-origin from Cloudinary (validated
+  by `resource_type`), not from MarketX's origin — so the "served from-origin"
+  path does not apply. Residual (low): the allowlist trusts the client-declared
+  MIME rather than magic bytes; magic-byte sniffing is optional defense-in-depth.
 
 ---
 
@@ -231,7 +236,7 @@ in the body, because rotation just invalidated the one they sent.
 | # | Item | Severity | Owner action |
 |---|------|----------|--------------|
 | 1 | Auth token in `localStorage` (XSS-readable) | Medium | Consider httpOnly-cookie migration |
-| 2 | File-upload server-side type/size validation unverified | Medium | Verify or add |
+| ~~2~~ | ~~File-upload server-side type/size validation unverified~~ — **verified** (allowlist excl. SVG + 50MB cap + off-origin Cloudinary; §1). Residual: declared-MIME trust (magic-byte sniffing optional) | Low | done |
 | 3 | Refresh-token cookie CSRF-reachability (web) | Medium | Web path still cookie + `sameSite:strict`; confirm pairing. Native path is header/body — not CSRF-reachable (see §8) |
 | ~~4~~ | ~~OAuth `state` param CSRF untested~~ — **verified defended** (callback rejects state≠cookie; `oauth.spec.ts`) | — | done |
 | 5 | `SENDBOX_WEBHOOK_SECRET` placeholder | High (breaks tracking) | Set real value in prod env |

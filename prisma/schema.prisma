@@ -369,6 +369,7 @@ model Orders {
 
   @@index([paymentRef])
   @@index([purchaseGroupId])
+  @@index([userId, created_at(sort: Desc)])  // buyer order list: WHERE userId=X ORDER BY created_at DESC (getUserOrders)
 }
 
 model OrderItem {

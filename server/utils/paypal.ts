@@ -32,6 +32,7 @@ async function getAccessToken(): Promise<string> {
       'Content-Type': 'application/x-www-form-urlencoded',
     },
     body: 'grant_type=client_credentials',
+    timeout: 15000,
   })
   if (!res.access_token) throw new Error('Failed to get PayPal access token')
   return res.access_token
@@ -82,6 +83,7 @@ export const paypal = {
           cancel_url: params.cancelUrl,
         },
       },
+      timeout: 15000,
     })
     const approvalUrl = (res.links as any[])?.find(
       (l: any) => l.rel === 'approve',
@@ -104,6 +106,7 @@ export const paypal = {
         method: 'POST',
         headers,
         body: {},
+        timeout: 15000,
       },
     )
     const captureId = res.purchase_units?.[0]?.payments?.captures?.[0]?.id ?? ''

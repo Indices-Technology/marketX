@@ -18,7 +18,7 @@ const requiredVars: RequiredEnvVar[] = [
   {
     name: 'DATABASE_URL',
     required: true,
-    description: 'PostgreSQL connection string (Neon)',
+    description: 'PostgreSQL connection string (provider-agnostic; drop Neon-only `channel_binding` for other hosts — see docs/DATABASE.md)',
   },
 
   // ─── JWT ─────────────────────────────────────────────────────────────────────

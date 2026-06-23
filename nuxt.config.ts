@@ -243,13 +243,14 @@ export default defineNuxtConfig({
 
   // ── Nitro ────────────────────────────────────────────────────────────────────
   nitro: {
-    plugins: ['plugins/monitoring', 'plugins/workers'],
+    plugins: ['plugins/monitoring', 'plugins/workers', 'plugins/dbMetrics'],
     compressPublicAssets: true,
     minify: true,
     experimental: {
       websocket: true,
       tasks: true,
       openAPI: true,
+      asyncContext: true, // lets server utils resolve the current event (useEvent) — used by db query metrics
     },
     // OpenAPI contract for API consumers (e.g. the native/mobile client).
     // Spec:  /api/openapi.json   ·   Docs:  /api/scalar  &  /api/swagger
