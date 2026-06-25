@@ -4,7 +4,8 @@
  * Tiers:
  *  - Auth endpoints (/api/auth/*): handled by auth rateLimiter — skipped here
  *  - Upload endpoints (/api/upload/*): 10 req/min (expensive)
- *  - Public read endpoints: 120 req/min per IP
+ *  - Public read endpoints: 300 req/min per IP (feed/home pages fire ~8 calls each,
+ *    and mobile carrier-NAT means many real users share one IP — 120 was too tight)
  *  - Authenticated requests: 300 req/min per userId
  */
 
@@ -106,7 +107,7 @@ export default defineEventHandler(async (event) => {
       return
     }
 
-    if (!(await check(`rl:ip:${ip}`, 120, 60_000))) {
+    if (!(await check(`rl:ip:${ip}`, 300, 60_000))) {
       setResponseHeader(event, 'Retry-After', 60)
       throw createError({ statusCode: 429, statusMessage: 'Too many requests. Please slow down.' })
     }

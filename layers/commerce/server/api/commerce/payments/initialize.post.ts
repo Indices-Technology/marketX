@@ -7,6 +7,7 @@ import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
 import { getClientIP } from '~~/server/layers/shared/utils/security'
 import { orderService } from '../../../services/order.service'
 import { orderRepository } from '../../../repositories/order.repository'
+import { resolveAffiliateCode } from '~~/server/utils/affiliate-ref'
 
 
 const schema = z.object({
@@ -52,6 +53,7 @@ export default defineEventHandler(async (event) => {
       {
         ...body,
         paymentMethod: 'card',
+        affiliateCode: await resolveAffiliateCode(event, body.affiliateCode),
       },
       ipAddress,
       userAgent,

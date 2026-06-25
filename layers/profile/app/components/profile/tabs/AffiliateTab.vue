@@ -50,7 +50,7 @@
               class="flex items-center gap-3 p-4"
             >
               <img
-                :src="product.media?.[0]?.url || ''"
+                :src="productThumb(product)"
                 class="h-12 w-12 shrink-0 rounded-xl bg-gray-100 object-cover dark:bg-neutral-800"
               />
               <div class="min-w-0 flex-1">
@@ -362,7 +362,7 @@
                 class="flex items-center gap-3 p-4"
               >
                 <img
-                  :src="imgThumb(product.media?.[0]?.url)"
+                  :src="productThumb(product)"
                   class="h-12 w-12 shrink-0 rounded-xl bg-gray-100 object-cover dark:bg-neutral-800"
                 />
                 <div class="min-w-0 flex-1">
@@ -409,7 +409,7 @@ import { useCurrency } from '~~/layers/core/app/composables/useCurrency'
 import { useAffiliateApi } from '~~/layers/commerce/app/services/affiliate.api'
 import { computed, onMounted, ref } from 'vue'
 import type { Promoter, Referral } from '~~/layers/commerce/app/types/affiliate'
-import { imgThumb, imgAvatar } from '~~/layers/core/app/utils/cloudinary'
+import { imgThumb, imgAvatar, productThumb } from '~~/layers/core/app/utils/cloudinary'
 
 const toast = useToast()
 const sellerStore = useSellerStore()

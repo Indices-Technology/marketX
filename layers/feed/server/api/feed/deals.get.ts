@@ -31,11 +31,18 @@ export default defineEventHandler(async (event) => {
       const productsPlusOne = await prisma.products.findMany({
         where: {
           status: 'PUBLISHED',
-          isDeal: true,
-          OR: [{ dealEndsAt: null }, { dealEndsAt: { gte: now } }],
+          OR: [
+            // Explicit flash deals — live or evergreen (dealEndsAt null/future)
+            { isDeal: true, OR: [{ dealEndsAt: null }, { dealEndsAt: { gte: now } }] },
+            // Any discounted product — this is what users perceive as "on deal" and what
+            // the Discover grid surfaces; without it, marked-down items that weren't
+            // toggled as flash deals showed on Discover but vanished from the home Deals rail.
+            { discount: { gt: 0 } },
+          ],
         },
         orderBy: [
           { dealEndsAt: { sort: 'asc', nulls: 'last' } },
+          { discount: 'desc' },
           { created_at: 'desc' },
         ],
         take: take + 1,

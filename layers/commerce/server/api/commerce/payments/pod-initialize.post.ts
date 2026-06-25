@@ -10,6 +10,7 @@ import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
 import { getClientIP } from '~~/server/layers/shared/utils/security'
 import { orderService } from '../../../services/order.service'
 import { orderRepository } from '../../../repositories/order.repository'
+import { resolveAffiliateCode } from '~~/server/utils/affiliate-ref'
 import { walletRepository } from '../../../repositories/wallet.repository'
 import { notificationQueue } from '~~/server/queues/notification.queue'
 
@@ -127,6 +128,7 @@ export default defineEventHandler(async (event) => {
       {
         ...body,
         paymentMethod: 'pay_on_delivery',
+        affiliateCode: await resolveAffiliateCode(event, body.affiliateCode),
       },
       ipAddress,
       userAgent,

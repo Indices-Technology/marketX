@@ -40,6 +40,7 @@ export default defineEventHandler(async (event) => {
         slug: true,
         price: true,
         affiliateCommission: true,
+        bannerImageUrl: true,
         seller: {
           select: {
             store_slug: true,
@@ -49,7 +50,9 @@ export default defineEventHandler(async (event) => {
           },
         },
         media: {
-          select: { url: true },
+          // include `type` so the client can derive a poster for VIDEO covers
+          // instead of putting a .mp4 URL into an <img> (broken thumbnail).
+          select: { url: true, type: true },
           where: { isBgMusic: false },
           take: 1,
           orderBy: { created_at: 'asc' },

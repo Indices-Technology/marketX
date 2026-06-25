@@ -3,6 +3,7 @@ import { UserError } from '~~/layers/profile/server/types/user.types'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
 import { orderService } from '../../../services/order.service'
 import { getClientIP } from '~~/server/layers/shared/utils/security'
+import { resolveAffiliateCode } from '~~/server/utils/affiliate-ref'
 export default defineEventHandler(async (event) => {
   try {
     const user = await requireAuth(event)
@@ -12,7 +13,7 @@ export default defineEventHandler(async (event) => {
     const userAgent = getHeader(event, 'user-agent') || 'unknown'
     const result = await orderService.placeOrder(
       user.id,
-      body,
+      { ...body, affiliateCode: await resolveAffiliateCode(event, body?.affiliateCode) },
       ipAddress,
       userAgent,
     )
