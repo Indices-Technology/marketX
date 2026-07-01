@@ -177,6 +177,34 @@
               {{ profile.stateOfResidence }}
             </span>
           </div>
+
+          <!-- View Store — shown when this profile owns an active store -->
+          <NuxtLink
+            v-if="store?.store_slug"
+            :to="`/sellers/profile/${store.store_slug}`"
+            class="mt-3 flex items-center gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 transition-colors hover:bg-emerald-100 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:hover:bg-emerald-950/40"
+          >
+            <div
+              class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500"
+            >
+              <Icon name="mdi:storefront" size="18" class="text-white" />
+            </div>
+            <div class="min-w-0 flex-1">
+              <p
+                class="truncate text-[13px] font-bold text-gray-900 dark:text-neutral-100"
+              >
+                {{ store.store_name || 'Visit store' }}
+              </p>
+              <p class="text-[11px] text-emerald-700 dark:text-emerald-400">
+                {{ isOwnProfile ? 'View your store & products' : 'View store & products' }}
+              </p>
+            </div>
+            <Icon
+              name="mdi:chevron-right"
+              size="18"
+              class="shrink-0 text-emerald-600 dark:text-emerald-500"
+            />
+          </NuxtLink>
         </div>
       </div>
     </div>
@@ -199,6 +227,16 @@ const props = defineProps<{
 
 // Render-time guard against javascript:/data: URLs in user-set profile links
 const safeProfileUrl = computed(() => safeExternalUrl(props.profile?.profileUrl))
+
+// Store CTA — public profile returns sellerProfile as a single object; guard for
+// either shape and only surface an active store.
+const store = computed(() => {
+  const sp = props.profile?.sellerProfile as
+    | { store_slug?: string; store_name?: string; is_active?: boolean }
+    | undefined
+  if (!sp?.store_slug || sp.is_active === false) return null
+  return sp
+})
 
 defineEmits([
   'edit',

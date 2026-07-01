@@ -4,18 +4,9 @@
 // so they can continue straight to adding products.
 
 import { getClientIP } from '~~/server/layers/shared/utils/security'
+import { isReservedSlug } from '~~/server/layers/shared/utils/reservedSlugs'
 import { AuthError } from '../../types/auth.types'
 import { SellerError } from '~~/layers/seller/server/types/seller.types'
-import { sellerService } from '~~/layers/seller/server/services/seller.services'
-
-const RESERVED_SLUGS = new Set([
-  'discover', 'market', 'thrift', 'checkout', 'cart', 'sellers', 'seller',
-  'user-login', 'user-register', 'profile', 'map', 'reels', 'api',
-  'offline', 'landing', 'about', 'help', 'privacy', 'terms',
-  'forgot-password', 'reset-password', 'verify-email', 'resend-verification',
-  'feed', 'search', 'explore', 'settings', 'notifications', 'messages',
-  'admin', 'static', '_nuxt',
-])
 
 defineRouteMeta({
   openAPI: {
@@ -31,11 +22,23 @@ defineRouteMeta({
         'application/json': {
           schema: {
             type: 'object',
-            required: ['email', 'username', 'password', 'confirmPassword', 'store_name', 'store_slug'],
+            required: [
+              'email',
+              'username',
+              'password',
+              'confirmPassword',
+              'store_name',
+              'store_slug',
+            ],
             properties: {
               email: { type: 'string', format: 'email' },
               username: { type: 'string' },
-              password: { type: 'string', minLength: 8 },
+              password: {
+                type: 'string',
+                minLength: 12,
+                description:
+                  'Min 12 chars with upper, lower, number, and special character (same policy as /auth/register).',
+              },
               confirmPassword: { type: 'string' },
               store_name: { type: 'string', minLength: 3 },
               store_slug: { type: 'string', minLength: 3 },
@@ -51,7 +54,9 @@ defineRouteMeta({
       },
     },
     responses: {
-      200: { description: '{ success, accessToken, refreshToken, user, store }' },
+      200: {
+        description: '{ success, accessToken, refreshToken, user, store }',
+      },
       400: { description: 'Invalid input or duplicate email/username' },
       409: { description: 'Store URL already taken' },
       429: { description: 'Rate limit exceeded' },
@@ -62,43 +67,86 @@ export default defineEventHandler(async (event) => {
   const body = await readBody(event)
   const {
     // Account fields
-    email, username, password, confirmPassword,
+    email,
+    username,
+    password,
+    confirmPassword,
     // Store fields
-    store_name, store_slug, store_description,
-    store_logo, store_banner, store_location,
-    store_phone, store_currency,
+    store_name,
+    store_slug,
+    store_description,
+    store_logo,
+    store_banner,
+    store_location,
+    store_phone,
+    store_currency,
+    // Shipping origin (optional) — enables live carrier rates at checkout
+    shipFromName,
+    shipFromAddress,
+    shipFromCity,
+    shipFromState,
+    shipFromZip,
+    shipFromCountry,
+    shipFromPhone,
   } = body
 
   // ── Basic validation ────────────────────────────────────────────────────────
   if (!email || !username || !password || !confirmPassword)
-    throw createError({ statusCode: 400, statusMessage: 'All account fields are required' })
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'All account fields are required',
+    })
 
   if (password !== confirmPassword)
-    throw createError({ statusCode: 400, statusMessage: 'Passwords do not match' })
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Passwords do not match',
+    })
 
-  if (password.length < 8)
-    throw createError({ statusCode: 400, statusMessage: 'Password must be at least 8 characters' })
+  // Enforce the same OWASP password policy as POST /auth/register so sellers
+  // are never created with weaker credentials than regular users.
+  const passwordCheck = enhancedPasswordSchema.safeParse(password)
+  if (!passwordCheck.success)
+    throw createError({
+      statusCode: 400,
+      statusMessage:
+        passwordCheck.error.errors[0]?.message ??
+        'Password does not meet complexity requirements',
+    })
 
   if (!store_name || store_name.trim().length < 3)
-    throw createError({ statusCode: 400, statusMessage: 'Store name must be at least 3 characters' })
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Store name must be at least 3 characters',
+    })
 
   if (!store_slug || store_slug.trim().length < 3)
-    throw createError({ statusCode: 400, statusMessage: 'Store URL must be at least 3 characters' })
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Store URL must be at least 3 characters',
+    })
 
   const slug = store_slug.toLowerCase().trim()
 
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug))
-    throw createError({ statusCode: 400, statusMessage: 'Store URL can only contain lowercase letters, numbers, and hyphens' })
+    throw createError({
+      statusCode: 400,
+      statusMessage:
+        'Store URL can only contain lowercase letters, numbers, and hyphens',
+    })
 
-  if (RESERVED_SLUGS.has(slug))
-    throw createError({ statusCode: 400, statusMessage: `"${slug}" is a reserved name — choose a different store URL` })
+  if (isReservedSlug(slug))
+    throw createError({
+      statusCode: 400,
+      statusMessage: `"${slug}" is a reserved name — choose a different store URL`,
+    })
 
   const ipAddress = getClientIP(event)
   const userAgent = event.node.req.headers['user-agent'] || 'Unknown'
 
   try {
     // ── 1. Rate limit ────────────────────────────────────────────────────────
-    const rateLimit = checkRateLimit(`register:${ipAddress}`, {
+    const rateLimit = await checkRateLimitAsync(`register:${ipAddress}`, {
       windowMs: 15 * 60 * 1000,
       maxAttempts: 5,
       lockoutMs: 15 * 60 * 1000,
@@ -106,7 +154,10 @@ export default defineEventHandler(async (event) => {
     })
     if (!rateLimit.allowed) {
       const secs = Math.ceil((rateLimit.resetAt - Date.now()) / 1000)
-      throw createError({ statusCode: 429, statusMessage: `Too many attempts. Try again in ${secs} seconds` })
+      throw createError({
+        statusCode: 429,
+        statusMessage: `Too many attempts. Try again in ${secs} seconds`,
+      })
     }
 
     // ── 2. Check duplicate user ──────────────────────────────────────────────
@@ -115,8 +166,12 @@ export default defineEventHandler(async (event) => {
       select: { email: true },
     })
     if (existing) {
-      const field = existing.email === email.toLowerCase() ? 'Email' : 'Username'
-      throw createError({ statusCode: 400, statusMessage: `${field} already in use` })
+      const field =
+        existing.email === email.toLowerCase() ? 'Email' : 'Username'
+      throw createError({
+        statusCode: 400,
+        statusMessage: `${field} already in use`,
+      })
     }
 
     // ── 3. Check slug availability ───────────────────────────────────────────
@@ -125,7 +180,10 @@ export default defineEventHandler(async (event) => {
       select: { id: true },
     })
     if (slugTaken)
-      throw createError({ statusCode: 409, statusMessage: `Store URL "${slug}" is already taken` })
+      throw createError({
+        statusCode: 409,
+        statusMessage: `Store URL "${slug}" is already taken`,
+      })
 
     // ── 4. Create user + seller in a transaction ─────────────────────────────
     const userId = crypto.randomUUID()
@@ -153,6 +211,14 @@ export default defineEventHandler(async (event) => {
           store_location: store_location?.trim() || undefined,
           store_phone: store_phone?.trim() || undefined,
           default_currency: store_currency || 'NGN',
+          // Shipping origin (optional) — powers live GIG rates when provided
+          shipFromName: shipFromName?.trim() || undefined,
+          shipFromAddress: shipFromAddress?.trim() || undefined,
+          shipFromCity: shipFromCity?.trim() || undefined,
+          shipFromState: shipFromState?.trim() || undefined,
+          shipFromZip: shipFromZip?.trim() || undefined,
+          shipFromCountry: shipFromCountry || undefined,
+          shipFromPhone: shipFromPhone?.trim() || undefined,
           is_active: true,
         },
       })
@@ -164,28 +230,42 @@ export default defineEventHandler(async (event) => {
     const sessionId = crypto.randomUUID()
     const tokens = generateTokens(user.id, user.email, 'seller', sessionId)
 
-    await prisma.session.create({
-      data: {
-        id: sessionId,
-        userId: user.id,
-        refreshToken: tokens.refreshToken,
-        ipAddress,
-        userAgent,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      },
-    }).catch((e: Error) => logger.warn('Session create failed after seller registration', { userId: user.id, error: e.message }))
+    await prisma.session
+      .create({
+        data: {
+          id: sessionId,
+          userId: user.id,
+          refreshToken: tokens.refreshToken,
+          ip: ipAddress,
+          userAgent,
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        },
+      })
+      .catch((e: Error) =>
+        logger.warn('Session create failed after seller registration', {
+          userId: user.id,
+          error: e.message,
+        }),
+      )
 
-    await prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        email: user.email,
-        event_type: 'SELLER_REGISTERED',
-        reason: 'Account + store created via onboarding wizard',
-        ip_address: ipAddress,
-        user_agent: userAgent,
-        success: true,
-      },
-    }).catch((e: Error) => logger.warn('Audit log failed after seller registration', { userId: user.id, error: e.message }))
+    await prisma.auditLog
+      .create({
+        data: {
+          user_id: user.id,
+          email: user.email,
+          event_type: 'SELLER_REGISTERED',
+          reason: 'Account + store created via onboarding wizard',
+          ip_address: ipAddress,
+          user_agent: userAgent,
+          success: true,
+        },
+      })
+      .catch((e: Error) =>
+        logger.warn('Audit log failed after seller registration', {
+          userId: user.id,
+          error: e.message,
+        }),
+      )
 
     // ── 6. Set HTTP-only cookies (same shape as /api/auth/login) ─────────────
     setCookie(event, 'accessToken', tokens.accessToken, {
@@ -204,12 +284,17 @@ export default defineEventHandler(async (event) => {
     // ── 7. Send verification email async (non-blocking) ──────────────────────
     ;(async () => {
       try {
-        const { authRepository } = await import('../../repositories/auth.repository')
+        const { authRepository } = await import(
+          '../../repositories/auth.repository'
+        )
         const config = useRuntimeConfig()
-        const appUrl = (config.public.baseURL as string) || 'http://localhost:3000'
+        const appUrl =
+          (config.public.baseURL as string) || 'http://localhost:3000'
         const token = await authRepository.createEmailVerificationToken(user.id)
         await sendVerificationEmail(user.email, token, appUrl)
-      } catch { /* swallow — account is created, email is non-critical */ }
+      } catch {
+        /* swallow — account is created, email is non-critical */
+      }
     })()
 
     return {
@@ -227,10 +312,21 @@ export default defineEventHandler(async (event) => {
   } catch (error: unknown) {
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
     if (error instanceof AuthError)
-      throw createError({ statusCode: error.statusCode, statusMessage: error.message })
+      throw createError({
+        statusCode: error.statusCode,
+        statusMessage: error.message,
+      })
     if (error instanceof SellerError)
-      throw createError({ statusCode: error.statusCode || 400, statusMessage: error.message })
-    logger.logError('[POST /api/auth/register-seller]', error, { requestId: event.context?.requestId })
-    throw createError({ statusCode: 500, statusMessage: 'Registration failed. Please try again.' })
+      throw createError({
+        statusCode: error.statusCode || 400,
+        statusMessage: error.message,
+      })
+    logger.logError('[POST /api/auth/register-seller]', error, {
+      requestId: event.context?.requestId,
+    })
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Registration failed. Please try again.',
+    })
   }
 })

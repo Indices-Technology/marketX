@@ -2,7 +2,8 @@
 <template>
   <div class="w-full space-y-10 px-1 sm:px-2">
     <!-- ─── 1. DEALS ──────────────────────────────────────────────────────── -->
-    <section>
+    <!-- Today's deals — hidden entirely when there are no live (<48h) flash deals -->
+    <section v-if="dealsLoading || deals.length">
       <div class="mb-4 flex items-end justify-between">
         <div>
           <p
@@ -36,12 +37,6 @@
         label="Today's deals"
         @open-product="openProduct"
       />
-      <p
-        v-else-if="!dealsLoading"
-        class="py-6 text-center text-sm text-gray-400 dark:text-neutral-500"
-      >
-        No deals right now — check back soon
-      </p>
     </section>
 
     <!-- ─── 2. MARKETS (Squares) ──────────────────────────────────────────── -->
@@ -345,7 +340,6 @@ import PostDetailModal from '~~/layers/social/app/components/modals/PostDetailMo
 import ProductCommentModal from '~~/layers/commerce/app/components/modals/ProductCommentModal.vue'
 
 import { ref } from 'vue'
-import { useRouter } from '#imports'
 import { imgAvatar } from '~~/layers/core/app/utils/cloudinary'
 import { useProductDetail } from '~~/layers/commerce/app/composables/useProductDetail'
 import { useMarketHome } from '../composables/useMarketHome'
@@ -354,7 +348,6 @@ import type { IProduct } from '~~/layers/social/app/types/post.types'
 
 defineEmits<{ 'sign-in': [] }>()
 
-const router = useRouter()
 const {
   selectedProduct,
   detailLoading: productDetailLoading,

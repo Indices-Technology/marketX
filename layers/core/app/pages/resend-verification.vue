@@ -75,10 +75,10 @@
 
           <!-- Resend to different email -->
           <BaseButton
-            @click="resetForm"
             type="button"
             variant="ghost"
             class="w-full"
+            @click="resetForm"
           >
             Resend to a different email
           </BaseButton>
@@ -135,7 +135,11 @@
             :loading="isLoading"
             :disabled="isLoading"
           >
-            {{ isLoading ? 'Sending verification email...' : 'Send Verification Email' }}
+            {{
+              isLoading
+                ? 'Sending verification email...'
+                : 'Send Verification Email'
+            }}
           </BaseButton>
         </form>
 
@@ -185,6 +189,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
+import { definePageMeta } from '#imports'
 import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { useRoute } from 'vue-router'
 import { useAuth } from '../composables/useAuth'

@@ -125,6 +125,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { definePageMeta } from '#imports'
+import { useRouter } from 'vue-router'
 import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { useRoute } from 'nuxt/app'
 import { useAuth } from '../composables/useAuth'

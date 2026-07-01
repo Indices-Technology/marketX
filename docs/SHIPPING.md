@@ -152,25 +152,44 @@ filter(canHandle)
 
 ## 6. Pricing engine
 
-Margin is a **dial**, not hardcoded. Each carrier rate stores two numbers; the
-platform applies one knob:
+Margin is a **provider-agnostic dial**, not hardcoded and not per-carrier.
 
-- **`costMinor`** — what we pay the carrier (GIG **Class**, Sendbox negotiated).
-- **`listMinor`** — reference/retail (GIG **Basic**; single-rate carriers:
-  `cost × (1 + defaultMarkup)`).
-- **`customerDiscountPct`** — admin-set (global / per-carrier / per-zone / promo):
+- **`costMinor`** — what we pay the carrier. This is the **only** number we trust
+  at runtime: GIG's live `/price` returns a single price for our ecommerce account
+  (`Discount: 0`, no live Class/Basic split), so we treat it as cost. We do **not**
+  derive retail from the Annexure — that static card can change any time.
+- **Retail is computed centrally** as `cost × (1 + SHIPPING_MARKUP_PCT)` (+ optional
+  `SHIPPING_HANDLING_FEE`). One env dial covers **every** carrier we onboard (GIG
+  now, Sendbox/Shippo later) — not a per-carrier variable.
+- **Seller-priced BYOS (`self`) is passed through untouched** — the seller sets
+  their own delivery/pickup price; the platform adds no markup to it.
+- **`customerDiscountPct`** — admin relief that hands part of the spread back:
 
 ```
+list           = cost × (1 + SHIPPING_MARKUP_PCT) + handlingFee   (carriers only)
 buyerPrice     = list − customerDiscountPct × (list − cost)
 platformMargin = buyerPrice − cost
 ```
 
-- `discount = 0%` → buyer pays Basic, platform keeps the full ~17–21% GIG spread (default).
-- `discount = 100%` → buyer pays Class — cheapest in market, zero margin.
+- `discount = 0%` → buyer pays the marked-up list, platform keeps the full margin (default).
+- `discount = 100%` → buyer pays cost — cheapest in market, zero margin.
 - Rates are **VAT-inclusive** (GIG Annexure 2) — never re-add VAT.
 
-The cost→retail transform lives **once** in `pricing.service.ts`. Providers return
-cost only; the platform owns margin. Configurable from the admin dashboard.
+The cost→retail transform lives **once** in `pricing.service.ts` (`computePrice` +
+`shippingMarkupPct`/`shippingHandlingFeeMinor`); the orchestrator applies it to
+every carrier quote and skips `self`. Env: `SHIPPING_MARKUP_PCT` (default 0.25),
+`SHIPPING_HANDLING_FEE` (default 0). Later movable to per-carrier/zone config.
+
+> ⚠️ **Known gap — legacy carrier path is NOT marked up yet.** `rates.post.ts`
+> has a second branch (§2, "Live carrier rates") that calls the old Sendbox/Shippo
+> providers via `getShippingProvider().getRates()` **directly**, bypassing the
+> orchestrator — so those rates do **not** get `SHIPPING_MARKUP_PCT`. This is
+> deferred on purpose: those providers are slated to be lifted into the
+> `layers/shipping` orchestrator (see §13 ⬜ "Lift Sendbox + Shippo"), at which
+> point they inherit the central markup automatically. Until then, only
+> **orchestrated** carriers (GIG + `self`) flow through `computePrice`. If Sendbox/
+> Shippo are re-enabled before that migration, route their branch through
+> `computePrice` (markup, skip `self`) or they'll be sold at raw carrier cost.
 
 ---
 
@@ -364,16 +383,18 @@ Legend: ✅ done · 🟡 in progress · ⬜ not started
 - ✅ Pricing service — cost/list/discount dial (`buyer = list − discountPct×(list−cost)`); verified dial @100% collapses to cost
 - ✅ Zone service + NG matrix — 6 geopolitical zones + intra-state → Z1–Z4, express-city gate (in-code reference; DB `ShippingZone` table overrides later)
 - ✅ GIG provider — zone-driven Class(cost)/Basic(list) rate-card quoting (verified vs Annexure 2: 1kg Z1 = ₦5,101.40/₦6,184.70); conditional GoFaster express.
-- ✅ **GIG live API (sandbox verified)** — client (`gig/client.ts`): `POST /login` (JWT cached in `access-token` header), `GET /localstations/get` (cached, 46 stations), `POST /price`, `POST /capture/preshipment`, `GET /track/mobileShipment`. Provider `quote/book/track` call the live API with **automatic fallback to the rate card**. **Verified:** Lagos→Abuja 2kg → live GrandTotal ₦12,305 (cost), Basic anchor ₦15,381 (= cost/0.8 per GIGL Class 20%-off); shows in checkout alongside BYOS.
-  - **CustomerCode/CustomerType auto-derive from the login response** (`UserChannelCode`/`CustomerType`); env is optional and placeholder values (`<...>`) are ignored.
-  - **Tuned vs sandbox:** `SpecialPackageId: 1` (required; 1=normal package), station StateName alias **Abuja→FCT**, first-public-station per state (Anambra/Delta/Edo/etc. have several), Kebbi/Yobe have no station → rate-card fallback.
+- ✅ **GIG live API (sandbox verified)** — client (`gig/client.ts`): `POST /login` (JWT cached in `access-token` header), `GET /localstations/get` (cached, 46 stations), `POST /price`, `POST /capture/preshipment`, `GET /track/mobileShipment`. Provider `quote/book/track` call the live API with **automatic fallback to the rate card**. **Verified (July 2026, weight-correct):** Enugu→Lagos 0.5kg → live GrandTotal ₦7,997, scaling with weight (1kg ₦8,998 · 2kg ₦11,398 · 5kg ₦16,646); Basic anchor = cost/0.8; shows in checkout alongside BYOS.
+  - **CustomerCode/CustomerType auto-derive from the login response** (`UserChannelCode`/`CustomerType`); env is optional and placeholder values (`<...>`) are ignored. Sandbox account `ECO038082` returns `Discount: 0` — GIG gives a single price, no live Class/Basic split.
+  - **Weight-based pricing (fixed July 2026):** quote items with `ShipmentType: 1` + `ItemName` + `IsVolumetric: false` → priced by the actual `Weight`. **Do NOT use `ShipmentType: 0` / `SpecialPackageId`** — those select *predefined special packages* whose fixed weight overrides yours (id 1 = 12.5kg), which had silently billed **every** parcel as 12.5kg (0.5kg was quoting ₦12,318 instead of ₦7,997). `/capture` mirrors the same item shape so the booked weight matches the quote.
+  - **Station notes:** StateName alias **Abuja→FCT**, first-public-station per state (Anambra/Delta/Edo/etc. have several), Kebbi/Yobe have no station → rate-card fallback.
   - Env: `GIG_BASE_URL` (default sandbox), `GIG_EMAIL`, `GIG_PASSWORD` (only these two required).
   - **Still to tune:** scan-status code map for `/track` (needs a real tracked shipment); only-on-401-auth re-login guard added.
 - ✅ **Consolidation (June 2026)** — all shipping moved under `layers/shipping`: root `server/utils/shipping/*` → `legacy/`; `commerce/.../shipping/*` routes → `api/shipping/*` (single `/api/shipping/*` namespace). Webhooks kept in commerce (wallet-coupled). Removed the duplicate-`IShippingProvider` auto-import collision. Imports/URLs/tests updated; **20/20 shipping tests pass**.
 - ✅ API routes — `quote · rates · calculate · zones · create · seed · track` all live at `/api/shipping/*`; `book` (new orchestrator path) ⬜
 - ✅ **Self-shipping / BYOS provider** — seller-defined flat / free-over / pickup / per-zone, stored in `SellerProfile.shippingConfig` (JSON); decoupled (config travels in the request); escrow-POD only, no carrier wallet/return-tariff; orchestrator `only` filter added (holds GIG back until its API is live)
-- ✅ **Checkout integration** — `/api/shipping/rates` merges BYOS + GIG (live) + legacy carriers; client passes `subtotalMinor` for free-over; rendered as selectable options in `CheckoutShipping.vue`. GIG gated on `isGigConfigured()` + a resolvable origin. Verified live: Pickup (free) · Seller delivery (₦1,500) · GIG (₦12,299).
-- ✅ **Multi-seller checkout (Phase 1)** — checkout groups the cart by seller and quotes **each seller independently** ("Ships from {store}"), pre-selecting the cheapest, summing the total, and emitting a per-seller `shippingBreakdown`. Sellers with config show their options; others fall back to the flat zone. Fixes the "providers not showing" case (every seller is quoted, not just one primary). Verified: per-seller `/api/shipping/rates` returns each store's options.
+- ✅ **Checkout integration** — `/api/shipping/rates` merges BYOS + GIG (live) + legacy carriers; client passes `subtotalMinor` for free-over; rendered as selectable options in `CheckoutShipping.vue` (which now supports an `embedded` prop so it can render without its own card chrome inside a seller package). GIG gated on `isGigConfigured()` + a resolvable origin. Verified live: Pickup (free) · Seller delivery (₦1,500) · GIG (₦12,299).
+- ✅ **Multi-seller checkout (Phase 1)** — checkout groups the cart by seller and quotes **each seller independently**, pre-selecting the cheapest, summing the total, and emitting a per-seller `shippingBreakdown`. Sellers with config show their options; others fall back to the flat zone. Fixes the "providers not showing" case (every seller is quoted, not just one primary). Verified: per-seller `/api/shipping/rates` returns each store's options.
+- ✅ **Checkout UI restructure (June 2026)** — each seller now renders as a single `CheckoutSellerPackage.vue` card combining **its products + its delivery options + an Items/Shipping cost line**, so the buyer sees that store's total in one place instead of scrolling between a global order summary and separate "Ships from {store}" shipping cards. The delivery address moved to the top of the page (rates depend on it). Pure presentation change — `sellerGroups`, `shipBySeller`, `groupShippingMajor`, `shippingBreakdown`, and `isFormValid` are unchanged, so totals and the order payload are identical. (`CheckoutOrderSummary.vue` is now unused.)
 - ✅ **Multi-seller orders (Phase 2)** — `placeOrder` now splits the cart into **one order per seller** under a shared `purchaseGroupId`, each carrying its own items + shipping (from the breakdown) + `affiliateCut`. Schema: `purchaseGroupId` + `shippingBreakdown` on `Orders`; `paymentRef` is shared across the group (no longer unique). **Payment** (Paystack `initialize`/`verify`, `pod-initialize`/`pod-verify`, PayPal `create`/`capture`, and the Paystack `webhook`) charges the group's summed total in one transaction and runs the existing per-order side-effects in a loop. **Escrow + affiliate need no rewrite** — `creditSellersOnPayment`/`releaseFundsOnDelivery`/`reverseOrderCredit`/`affiliateCut` are keyed per order, so with one seller per order they become per-seller automatically (confirming receipt on one seller's order releases only that seller's escrow). Verified: a 2-seller cart → 2 orders, shared group, per-seller shipping (₦1,500 + ₦3,200); all payment routes compile + behave (4xx on bogus refs, not 500).
 - ⬜ **Polish** — buyer "My Orders" visual grouping (one purchase shown as N shipments); full pay→ship→confirm→release run pending a working Paystack test key.
 - ✅ **Seller settings UI for BYOS** — "Self / Own Delivery" section in seller store settings: toggle, flat fee, free-over threshold, pickup + note, ETA. Persists to `SellerProfile.shippingConfig` via `PATCH /api/seller/:id` (schema + repo + ₦→kobo conversion). Verified: save → checkout shows the configured options. (Ship-from origin section already existed — required for GIG to quote.)

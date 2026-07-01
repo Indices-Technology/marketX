@@ -16,7 +16,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['Auth'],
     summary: 'Send a guest-checkout OTP',
-    description: 'Step 1 of inline checkout auth — emails a 6-digit one-time code.',
+    description:
+      'Step 1 of inline checkout auth — emails a 6-digit one-time code.',
     requestBody: {
       required: true,
       content: {

@@ -11,6 +11,10 @@
 		}
 	],
 	"settings": {
-		"liveServer.settings.multiRootWorkspaceName": "marketX"
+		"liveServer.settings.multiRootWorkspaceName": "marketX",
+		"cSpell.words": [
+			"dasah",
+			"marketx"
+		]
 	}
 }

@@ -61,7 +61,7 @@ const checks = computed(() => ({
   uppercase: /[A-Z]/.test(props.password),
   lowercase: /[a-z]/.test(props.password),
   number: /[0-9]/.test(props.password),
-  special: /[!@#$%^&*]/.test(props.password),
+  special: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(props.password),
 }))
 
 // Calculate strength

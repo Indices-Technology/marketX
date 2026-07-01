@@ -1,12 +1,16 @@
 <template>
   <div
     class="group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg dark:bg-neutral-900"
+    :class="fill ? 'h-full' : ''"
     @click="$emit('open-detail', product)"
   >
     <!-- ─── MEDIA BLOCK ─────────────────────────────────────────────────── -->
     <div
-      class="relative w-full overflow-hidden bg-gray-50 dark:bg-neutral-800"
-      :class="aspectClass"
+      class="relative w-full overflow-hidden"
+      :class="[
+        fill ? 'min-h-0 flex-1' : aspectClass,
+        tintClass || 'bg-gray-50 dark:bg-neutral-800',
+      ]"
     >
       <img
         v-if="coverImage"
@@ -44,7 +48,12 @@
 
       <!-- Like button (top-right) -->
       <button
-        class="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 shadow-sm backdrop-blur-sm transition-transform hover:scale-110 active:scale-95 dark:bg-black/40"
+        class="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 shadow-sm backdrop-blur-sm transition-all hover:scale-110 active:scale-95 dark:bg-black/40"
+        :class="
+          calm && !localLiked
+            ? 'opacity-0 group-hover:opacity-100 focus:opacity-100'
+            : ''
+        "
         aria-label="Like"
         @click.stop="handleLike"
       >
@@ -73,7 +82,8 @@
     <!-- ─── INFO BLOCK ────────────────────────────────────────────────── -->
     <div class="flex flex-col gap-1 px-2.5 py-2">
       <h3
-        class="line-clamp-1 text-[12px] font-semibold leading-snug text-gray-900 transition-colors group-hover:text-brand dark:text-neutral-100"
+        class="font-semibold leading-snug text-gray-900 transition-colors group-hover:text-brand dark:text-neutral-100"
+        :class="featured ? 'line-clamp-2 text-sm' : 'line-clamp-1 text-[12px]'"
       >
         {{ product.title }}
       </h3>
@@ -86,7 +96,7 @@
           <Icon name="mdi:storefront-outline" size="10" class="shrink-0" />
           <span class="truncate">{{ product.seller.store_name }}</span>
         </p>
-        <div class="flex shrink-0 items-center gap-1.5">
+        <div v-if="!calm" class="flex shrink-0 items-center gap-1.5">
           <!-- Relative time — visible in Fresh Drops context -->
           <span
             v-if="showAge && product.created_at"
@@ -115,7 +125,8 @@
             {{ formatPrice(product.price) }}
           </span>
           <span
-            class="text-[13px] font-bold leading-none text-gray-900 dark:text-neutral-100"
+            class="font-bold leading-none text-gray-900 dark:text-neutral-100"
+            :class="featured ? 'text-base' : 'text-[13px]'"
           >
             {{ formatPrice(discountedPrice) }}
           </span>
@@ -163,6 +174,14 @@ const props = defineProps<{
   aspectClass?: string
   /** Show relative timestamp — intended for Fresh Drops context */
   showAge?: boolean
+  /** Fill parent height (bento grid cells) instead of using a fixed aspect ratio. */
+  fill?: boolean
+  /** Hero treatment — larger title/price, 2-line title. */
+  featured?: boolean
+  /** Calmer face — hides the time/like-count meta row, reveals the like button on hover. */
+  calm?: boolean
+  /** Soft tint behind the media block (Selar-style warmth). Falls back to neutral. */
+  tintClass?: string
 }>()
 
 const emit = defineEmits<{

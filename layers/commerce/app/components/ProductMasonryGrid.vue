@@ -1,33 +1,30 @@
 <template>
-  <!-- Skeleton -->
-  <div
-    v-if="loading && !products.length"
-    class="columns-2 gap-3 sm:columns-3 lg:columns-4 xl:columns-5"
-  >
+  <!-- Skeleton — mirrors the bento rhythm so the layout doesn't jump on load -->
+  <div v-if="loading && !products.length" class="bento-grid">
     <div
-      v-for="(h, i) in SKELETON_HEIGHTS"
+      v-for="i in 12"
       :key="i"
-      class="mb-3 break-inside-avoid animate-pulse rounded-2xl bg-gray-100 dark:bg-neutral-800"
-      :style="{ height: `${h}px` }"
+      class="animate-pulse rounded-2xl bg-gray-100 dark:bg-neutral-800"
+      :style="spanStyle(i - 1)"
     />
   </div>
 
   <!-- Empty -->
   <slot v-else-if="!products.length" name="empty" />
 
-  <!-- Grid -->
-  <div
-    v-else
-    class="columns-2 gap-3 sm:columns-3 lg:columns-4 xl:columns-5"
-  >
+  <!-- Bento grid — dense flow packs cards around the larger heroes -->
+  <div v-else class="bento-grid">
     <div
       v-for="(product, i) in products"
       :key="product.id"
-      class="mb-3 break-inside-avoid"
+      :style="spanStyle(i)"
     >
       <ProductCardMini
         :product="product"
-        :aspect-class="aspectPattern[i % aspectPattern.length]"
+        fill
+        :featured="layoutAt(i) === 'hero'"
+        :calm="layoutAt(i) !== 'hero'"
+        :tint-class="tintFor(i)"
         :show-age="showAge"
         @open-detail="emit('open-detail', $event)"
         @quick-add="emit('quick-add', $event)"
@@ -60,17 +57,45 @@ const emit = defineEmits<{
   'load-more': []
 }>()
 
-// Cycling aspect ratios — portrait-dominant so images feel editorial, not catalog
-const aspectPattern = [
-  'aspect-[3/4]',
-  'aspect-[4/5]',
-  'aspect-[3/4]',
-  'aspect-square',
-  'aspect-[4/5]',
-]
+// ─── Bento layout ─────────────────────────────────────────────────────────────
+// Grid geometry (columns / gap / fixed row height) lives in the scoped <style>
+// block as real CSS so it can't be purged by Tailwind's JIT — that matters here
+// because the cards fill their cell (no intrinsic height), so a missing
+// grid-auto-rows would collapse them to nothing.
 
-// Skeleton heights mirror the aspect pattern at ~160px column width
-const SKELETON_HEIGHTS = [213, 200, 213, 160, 200, 213, 160, 200, 213, 200]
+// Deterministic, non-obvious rhythm: ~1 hero (2×3) + 2 tall (1×3) per 11 cards,
+// the rest normal (1×2). Pattern length 11 (coprime with the column counts) so
+// heroes don't line up into a visible column.
+type Span = 'hero' | 'tall' | 'normal'
+const layoutAt = (i: number): Span => {
+  const m = i % 11
+  if (m === 0) return 'hero'
+  if (m === 4 || m === 8) return 'tall'
+  return 'normal'
+}
+// Inline grid spans — robust against Tailwind purging span/arbitrary classes.
+const spanStyle = (i: number): Record<string, string> => {
+  switch (layoutAt(i)) {
+    case 'hero':
+      return { gridColumn: 'span 2', gridRow: 'span 3' }
+    case 'tall':
+      return { gridRow: 'span 3' }
+    default:
+      return { gridRow: 'span 2' }
+  }
+}
+
+// Soft per-card tints (Selar-style warmth). Low-saturation, dark-aware; shows
+// behind transparent/loading media and on the hero/empty states. No purple.
+const TINTS = [
+  'bg-rose-50 dark:bg-rose-950/30',
+  'bg-amber-50 dark:bg-amber-950/30',
+  'bg-emerald-50 dark:bg-emerald-950/30',
+  'bg-sky-50 dark:bg-sky-950/30',
+  'bg-orange-50 dark:bg-orange-950/30',
+  'bg-teal-50 dark:bg-teal-950/30',
+]
+const tintFor = (i: number): string => TINTS[i % TINTS.length]
 
 // Infinite scroll via IntersectionObserver
 const trigger = ref<HTMLElement | null>(null)
@@ -101,3 +126,26 @@ watch(
 
 onUnmounted(() => observer?.disconnect())
 </script>
+
+<style scoped>
+.bento-grid {
+  display: grid;
+  grid-auto-flow: row dense;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 116px;
+  gap: 0.875rem;
+}
+@media (min-width: 640px) {
+  .bento-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-auto-rows: 124px;
+    gap: 1rem;
+  }
+}
+@media (min-width: 1024px) {
+  .bento-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-auto-rows: 132px;
+  }
+}
+</style>

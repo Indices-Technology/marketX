@@ -3,7 +3,8 @@
 /**
  * Auth Service
  * Handles authentication business logic
- * Uses in-memory rate limiting (not database)
+ * Rate limiting is Redis-backed (checkRateLimitAsync) so counters/lockouts are
+ * shared across serverless instances; falls back to in-memory when Redis is down.
  */
 
 import RATE_LIMITS from '~~/server/config/rateLimits'
@@ -78,7 +79,7 @@ export const authService = {
     email = email.toLowerCase()
 
     // 1. Rate Limit (By IP to prevent bot spam)
-    const rateLimit = checkRateLimit(`register:${ipAddress}`, {
+    const rateLimit = await checkRateLimitAsync(`register:${ipAddress}`, {
       windowMs: RATE_LIMITS.REGISTER.windowMs,
       maxAttempts: RATE_LIMITS.REGISTER.maxAttempts,
       lockoutMs: RATE_LIMITS.REGISTER.lockoutMs,
@@ -186,7 +187,7 @@ export const authService = {
     const normalizedEmail = email.toLowerCase()
 
     // 1. Rate Limit (By Email)
-    const rateLimit = checkRateLimit(`login:${normalizedEmail}`, {
+    const rateLimit = await checkRateLimitAsync(`login:${normalizedEmail}`, {
       windowMs: RATE_LIMITS.LOGIN.windowMs,
       maxAttempts: RATE_LIMITS.LOGIN.maxAttempts,
       lockoutMs: RATE_LIMITS.LOGIN.lockoutMs,
@@ -397,7 +398,7 @@ export const authService = {
     }
 
     // 2. Rate limit refresh attempts
-    const rateLimit = checkRateLimit(`refresh:${session.userId}`, {
+    const rateLimit = await checkRateLimitAsync(`refresh:${session.userId}`, {
       windowMs: RATE_LIMITS.REFRESH_TOKEN.windowMs,
       maxAttempts: RATE_LIMITS.REFRESH_TOKEN.maxAttempts,
       keyPrefix: RATE_LIMITS.REFRESH_TOKEN.keyPrefix,
@@ -461,7 +462,7 @@ export const authService = {
 
   async sendVerificationEmail(userId: string, email: string) {
     // Rate limit email sends
-    const rateLimit = checkRateLimit(`verify-send:${email}`, {
+    const rateLimit = await checkRateLimitAsync(`verify-send:${email}`, {
       windowMs: RATE_LIMITS.VERIFY_EMAIL_SEND.windowMs,
       maxAttempts: RATE_LIMITS.VERIFY_EMAIL_SEND.maxAttempts,
       keyPrefix: RATE_LIMITS.VERIFY_EMAIL_SEND.keyPrefix,
@@ -493,7 +494,7 @@ export const authService = {
 
   async verifyEmail(token: string) {
     // Rate limit verification attempts
-    const rateLimit = checkRateLimit(`verify-attempt:${token}`, {
+    const rateLimit = await checkRateLimitAsync(`verify-attempt:${token}`, {
       windowMs: RATE_LIMITS.VERIFY_EMAIL_TOKEN.windowMs,
       maxAttempts: RATE_LIMITS.VERIFY_EMAIL_TOKEN.maxAttempts,
       keyPrefix: RATE_LIMITS.VERIFY_EMAIL_TOKEN.keyPrefix,
@@ -538,7 +539,7 @@ export const authService = {
     email = email.toLowerCase()
 
     // Rate limit password reset requests
-    const rateLimit = checkRateLimit(`forgot:${email}`, {
+    const rateLimit = await checkRateLimitAsync(`forgot:${email}`, {
       windowMs: RATE_LIMITS.FORGOT_PASSWORD.windowMs,
       maxAttempts: RATE_LIMITS.FORGOT_PASSWORD.maxAttempts,
       keyPrefix: RATE_LIMITS.FORGOT_PASSWORD.keyPrefix,

@@ -33,7 +33,10 @@
           class="whitespace-pre-wrap text-[15px] font-medium italic leading-relaxed text-gray-900 dark:text-neutral-100"
           :class="isTextLong && !textExpanded ? 'line-clamp-6' : ''"
         >
-          <PostCaption :caption="post.caption || post.content" :mentions="post.mentions" />
+          <PostCaption
+            :caption="post.caption || post.content"
+            :mentions="post.mentions"
+          />
         </p>
         <button
           v-if="isTextLong && !textExpanded"
@@ -54,7 +57,10 @@
           class="whitespace-pre-wrap text-[14px] leading-relaxed text-gray-900 dark:text-neutral-100"
           :class="isTextLong && !textExpanded ? 'line-clamp-6' : ''"
         >
-          <PostCaption :caption="post.caption || post.content" :mentions="post.mentions" />
+          <PostCaption
+            :caption="post.caption || post.content"
+            :mentions="post.mentions"
+          />
         </p>
         <button
           v-if="isTextLong && !textExpanded"
@@ -87,7 +93,10 @@
               isTextLong && !textExpanded ? 'line-clamp-6' : '',
             ]"
           >
-            <PostCaption :caption="post.caption || post.content" :mentions="post.mentions" />
+            <PostCaption
+              :caption="post.caption || post.content"
+              :mentions="post.mentions"
+            />
           </p>
         </div>
         <button
@@ -104,11 +113,11 @@
     <!-- ─── Media (full-bleed) ───────────────────────────────────────── -->
     <PostMediaGallery
       v-if="hasMedia"
+      ref="mediaGalleryRef"
       :media-items="mediaItems"
       :post="post"
       :sound-enabled="soundEnabled"
       :music-playing="musicPlaying"
-      ref="mediaGalleryRef"
       @click="$emit('open-details', post)"
       @music-toggle="toggleAllSound"
     />
@@ -156,10 +165,13 @@ import { notify } from '@kyvg/vue3-notification'
 import PostEditModal from './modals/PostEditModal.vue'
 import type { IFeedItem } from '~~/layers/feed/app/types/feed.types'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
+import { useFeedSound } from '~~/layers/feed/app/composables/useFeedSound'
 import PostCardHeader from './post-card/PostCardHeader.vue'
 import PostMediaGallery from './post-card/PostMediaGallery.vue'
 import PostCardActions from './post-card/PostCardActions.vue'
 import PostCaption from './PostCaption.vue'
+import { useI18n } from 'vue-i18n'
+import { useViewTracker } from '~~/layers/core/app/composables/useViewTracker'
 
 const { t } = useI18n()
 
@@ -194,18 +206,16 @@ const isOwner = computed(
   () => !!profileStore.userId && profileStore.userId === props.post.author?.id,
 )
 const isMod = computed(
-  () => profileStore.me?.role === 'admin' || profileStore.me?.role === 'moderator',
+  () =>
+    profileStore.me?.role === 'admin' || profileStore.me?.role === 'moderator',
 )
-const menuOpen = ref(false)
 const showEditModal = ref(false)
 
 const openEdit = () => {
-  menuOpen.value = false
   showEditModal.value = true
 }
 
 const handleDelete = async () => {
-  menuOpen.value = false
   if (!confirm(t('post.confirmDelete'))) return
   try {
     await deletePost(props.post.id)
@@ -220,7 +230,10 @@ const handleModerate = (status: string) => {
   // Remove from local feed immediately for hide/remove; restore keeps it visible
   if (status === 'HIDDEN' || status === 'REMOVED') {
     emit('deleted', props.post.id)
-    notify({ type: 'success', text: status === 'HIDDEN' ? 'Post hidden' : 'Post removed' })
+    notify({
+      type: 'success',
+      text: status === 'HIDDEN' ? 'Post hidden' : 'Post removed',
+    })
   } else {
     notify({ type: 'success', text: 'Post restored' })
   }
@@ -231,21 +244,8 @@ const onPostUpdated = (updates: any) => {
   // will reflect on next render via the store. Nothing extra needed.
 }
 
-// Close menu when clicking outside
-const closeMenu = () => {
-  menuOpen.value = false
-}
-onMounted(() => document.addEventListener('click', closeMenu))
-onUnmounted(() => document.removeEventListener('click', closeMenu))
-
 // ─── Text expand ──────────────────────────────────────────────────────────────
 const textExpanded = ref(false)
-
-// ─── Image dimension tracking ─────────────────────────────────────────────────
-const imageNaturalWidth = ref(0)
-const imageNaturalHeight = ref(0)
-const imageLoaded = ref(false)
-const imageError = ref(false)
 
 // ─── Media helpers ────────────────────────────────────────────────────────────
 // Use mediaItems array (multi-media) when available, fall back to legacy single media
@@ -256,7 +256,6 @@ const mediaItems = computed(() =>
       ? [props.post.media]
       : [],
 )
-const primaryMedia = computed(() => mediaItems.value[0])
 const hasMedia = computed(() => mediaItems.value.length > 0)
 
 // ─── Background music helpers ─────────────────────────────────────────────────
@@ -266,35 +265,33 @@ const cardVisible = ref(false)
 // Sync watcher: fires in the same call stack as the user gesture that changed
 // soundEnabled — so audio.play() is called while the gesture is still "active"
 // and the browser allows it even on iOS Safari.
-watch(soundEnabled, (enabled) => {
-  // Imperatively sync video muted state — Vue's :muted binding alone isn't
-  // always reliable on video elements after initial mount
-  if (videoRef.value) {
-    videoRef.value.muted = !enabled || !!props.post.bgMusic
-  }
+watch(
+  soundEnabled,
+  (enabled) => {
+    // Imperatively sync video muted state — Vue's :muted binding alone isn't
+    // always reliable on video elements after initial mount
+    if (videoRef.value) {
+      videoRef.value.muted = !enabled || !!props.post.bgMusic
+    }
 
-  // Control bgMusic audio element
-  if (!musicRef.value) return
-  if (enabled && cardVisible.value) {
-    musicRef.value.play()
-      .then(() => { musicPlaying.value = true })
-      .catch(() => { musicPlaying.value = false })
-  } else {
-    musicRef.value.pause()
-    musicPlaying.value = false
-  }
-}, { flush: 'sync' })
-
-// Tapping the pill toggles feed-wide sound (no per-card state needed)
-const toggleMusic = () => { soundEnabled.value = !soundEnabled.value }
-
-const musicDisplayName = computed(() => {
-  const name = props.post.bgMusic?.name
-  if (!name) return 'Background Music'
-  // Strip extension and prettify
-  return name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ')
-})
-const shouldScrollMusic = computed(() => musicDisplayName.value.length > 22)
+    // Control bgMusic audio element
+    if (!musicRef.value) return
+    if (enabled && cardVisible.value) {
+      musicRef.value
+        .play()
+        .then(() => {
+          musicPlaying.value = true
+        })
+        .catch(() => {
+          musicPlaying.value = false
+        })
+    } else {
+      musicRef.value.pause()
+      musicPlaying.value = false
+    }
+  },
+  { flush: 'sync' },
+)
 
 // ─── Content type system ──────────────────────────────────────────────────────
 const CONTENT_TYPE_MAP: Record<
@@ -344,76 +341,41 @@ const contentTypeDef = computed(
     },
 )
 
-const contentTypeLabel = computed(() =>
-  t(`contentType.${props.post.contentType}`, props.post.contentType),
-)
-const badgeIcon = computed(() => contentTypeDef.value.icon)
 const accentBgClass = computed(() => contentTypeDef.value.accent)
-const badgeClass = computed(() => contentTypeDef.value.badge)
 
-// ─── Image aspect ratio ───────────────────────────────────────────────────────
-// Clamp between 4:5 (portrait) and 1:1 (square). Landscape → square with blurred fill.
-const imageContainerStyle = computed(() => {
-  if (!imageLoaded.value || imageNaturalWidth.value === 0) {
-    return { aspectRatio: '4 / 5' }
-  }
-  const natural = imageNaturalWidth.value / imageNaturalHeight.value
-  const clamped = Math.min(1.0, Math.max(0.8, natural))
-  return { aspectRatio: `${clamped}` }
-})
-
-// ─── Video aspect ratio ───────────────────────────────────────────────────────
-const videoContainerStyle = computed(() => ({
-  aspectRatio: '9 / 16',
-  maxHeight: '75vh',
-}))
-
-const onImageLoad = (e: Event) => {
-  const img = e.target as HTMLImageElement
-  imageNaturalWidth.value = img.naturalWidth
-  imageNaturalHeight.value = img.naturalHeight
-  imageLoaded.value = true
-}
-
-const onImageError = () => {
-  imageError.value = true
-  imageLoaded.value = true
-}
-
-const isCaptionLong = computed(
-  () =>
-    (props.post.caption?.length ?? 0) + (props.post.content?.length ?? 0) > 120,
-)
 const isTextLong = computed(() => (props.post.content?.length ?? 0) > 200)
 
 // ─── Text-post backgrounds — dark shade of each content type's accent ────────
 const TEXT_BG_MAP: Record<string, { bg: string; text: string }> = {
-  EXPERIENCE:    { bg: 'linear-gradient(160deg, #0d1b2e 0%, #1a3a5c 100%)', text: '#7dd3fc' },
-  INSPIRATION:   { bg: 'linear-gradient(160deg, #1f1400 0%, #3d2800 100%)', text: '#fde047' },
-  EDUCATIONAL:   { bg: 'linear-gradient(160deg, #1a0d00 0%, #3b1f00 100%)', text: '#fb923c' },
-  ENTERTAINMENT: { bg: 'linear-gradient(160deg, #1f0016 0%, #3d0030 100%)', text: '#f472b6' },
-  COMMERCE:      { bg: 'linear-gradient(160deg, #00180f 0%, #003d22 100%)', text: '#34d399' },
+  EXPERIENCE: {
+    bg: 'linear-gradient(160deg, #0d1b2e 0%, #1a3a5c 100%)',
+    text: '#7dd3fc',
+  },
+  INSPIRATION: {
+    bg: 'linear-gradient(160deg, #1f1400 0%, #3d2800 100%)',
+    text: '#fde047',
+  },
+  EDUCATIONAL: {
+    bg: 'linear-gradient(160deg, #1a0d00 0%, #3b1f00 100%)',
+    text: '#fb923c',
+  },
+  ENTERTAINMENT: {
+    bg: 'linear-gradient(160deg, #1f0016 0%, #3d0030 100%)',
+    text: '#f472b6',
+  },
+  COMMERCE: {
+    bg: 'linear-gradient(160deg, #00180f 0%, #003d22 100%)',
+    text: '#34d399',
+  },
 }
-const TEXT_BG_DEFAULT = { bg: 'linear-gradient(160deg, #111111 0%, #222222 100%)', text: '#f3f4f6' }
+const TEXT_BG_DEFAULT = {
+  bg: 'linear-gradient(160deg, #111111 0%, #222222 100%)',
+  text: '#f3f4f6',
+}
 
-const textBgStyle = computed(() =>
-  TEXT_BG_MAP[props.post.contentType] ?? TEXT_BG_DEFAULT
+const textBgStyle = computed(
+  () => TEXT_BG_MAP[props.post.contentType] ?? TEXT_BG_DEFAULT,
 )
-
-// ─── Tagged products ──────────────────────────────────────────────────────────
-const isSeller = computed(() => props.post.author?.role === 'seller')
-
-const taggedProducts = computed(() =>
-  (props.post.taggedProducts || []).map((t: any) => ({
-    id: t.productId ?? t.id,
-    title: t.product?.title ?? t.title,
-    price: t.product?.price ?? t.price,
-    slug: t.product?.slug ?? t.slug,
-    image: t.product?.media?.[0]?.url ?? t.image ?? null,
-  })),
-)
-// Only show commerce elements for seller posts
-const hasTaggedProducts = computed(() => isSeller.value && taggedProducts.value.length > 0)
 
 // ─── Actions ──────────────────────────────────────────────────────────────────
 const handleLike = async () => {
@@ -467,20 +429,11 @@ const sharePost = async () => {
   }
 }
 
-const timeAgo = (date: Date | string) => {
-  if (!date) return ''
-  const s = Math.floor((Date.now() - new Date(date).getTime()) / 1000)
-  if (s < 60) return t('time.justNow')
-  if (s < 3600) return t('time.minutesAgo', { n: Math.floor(s / 60) })
-  if (s < 86400) return t('time.hoursAgo', { n: Math.floor(s / 3600) })
-  return t('time.daysAgo', { n: Math.floor(s / 86400) })
-}
-
-// ─── Video mute toggle ────────────────────────────────────────────────────────
-// Muted when: feed sound is globally off, OR bgMusic is present (bgMusic owns the audio track)
-const videoMuted = computed(() => !soundEnabled.value || !!props.post.bgMusic)
+// ─── Audio control ────────────────────────────────────────────────────────────
 // Single control for all audio on this card — bgMusic + video natural sound together
-const toggleAllSound = () => { soundEnabled.value = !soundEnabled.value }
+const toggleAllSound = () => {
+  soundEnabled.value = !soundEnabled.value
+}
 
 // ─── View tracking (3s dwell at ≥50% visibility) ─────────────────────────────
 onMounted(() => {
@@ -561,9 +514,14 @@ onMounted(() => {
           musicPlaying.value = false
         } else if (soundEnabled.value) {
           // Browser already unlocked (user tapped a pill earlier this session)
-          musicRef.value?.play()
-            .then(() => { musicPlaying.value = true })
-            .catch(() => { musicPlaying.value = false })
+          musicRef.value
+            ?.play()
+            .then(() => {
+              musicPlaying.value = true
+            })
+            .catch(() => {
+              musicPlaying.value = false
+            })
         }
       },
       { threshold: 0.5 },
@@ -578,5 +536,3 @@ onUnmounted(() => {
   musicRef.value?.pause()
 })
 </script>
-
-

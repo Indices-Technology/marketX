@@ -135,6 +135,7 @@ export async function sendPasswordResetEmail(
   email: string,
   token: string,
   appUrl: string = 'http://localhost:3000',
+  appName?: string,
 ): Promise<{ id: string }> {
   const resetLink = `${appUrl}/reset-password?token=${token}`
 
@@ -157,6 +158,7 @@ export async function sendPasswordResetEmail(
       <body>
         <div class="container">
           <div class="header">
+          <div class="header"><h1>${appName}</h1></div>
             <h1>Reset Your Password</h1>
           </div>
           
@@ -559,21 +561,21 @@ export function buildContentModerationEmail(
   }
   const { subject, detail, color, bg, badge } = info[action]
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
-body{font-family:Arial,sans-serif;background:#f4f4f4;margin:0;padding:0}
-.wrap{max-width:480px;margin:40px auto;background:#fff;border-radius:12px;overflow:hidden}
-.hd{background:#e31837;padding:28px 32px;text-align:center}
-.hd h1{color:#fff;margin:0;font-size:20px}
-.bd{padding:32px}
-.badge{display:inline-block;font-size:13px;background:${bg};color:${color};padding:4px 10px;border-radius:20px;margin-bottom:16px;font-weight:600}
-p{font-size:15px;color:#333;line-height:1.6;margin:0 0 12px}
-.ft{text-align:center;padding:16px;font-size:12px;color:#aaa}
-</style></head><body>
-<div class="wrap"><div class="hd"><h1>${appName}</h1></div>
-<div class="bd"><span class="badge">${badge}</span>
-<p>${detail}</p>
-<p style="color:#888;font-size:13px">If you believe this was a mistake, please contact our support team.</p>
-</div><div class="ft">&copy; ${new Date().getFullYear()} ${appName}. All rights reserved.</div></div>
-</body></html>`
+                  body{font-family:Arial,sans-serif;background:#f4f4f4;margin:0;padding:0}
+                    .wrap{max-width:480px;margin:40px auto;background:#fff;border-radius:12px;overflow:hidden}
+                    .hd{background:#e31837;padding:28px 32px;text-align:center}
+                    .hd h1{color:#fff;margin:0;font-size:20px}
+                    .bd{padding:32px}
+                    .badge{display:inline-block;font-size:13px;background:${bg};color:${color};padding:4px 10px;border-radius:20px;margin-bottom:16px;font-weight:600}
+                    p{font-size:15px;color:#333;line-height:1.6;margin:0 0 12px}
+                    .ft{text-align:center;padding:16px;font-size:12px;color:#aaa}
+                    </style></head><body>
+                    <div class="wrap"><div class="hd"><h1>${appName}</h1></div>
+                    <div class="bd"><span class="badge">${badge}</span>
+                    <p>${detail}</p>
+                    <p style="color:#888;font-size:13px">If you believe this was a mistake, please contact our support team.</p>
+                    </div><div class="ft">&copy; ${new Date().getFullYear()} ${appName}. All rights reserved.</div></div>
+                  </body></html>`
   return { subject, html, text: `Content Moderation Notice\n\n${detail}` }
 }
 

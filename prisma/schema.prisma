@@ -15,7 +15,7 @@ model Profile {
   email             String         @unique
   role              String         @default("user")
   avatar            String?
-  username          String?
+  username          String?        @unique
   password_hash     String
   created_at        DateTime       @default(now()) @db.Timestamptz(6)
   updated_at        DateTime       @updatedAt @db.Timestamptz(6)

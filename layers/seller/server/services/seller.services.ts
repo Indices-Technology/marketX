@@ -7,6 +7,7 @@ import {
   VerifySellerProfileRequest,
 } from '../schemas/seller.schema'
 import { sellerRepository } from '../repositories/seller.repository'
+import { isReservedSlug } from '~~/server/layers/shared/utils/reservedSlugs'
 import { entityEmbedder } from '~~/layers/ai/server/services/entity-embedder.service'
 
 /**
@@ -29,6 +30,14 @@ export const sellerService = {
     userId: string,
     data: CreateSellerProfileRequest,
   ): Promise<SellerProfile> {
+    // Reject reserved/system slugs (same guard as POST /auth/register-seller)
+    if (isReservedSlug(data.store_slug)) {
+      throw new SellerError(
+        `"${data.store_slug}" is a reserved name — choose a different store URL`,
+        400,
+      )
+    }
+
     // Check if user already has a seller with this slug
     const existingSlug = await sellerRepository.userHasSellerSlug(
       userId,

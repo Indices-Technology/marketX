@@ -69,10 +69,15 @@
       </div>
       <!-- Info -->
       <div class="pb-3 pl-2.5 pr-2 pt-6">
-        <p class="truncate text-[12px] font-bold text-gray-900 dark:text-white">
+        <p
+          class="truncate font-display text-[12px] font-bold text-gray-900 dark:text-white"
+        >
           {{ square.name }}
         </p>
-        <p class="mt-0.5 text-[10px] text-gray-400 dark:text-neutral-500">
+        <p
+          class="mt-0.5 flex items-center gap-1 text-[10px] text-gray-400 dark:text-neutral-500"
+        >
+          <Icon name="mdi:store-outline" size="10" class="shrink-0" />
           {{ square.memberCount ?? 0 }} sellers
         </p>
       </div>
@@ -114,9 +119,12 @@
           :style="`background: linear-gradient(to top, ${accent}44, transparent)`"
         />
         <span
-          class="absolute left-3 top-2.5 rounded-full bg-black/50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white backdrop-blur-sm"
+          class="absolute left-3 top-2.5 inline-flex items-center gap-1 rounded-full bg-black/50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white backdrop-blur-sm"
         >
-          {{ square.type === 'GEOGRAPHIC' ? '📍' : '🏷️' }}
+          <Icon
+            :name="square.type === 'GEOGRAPHIC' ? 'mdi:map-marker' : 'mdi:tag'"
+            size="11"
+          />
           {{ square.type === 'GEOGRAPHIC' ? 'Location' : 'Category' }}
         </span>
       </div>
@@ -149,7 +157,9 @@
             </span>
           </div>
           <div class="min-w-0 flex-1 pt-0.5">
-            <p class="truncate text-sm font-bold text-gray-900 dark:text-white">
+            <p
+              class="truncate font-display text-sm font-bold text-gray-900 dark:text-white"
+            >
               {{ square.name }}
             </p>
             <p
@@ -186,7 +196,7 @@
             :class="
               following
                 ? 'bg-amber-50 text-amber-600 ring-1 ring-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:ring-amber-700/40'
-                : 'bg-amber-500 text-white shadow-sm shadow-amber-400/30 hover:bg-amber-600'
+                : 'text-amber-600 ring-1 ring-amber-300 hover:bg-amber-500 hover:text-white hover:ring-amber-500 dark:text-amber-400 dark:ring-amber-700/50'
             "
             :disabled="followLoading"
             @click.prevent="$emit('toggle-follow')"

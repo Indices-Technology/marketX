@@ -115,12 +115,12 @@
           <!-- Resend Button -->
           <BaseButton
             type="button"
-            @click="handleSendAgain"
             variant="secondary"
             size="lg"
             class="w-full"
             :loading="isLoading"
             :disabled="isLoading"
+            @click="handleSendAgain"
           >
             {{ isLoading ? 'Sending again...' : 'Send Link Again' }}
           </BaseButton>
@@ -156,6 +156,7 @@
 
 <script setup lang="ts">
 import { reactive, ref, computed } from 'vue'
+import { definePageMeta } from '#imports'
 import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { useAuth } from '../composables/useAuth'
 import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'

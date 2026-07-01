@@ -54,7 +54,7 @@ export async function sendCheckoutOtp(
   phone: string | undefined,
   ipAddress: string,
 ): Promise<SendOtpResult> {
-  const rateLimit = checkRateLimit(`${OTP_RATE_KEY}:${ipAddress}`, {
+  const rateLimit = await checkRateLimitAsync(`${OTP_RATE_KEY}:${ipAddress}`, {
     windowMs: 15 * 60 * 1000,
     maxAttempts: 5,
     lockoutMs: 15 * 60 * 1000,

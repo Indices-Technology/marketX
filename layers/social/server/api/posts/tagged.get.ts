@@ -8,7 +8,9 @@ export default defineEventHandler(async (event) => {
     const query = getQuery(event)
     const username = query.username as string
     const limit = Math.min(Number(query.limit) || 20, 100)
-    const offset = Number(query.offset) || 0
+    // Callers may paginate with either `offset` or `page` (1-based).
+    const page = Math.max(1, Number(query.page) || 1)
+    const offset = Number(query.offset) || (page - 1) * limit
 
     if (!username)
       throw new UserError('INVALID_INPUT', 'username is required', 400)
@@ -25,7 +27,7 @@ export default defineEventHandler(async (event) => {
       where: {
         taggedProducts: {
           some: {
-            product: { sellerId: profile.id },
+            product: { seller: { profileId: profile.id } },
           },
         },
       },
@@ -54,7 +56,7 @@ export default defineEventHandler(async (event) => {
     const total = await prisma.post.count({
       where: {
         taggedProducts: {
-          some: { product: { sellerId: profile.id } },
+          some: { product: { seller: { profileId: profile.id } } },
         },
       },
     })
@@ -70,6 +72,11 @@ export default defineEventHandler(async (event) => {
         statusCode: error.status,
         statusMessage: error.message,
       })
+    // Surface the real cause (was silently swallowed) — follows the codebase's
+    // logger.logError-with-requestId pattern so 500s are diagnosable.
+    logger.logError('[GET /api/posts/tagged]', error, {
+      requestId: event.context?.requestId,
+    })
     throw createError({
       statusCode: 500,
       statusMessage: 'Internal server error',

@@ -36,7 +36,10 @@ export default defineEventHandler(async (event) => {
   const body = await readBody<IRatesBody>(event)
 
   if (!body?.to || !body?.parcel) {
-    throw createError({ statusCode: 400, message: 'to and parcel are required' })
+    throw createError({
+      statusCode: 400,
+      message: 'to and parcel are required',
+    })
   }
 
   let from: IAddress | undefined = body.from

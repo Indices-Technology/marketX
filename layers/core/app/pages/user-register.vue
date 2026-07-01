@@ -543,6 +543,87 @@
             />
           </div>
 
+          <!-- Shipping origin — optional, collapsed by default -->
+          <div
+            class="overflow-hidden rounded-xl border border-gray-200 dark:border-neutral-700"
+          >
+            <button
+              type="button"
+              class="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-neutral-800/50"
+              @click="shipFromOpen = !shipFromOpen"
+            >
+              <div class="flex items-center gap-2.5">
+                <div
+                  class="flex h-7 w-7 items-center justify-center rounded-lg bg-brand/10"
+                >
+                  <Icon
+                    name="mdi:truck-fast-outline"
+                    size="15"
+                    class="text-brand"
+                  />
+                </div>
+                <div>
+                  <p
+                    class="text-[13px] font-semibold text-gray-800 dark:text-neutral-200"
+                  >
+                    Shipping origin
+                    <span
+                      class="ml-1 rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] font-bold text-gray-400 dark:bg-neutral-800 dark:text-neutral-500"
+                      >optional</span
+                    >
+                  </p>
+                  <p class="text-[11px] text-gray-400 dark:text-neutral-500">
+                    Where you ship from — enables live delivery rates
+                  </p>
+                </div>
+              </div>
+              <Icon
+                name="mdi:chevron-down"
+                size="18"
+                class="shrink-0 text-gray-400 transition-transform duration-200"
+                :class="shipFromOpen ? 'rotate-180' : ''"
+              />
+            </button>
+            <div
+              v-if="shipFromOpen"
+              class="space-y-2.5 border-t border-gray-200 px-4 pb-4 pt-3 dark:border-neutral-700"
+            >
+              <input
+                v-model="storeForm.shipFromAddress"
+                placeholder="Street address"
+                :class="shipInputClass"
+              />
+              <div class="grid grid-cols-2 gap-2.5">
+                <input
+                  v-model="storeForm.shipFromCity"
+                  placeholder="City"
+                  :class="shipInputClass"
+                />
+                <input
+                  v-model="storeForm.shipFromState"
+                  placeholder="State / Region"
+                  :class="shipInputClass"
+                />
+                <input
+                  v-model="storeForm.shipFromZip"
+                  placeholder="Postal / ZIP"
+                  :class="shipInputClass"
+                />
+                <select v-model="storeForm.shipFromCountry" :class="shipInputClass">
+                  <option v-for="c in SHIP_COUNTRIES" :key="c.code" :value="c.code">
+                    {{ c.name }}
+                  </option>
+                </select>
+              </div>
+              <input
+                v-model="storeForm.shipFromPhone"
+                type="tel"
+                placeholder="Pickup phone (optional)"
+                :class="shipInputClass"
+              />
+            </div>
+          </div>
+
           <button
             type="submit"
             :disabled="
@@ -637,7 +718,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, onUnmounted } from 'vue'
 import { definePageMeta, useSeoMeta } from '#imports'
 import { useAuth } from '../composables/useAuth'
 import PasswordStrengthMeter from '../components/PasswordStrengthMeter.vue'
@@ -645,6 +726,7 @@ import { useMediaUpload } from '~~/layers/core/app/composables/useMediaUpload'
 import { useSellerManagement } from '~~/layers/seller/app/composables/useSellerManagement'
 import BaseInput from '~~/layers/ui/app/components/BaseInput.vue'
 import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
+import { useRuntimeConfig } from '#imports'
 
 definePageMeta({ layout: false, middleware: 'guest' })
 
@@ -730,8 +812,17 @@ const validateAccountForm = () => {
     errors.password = 'Password is required'
     return false
   }
-  if (form.password.length < 8) {
-    errors.password = 'Password must be at least 8 characters'
+  // Mirror the server policy (enhancedPasswordSchema) and the strength meter:
+  // 12+ chars with upper, lower, number, and special character.
+  if (
+    form.password.length < 12 ||
+    !/[A-Z]/.test(form.password) ||
+    !/[a-z]/.test(form.password) ||
+    !/[0-9]/.test(form.password) ||
+    !/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(form.password)
+  ) {
+    errors.password =
+      'Password must be at least 12 characters and include an uppercase letter, a lowercase letter, a number, and a special character'
     return false
   }
   if (!form.confirmPassword) {
@@ -779,7 +870,28 @@ const storeForm = reactive({
   logo: '',
   logoPreview: '',
   uploadingLogo: false,
+  // Shipping origin (optional) — enables live carrier rates at checkout
+  shipFromAddress: '',
+  shipFromCity: '',
+  shipFromState: '',
+  shipFromZip: '',
+  shipFromCountry: 'NG',
+  shipFromPhone: '',
 })
+const shipFromOpen = ref(false)
+const SHIP_COUNTRIES = [
+  { code: 'NG', name: 'Nigeria' },
+  { code: 'GH', name: 'Ghana' },
+  { code: 'KE', name: 'Kenya' },
+  { code: 'ZA', name: 'South Africa' },
+  { code: 'US', name: 'United States' },
+  { code: 'GB', name: 'United Kingdom' },
+  { code: 'CA', name: 'Canada' },
+  { code: 'DE', name: 'Germany' },
+  { code: 'FR', name: 'France' },
+]
+const shipInputClass =
+  'w-full rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2 text-[13px] text-gray-900 placeholder-gray-400 transition focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100'
 const storeErrors = reactive({ name: '', slug: '' })
 const storeError = ref('')
 const storeSubmitting = ref(false)
@@ -788,9 +900,9 @@ const logoInput = ref<HTMLInputElement | null>(null)
 
 const CURRENCIES = ['NGN', 'USD', 'GBP', 'EUR', 'GHS', 'KES', 'ZAR', 'CAD']
 
-// Slug prefix measured in CSS (approx px for "marketx.app/")
+// Slug prefix measured in CSS (approx px for "marketx.africa/")
 const slugPrefixWidth = computed(() => {
-  const domain = config.public.brandDomain || 'marketx.app'
+  const domain = config.public.brandDomain || 'marketx.africa'
   return domain.length * 7.5 + 24
 })
 
@@ -873,6 +985,13 @@ const handleSellerSubmit = async () => {
       store_location: storeForm.location || undefined,
       store_logo: storeForm.logo || undefined,
       store_currency: storeForm.currency,
+      // Shipping origin (optional)
+      shipFromAddress: storeForm.shipFromAddress || undefined,
+      shipFromCity: storeForm.shipFromCity || undefined,
+      shipFromState: storeForm.shipFromState || undefined,
+      shipFromZip: storeForm.shipFromZip || undefined,
+      shipFromCountry: storeForm.shipFromCountry || undefined,
+      shipFromPhone: storeForm.shipFromPhone || undefined,
     })
 
     createdStoreSlug.value = res.store.store_slug
@@ -892,7 +1011,7 @@ const handleSellerSubmit = async () => {
 // ── Success copy link ─────────────────────────────────────────────────────────
 const linkCopied = ref(false)
 const copyStoreLink = async () => {
-  const domain = config.public.brandDomain || 'marketx.app'
+  const domain = config.public.brandDomain || 'marketx.africa'
   const url = import.meta.client
     ? `${window.location.protocol}//${window.location.host}/${createdStoreSlug.value}`
     : `https://${domain}/${createdStoreSlug.value}`

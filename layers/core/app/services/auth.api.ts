@@ -9,6 +9,7 @@
 import { BaseApiClient, type ApiServiceOptions } from './base.api'
 import type {
   IAuthUser as User,
+  IAuthUser,
   IAuthResponse as LoginResponse,
 } from '~~/shared/types/auth'
 
@@ -35,6 +36,48 @@ export class AuthApiClient extends BaseApiClient {
     confirmPassword: string
   }): Promise<User> {
     return this.request('/api/auth/register', {
+      method: 'POST',
+      body: data,
+    })
+  }
+
+  // ==================== REGISTER SELLER (account + store, auto-login) ==========
+
+  /**
+   * Registers a new user account AND creates their store in one atomic flow,
+   * then auto-logs-in (tokens in body + httpOnly cookies). Unauthenticated —
+   * called from the seller onboarding wizard for brand-new visitors.
+   *
+   * @param data - Account fields + store fields
+   * @returns Promise resolving to tokens, user, and the created store
+   */
+  async registerSeller(data: {
+    email: string
+    username: string
+    password: string
+    confirmPassword: string
+    store_name: string
+    store_slug: string
+    store_description?: string
+    store_location?: string
+    store_logo?: string
+    store_currency?: string
+    // Shipping origin (optional) — enables live carrier rates at checkout
+    shipFromName?: string
+    shipFromAddress?: string
+    shipFromCity?: string
+    shipFromState?: string
+    shipFromZip?: string
+    shipFromCountry?: string
+    shipFromPhone?: string
+  }): Promise<{
+    success: boolean
+    accessToken: string
+    refreshToken: string
+    user: IAuthUser
+    store: { store_slug: string; store_name: string }
+  }> {
+    return this.request('/api/auth/register-seller', {
       method: 'POST',
       body: data,
     })
@@ -165,7 +208,13 @@ export class AuthApiClient extends BaseApiClient {
     isNewUser: boolean
     accessToken: string
     refreshToken: string
-    user: { id: string; email: string; username: string; emailVerified: boolean; role: string }
+    user: {
+      id: string
+      email: string
+      username: string
+      emailVerified: boolean
+      role: string
+    }
   }> {
     return this.request('/api/auth/checkout-otp/verify', {
       method: 'POST',

@@ -10,7 +10,11 @@
 
 import type { Quote, ShipmentRequest } from '../utils/types'
 import { eligibleProviders } from '../providers/registry'
-import { computePrice } from './pricing.service'
+import {
+  computePrice,
+  shippingMarkupPct,
+  shippingHandlingFeeMinor,
+} from './pricing.service'
 
 export type RankStrategy = 'cheapest' | 'fastest' | 'best-value'
 
@@ -42,10 +46,16 @@ export async function getQuotes(
   for (const result of settled) {
     if (result.status !== 'fulfilled') continue
     for (const q of result.value) {
-      // Apply the platform pricing dial: provider gives cost+list, we set buyerPrice.
+      // Platform pricing dial. Carriers (GIG + any future provider) are marked up
+      // centrally via SHIPPING_MARKUP_PCT — provider-agnostic, no per-carrier env.
+      // Seller-priced BYOS ('self') passes through untouched (seller sets the price).
+      const passThrough = q.carrierId === 'self'
       const priced = computePrice({
         costMinor: q.costMinor,
-        listMinor: q.listMinor,
+        listMinor: passThrough ? q.listMinor : undefined,
+        deriveList: !passThrough,
+        markup: shippingMarkupPct(),
+        handlingFeeMinor: passThrough ? 0 : shippingHandlingFeeMinor(),
         discountPct: opts.discountPct ?? 0,
       })
       quotes.push({ ...q, ...priced })

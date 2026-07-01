@@ -19,7 +19,10 @@
 
       <!-- Logged in: show form immediately, lazy-load order summary -->
       <div v-else class="space-y-5">
-        <!-- Order summary: skeleton while cart loads, empty state after, real items when ready -->
+        <!-- Delivery first — per-seller shipping rates depend on the address -->
+        <CheckoutDelivery :form="form" @address-changed="onAddressChanged" />
+
+        <!-- Skeleton while cart loads, empty state after, seller packages when ready -->
         <template v-if="!hasFetchedOnce">
           <div class="space-y-3">
             <div
@@ -28,10 +31,16 @@
               class="animate-pulse rounded-2xl border border-gray-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900"
             >
               <div class="flex gap-3">
-                <div class="h-14 w-14 rounded-xl bg-gray-100 dark:bg-neutral-800" />
+                <div
+                  class="h-14 w-14 rounded-xl bg-gray-100 dark:bg-neutral-800"
+                />
                 <div class="flex-1 space-y-2">
-                  <div class="h-4 w-3/4 rounded bg-gray-100 dark:bg-neutral-800" />
-                  <div class="h-3 w-1/2 rounded bg-gray-100 dark:bg-neutral-800" />
+                  <div
+                    class="h-4 w-3/4 rounded bg-gray-100 dark:bg-neutral-800"
+                  />
+                  <div
+                    class="h-3 w-1/2 rounded bg-gray-100 dark:bg-neutral-800"
+                  />
                 </div>
               </div>
             </div>
@@ -39,9 +48,18 @@
         </template>
         <template v-else-if="!items.length">
           <div class="py-16 text-center">
-            <Icon name="mdi:cart-outline" size="48" class="mb-3 text-gray-300 dark:text-neutral-600" />
-            <p class="font-medium text-gray-600 dark:text-neutral-400">Your cart is empty</p>
-            <NuxtLink to="/discover" class="mt-3 inline-block text-sm font-semibold text-brand hover:underline">
+            <Icon
+              name="mdi:cart-outline"
+              size="48"
+              class="mb-3 text-gray-300 dark:text-neutral-600"
+            />
+            <p class="font-medium text-gray-600 dark:text-neutral-400">
+              Your cart is empty
+            </p>
+            <NuxtLink
+              to="/discover"
+              class="mt-3 inline-block text-sm font-semibold text-brand hover:underline"
+            >
               Browse products
             </NuxtLink>
           </div>
@@ -63,42 +81,39 @@
             </template>
           </div>
 
-          <CheckoutOrderSummary
-            :items="items"
-            :active-currency="activeCurrency"
-          />
+          <!-- One card per seller: their products + their shipping together -->
+          <div class="space-y-3">
+            <p
+              v-if="sellerGroups.length > 1"
+              class="px-1 text-[12px] font-medium text-gray-500 dark:text-neutral-400"
+            >
+              Ships in {{ sellerGroups.length }} packages
+            </p>
+            <CheckoutSellerPackage
+              v-for="g in sellerGroups"
+              :key="g.slug"
+              :store-slug="g.slug"
+              :store-name="sellerGroups.length > 1 ? g.storeName : ''"
+              :items="g.items"
+              :subtotal-major="g.subtotalMajor"
+              :shipping-major="groupShippingMajor(g.slug)"
+              :active-currency="activeCurrency"
+              :shipping-calculation="shippingCalculation"
+              :live-rates="shipBySeller[g.slug]?.rates ?? []"
+              :selected-rate="shipBySeller[g.slug]?.selected ?? null"
+              :is-loading-rates="shipBySeller[g.slug]?.loading ?? false"
+              :shipping-loading="shippingLoading"
+              :rates-error="shipBySeller[g.slug]?.error ?? null"
+              :active-country="activeCountry"
+              @update:selected-rate="
+                (r) => {
+                  const s = shipBySeller[g.slug]
+                  if (s) s.selected = r
+                }
+              "
+            />
+          </div>
         </template>
-
-        <!-- Delivery form: always visible — buyer can fill address while cart loads -->
-        <CheckoutDelivery :form="form" @address-changed="onAddressChanged" />
-
-        <div class="space-y-3">
-          <p
-            v-if="sellerGroups.length > 1"
-            class="px-1 text-[12px] font-medium text-gray-500 dark:text-neutral-400"
-          >
-            Ships in {{ sellerGroups.length }} packages
-          </p>
-          <CheckoutShipping
-            v-for="g in sellerGroups"
-            :key="g.slug"
-            :store-name="sellerGroups.length > 1 ? g.storeName : ''"
-            :shipping-calculation="shippingCalculation"
-            :live-rates="shipBySeller[g.slug]?.rates ?? []"
-            :selected-rate="shipBySeller[g.slug]?.selected ?? null"
-            :is-loading-rates="shipBySeller[g.slug]?.loading ?? false"
-            :shipping-loading="shippingLoading"
-            :rates-error="shipBySeller[g.slug]?.error ?? null"
-            :active-country="activeCountry"
-            :active-currency="activeCurrency"
-            @update:selected-rate="
-              (r) => {
-                const s = shipBySeller[g.slug]
-                if (s) s.selected = r
-              }
-            "
-          />
-        </div>
 
         <!-- Order Total -->
         <div
@@ -240,6 +255,7 @@
 </template>
 
 <script setup lang="ts">
+import { definePageMeta } from '#imports'
 // Checkout depends on client-only auth state — SSR output would always mismatch
 definePageMeta({ ssr: false })
 
@@ -251,15 +267,18 @@ import { useRuntimeConfig } from '#app'
 import { useOrderApi } from '~~/layers/commerce/app/services/order.api'
 import { useAffiliate } from '~~/layers/commerce/app/composables/useAffiliate'
 import { useSeo } from '~~/app/composables/useSeo'
-import { useCartStore, effectiveUnitPrice } from '~~/layers/commerce/app/stores/cart.store'
+import {
+  useCartStore,
+  effectiveUnitPrice,
+} from '~~/layers/commerce/app/stores/cart.store'
 import type { IShipmentRate } from '~~/layers/shipping/server/legacy/types'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import { extractErrorMessage } from '~~/layers/core/app/utils/errors'
 import CheckoutAuthStep from '../components/checkout/CheckoutAuthStep.vue'
-import CheckoutOrderSummary from '../components/checkout/CheckoutOrderSummary.vue'
 import CheckoutDelivery from '../components/checkout/CheckoutDelivery.vue'
-import CheckoutShipping from '../components/checkout/CheckoutShipping.vue'
+import CheckoutSellerPackage from '../components/checkout/CheckoutSellerPackage.vue'
 import CheckoutPaymentMethod from '../components/checkout/CheckoutPaymentMethod.vue'
+import type { ICartItem } from '~~/layers/commerce/app/types/commerce.types'
 
 const { setCheckoutPage } = useSeo()
 setCheckoutPage()
@@ -280,7 +299,6 @@ const {
 const {
   getCurrencyForCountry,
   formatPrice: formatProduct,
-  formatKobo: format,
   formatNGN,
   formatProductNGN,
 } = useCurrency()
@@ -316,6 +334,7 @@ interface SellerGroup {
   slug: string
   storeName: string
   subtotalMajor: number
+  items: ICartItem[]
 }
 const sellerGroups = computed<SellerGroup[]>(() => {
   const map = new Map<string, SellerGroup>()
@@ -323,10 +342,14 @@ const sellerGroups = computed<SellerGroup[]>(() => {
     const seller = it.variant?.product?.seller
     const slug = seller?.store_slug
     if (!slug) continue
-    const g =
-      map.get(slug) ??
-      { slug, storeName: seller?.store_name || 'Seller', subtotalMajor: 0 }
+    const g = map.get(slug) ?? {
+      slug,
+      storeName: seller?.store_name || 'Seller',
+      subtotalMajor: 0,
+      items: [],
+    }
     g.subtotalMajor += effectiveUnitPrice(it) * (it.quantity || 1)
+    g.items.push(it)
     map.set(slug, g)
   }
   return [...map.values()]
@@ -356,7 +379,12 @@ const fetchSellerRates = async () => {
       // (Mutating the raw object created in the `??` would bypass reactivity and
       // leave `shippingCostMajor` frozen at its pre-rate fallback value.)
       if (!shipBySeller[g.slug])
-        shipBySeller[g.slug] = { rates: [], selected: null, loading: false, error: null }
+        shipBySeller[g.slug] = {
+          rates: [],
+          selected: null,
+          loading: false,
+          error: null,
+        }
       const s: SellerShip = shipBySeller[g.slug]!
       s.loading = true
       s.error = null
@@ -430,7 +458,6 @@ const shippingBreakdown = computed(() =>
 
 const fmtP = (majorNGN: number) => formatProduct(majorNGN, activeCurrency.value)
 const fmtPNGN = (majorNGN: number) => formatProductNGN(majorNGN)
-const fmtS = (kobo: number) => format(kobo, activeCurrency.value)
 const fmtNGN = (kobo: number) => formatNGN(kobo)
 
 // Every seller group must have a chosen option (or a flat fallback available),

@@ -51,6 +51,8 @@ const props = defineProps<{
   selectedSlug: string | null
   radiusKm: number
   viewMode?: ViewMode
+  /** When true, results are beyond the radius (nearest-fallback) — fit the map to them */
+  outsideRadius?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -438,6 +440,19 @@ watch(() => props.selectedSlug, (slug) => {
 
 // Re-apply pin visibility whenever view mode changes
 watch(() => props.viewMode, () => { if (map?.loaded()) applyViewMode() })
+
+// ── Nearest-fallback: fit the map to the results when they're beyond the radius ───
+// (otherwise the nearest stores render off-screen and the map looks empty).
+function fitToResults() {
+  if (!map || !maplibregl || !props.sellers.length) return
+  const bounds = new maplibregl.LngLatBounds()
+  if (props.userLat != null && props.userLng != null) bounds.extend([props.userLng, props.userLat])
+  for (const s of props.sellers) bounds.extend([s.longitude, s.latitude])
+  map.fitBounds(bounds, { padding: 70, maxZoom: 13, duration: 800 })
+}
+watch(() => [props.outsideRadius, props.sellers.length], () => {
+  if (props.outsideRadius && props.sellers.length && map?.loaded()) fitToResults()
+})
 
 // ── Square pins ───────────────────────────────────────────────────────────
 watch(() => props.squares, renderSquarePins, { deep: true })

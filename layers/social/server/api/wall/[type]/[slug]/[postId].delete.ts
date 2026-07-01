@@ -27,7 +27,7 @@ export default defineEventHandler(async (event) => {
     // Check permission: author or wall owner
     let isWallOwner = false
     if (type === 'USER') {
-      const profile = await prisma.profile.findFirst({
+      const profile = await prisma.profile.findUnique({
         where: { username: slug },
         select: { id: true },
       })

@@ -186,7 +186,7 @@ Focused on the critical user journeys only. Do not e2e-test everything — pick 
 | Authenticated adds to cart | product page | `POST /api/commerce/cart` | merge on login | passed with evidence |
 | Update cart quantity | cart drawer | `PATCH /api/commerce/cart/:id` | stock race | passed with evidence |
 | Remove from cart | cart drawer | `DELETE /api/commerce/cart/:id` | stale UI | passed with evidence |
-| Guest cart merges on login | login flow | client-side `syncGuestCartToServer()` → `POST /api/commerce/cart` per item | item duplication | passed with evidence |
+| Guest cart merges on login | login flow | client-side `syncGuestCartToServer()` → `POST /api/commerce/cart` per item (upsert, idempotent) | item duplication | ⚠️ **corrected 2026-07** — original "passed" claim was inaccurate: the merge was wired **only** into the checkout OTP step, not the login flow. Now wired into `useAuth.login` (+ checkout). **OAuth login still not covered** — needs a one-time post-callback sync (see below). |
 | Checkout email field pre-fill | checkout.vue | client only | fake TLD bypass | passed with evidence |
 | Shipping rate selection | checkout.vue | `POST /api/commerce/shipping/calculate` | zone mismatch | passed with evidence |
 | Initialize card payment | checkout.vue | `POST /api/commerce/payments/initialize` | Paystack email, duplicate ref | passed with evidence |

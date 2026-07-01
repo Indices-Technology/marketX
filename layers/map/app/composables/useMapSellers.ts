@@ -40,6 +40,7 @@ export function useMapSellers() {
   const error = ref<string | null>(null)
   const total = ref(0)
   const hasMore = ref(false)
+  const outsideRadius = ref(false)
   const userLat = ref<number | null>(null)
   const userLng = ref<number | null>(null)
   const radiusKm = ref(50)
@@ -110,6 +111,7 @@ export function useMapSellers() {
       sellers.value = append ? [...sellers.value, ...data.data] : data.data
       total.value = data.meta.total
       hasMore.value = data.meta.hasMore
+      outsideRadius.value = !!data.meta.outsideRadius
     } catch (e: unknown) {
       error.value = extractErrorMessage(e, 'Could not load nearby stores')
     } finally {
@@ -166,6 +168,7 @@ export function useMapSellers() {
     error: readonly(error),
     total: readonly(total),
     hasMore: readonly(hasMore),
+    outsideRadius: readonly(outsideRadius),
     userLat: readonly(userLat),
     userLng: readonly(userLng),
     radiusKm,
