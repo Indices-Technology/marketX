@@ -42,12 +42,24 @@
     <!-- ─── 2. MARKETS (Squares) ──────────────────────────────────────────── -->
     <section>
       <div class="mb-4 flex items-end justify-between">
-        <h2 class="text-base font-bold text-gray-900 dark:text-white">
-          Explore Nigeria's Digital Markets
-        </h2>
+        <div>
+          <p
+            class="text-[11px] font-semibold uppercase tracking-widest text-brand"
+          >
+            Discover
+          </p>
+          <h2
+            class="text-lg font-extrabold leading-tight text-gray-900 dark:text-white"
+          >
+            Explore Nigeria's Digital Markets
+          </h2>
+          <p class="mt-0.5 text-[12px] text-gray-500 dark:text-neutral-400">
+            Step into real market squares — meet the traders inside
+          </p>
+        </div>
         <NuxtLink
           to="/squares"
-          class="text-xs font-semibold text-gray-400 hover:text-brand dark:text-neutral-500"
+          class="mb-0.5 shrink-0 text-xs font-semibold text-gray-500 hover:text-brand dark:text-neutral-400"
         >
           All markets →
         </NuxtLink>
@@ -56,21 +68,21 @@
       <div
         v-if="squaresLoading && !squares.length"
         class="scrollbar-hide flex gap-3 overflow-x-auto pb-1"
-        style="height: 116px; contain: strict"
+        style="height: 208px; contain: strict"
       >
         <div
-          v-for="i in 4"
+          v-for="i in 3"
           :key="i"
-          class="h-[108px] w-36 shrink-0 animate-pulse rounded-2xl bg-gray-100 dark:bg-neutral-800"
+          class="h-[200px] w-60 shrink-0 animate-pulse rounded-2xl bg-gray-100 dark:bg-neutral-800"
         />
       </div>
 
       <!-- Empty / error state — API failed or no squares seeded -->
       <p
         v-else-if="!squaresLoading && !squares.length"
-        class="text-xs text-gray-400 dark:text-neutral-500"
+        class="text-xs text-gray-500 dark:text-neutral-400"
       >
-        No squares yet
+        No markets open yet — check back soon
       </p>
 
       <div
@@ -81,7 +93,7 @@
           v-for="sq in squares"
           :key="sq.id"
           :square="sq"
-          variant="compact"
+          variant="spotlight"
         />
 
         <NuxtLink
