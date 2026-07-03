@@ -323,7 +323,7 @@
           class="mx-auto mb-3 text-gray-300 dark:text-neutral-600"
         />
         <p class="text-sm text-gray-500 dark:text-neutral-400">
-          Nothing trending yet
+          The markets are quiet right now — explore traders near you.
         </p>
       </div>
     </template>
