@@ -240,7 +240,7 @@ All feed endpoints are read-only and return `{ items[], meta }` unless noted.
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET    | `/commerce/products` | Browse products (`?search`, `?category`, `?status`, etc.) |
+| GET    | `/commerce/products` | Browse products (`?search`, `?categorySlug`, `?squareSlug` (products in a market), `?status`, `?sortBy`, `?minPrice`/`?maxPrice`, etc.) |
 | POST   | `/commerce/products` | Create a product (seller) |
 | GET    | `/commerce/products/liked` | Products the current user has liked |
 | GET    | `/commerce/products/by-slug/[slug]` | Product by URL slug |

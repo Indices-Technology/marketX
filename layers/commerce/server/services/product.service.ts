@@ -23,6 +23,7 @@ export interface ProductFilters {
   storeSlug?: string
   isThrift?: boolean
   categorySlug?: string
+  squareSlug?: string
   minDiscount?: number
   minPrice?: number
   maxPrice?: number
@@ -125,6 +126,7 @@ export const productService = {
 
     const repoFilters = {
       status, search, sellerId, isThrift, categorySlug,
+      squareSlug: filters?.squareSlug,
       minDiscount: filters?.minDiscount,
       minPrice: filters?.minPrice,
       maxPrice: filters?.maxPrice,

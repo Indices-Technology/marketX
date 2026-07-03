@@ -262,6 +262,7 @@ export const productRepository = {
       storeSlug?: string
       isThrift?: boolean
       categorySlug?: string
+      squareSlug?: string
       minDiscount?: number
       minPrice?: number
       maxPrice?: number
@@ -276,6 +277,9 @@ export const productRepository = {
     if (filters.isThrift !== undefined) where.isThrift = filters.isThrift
     if (filters.categorySlug) {
       where.category = { some: { category: { slug: filters.categorySlug } } }
+    }
+    if (filters.squareSlug) {
+      where.square = { slug: filters.squareSlug }
     }
     if (filters.search) {
       where.OR = [
