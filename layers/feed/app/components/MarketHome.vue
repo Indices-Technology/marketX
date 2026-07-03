@@ -43,7 +43,7 @@
     <section>
       <div class="mb-4 flex items-end justify-between">
         <h2 class="text-base font-bold text-gray-900 dark:text-white">
-          Browse by market
+          Explore Nigeria's Digital Markets
         </h2>
         <NuxtLink
           to="/squares"
@@ -99,7 +99,7 @@
       <div class="mb-4 flex items-center justify-between">
         <div class="flex items-center gap-2">
           <h2 class="text-base font-bold text-gray-900 dark:text-white">
-            Selling now
+            Traders selling live
           </h2>
           <span
             class="flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-bold text-green-600 dark:bg-green-900/30 dark:text-green-400"
@@ -209,8 +209,8 @@
         <span class="text-[13px] text-gray-500 dark:text-neutral-400">
           {{
             sellersRequesting
-              ? 'Finding sellers near you…'
-              : "See who's selling near you"
+              ? 'Finding traders near you…'
+              : "See who's trading near you"
           }}
         </span>
       </button>
@@ -221,10 +221,10 @@
       <div class="mb-4 flex items-end justify-between">
         <div>
           <h2 class="text-base font-bold text-gray-900 dark:text-white">
-            Just in
+            Fresh from the market
           </h2>
-          <p class="text-[11px] text-gray-400 dark:text-neutral-500">
-            New listings from the past week
+          <p class="text-[11px] text-gray-500 dark:text-neutral-400">
+            New goods from traders this week
           </p>
         </div>
         <NuxtLink
@@ -243,7 +243,7 @@
       <FeedProductShelf
         v-else-if="freshItems.length"
         :products="freshItems"
-        label="Just in"
+        label="Fresh from the market"
         @open-product="openProduct"
       />
     </section>
@@ -252,7 +252,7 @@
     <section ref="section5Ref">
       <div class="mb-4 flex items-end justify-between">
         <h2 class="text-base font-bold text-gray-900 dark:text-white">
-          What people are saying
+          From the market
         </h2>
         <NuxtLink
           to="/"

@@ -15,7 +15,7 @@
       >
         <p>
           These Terms of Service ("Terms") govern your access to and use of
-          <strong>{{ config.public.siteName || 'styleX' }}</strong> ("Platform",
+          <strong>{{ config.public.siteName || 'MarketX' }}</strong> ("Platform",
           "we", "us"). By creating an account or making a purchase, you agree to
           be bound by these Terms. Please read them carefully.
         </p>
@@ -157,7 +157,7 @@
             Affiliates earn the commission displayed on the product page for
             each verified sale driven through their unique referral link.
             Commission is credited after the buyer's dispute window closes.
-            {{ config.public.siteName || 'styleX' }} reserves the right to
+            {{ config.public.siteName || 'MarketX' }} reserves the right to
             withhold commission for fraudulent or self-referred purchases.
           </p>
         </section>
@@ -188,7 +188,7 @@
           <p>
             You retain ownership of content you upload (photos, videos,
             descriptions). By uploading, you grant
-            {{ config.public.siteName || 'styleX' }} a non-exclusive,
+            {{ config.public.siteName || 'MarketX' }} a non-exclusive,
             royalty-free licence to display, reproduce, and distribute that
             content on the Platform and in promotional materials. We will never
             sell your content to third parties.
@@ -232,7 +232,7 @@
           </h2>
           <p>
             To the maximum extent permitted by law,
-            {{ config.public.siteName || 'styleX' }} is not liable for indirect,
+            {{ config.public.siteName || 'MarketX' }} is not liable for indirect,
             incidental, or consequential damages arising from your use of the
             Platform. Our total liability to you for any claim shall not exceed
             the total fees paid by you to us in the 3 months preceding the
@@ -320,7 +320,7 @@ import RightSideNavLinks from '~~/layers/core/app/layouts/children/RightSideNavL
 const config = useRuntimeConfig()
 
 useSeoMeta({
-  title: `Terms of Service · ${useRuntimeConfig().public.siteName || 'styleX'}`,
-  description: `Read the terms and conditions governing use of the ${useRuntimeConfig().public.siteName || 'styleX'} platform.`,
+  title: `Terms of Service · ${useRuntimeConfig().public.siteName || 'MarketX'}`,
+  description: `Read the terms and conditions governing use of the ${useRuntimeConfig().public.siteName || 'MarketX'} platform.`,
 })
 </script>

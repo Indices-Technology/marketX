@@ -211,7 +211,7 @@
                 </h3>
                 <p class="mt-0.5 text-xs text-gray-500 dark:text-neutral-500">
                   Rules and guidelines for using
-                  {{ $config.public.siteName || 'styleX' }}
+                  {{ $config.public.siteName || 'MarketX' }}
                 </p>
               </div>
             </div>
@@ -382,7 +382,7 @@ const categories = [
   { id: 'shopping', label: 'Shopping & Orders', icon: 'mdi:shopping-outline' },
   {
     id: 'selling',
-    label: `Selling on ${config.public.siteName || 'styleX'}`,
+    label: `Selling on ${config.public.siteName || 'MarketX'}`,
     icon: 'mdi:storefront-outline',
   },
   {

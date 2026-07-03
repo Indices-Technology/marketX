@@ -18,7 +18,7 @@
             <input
               v-model="searchQuery"
               type="text"
-              placeholder="Search products, stores, posts… or @username"
+              placeholder="Search markets, traders, goods… or @username"
               autofocus
               class="w-full rounded-lg bg-gray-100 py-2 pl-10 pr-4 text-gray-900 placeholder-gray-400 focus:outline-none dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-500"
             />

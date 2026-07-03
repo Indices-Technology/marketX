@@ -16,7 +16,7 @@
             <span class="text-xs font-black italic text-white">MX</span>
           </div>
           <span class="text-sm font-bold text-gray-500 dark:text-neutral-400"
-            >← Back to {{ $config.public.siteName || 'styleX' }}</span
+            >← Back to {{ $config.public.siteName || 'MarketX' }}</span
           >
         </NuxtLink>
       </div>

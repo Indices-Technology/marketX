@@ -78,7 +78,7 @@
           class="mt-0.5 flex items-center gap-1 text-[10px] text-gray-400 dark:text-neutral-500"
         >
           <Icon name="mdi:store-outline" size="10" class="shrink-0" />
-          {{ square.memberCount ?? 0 }} sellers
+          {{ square.memberCount ?? 0 }} traders
         </p>
       </div>
     </template>
@@ -184,7 +184,7 @@
           >
             <span class="flex items-center gap-1">
               <Icon name="mdi:store-outline" size="13" />
-              {{ square.memberCount ?? 0 }} sellers
+              {{ square.memberCount ?? 0 }} traders
             </span>
             <span class="flex items-center gap-1">
               <Icon name="mdi:account-multiple-outline" size="13" />

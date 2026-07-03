@@ -19,7 +19,7 @@
           <input
             v-model="searchQuery"
             type="text"
-            placeholder="Search MarketX…"
+            placeholder="Search markets, traders or goods"
             class="flex-1 bg-transparent text-[13px] text-gray-900 placeholder-gray-400 outline-none dark:text-white dark:placeholder-neutral-500"
             @focus="searchFocused = true"
             @keydown.escape="clearSearch"
