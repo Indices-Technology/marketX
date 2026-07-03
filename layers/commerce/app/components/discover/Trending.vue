@@ -1,14 +1,56 @@
 <template>
   <div class="mt-5 space-y-8">
     <!-- Category grid — only shown on the browse landing, not on standalone trending -->
-    <DiscoverCategoryGrid v-if="isBrowseTab" />
+    <section v-if="isBrowseTab">
+      <h2 class="mb-3 text-lg font-bold text-gray-900 dark:text-white">
+        What are you looking for today?
+      </h2>
+      <DiscoverCategoryGrid />
+    </section>
+
+    <!-- Markets near you — leads discovery on the browse landing -->
+    <section v-if="isBrowseTab && (marketsLoading || marketStrip.length)">
+      <div class="mb-3 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <Icon name="mdi:storefront" size="18" class="text-brand" />
+          <h2 class="text-base font-bold text-gray-900 dark:text-white">
+            Markets near you
+          </h2>
+        </div>
+        <button
+          class="text-xs font-semibold text-brand hover:underline"
+          @click="activeTab = 'squares'"
+        >
+          See all →
+        </button>
+      </div>
+      <div class="scroll-strip-wrap">
+        <div class="scrollbar-hide -mx-4 flex gap-3 overflow-x-auto px-4 pb-2">
+          <template v-if="marketsLoading && !marketStrip.length">
+            <div
+              v-for="n in 4"
+              :key="n"
+              class="h-[200px] w-60 shrink-0 animate-pulse rounded-2xl bg-gray-100 dark:bg-neutral-800"
+            />
+          </template>
+          <SquareCard
+            v-for="sq in marketStrip"
+            :key="sq.id"
+            :square="sq"
+            variant="spotlight"
+          />
+        </div>
+        <div class="scroll-fade-right" />
+      </div>
+    </section>
+
     <!-- Horizontal strips -->
     <section>
       <div class="mb-3 flex items-center justify-between">
         <div class="flex items-center gap-2">
           <Icon name="mdi:lightning-bolt" size="18" class="text-amber-400" />
           <h2
-            class="text-sm font-bold uppercase tracking-wider text-gray-700 dark:text-neutral-300"
+            class="text-base font-bold text-gray-900 dark:text-white"
           >
             Fresh from the markets
           </h2>
@@ -52,7 +94,7 @@
         <div class="flex items-center gap-2">
           <Icon name="mdi:tag-heart-outline" size="18" class="text-brand" />
           <h2
-            class="text-sm font-bold uppercase tracking-wider text-gray-700 dark:text-neutral-300"
+            class="text-base font-bold text-gray-900 dark:text-white"
           >
             Deals across the markets
           </h2>
@@ -96,7 +138,7 @@
         <div class="flex items-center gap-2">
           <Icon name="mdi:recycle" size="18" class="text-emerald-500" />
           <h2
-            class="text-sm font-bold uppercase tracking-wider text-gray-700 dark:text-neutral-300"
+            class="text-base font-bold text-gray-900 dark:text-white"
           >
             Pre-loved from traders
           </h2>
@@ -158,7 +200,7 @@
         <div class="mb-3 flex items-center gap-2">
           <Icon name="mdi:fire" size="18" class="text-orange-500" />
           <h2
-            class="text-sm font-bold uppercase tracking-wider text-gray-700 dark:text-neutral-300"
+            class="text-base font-bold text-gray-900 dark:text-white"
           >
             Popular in the markets
           </h2>
@@ -172,7 +214,7 @@
             class="flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3.5 py-1.5 text-[13px] font-medium text-gray-700 transition-all hover:border-brand/40 hover:bg-brand/5 hover:text-brand dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:border-brand/50 dark:hover:text-brand"
             @click="navigateTo({ query: { tagName: tag.name } }, { replace: true })"
           >
-            <span class="text-gray-400 dark:text-neutral-500">#</span>
+            <span class="text-gray-500 dark:text-neutral-400">#</span>
             {{ tag.name }}
             <span
               class="rounded-full bg-gray-100 px-1.5 py-0.5 text-[11px] text-gray-500 dark:bg-neutral-800 dark:text-neutral-400"
@@ -187,9 +229,9 @@
           <div class="flex items-center gap-2">
             <Icon name="mdi:trending-up" size="18" class="text-brand" />
             <h2
-              class="text-sm font-bold uppercase tracking-wider text-gray-700 dark:text-neutral-300"
+              class="text-base font-bold text-gray-900 dark:text-white"
             >
-              Hot Right Now
+              Trending with traders
             </h2>
           </div>
           <button
@@ -216,9 +258,9 @@
           <div class="flex items-center gap-2">
             <Icon name="mdi:store-check-outline" size="18" class="text-brand" />
             <h2
-              class="text-sm font-bold uppercase tracking-wider text-gray-700 dark:text-neutral-300"
+              class="text-base font-bold text-gray-900 dark:text-white"
             >
-              Top Stores
+              Traders to discover
             </h2>
           </div>
           <button
@@ -263,7 +305,7 @@
                 >
                   {{ seller.store_name }}
                 </p>
-                <p class="text-[10px] text-gray-400 dark:text-neutral-500">
+                <p class="text-[10px] text-gray-500 dark:text-neutral-400">
                   {{ formatNum(seller.followers_count || 0) }} followers
                 </p>
               </div>
@@ -301,7 +343,7 @@
               >
                 {{ seller.store_name }}
               </p>
-              <p class="text-[11px] text-gray-400 dark:text-neutral-500">
+              <p class="text-[11px] text-gray-500 dark:text-neutral-400">
                 {{ formatNum(seller.followers_count || 0) }} followers
               </p>
             </div>
@@ -335,9 +377,11 @@ import { ref, computed, onMounted, watch } from 'vue'
 import type { IProduct } from '~~/layers/commerce/app/types/commerce.types'
 import ProductCardMini from '~~/layers/commerce/app/components/ProductCardMini.vue'
 import DiscoverCategoryGrid from '~~/layers/commerce/app/components/discover/CategoryGrid.vue'
+import SquareCard from '~~/layers/square/app/components/SquareCard.vue'
 import { useDiscoverFilters } from '~~/layers/commerce/app/composables/useDiscoverFilters'
 import { imgAvatar } from '~~/layers/core/app/utils/cloudinary'
 import { useFeedApi } from '~~/layers/feed/app/services/feed.api'
+import { useSquareApi } from '~~/layers/square/app/services/square.api'
 
 const emit = defineEmits<{
   'open-detail': [product: IProduct]
@@ -345,6 +389,7 @@ const emit = defineEmits<{
 
 const { activeTab, filters: discoverFilters } = useDiscoverFilters()
 const feedApi = useFeedApi()
+const squareApi = useSquareApi()
 
 const isBrowseTab = computed(() => activeTab.value === 'browse')
 
@@ -363,6 +408,24 @@ const freshStrip = ref<IProduct[]>([])
 const dealStrip = ref<IProduct[]>([])
 const prelovedStrip = ref<IProduct[]>([])
 const stripsLoading = ref(true)
+
+const marketStrip = ref<any[]>([])
+const marketsLoading = ref(true)
+
+const loadMarkets = async () => {
+  marketsLoading.value = true
+  try {
+    const res: any = await squareApi.listSquares({
+      type: 'GEOGRAPHIC',
+      limit: 8,
+    })
+    marketStrip.value = res.data ?? []
+  } catch {
+    //
+  } finally {
+    marketsLoading.value = false
+  }
+}
 
 const loadTrending = async () => {
   trendingLoading.value = true
@@ -393,6 +456,7 @@ watch(
 
 onMounted(() => {
   loadTrending()
+  loadMarkets()
 })
 </script>
 
