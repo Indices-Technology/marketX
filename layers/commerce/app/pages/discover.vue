@@ -34,7 +34,21 @@
               type="text"
               :placeholder="searchPlaceholder"
               class="w-full rounded-full border border-transparent bg-gray-100/80 py-2 pl-9 pr-8 text-[13px] text-gray-900 placeholder-gray-400 transition-all focus:border-brand/30 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand/10 dark:bg-neutral-800/80 dark:text-neutral-100 dark:placeholder-neutral-500 dark:focus:bg-neutral-800"
+              @focus="searchFocused = true"
+              @blur="onSearchBlur"
+              @keydown.enter="onSearchEnter"
             />
+
+            <!-- Search suggestions (focused + empty query) -->
+            <div
+              v-if="searchFocused && !searchInput.trim()"
+              class="absolute left-0 right-0 top-[calc(100%+8px)] z-50"
+            >
+              <DiscoverSearchSuggestions
+                @search="onSuggestionSearch"
+                @close="searchFocused = false"
+              />
+            </div>
             <button
               v-if="searchInput"
               aria-label="Clear search"
@@ -198,6 +212,8 @@ import DiscoverProducts from '~~/layers/commerce/app/components/discover/Product
 import DiscoverSellers from '~~/layers/commerce/app/components/discover/Sellers.vue'
 import DiscoverPeople from '~~/layers/commerce/app/components/discover/People.vue'
 import DiscoverTags from '~~/layers/commerce/app/components/discover/Tags.vue'
+import DiscoverSearchSuggestions from '~~/layers/commerce/app/components/discover/SearchSuggestions.vue'
+import { useRecentSearches } from '~~/layers/commerce/app/composables/useRecentSearches'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useProductDetail } from '~~/layers/commerce/app/composables/useProductDetail'
 import { useLayoutData } from '~~/layers/core/app/composables/useLayoutData'
@@ -238,6 +254,30 @@ const { activeTab, selectedCategoryId, filters, hasActiveFilters, resetFilters }
 const searchInput = ref('')
 const pendingTagName = ref<string | null>(null)
 const filterSheetOpen = ref(false)
+
+// ── Search suggestions ──────────────────────────────────────────────────────
+const searchFocused = ref(false)
+const recentSearches = useRecentSearches()
+
+const onSearchBlur = () => {
+  // Delay so a click inside the suggestions panel registers before it closes.
+  setTimeout(() => {
+    searchFocused.value = false
+  }, 150)
+}
+const onSearchEnter = () => {
+  if (searchInput.value.trim()) recentSearches.add(searchInput.value)
+}
+const onSuggestionSearch = (term: string) => {
+  const t = term.trim()
+  if (!t) return
+  recentSearches.add(t)
+  searchInput.value = t
+  if (activeTab.value === 'browse' || activeTab.value === 'trending') {
+    activeTab.value = 'products'
+  }
+  searchFocused.value = false
+}
 
 const SORT_LABEL: Record<string, string> = {
   popular: 'Most popular',
