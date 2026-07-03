@@ -180,4 +180,3 @@ const handleVerifyOtp = async () => {
   }
 }
 </script>
-

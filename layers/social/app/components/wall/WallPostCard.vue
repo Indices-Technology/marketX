@@ -1,11 +1,17 @@
 <template>
-  <div class="rounded-2xl border border-gray-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
+  <div
+    class="rounded-2xl border border-gray-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"
+  >
     <!-- Header -->
     <div class="flex items-start justify-between gap-3">
       <div class="flex items-center gap-3">
         <!-- Avatar -->
         <NuxtLink
-          :to="post.author.role === 'seller' ? `/sellers/profile/${post.author.username}` : `/profile/${post.author.username}`"
+          :to="
+            post.author.role === 'seller'
+              ? `/sellers/profile/${post.author.username}`
+              : `/profile/${post.author.username}`
+          "
           class="shrink-0"
         >
           <div
@@ -16,7 +22,9 @@
               :src="imgAvatar(resolvedAvatar)"
               class="h-full w-full object-cover"
             />
-            <span v-else>{{ post.author.username?.[0]?.toUpperCase() ?? 'U' }}</span>
+            <span v-else>{{
+              post.author.username?.[0]?.toUpperCase() ?? 'U'
+            }}</span>
           </div>
         </NuxtLink>
 
@@ -37,7 +45,9 @@
               Shoutout
             </span>
           </div>
-          <p class="text-[11px] text-gray-400 dark:text-neutral-500">{{ timeAgo(post.created_at) }}</p>
+          <p class="text-[11px] text-gray-400 dark:text-neutral-500">
+            {{ timeAgo(post.created_at) }}
+          </p>
         </div>
       </div>
 
@@ -48,7 +58,12 @@
         :disabled="deleting"
         @click="handleDelete"
       >
-        <Icon v-if="deleting" name="eos-icons:loading" size="14" class="animate-spin" />
+        <Icon
+          v-if="deleting"
+          name="eos-icons:loading"
+          size="14"
+          class="animate-spin"
+        />
         <Icon v-else name="mdi:delete-outline" size="16" />
       </button>
     </div>
@@ -64,7 +79,11 @@
     <!-- Media -->
     <div v-if="post.media?.length" class="mt-3">
       <div
-        :class="post.media.length === 1 ? 'rounded-xl overflow-hidden' : 'grid grid-cols-2 gap-1 rounded-xl overflow-hidden'"
+        :class="
+          post.media.length === 1
+            ? 'overflow-hidden rounded-xl'
+            : 'grid grid-cols-2 gap-1 overflow-hidden rounded-xl'
+        "
       >
         <img
           v-for="(m, i) in post.media.slice(0, 4)"
@@ -79,11 +98,17 @@
     </div>
 
     <!-- Actions -->
-    <div class="mt-3 flex items-center gap-4 border-t border-gray-50 pt-3 dark:border-neutral-800">
+    <div
+      class="mt-3 flex items-center gap-4 border-t border-gray-50 pt-3 dark:border-neutral-800"
+    >
       <!-- Like -->
       <button
         class="flex items-center gap-1.5 text-xs font-semibold transition"
-        :class="localLiked ? 'text-brand' : 'text-gray-400 hover:text-brand dark:text-neutral-500'"
+        :class="
+          localLiked
+            ? 'text-brand'
+            : 'text-gray-400 hover:text-brand dark:text-neutral-500'
+        "
         @click="toggleLike"
       >
         <Icon
@@ -104,17 +129,22 @@
         <span>Comment</span>
       </button>
     </div>
-
   </div>
-
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from '#imports'
-import { imgAvatar, imgFeed, videoThumb } from '~~/layers/core/app/utils/cloudinary'
+import {
+  imgAvatar,
+  imgFeed,
+  videoThumb,
+} from '~~/layers/core/app/utils/cloudinary'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
-import { useWallApi, type WallType } from '~~/layers/social/app/services/wall.api'
+import {
+  useWallApi,
+  type WallType,
+} from '~~/layers/social/app/services/wall.api'
 import { usePostApi } from '~~/layers/social/app/services/post.api'
 import type { IWallPost } from '~~/layers/social/app/services/wall.api'
 
@@ -137,14 +167,14 @@ const deleting = ref(false)
 const localLiked = ref(props.post.viewerLiked)
 const localLikes = ref(props.post._count.likes)
 
-const resolvedAvatar = computed(() =>
-  props.post.author.avatar || props.ownerAvatar || null
+const resolvedAvatar = computed(
+  () => props.post.author.avatar || props.ownerAvatar || null,
 )
 
 const canDelete = computed(
-  () => profileStore.isLoggedIn && (
-    profileStore.me?.id === props.post.author.id || props.isWallOwner
-  ),
+  () =>
+    profileStore.isLoggedIn &&
+    (profileStore.me?.id === props.post.author.id || props.isWallOwner),
 )
 
 const timeAgo = (date: string): string => {
@@ -180,7 +210,11 @@ const handleDelete = async () => {
   if (deleting.value) return
   deleting.value = true
   try {
-    await useWallApi().deleteShoutout(props.wallType, props.wallSlug, props.post.id)
+    await useWallApi().deleteShoutout(
+      props.wallType,
+      props.wallSlug,
+      props.post.id,
+    )
     emit('deleted', props.post.id)
   } catch {
     // BaseApiClient shows toast
@@ -191,6 +225,12 @@ const handleDelete = async () => {
 </script>
 
 <style scoped>
-.fade-enter-active, .fade-leave-active { transition: opacity 0.15s; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.15s;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
 </style>

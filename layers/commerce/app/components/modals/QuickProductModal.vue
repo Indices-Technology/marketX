@@ -263,6 +263,21 @@
               </div>
             </div>
 
+            <!-- Quantity in stock -->
+            <div>
+              <label
+                class="mb-1.5 block text-xs font-semibold text-gray-600 dark:text-neutral-400"
+                >Quantity in stock *</label
+              >
+              <BaseInput v-model="form.stock" type="number" min="0" placeholder="e.g. 10" />
+              <p
+                v-if="form.price !== '' && Number(form.stock) < 1"
+                class="mt-1 text-[11px] text-amber-500"
+              >
+                Set at least 1 — a product with 0 stock can't be added to cart.
+              </p>
+            </div>
+
             <!-- Affiliate Commission -->
             <div
               class="rounded-lg border border-brand/20 bg-brand/5 px-3 py-3 dark:border-brand/30 dark:bg-brand/10"
@@ -579,6 +594,7 @@ const removeBgMusic = () => {
 const form = reactive({
   title: '',
   price: '',
+  stock: '1',
   status: 'DRAFT' as 'DRAFT' | 'PUBLISHED',
   description: '',
   affiliateCommission: '',
@@ -601,6 +617,7 @@ const canSubmit = computed(
     form.title.trim().length >= 2 &&
     Number(form.price) >= 0 &&
     form.price !== '' &&
+    Number(form.stock) >= 1 &&
     !uploadingCover.value &&
     !uploadingMusic.value,
 )
@@ -619,6 +636,9 @@ const submit = async () => {
       title: form.title.trim(),
       price: Number(form.price),
       status: form.status,
+      // A product needs at least one variant with stock to be purchasable —
+      // without this the item shows but "Add to cart" fails (variant stock 0).
+      variants: [{ size: 'Default', stock: Number(form.stock) }],
     }
     if (form.description.trim()) payload.description = form.description.trim()
     if (Number(form.affiliateCommission) > 0)
@@ -661,6 +681,7 @@ watch(
       storeDropdownOpen.value = false
       form.title = ''
       form.price = ''
+      form.stock = '1'
       form.status = 'DRAFT'
       form.description = ''
       form.affiliateCommission = ''

@@ -22,6 +22,7 @@ import type {
   ShipmentRequest,
   SellerShippingConfig,
 } from '~~/layers/shipping/server/utils/types'
+import { signShippingQuote } from '~~/layers/shipping/server/utils/quoteToken'
 
 interface IRatesBody {
   storeSlug?: string
@@ -36,7 +37,10 @@ export default defineEventHandler(async (event) => {
   const body = await readBody<IRatesBody>(event)
 
   if (!body?.to || !body?.parcel) {
-    throw createError({ statusCode: 400, message: 'to and parcel are required' })
+    throw createError({
+      statusCode: 400,
+      message: 'to and parcel are required',
+    })
   }
 
   let from: IAddress | undefined = body.from
@@ -166,6 +170,18 @@ export default defineEventHandler(async (event) => {
   // If nothing resolved, let the client fall back to the GlobalShippingZone flat rate.
   if (out.length === 0) {
     return { success: true, data: [], fallback: true }
+  }
+
+  // Sign each rate so checkout can prove the chosen amount back to placeOrder
+  // (bug #3: the shipping charge is re-derived from the token, not the client).
+  if (body.storeSlug) {
+    for (const r of out) {
+      r.token = signShippingQuote({
+        s: body.storeSlug,
+        a: Math.round(r.amountNGN * 100),
+        c: r.provider,
+      })
+    }
   }
 
   return { success: true, data: out }

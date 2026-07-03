@@ -15,6 +15,7 @@ import { useProfileApi } from '~~/layers/profile/app/services/profile.api'
 import { useNotificationStore } from '~~/layers/profile/app/stores/notification.store'
 import { useSellerStore } from '~~/layers/seller/app/store/seller.store'
 import { useCartStore } from '~~/layers/commerce/app/stores/cart.store'
+import { useCart } from '~~/layers/commerce/app/composables/useCart'
 import { useSettings } from '~~/layers/profile/app/composables/useSettings'
 import { useChat } from '~~/layers/profile/app/composables/useChat'
 import { extractErrorMessage } from '~~/layers/core/app/utils/errors'
@@ -85,17 +86,18 @@ export const useAuth = () => {
     store_location?: string
     store_logo?: string
     store_currency?: string
+    shipFromName?: string
+    shipFromAddress?: string
+    shipFromCity?: string
+    shipFromState?: string
+    shipFromZip?: string
+    shipFromCountry?: string
+    shipFromPhone?: string
   }) => {
     authStore.setLoading(true)
     authStore.setError(null)
     try {
-      const result = await $fetch<{
-        success: boolean
-        accessToken: string
-        refreshToken: string
-        user: IAuthUser
-        store: { store_slug: string; store_name: string }
-      }>('/api/auth/register-seller', { method: 'POST', body: payload })
+      const result = await authApi.registerSeller(payload)
 
       authStore.setAccessToken(result.accessToken)
       authStore.setRefreshToken(result.refreshToken)
@@ -145,6 +147,13 @@ export const useAuth = () => {
       authStore.setRefreshToken(result.refreshToken)
 
       await syncUserToProfile(result.user)
+
+      // Merge any guest cart (localStorage) into the now-authenticated server
+      // cart. Idempotent (server upsert) and non-blocking — a sync failure must
+      // never break login. Called lazily to avoid a useAuth→useCart module cycle.
+      await useCart()
+        .syncGuestCartToServer()
+        .catch(() => {})
 
       authStore.setMessage('Logged in successfully!')
 

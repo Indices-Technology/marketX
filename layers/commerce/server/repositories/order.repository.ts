@@ -151,6 +151,31 @@ export const orderRepository = {
     )
   },
 
+  /**
+   * Atomically fail + cancel an unpaid order and restore its stock. Idempotent:
+   * only a transition from a non-terminal state restores stock, so calling this
+   * from both verify and the webhook can't double-restore. Returns whether it
+   * actually transitioned. (releaseExpiredOrders only reclaims UNPAID orders, so
+   * without this a FAILED order would leak its stock permanently.)
+   */
+  async failAndRestore(orderId: number): Promise<boolean> {
+    const { count } = await prisma.orders.updateMany({
+      where: { id: orderId, paymentStatus: { notIn: ['PAID', 'FAILED'] } },
+      data: { paymentStatus: 'FAILED', status: 'CANCELLED' },
+    })
+    if (count === 0) return false
+    const items = await prisma.orderItem.findMany({
+      where: { orderId },
+      select: { variantId: true, quantity: true },
+    })
+    await this.restoreStock(
+      items
+        .filter((i) => i.variantId != null)
+        .map((i) => ({ variantId: i.variantId!, quantity: i.quantity })),
+    )
+    return true
+  },
+
   async countUserOrders(userId: string) {
     return prisma.orders.count({ where: { userId } })
   },

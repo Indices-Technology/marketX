@@ -41,7 +41,12 @@ export const useProduct = () => {
 
   const fetchSellerProducts = async (
     storeSlug: string,
-    params?: { status?: string; limit?: number; offset?: number; search?: string },
+    params?: {
+      status?: string
+      limit?: number
+      offset?: number
+      search?: string
+    },
   ) => {
     store.setLoading(true)
     store.setError(null)

@@ -156,3 +156,23 @@ export function videoThumb(
   const withJpg = after.replace(/\.[^./]+$/, '.jpg')
   return `${before}${parts.join(',')}/${withJpg}`
 }
+
+/**
+ * Resolve a product's display thumbnail, handling VIDEO covers correctly.
+ * Order: the still `bannerImageUrl` (set at upload) → a poster derived from a video
+ * cover → the first image. Prevents the broken-placeholder bug where a video URL
+ * was put straight into an <img> (e.g. in the affiliate marketplace list).
+ */
+export function productThumb(
+  product: {
+    bannerImageUrl?: string | null
+    media?: Array<{ url?: string | null; type?: string | null }> | null
+  },
+  size = 400,
+): string {
+  if (product?.bannerImageUrl) return cloudinaryUrl(product.bannerImageUrl, { width: size, height: size, crop: 'fill' })
+  const m = product?.media?.[0]
+  if (!m?.url) return ''
+  const isVideo = (m.type ?? '').toUpperCase() === 'VIDEO' || /\.(mp4|webm|mov|m4v|ogg)(\?|$)/i.test(m.url)
+  return isVideo ? videoThumb(m.url, { width: size, height: size }) : cloudinaryUrl(m.url, { width: size, height: size, crop: 'fill' })
+}

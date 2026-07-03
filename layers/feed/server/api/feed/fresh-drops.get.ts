@@ -22,6 +22,8 @@ export default defineEventHandler(async (event) => {
         slug: true,
         price: true,
         discount: true,
+        averageRating: true,
+        totalReviews: true,
         isDeal: true,
         dealEndsAt: true,
         isThrift: true,
@@ -36,6 +38,7 @@ export default defineEventHandler(async (event) => {
             store_logo: true,
             locationLabel: true,
             city: true,
+            is_verified: true,
           },
         },
         media: {

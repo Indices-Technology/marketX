@@ -1,8 +1,28 @@
 <!-- Market home — rendered inside HomeLayout by the auth-aware index.vue -->
 <template>
   <div class="w-full space-y-10 px-1 sm:px-2">
+    <!-- ─── 0. SEARCH (hero) — mobile/tablet only; desktop uses the right-rail search -->
+    <section class="pt-1 lg:hidden">
+      <form class="relative" role="search" @submit.prevent="goSearch">
+        <Icon
+          name="mdi:magnify"
+          size="20"
+          class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-neutral-500"
+        />
+        <input
+          v-model="searchQuery"
+          type="search"
+          enterkeyhint="search"
+          placeholder="Search markets, traders or goods"
+          aria-label="Search markets, traders or goods"
+          class="w-full rounded-full border border-gray-200 bg-white py-3 pl-11 pr-4 text-sm text-gray-900 placeholder-gray-500 shadow-sm transition focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/25 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white dark:placeholder-neutral-500"
+        />
+      </form>
+    </section>
+
     <!-- ─── 1. DEALS ──────────────────────────────────────────────────────── -->
-    <section>
+    <!-- Today's deals — hidden entirely when there are no live (<48h) flash deals -->
+    <section v-if="dealsLoading || deals.length">
       <div class="mb-4 flex items-end justify-between">
         <div>
           <p
@@ -34,25 +54,32 @@
         :products="deals"
         :priority="true"
         label="Today's deals"
+        hide-header
         @open-product="openProduct"
       />
-      <p
-        v-else-if="!dealsLoading"
-        class="py-6 text-center text-sm text-gray-400 dark:text-neutral-500"
-      >
-        No deals right now — check back soon
-      </p>
     </section>
 
     <!-- ─── 2. MARKETS (Squares) ──────────────────────────────────────────── -->
     <section>
       <div class="mb-4 flex items-end justify-between">
-        <h2 class="text-base font-bold text-gray-900 dark:text-white">
-          Browse by market
-        </h2>
+        <div>
+          <p
+            class="text-[11px] font-semibold uppercase tracking-widest text-brand"
+          >
+            Discover
+          </p>
+          <h2
+            class="text-lg font-extrabold leading-tight text-gray-900 dark:text-white"
+          >
+            Explore Nigeria's Digital Markets
+          </h2>
+          <p class="mt-0.5 text-[12px] text-gray-500 dark:text-neutral-400">
+            Step into real market squares — meet the traders inside
+          </p>
+        </div>
         <NuxtLink
           to="/squares"
-          class="text-xs font-semibold text-gray-400 hover:text-brand dark:text-neutral-500"
+          class="mb-0.5 shrink-0 text-xs font-semibold text-gray-500 hover:text-brand dark:text-neutral-400"
         >
           All markets →
         </NuxtLink>
@@ -61,21 +88,21 @@
       <div
         v-if="squaresLoading && !squares.length"
         class="scrollbar-hide flex gap-3 overflow-x-auto pb-1"
-        style="height: 116px; contain: strict"
+        style="height: 208px; contain: strict"
       >
         <div
-          v-for="i in 4"
+          v-for="i in 3"
           :key="i"
-          class="h-[108px] w-36 shrink-0 animate-pulse rounded-2xl bg-gray-100 dark:bg-neutral-800"
+          class="h-[200px] w-60 shrink-0 animate-pulse rounded-2xl bg-gray-100 dark:bg-neutral-800"
         />
       </div>
 
       <!-- Empty / error state — API failed or no squares seeded -->
       <p
         v-else-if="!squaresLoading && !squares.length"
-        class="text-xs text-gray-400 dark:text-neutral-500"
+        class="text-xs text-gray-500 dark:text-neutral-400"
       >
-        No squares yet
+        No markets open yet — check back soon
       </p>
 
       <div
@@ -86,7 +113,7 @@
           v-for="sq in squares"
           :key="sq.id"
           :square="sq"
-          variant="compact"
+          variant="spotlight"
         />
 
         <NuxtLink
@@ -104,7 +131,7 @@
       <div class="mb-4 flex items-center justify-between">
         <div class="flex items-center gap-2">
           <h2 class="text-base font-bold text-gray-900 dark:text-white">
-            Selling now
+            Traders selling live
           </h2>
           <span
             class="flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-bold text-green-600 dark:bg-green-900/30 dark:text-green-400"
@@ -214,8 +241,8 @@
         <span class="text-[13px] text-gray-500 dark:text-neutral-400">
           {{
             sellersRequesting
-              ? 'Finding sellers near you…'
-              : "See who's selling near you"
+              ? 'Finding traders near you…'
+              : "See who's trading near you"
           }}
         </span>
       </button>
@@ -226,10 +253,10 @@
       <div class="mb-4 flex items-end justify-between">
         <div>
           <h2 class="text-base font-bold text-gray-900 dark:text-white">
-            Just in
+            Fresh from the market
           </h2>
-          <p class="text-[11px] text-gray-400 dark:text-neutral-500">
-            New listings from the past week
+          <p class="text-[11px] text-gray-500 dark:text-neutral-400">
+            New goods from traders this week
           </p>
         </div>
         <NuxtLink
@@ -248,7 +275,8 @@
       <FeedProductShelf
         v-else-if="freshItems.length"
         :products="freshItems"
-        label="Just in"
+        label="Fresh from the market"
+        hide-header
         @open-product="openProduct"
       />
     </section>
@@ -257,7 +285,7 @@
     <section ref="section5Ref">
       <div class="mb-4 flex items-end justify-between">
         <h2 class="text-base font-bold text-gray-900 dark:text-white">
-          What people are saying
+          From the market
         </h2>
         <NuxtLink
           to="/"
@@ -286,6 +314,33 @@
           @open-details="selectedPost = $event"
           @open-product="openProduct"
         />
+      </div>
+
+      <!-- Empty — encourage exploration instead of a dangling header -->
+      <div
+        v-else
+        class="rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-4 py-8 text-center dark:border-neutral-700 dark:bg-neutral-800/40"
+      >
+        <Icon
+          name="mdi:storefront-outline"
+          size="28"
+          class="mx-auto text-gray-300 dark:text-neutral-600"
+        />
+        <p
+          class="mt-2 text-sm font-semibold text-gray-600 dark:text-neutral-300"
+        >
+          The market is quiet right now
+        </p>
+        <p class="mt-0.5 text-[12px] text-gray-500 dark:text-neutral-400">
+          Follow traders and markets to see their latest here.
+        </p>
+        <NuxtLink
+          to="/squares"
+          class="mt-3 inline-flex items-center gap-1 rounded-full bg-brand px-4 py-1.5 text-[12px] font-bold text-white transition hover:bg-brand/90"
+        >
+          Explore markets
+          <Icon name="mdi:arrow-right" size="13" />
+        </NuxtLink>
       </div>
     </section>
 
@@ -345,7 +400,6 @@ import PostDetailModal from '~~/layers/social/app/components/modals/PostDetailMo
 import ProductCommentModal from '~~/layers/commerce/app/components/modals/ProductCommentModal.vue'
 
 import { ref } from 'vue'
-import { useRouter } from '#imports'
 import { imgAvatar } from '~~/layers/core/app/utils/cloudinary'
 import { useProductDetail } from '~~/layers/commerce/app/composables/useProductDetail'
 import { useMarketHome } from '../composables/useMarketHome'
@@ -354,7 +408,15 @@ import type { IProduct } from '~~/layers/social/app/types/post.types'
 
 defineEmits<{ 'sign-in': [] }>()
 
-const router = useRouter()
+// ── Hero search — routes to the full search page ────────────────────────────────
+const searchQuery = ref('')
+const goSearch = () =>
+  navigateTo(
+    searchQuery.value.trim()
+      ? `/discover?q=${encodeURIComponent(searchQuery.value.trim())}`
+      : '/discover',
+  )
+
 const {
   selectedProduct,
   detailLoading: productDetailLoading,

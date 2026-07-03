@@ -28,7 +28,7 @@ export default defineEventHandler(async (event) => {
     // Resolve wall owner — needed to notify them
     let ownerProfileId: string | null = null
     if (type === 'USER') {
-      const profile = await prisma.profile.findFirst({
+      const profile = await prisma.profile.findUnique({
         where: { username: slug },
         select: { id: true },
       })

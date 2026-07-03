@@ -60,7 +60,7 @@ const postInclude = {
 
 export const postRepository = {
   async getUserByUsername(username: string) {
-    return await prisma.profile.findFirst({ where: { username } })
+    return await prisma.profile.findUnique({ where: { username } })
   },
 
   // ========== POSTS ==========

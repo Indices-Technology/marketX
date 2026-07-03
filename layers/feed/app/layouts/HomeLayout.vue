@@ -163,7 +163,7 @@
             </div>
             <div class="min-w-0 flex-1">
               <p class="text-[12px] font-bold leading-tight text-white">
-                Start selling on {{ $config.public.siteName || 'styleX' }}
+                Start selling on {{ $config.public.siteName || 'MarketX' }}
               </p>
               <p class="text-[10px] text-white/70">
                 Turn your passion into profit

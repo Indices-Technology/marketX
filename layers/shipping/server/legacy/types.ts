@@ -44,6 +44,9 @@ export interface IShipmentRate {
   estimatedDays: string
   /** Which provider returned this rate */
   provider: 'sendbox' | 'shippo' | 'self' | 'gig'
+  /** Signed quote token (storeSlug + amount). Echoed back at checkout so the
+   *  order re-derives the shipping charge from the server, not the client. */
+  token?: string
 }
 
 // ─── Create Shipment ──────────────────────────────────────────────────────────

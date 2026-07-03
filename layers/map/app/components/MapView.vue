@@ -51,6 +51,8 @@ const props = defineProps<{
   selectedSlug: string | null
   radiusKm: number
   viewMode?: ViewMode
+  /** When true, results are beyond the radius (nearest-fallback) — fit the map to them */
+  outsideRadius?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -76,12 +78,30 @@ let userMarker: any = null
 const CLUSTER_ZOOM = 13  // below this zoom → show clusters; at/above → show individual pins
 
 // ── Map styles ────────────────────────────────────────────────────────────────
-// Stadia Maps: free for dev/testing, no API key required (register for production)
-// OpenFreeMap: fully free, no key, based on OSM data
-const MAP_STYLES = {
-  dark:      'https://tiles.stadiamaps.com/styles/alidade_smooth_dark.json',
-  streets:   'https://tiles.openfreemap.org/styles/liberty',
-  satellite: 'https://api.maptiler.com/maps/satellite/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL',
+// Defaults are ALL keyless and CORS-open on ANY domain — this matters: Stadia/MapTiler
+// "free" keys only authorise localhost, so they 401 in production and the map renders
+// blank (the bug where tiles show locally but not live). Production-safe sources:
+//   • CARTO dark-matter — keyless vector dark basemap (matches the dark UI)
+//   • OpenFreeMap liberty — keyless OSM vector streets
+//   • Esri World Imagery — keyless raster satellite
+// Override any of them with a keyed Stadia/MapTiler style via runtimeConfig
+// (NUXT_PUBLIC_MAP_STYLE_DARK / _STREETS / _SATELLITE) without touching code.
+const rc = useRuntimeConfig().public as Record<string, string | undefined>
+const MAP_STYLES: Record<'dark' | 'streets' | 'satellite', any> = {
+  dark:    rc.mapStyleDark    || 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+  streets: rc.mapStyleStreets || 'https://tiles.openfreemap.org/styles/liberty',
+  satellite: rc.mapStyleSatellite || {
+    version: 8,
+    sources: {
+      'esri-imagery': {
+        type: 'raster',
+        tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+        tileSize: 256,
+        attribution: 'Imagery © Esri, Maxar, Earthstar Geographics',
+      },
+    },
+    layers: [{ id: 'esri-imagery', type: 'raster', source: 'esri-imagery' }],
+  },
 }
 const mapStyles = [
   { id: 'dark',      icon: 'mdi:map-outline',         label: 'Dark' },
@@ -421,6 +441,19 @@ watch(() => props.selectedSlug, (slug) => {
 // Re-apply pin visibility whenever view mode changes
 watch(() => props.viewMode, () => { if (map?.loaded()) applyViewMode() })
 
+// ── Nearest-fallback: fit the map to the results when they're beyond the radius ───
+// (otherwise the nearest stores render off-screen and the map looks empty).
+function fitToResults() {
+  if (!map || !maplibregl || !props.sellers.length) return
+  const bounds = new maplibregl.LngLatBounds()
+  if (props.userLat != null && props.userLng != null) bounds.extend([props.userLng, props.userLat])
+  for (const s of props.sellers) bounds.extend([s.longitude, s.latitude])
+  map.fitBounds(bounds, { padding: 70, maxZoom: 13, duration: 800 })
+}
+watch(() => [props.outsideRadius, props.sellers.length], () => {
+  if (props.outsideRadius && props.sellers.length && map?.loaded()) fitToResults()
+})
+
 // ── Square pins ───────────────────────────────────────────────────────────
 watch(() => props.squares, renderSquarePins, { deep: true })
 
@@ -460,29 +493,29 @@ function buildSquarePinEl(square: IMapSquare): HTMLElement {
   const wrap = document.createElement('div')
   wrap.className = 'sq-pin-wrap'
 
-  const accent = square.accentColor || '#f59e0b'
-  const name = square.name.slice(0, 20)
-  const location = [square.city, square.state].filter(Boolean).join(', ')
-  const initials = square.name.slice(0, 2).toUpperCase()
+  const accent = safeColor(square.accentColor)
+  const name = esc(square.name.slice(0, 20))
+  const location = esc([square.city, square.state].filter(Boolean).join(', '))
+  const initials = esc(square.name.slice(0, 2).toUpperCase())
 
   wrap.innerHTML = `
     <div class="sq-pulse" style="--sq-color:${accent}"></div>
     <div class="sq-pin" style="--sq-color:${accent}">
       ${square.iconUrl
-        ? `<img src="${square.iconUrl}" class="sq-icon-img" alt="" loading="lazy" />`
+        ? `<img src="${esc(square.iconUrl)}" class="sq-icon-img" alt="" loading="lazy" />`
         : `<span class="sq-initials">${initials}</span>`
       }
       <div class="sq-label">${name}</div>
     </div>
     <div class="sq-tip" role="tooltip">
-      <div class="sq-tip-name">${square.name}</div>
+      <div class="sq-tip-name">${esc(square.name)}</div>
       ${location ? `<div class="sq-tip-loc">📍 ${location}</div>` : ''}
       <div class="sq-tip-stats">
         <span>${fmt(square.memberCount)} sellers</span>
         <span class="tt-dot">·</span>
         <span>${fmt(square.followerCount)} followers</span>
       </div>
-      <a href="/squares/${square.slug}" class="sq-tip-visit" onclick="event.stopPropagation()">
+      <a href="/squares/${esc(square.slug)}" class="sq-tip-visit" onclick="event.stopPropagation()">
         Explore Square →
       </a>
     </div>
@@ -498,14 +531,27 @@ function fmt(n: number) {
   return String(n)
 }
 
+// Pins are built with innerHTML from seller-controlled fields (store_name, location,
+// square name, logo/icon URLs). Escape every interpolated value to prevent stored XSS
+// — e.g. a store named '"><img src=x onerror=…>' would otherwise run on the public map.
+function esc(v: unknown): string {
+  return String(v ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;')
+}
+// Colours flow into inline `style` attributes — only allow hex, else fall back.
+function safeColor(c?: string | null): string {
+  return c && /^#[0-9a-fA-F]{3,8}$/.test(c) ? c : '#f59e0b'
+}
+
 function buildPinEl(seller: IMapSeller): HTMLElement {
   const wrap = document.createElement('div')
   wrap.className = 'pin-wrap'
 
-  const logoUrl = seller.store_logo ?? ''
-  const initials = (seller.store_name ?? seller.store_slug ?? '?').slice(0, 2).toUpperCase()
-  const name = (seller.store_name ?? seller.store_slug ?? '').slice(0, 16)
-  const location = seller.locationLabel || seller.city || ''
+  const logoUrl = esc(seller.store_logo ?? '')
+  const initials = esc((seller.store_name ?? seller.store_slug ?? '?').slice(0, 2).toUpperCase())
+  const name = esc((seller.store_name ?? seller.store_slug ?? '').slice(0, 16))
+  const location = esc(seller.locationLabel || seller.city || '')
   const pulseClass = seller.hasActiveDeal
     ? 'pin-pulse-deal'
     : seller.isPremium
@@ -518,10 +564,10 @@ function buildPinEl(seller: IMapSeller): HTMLElement {
   let statusLine = ''
   if (seller.isOnline) {
     statusLine = seller.isOpenNow
-      ? `<span class="tt-online">● Online now</span>${seller.closesAt ? ` · closes ${seller.closesAt}` : ''}`
+      ? `<span class="tt-online">● Online now</span>${seller.closesAt ? ` · closes ${esc(seller.closesAt)}` : ''}`
       : `<span class="tt-online">● Online</span>`
   } else {
-    const seen = seller.lastSeenLabel ? ` · ${seller.lastSeenLabel}` : ''
+    const seen = seller.lastSeenLabel ? ` · ${esc(seller.lastSeenLabel)}` : ''
     statusLine = `<span class="tt-offline">○ Offline${seen}</span>`
   }
 
@@ -532,10 +578,10 @@ function buildPinEl(seller: IMapSeller): HTMLElement {
   const sq = seller.square
   const squareBadge = sq
     ? (() => {
-        const color = sq.accentColor || '#f59e0b'
-        return `<a href="/squares/${sq.slug}" class="tt-square" style="background:${color}22;color:${color};border-color:${color}44" onclick="event.stopPropagation()">
+        const color = safeColor(sq.accentColor)
+        return `<a href="/squares/${esc(sq.slug)}" class="tt-square" style="background:${color}22;color:${color};border-color:${color}44" onclick="event.stopPropagation()">
           <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
-          ${sq.name}
+          ${esc(sq.name)}
         </a>`
       })()
     : ''
@@ -554,7 +600,7 @@ function buildPinEl(seller: IMapSeller): HTMLElement {
     <div class="pin-name${!seller.isOnline ? ' pin-name--offline' : ''}">${name}</div>
     <div class="pin-tooltip" role="tooltip">
       <div class="tt-header">
-        <div class="tt-name">${seller.store_name ?? seller.store_slug ?? ''}</div>
+        <div class="tt-name">${esc(seller.store_name ?? seller.store_slug ?? '')}</div>
         ${openBadge}
       </div>
       ${location ? `<div class="tt-loc">📍 ${location} · ${seller.distanceKm.toFixed(1)}km</div>` : ''}
@@ -567,7 +613,7 @@ function buildPinEl(seller: IMapSeller): HTMLElement {
       ${seller.hasActiveDeal ? '<div class="tt-deal">🏷️ Active deal</div>' : ''}
       ${seller.isPremium ? '<div class="tt-premium">⭐ Premium store</div>' : ''}
       <div class="tt-status">${statusLine}</div>
-      <a href="/sellers/profile/${seller.store_slug}" class="tt-visit" onclick="event.stopPropagation()">
+      <a href="/sellers/profile/${esc(seller.store_slug)}" class="tt-visit" onclick="event.stopPropagation()">
         View store →
       </a>
       <a href="https://www.google.com/maps/dir/?api=1&destination=${seller.latitude},${seller.longitude}" target="_blank" rel="noopener" class="tt-directions" onclick="event.stopPropagation()">

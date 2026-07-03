@@ -2,7 +2,11 @@
   <NuxtLink
     :to="`/squares/${square.slug}`"
     class="group relative block overflow-hidden rounded-2xl border bg-white transition-all hover:shadow-md dark:bg-neutral-900"
-    :class="variant === 'compact' ? 'w-36 shrink-0' : 'flex flex-col'"
+    :class="[
+      variant === 'compact' ? 'w-36 shrink-0' : '',
+      variant === 'spotlight' ? 'w-60 shrink-0' : '',
+      variant === 'full' ? 'flex flex-col' : '',
+    ]"
     :style="`border-color: ${accent}44`"
   >
     <!-- ── COMPACT LAYOUT ──────────────────────────────────────────────────── -->
@@ -69,12 +73,124 @@
       </div>
       <!-- Info -->
       <div class="pb-3 pl-2.5 pr-2 pt-6">
-        <p class="truncate text-[12px] font-bold text-gray-900 dark:text-white">
+        <p
+          class="truncate font-display text-[12px] font-bold text-gray-900 dark:text-white"
+        >
           {{ square.name }}
         </p>
-        <p class="mt-0.5 text-[10px] text-gray-400 dark:text-neutral-500">
-          {{ square.memberCount ?? 0 }} sellers
+        <p
+          class="mt-0.5 flex items-center gap-1 text-[10px] text-gray-400 dark:text-neutral-500"
+        >
+          <Icon name="mdi:store-outline" size="10" class="shrink-0" />
+          {{ square.memberCount ?? 0 }} traders
         </p>
+      </div>
+    </template>
+
+    <!-- ── SPOTLIGHT LAYOUT (home destination rail) ────────────────────────── -->
+    <template v-else-if="variant === 'spotlight'">
+      <!-- Banner -->
+      <div class="relative h-28 overflow-hidden">
+        <img
+          v-if="square.bannerUrl"
+          :src="
+            cloudinaryUrl(square.bannerUrl, {
+              width: 480,
+              height: 224,
+              crop: 'fill',
+            })
+          "
+          :alt="square.name"
+          width="240"
+          height="112"
+          class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          loading="lazy"
+          decoding="async"
+        />
+        <div
+          v-else
+          class="h-full w-full"
+          :style="`background: linear-gradient(135deg, ${accent}55, ${accent}22)`"
+        />
+        <!-- Accent scrim for legibility -->
+        <div
+          class="pointer-events-none absolute inset-0"
+          :style="`background: linear-gradient(to top, ${accent}66, transparent 60%)`"
+        />
+        <!-- Type badge -->
+        <span
+          class="absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-full bg-black/45 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white backdrop-blur-sm"
+        >
+          <Icon
+            :name="square.type === 'GEOGRAPHIC' ? 'mdi:map-marker' : 'mdi:tag'"
+            size="11"
+          />
+          {{ square.type === 'GEOGRAPHIC' ? 'Market' : 'Category' }}
+        </span>
+      </div>
+
+      <!-- Icon chip straddles the banner/body seam -->
+      <div class="relative px-3">
+        <div
+          class="absolute -top-5 left-3 flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border-2 border-white bg-white shadow dark:border-neutral-900 dark:bg-neutral-900"
+          :style="`box-shadow: 0 2px 8px ${accent}33`"
+        >
+          <img
+            v-if="square.iconUrl"
+            :src="
+              cloudinaryUrl(square.iconUrl, {
+                width: 40,
+                height: 40,
+                crop: 'fill',
+              })
+            "
+            :alt="square.name"
+            width="40"
+            height="40"
+            class="h-full w-full object-cover"
+            loading="lazy"
+            decoding="async"
+          />
+          <span v-else class="text-xs font-black" :style="`color: ${accent}`">
+            {{ square.name.slice(0, 2).toUpperCase() }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Info -->
+      <div class="px-3 pb-3 pt-6">
+        <p
+          class="truncate font-display text-sm font-bold text-gray-900 dark:text-white"
+        >
+          {{ square.name }}
+        </p>
+        <p
+          v-if="square.city || square.state"
+          class="mt-0.5 flex items-center gap-1 truncate text-[11px] text-gray-500 dark:text-neutral-400"
+        >
+          <Icon name="mdi:map-marker-outline" size="11" class="shrink-0" />
+          {{ [square.city, square.state].filter(Boolean).join(', ') }}
+        </p>
+        <div class="mt-2 flex items-center gap-1.5 text-[11px]">
+          <span
+            class="flex items-center gap-1 font-semibold"
+            :style="`color: ${accent}`"
+          >
+            <Icon name="mdi:store-outline" size="13" />
+            {{ square.memberCount ?? 0 }} traders
+          </span>
+          <span
+            v-if="square.productCount != null"
+            class="text-gray-400 dark:text-neutral-500"
+          >
+            · {{ square.productCount }} goods
+          </span>
+          <span
+            class="ml-auto inline-flex items-center gap-1 text-gray-400 dark:text-neutral-500"
+          >
+            Visit <Icon name="mdi:arrow-right" size="12" />
+          </span>
+        </div>
       </div>
     </template>
 
@@ -114,9 +230,12 @@
           :style="`background: linear-gradient(to top, ${accent}44, transparent)`"
         />
         <span
-          class="absolute left-3 top-2.5 rounded-full bg-black/50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white backdrop-blur-sm"
+          class="absolute left-3 top-2.5 inline-flex items-center gap-1 rounded-full bg-black/50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white backdrop-blur-sm"
         >
-          {{ square.type === 'GEOGRAPHIC' ? '📍' : '🏷️' }}
+          <Icon
+            :name="square.type === 'GEOGRAPHIC' ? 'mdi:map-marker' : 'mdi:tag'"
+            size="11"
+          />
           {{ square.type === 'GEOGRAPHIC' ? 'Location' : 'Category' }}
         </span>
       </div>
@@ -149,7 +268,9 @@
             </span>
           </div>
           <div class="min-w-0 flex-1 pt-0.5">
-            <p class="truncate text-sm font-bold text-gray-900 dark:text-white">
+            <p
+              class="truncate font-display text-sm font-bold text-gray-900 dark:text-white"
+            >
               {{ square.name }}
             </p>
             <p
@@ -174,7 +295,7 @@
           >
             <span class="flex items-center gap-1">
               <Icon name="mdi:store-outline" size="13" />
-              {{ square.memberCount ?? 0 }} sellers
+              {{ square.memberCount ?? 0 }} traders
             </span>
             <span class="flex items-center gap-1">
               <Icon name="mdi:account-multiple-outline" size="13" />
@@ -186,7 +307,7 @@
             :class="
               following
                 ? 'bg-amber-50 text-amber-600 ring-1 ring-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:ring-amber-700/40'
-                : 'bg-amber-500 text-white shadow-sm shadow-amber-400/30 hover:bg-amber-600'
+                : 'text-amber-600 ring-1 ring-amber-300 hover:bg-amber-500 hover:text-white hover:ring-amber-500 dark:text-amber-400 dark:ring-amber-700/50'
             "
             :disabled="followLoading"
             @click.prevent="$emit('toggle-follow')"
@@ -224,8 +345,9 @@ const props = withDefaults(
       type: 'GEOGRAPHIC' | 'CATEGORY'
       memberCount?: number
       followerCount?: number
+      productCount?: number
     }
-    variant?: 'full' | 'compact'
+    variant?: 'full' | 'compact' | 'spotlight'
     following?: boolean
     followLoading?: boolean
   }>(),

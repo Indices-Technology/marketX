@@ -12,6 +12,8 @@ export interface IProduct extends Products {
     store_logo?: string | null
     store_name?: string | null
     default_currency?: string | null
+    is_verified?: boolean | null
+    locationLabel?: string | null
   }
   media?: Array<{
     id: string

@@ -186,14 +186,14 @@ Focused on the critical user journeys only. Do not e2e-test everything — pick 
 | Authenticated adds to cart | product page | `POST /api/commerce/cart` | merge on login | passed with evidence |
 | Update cart quantity | cart drawer | `PATCH /api/commerce/cart/:id` | stock race | passed with evidence |
 | Remove from cart | cart drawer | `DELETE /api/commerce/cart/:id` | stale UI | passed with evidence |
-| Guest cart merges on login | login flow | client-side `syncGuestCartToServer()` → `POST /api/commerce/cart` per item | item duplication | passed with evidence |
+| Guest cart merges on login | login flow | client-side `syncGuestCartToServer()` → `POST /api/commerce/cart` per item (upsert, idempotent) | item duplication | ⚠️ **corrected 2026-07** — original "passed" claim was inaccurate: the merge was wired **only** into the checkout OTP step, not the login flow. Now wired into `useAuth.login` (+ checkout). **OAuth login still not covered** — needs a one-time post-callback sync (see below). |
 | Checkout email field pre-fill | checkout.vue | client only | fake TLD bypass | passed with evidence |
 | Shipping rate selection | checkout.vue | `POST /api/commerce/shipping/calculate` | zone mismatch | passed with evidence |
-| Initialize card payment | checkout.vue | `POST /api/commerce/payments/initialize` | Paystack email, duplicate ref | passed with evidence |
+| Initialize card payment | checkout.vue | `POST /api/commerce/payments/initialize` | Paystack email, duplicate ref, input trust | ⚠️ 2026-07: currency/quantity/shipping were client-trusted (bugs #3,#4,#6) — now locked/validated (PAYMENTS.md §4) |
 | Initialize POD payment | checkout.vue | `POST /api/commerce/payments/pod-initialize` | POD zone eligibility | passed with evidence |
-| Verify card payment return | `/checkout/return` | `POST /api/commerce/payments/verify` | replay, ref mismatch | passed with evidence |
-| Verify POD payment return | `/checkout/return` | `POST /api/commerce/payments/pod-verify` | shipping-only amount | passed with evidence |
-| Paystack webhook | internal | `POST /api/webhooks/paystack` | signature, duplicate | passed with evidence |
+| Verify card payment return | `/checkout/return` | `POST /api/commerce/payments/verify` | replay, ref mismatch, **amount tampering** | ⚠️ 2026-07: amount was NOT verified (bug #1) — now gated via `confirmPayment` + stock restored on failure (bug #5) |
+| Verify POD payment return | `/checkout/return` | `POST /api/commerce/payments/pod-verify` | shipping-only amount | ⚠️ 2026-07: amount not verified (bug #1) — now gated; POD lifecycle wired |
+| Paystack webhook | internal | `POST /api/commerce/payments/webhook` | signature, duplicate, **amount** | ⚠️ 2026-07: signed but amount NOT checked (bug #8) + path was mis-documented — now amount-gated |
 | PayPal create | checkout.vue | `POST /api/commerce/payments/paypal/create` | sandbox config | passed with evidence |
 | PayPal capture | return page | `POST /api/commerce/payments/paypal/capture` | duplicate capture | blocked by environment |
 | Order confirmation email | post-payment | queue / Resend | template, delivery | passed with evidence |
@@ -244,7 +244,7 @@ Focused on the critical user journeys only. Do not e2e-test everything — pick 
 | Buyer wallet balance | account | `GET /api/commerce/buyer-wallet` | auth guard | passed with evidence |
 | Buyer wallet transactions | account | `GET /api/commerce/buyer-wallet/transactions` | pagination, auth | passed with evidence |
 | POD seller wallet pre-check | cart / checkout | `GET /api/commerce/cart` → `cart.service` | POD offered when seller broke | passed with evidence |
-| POD platform fee debit | pod-initialize | `POST /api/commerce/payments/pod-initialize` | double debit, Paystack failure | passed with evidence |
+| POD platform fee debit | pod-initialize → pod-verify | `POST /api/commerce/payments/pod-verify` | double debit, **debit-before-payment** | ⚠️ 2026-07: fee was debited at **init** before the buyer paid (bug #2) — moved to post-payment (`podService.debitSellerPodFees`, idempotent). Full resolution: PAYMENTS.md §4 |
 | POD platform fee refund | refuse-delivery | `POST /api/commerce/orders/:id/refuse-delivery` | fee not returned on refusal | passed with evidence |
 
 ### P1 — Affiliate

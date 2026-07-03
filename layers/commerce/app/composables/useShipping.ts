@@ -105,7 +105,10 @@ export const useShipping = () => {
       return { rates: res.data ?? [], error: null }
     } catch (e: unknown) {
       const err = e as Error & { data?: { message?: string } }
-      return { rates: [], error: err?.data?.message ?? 'Could not fetch shipping rates' }
+      return {
+        rates: [],
+        error: err?.data?.message ?? 'Could not fetch shipping rates',
+      }
     }
   }
 

@@ -15,18 +15,38 @@
  * table; until then callers pass an explicit discountPct (default 0).
  */
 
-/** Default markup applied to single-rate carriers (no distinct list price). */
-export const DEFAULT_MARKUP = 0.15
+/**
+ * Platform markup applied to CARRIER cost (GIG today, any carrier we onboard next).
+ * Provider-agnostic — set once via env, not per-carrier. Seller-priced BYOS
+ * ('self') is passed through untouched by the orchestrator.
+ *   SHIPPING_MARKUP_PCT    fraction on cost, e.g. 0.25 → buyer pays cost × 1.25
+ *   SHIPPING_HANDLING_FEE  optional flat NGN added per carrier shipment (default 0)
+ */
+export const DEFAULT_MARKUP = 0.25
+
+/** Global carrier markup (fraction), from env; falls back to DEFAULT_MARKUP. */
+export function shippingMarkupPct(): number {
+  const n = Number(process.env.SHIPPING_MARKUP_PCT)
+  return Number.isFinite(n) && n >= 0 ? n : DEFAULT_MARKUP
+}
+
+/** Global flat handling fee in MINOR units (kobo), from env (major NGN); default 0. */
+export function shippingHandlingFeeMinor(): number {
+  const n = Number(process.env.SHIPPING_HANDLING_FEE)
+  return Number.isFinite(n) && n > 0 ? Math.round(n * 100) : 0
+}
 
 export interface PricingInput {
   costMinor: number
-  /** Reference/retail price. For single-rate carriers, pass costMinor and set deriveList. */
+  /** Reference/retail price. When absent + deriveList, computed from cost. */
   listMinor?: number
   /** 0..1 — fraction of the (list − cost) spread passed to the buyer as discount. */
   discountPct?: number
-  /** When listMinor is absent, derive it as cost × (1 + markup). */
+  /** When listMinor is absent, derive it as cost × (1 + markup) + handling fee. */
   deriveList?: boolean
   markup?: number
+  /** Flat fee (minor) added to the derived list — carrier handling. */
+  handlingFeeMinor?: number
 }
 
 export interface PricingResult {
@@ -40,11 +60,12 @@ export function computePrice(input: PricingInput): PricingResult {
   const cost = Math.max(0, Math.round(input.costMinor))
   const markup = input.markup ?? DEFAULT_MARKUP
 
+  const fee = Math.max(0, Math.round(input.handlingFeeMinor ?? 0))
   const list =
     input.listMinor != null
       ? Math.round(input.listMinor)
       : input.deriveList
-        ? Math.round(cost * (1 + markup))
+        ? Math.round(cost * (1 + markup)) + fee
         : cost
 
   const discountPct = clamp01(input.discountPct ?? 0)

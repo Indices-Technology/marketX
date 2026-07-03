@@ -330,7 +330,7 @@ export default defineNuxtConfig({
 
   // ── Color mode ───────────────────────────────────────────────────────────────
   colorMode: {
-    preference: 'system',
+    preference: 'light',
     fallback: 'light',
     globalName: '__NUXT_COLOR_MODE__',
     componentName: 'ColorScheme',

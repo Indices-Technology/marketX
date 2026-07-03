@@ -33,8 +33,6 @@ import {
 import { resolveStation, locationFor } from './stations'
 
 const NGN = (naira: number) => Math.round(naira * 100) // → kobo (minor units)
-/** GIGL Class = 20% off the public (Basic) rate → Basic = Class / 0.8. */
-const CLASS_OFF = 0.2
 
 function totalWeightKg(req: ShipmentRequest): number {
   if (req.parcel?.weightKg) return req.parcel.weightKg
@@ -73,11 +71,16 @@ async function liveQuote(req: ShipmentRequest): Promise<Quote[] | null> {
     CustomerCode: gigCustomerCode(),
     CustomerType: gigCustomerType(),
     PickUpOptions: 0, // 0 = HomeDelivery
+    // Weight-priced regular item. ShipmentType 0 = "special package" — a
+    // predefined GIG package whose FIXED weight overrides ours (id 1 = 12.5kg),
+    // which made every quote come back as 12.5kg. ShipmentType 1 prices by the
+    // actual Weight and requires ItemName + IsVolumetric.
     ShipmentItems: [
       {
         Quantity: 1,
-        ShipmentType: 0,
-        SpecialPackageId: 1,
+        ShipmentType: 1,
+        ItemName: 'Merchandise',
+        IsVolumetric: false,
         Weight: weight,
         Value: valueMajor,
       },
@@ -89,8 +92,10 @@ async function liveQuote(req: ShipmentRequest): Promise<Quote[] | null> {
 
   const zone = resolveZone(req.origin.state, req.destination.state)
   const eta = ZONE_ETA[zone]
+  // GIG returns a single price for our ecommerce account (Discount: 0) — this IS
+  // our cost. The buyer-facing markup is applied centrally by the orchestrator
+  // (SHIPPING_MARKUP_PCT), so we no longer fabricate a "Basic" retail here.
   const costMinor = NGN(grand)
-  const listMinor = Math.round(costMinor / (1 - CLASS_OFF))
 
   return [
     {
@@ -99,8 +104,8 @@ async function liveQuote(req: ShipmentRequest): Promise<Quote[] | null> {
       serviceLevel: 'standard',
       zoneCode: zone,
       costMinor,
-      listMinor,
-      buyerPriceMinor: listMinor, // orchestrator applies the discount dial
+      listMinor: costMinor,
+      buyerPriceMinor: costMinor, // orchestrator applies markup + discount dial
       currency: req.currency ?? 'NGN',
       etaText: eta.text,
       etaMinHours: eta.minHours,
@@ -114,15 +119,18 @@ function fallbackQuote(req: ShipmentRequest): Quote[] {
   const weight = totalWeightKg(req)
   const zone = resolveZone(req.origin.state, req.destination.state)
   const eta = ZONE_ETA[zone]
+  // Offline estimate when the live API is down: use the Class rate card as cost;
+  // the orchestrator applies the same central markup as the live path.
+  const costMinor = NGN(gigRateNGN('CLASS', zone, weight))
   return [
     {
       carrierId: 'gig',
       carrierName: 'GIG Logistics',
       serviceLevel: 'standard',
       zoneCode: zone,
-      costMinor: NGN(gigRateNGN('CLASS', zone, weight)),
-      listMinor: NGN(gigRateNGN('BASIC', zone, weight)),
-      buyerPriceMinor: NGN(gigRateNGN('BASIC', zone, weight)),
+      costMinor,
+      listMinor: costMinor,
+      buyerPriceMinor: costMinor,
       currency: req.currency ?? 'NGN',
       etaText: eta.text,
       etaMinHours: eta.minHours,
@@ -191,11 +199,14 @@ export const gigProvider: IShippingProvider = {
       CashOnDeliveryAmount: cod
         ? (req.request.declaredValueMinor || 0) / 100
         : 0,
+      // Must mirror the quote's item shape (regular, weight-priced) so the booked
+      // shipment matches the quoted price — see quote()'s note on ShipmentType.
       ShipmentItems: [
         {
           Quantity: 1,
-          ShipmentType: 0,
-          SpecialPackageId: 1,
+          ShipmentType: 1,
+          ItemName: 'Merchandise',
+          IsVolumetric: false,
           Weight: weight,
           Value: (req.request.declaredValueMinor || 0) / 100,
         },

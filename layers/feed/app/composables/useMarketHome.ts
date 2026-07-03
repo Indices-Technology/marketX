@@ -56,7 +56,12 @@ export function useMarketHome() {
   async function loadSquares() {
     try {
       if (!_inflightSquares) {
-        _inflightSquares = squareApi.listSquares({ limit: 8 })
+        // Home hero shows real, physical market squares; category squares
+        // live in the right-rail "Markets by category" section instead.
+        _inflightSquares = squareApi.listSquares({
+          type: 'GEOGRAPHIC',
+          limit: 8,
+        })
         _inflightSquares.finally(() => {
           _inflightSquares = null
         })

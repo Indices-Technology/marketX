@@ -41,8 +41,13 @@ function checkInMemory(key: string, config: RateLimitConfig): RateLimitResult {
   let record = _store.get(key)
 
   if (record?.lockedUntil && record.lockedUntil > now) {
-    return { allowed: false, remaining: 0, resetAt: record.lockedUntil,
-      locked: true, lockedUntilMs: Math.ceil((record.lockedUntil - now) / 1000) }
+    return {
+      allowed: false,
+      remaining: 0,
+      resetAt: record.lockedUntil,
+      locked: true,
+      lockedUntilMs: Math.ceil((record.lockedUntil - now) / 1000),
+    }
   }
 
   if (!record || now - record.firstAttemptAt > config.windowMs) {
@@ -54,26 +59,43 @@ function checkInMemory(key: string, config: RateLimitConfig): RateLimitResult {
   if (record.count > config.maxAttempts) {
     record.lockedUntil = now + config.lockoutMs
     _store.set(key, record)
-    return { allowed: false, remaining: 0, resetAt: record.lockedUntil,
-      locked: true, lockedUntilMs: Math.ceil(config.lockoutMs / 1000) }
+    return {
+      allowed: false,
+      remaining: 0,
+      resetAt: record.lockedUntil,
+      locked: true,
+      lockedUntilMs: Math.ceil(config.lockoutMs / 1000),
+    }
   }
 
   _store.set(key, record)
-  return { allowed: true, remaining: config.maxAttempts - record.count,
-    resetAt: record.firstAttemptAt + config.windowMs, locked: false }
+  return {
+    allowed: true,
+    remaining: config.maxAttempts - record.count,
+    resetAt: record.firstAttemptAt + config.windowMs,
+    locked: false,
+  }
 }
 
 // ─── Redis implementation ─────────────────────────────────────────────────────
 
-async function checkRedis(key: string, config: RateLimitConfig): Promise<RateLimitResult> {
+async function checkRedis(
+  key: string,
+  config: RateLimitConfig,
+): Promise<RateLimitResult> {
   const now = Date.now()
   const lockKey = `${key}:lock`
 
   // Check lockout first
   const lockTtl = await redis!.ttl(lockKey)
   if (lockTtl > 0) {
-    return { allowed: false, remaining: 0, resetAt: now + lockTtl * 1000,
-      locked: true, lockedUntilMs: lockTtl }
+    return {
+      allowed: false,
+      remaining: 0,
+      resetAt: now + lockTtl * 1000,
+      locked: true,
+      lockedUntilMs: lockTtl,
+    }
   }
 
   const windowSec = Math.ceil(config.windowMs / 1000)
@@ -84,29 +106,44 @@ async function checkRedis(key: string, config: RateLimitConfig): Promise<RateLim
     const lockSec = Math.ceil(config.lockoutMs / 1000)
     await redis!.set(lockKey, '1', { ex: lockSec })
     await redis!.del(key)
-    return { allowed: false, remaining: 0, resetAt: now + config.lockoutMs,
-      locked: true, lockedUntilMs: lockSec }
+    return {
+      allowed: false,
+      remaining: 0,
+      resetAt: now + config.lockoutMs,
+      locked: true,
+      lockedUntilMs: lockSec,
+    }
   }
 
   const ttl = await redis!.ttl(key)
-  return { allowed: true, remaining: config.maxAttempts - count,
-    resetAt: now + ttl * 1000, locked: false }
+  return {
+    allowed: true,
+    remaining: config.maxAttempts - count,
+    resetAt: now + ttl * 1000,
+    locked: false,
+  }
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
-export function checkRateLimit(identifier: string, config: RateLimitConfig): RateLimitResult {
+/**
+ * Synchronous rate limit check. ALWAYS uses the per-process in-memory store —
+ * a sync function cannot await Redis, so this does NOT share counters across
+ * serverless instances. Prefer `checkRateLimitAsync` for any async caller
+ * (all auth endpoints use it). Kept only for rare sync callers.
+ */
+export function checkRateLimit(
+  identifier: string,
+  config: RateLimitConfig,
+): RateLimitResult {
   const key = `${config.keyPrefix}:${identifier}`
-  if (redis) {
-    // Sync callers (non-async service code) can't await — schedule the Redis check
-    // and optimistically allow while Redis updates. For auth endpoints the caller
-    // uses the async version; this sync path is kept for backward compat.
-    return checkInMemory(key, config)
-  }
   return checkInMemory(key, config)
 }
 
-export async function checkRateLimitAsync(identifier: string, config: RateLimitConfig): Promise<RateLimitResult> {
+export async function checkRateLimitAsync(
+  identifier: string,
+  config: RateLimitConfig,
+): Promise<RateLimitResult> {
   const key = `${config.keyPrefix}:${identifier}`
   if (redis) {
     try {
@@ -130,11 +167,17 @@ export function resetAllRateLimits(): void {
   _store.clear()
 }
 
-export function getRateLimitStatus(identifier: string, keyPrefix: string): AttemptRecord | undefined {
+export function getRateLimitStatus(
+  identifier: string,
+  keyPrefix: string,
+): AttemptRecord | undefined {
   return _store.get(`${keyPrefix}:${identifier}`)
 }
 
-export function deleteRateLimitRecord(identifier: string, keyPrefix: string): boolean {
+export function deleteRateLimitRecord(
+  identifier: string,
+  keyPrefix: string,
+): boolean {
   return _store.delete(`${keyPrefix}:${identifier}`)
 }
 

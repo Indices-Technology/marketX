@@ -5,18 +5,25 @@
     :narrow-sidebar="true"
   >
     <div class="discover-page-wrap relative w-full pb-20 md:pb-0 md:pt-0">
+      <!-- ─── HERO (non-sticky intro) ──────────────────────────────────────── -->
+      <div class="px-1 pb-3 pt-4 sm:px-0">
+        <h1
+          class="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white"
+        >
+          Discover
+        </h1>
+        <p class="mt-0.5 text-sm text-gray-500 dark:text-neutral-400">
+          Search products, traders or markets across Nigeria
+        </p>
+      </div>
+
       <!-- ─── STICKY HEADER ──────────────────────────────────────────────── -->
       <div
         class="discover-sticky-header -mx-2 border-b border-gray-200 bg-white/90 px-4 pb-3 pt-4 backdrop-blur-xl sm:-mx-4 dark:border-neutral-800 dark:bg-neutral-950/90"
         :style="{ top: discoverStickyTop }"
       >
         <div class="mb-3 flex items-center gap-2">
-          <h1
-            class="text-xl font-extrabold tracking-tight text-gray-900 dark:text-neutral-100"
-          >
-            Discover
-          </h1>
-          <div class="relative flex-1 sm:max-w-sm">
+          <div class="relative flex-1">
             <Icon
               name="mdi:magnify"
               size="18"
@@ -81,7 +88,7 @@
           <button
             v-for="tab in TABS"
             :key="tab.key"
-            class="flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-all"
+            class="flex min-h-[38px] shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-[13px] font-semibold transition-all"
             :class="
               activeTab === tab.key
                 ? 'bg-brand text-white shadow-sm shadow-brand/30'
@@ -221,7 +228,7 @@ const TABS = [
   { key: 'fresh',    label: 'Fresh Drops', icon: 'mdi:lightning-bolt' },
   { key: 'deals',    label: 'Deals',       icon: 'mdi:tag-heart-outline' },
   { key: 'preloved', label: 'Pre-loved',   icon: 'mdi:recycle' },
-  { key: 'sellers',  label: 'Sellers',     icon: 'mdi:storefront-outline' },
+  { key: 'sellers',  label: 'Traders',     icon: 'mdi:storefront-outline' },
   { key: 'squares',  label: 'Squares',     icon: 'mdi:store-marker-outline' },
   { key: 'people',   label: 'People',      icon: 'mdi:account-group-outline' },
   { key: 'tags',     label: 'Tags',        icon: 'mdi:tag-outline' },
@@ -269,16 +276,16 @@ const activeFilterChips = computed<Array<{ key: string; label: string; clear: ()
 
 const searchPlaceholder = computed(() => {
   const map: Record<string, string> = {
-    browse: 'Search products, stores and more…',
-    trending: 'Search trending…',
-    squares: 'Search squares…',
-    fresh: 'Search fresh drops…',
-    deals: 'Search deals…',
-    preloved: 'Search pre-loved items…',
-    products: 'Search products…',
-    sellers: 'Search stores…',
+    browse: 'Search products, traders or markets',
+    trending: 'Search products, traders or markets',
+    squares: 'Search markets',
+    fresh: 'Search products, traders or markets',
+    deals: 'Search products, traders or markets',
+    preloved: 'Search pre-loved from traders',
+    products: 'Search products, traders or markets',
+    sellers: 'Search traders',
     people: 'Search people by name or @username',
-    tags: 'Search tags…',
+    tags: 'Search categories',
   }
   return map[activeTab.value] ?? 'Search…'
 })
@@ -315,7 +322,26 @@ watch(
   },
 )
 
+// Search deep-link: /discover?q=… (used by the homepage search hero + right rail)
+const applySearchParam = (q: string) => {
+  searchInput.value = q
+  activeTab.value = 'products' as typeof activeTab.value
+}
+
+watch(
+  () => route.query.q,
+  (val) => {
+    if (val && typeof val === 'string') applySearchParam(val)
+  },
+)
+
 onMounted(() => {
+  const q = route.query.q as string | undefined
+  if (q) {
+    applySearchParam(q)
+    return
+  }
+
   const tagName = route.query.tagName as string | undefined
   if (tagName) {
     applyTagNameParam(tagName)

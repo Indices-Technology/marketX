@@ -4,6 +4,7 @@
 import { z, ZodError } from 'zod'
 import { orderService } from '~~/layers/commerce/server/services/order.service'
 import { orderRepository } from '~~/layers/commerce/server/repositories/order.repository'
+import { resolveAffiliateCode } from '~~/server/utils/affiliate-ref'
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
 import { getClientIP } from '~~/server/layers/shared/utils/security'
@@ -46,7 +47,7 @@ export default defineEventHandler(async (event) => {
     // 1. Create internal orders (one per seller, PENDING/UNPAID, shared group)
     const group = await orderService.placeOrder(
       user.id,
-      { ...body, paymentMethod: 'paypal' },
+      { ...body, paymentMethod: 'paypal', affiliateCode: await resolveAffiliateCode(event, body.affiliateCode) },
       ipAddress,
       userAgent,
     )

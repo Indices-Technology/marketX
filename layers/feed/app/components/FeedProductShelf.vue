@@ -4,8 +4,11 @@
   <div
     class="w-full overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-950"
   >
-    <!-- Header -->
-    <div class="flex items-center justify-between px-4 py-3">
+    <!-- Header (hidden when the parent already renders a section header) -->
+    <div
+      v-if="!hideHeader"
+      class="flex items-center justify-between px-4 py-3"
+    >
       <div class="flex items-center gap-2">
         <div
           class="flex h-7 w-7 items-center justify-center rounded-lg bg-brand/10"
@@ -156,6 +159,8 @@ const props = defineProps<{
     media?: Array<{ url: string; type?: string }>
   }>
   label?: string
+  /** Hide the shelf's own header when the parent renders its own section header. */
+  hideHeader?: boolean
 }>()
 
 defineEmits<{ 'open-product': [product: (typeof props.products)[number]] }>()

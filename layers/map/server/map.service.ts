@@ -31,21 +31,29 @@ export const mapService = {
       all = await remember('map:geo-sellers:all', 300, () => mapRepository.getAllGeoSellers())
     }
 
-    let filtered = all
+    // Distance + attribute filters first, then radius.
+    let candidates = all
       .map((s) => ({ ...s, distanceKm: haversineKm(opts.lat, opts.lng, s.latitude, s.longitude) }))
-      .filter((s) => s.distanceKm <= opts.radiusKm)
       .sort((a, b) => a.distanceKm - b.distanceKm)
 
-    if (opts.filter === 'deals')    filtered = filtered.filter((s) => s.hasActiveDeal)
-    if (opts.filter === 'premium')  filtered = filtered.filter((s) => s.isPremium)
-    if (opts.filter === 'verified') filtered = filtered.filter((s) => s.is_verified)
+    if (opts.filter === 'deals')    candidates = candidates.filter((s) => s.hasActiveDeal)
+    if (opts.filter === 'premium')  candidates = candidates.filter((s) => s.isPremium)
+    if (opts.filter === 'verified') candidates = candidates.filter((s) => s.is_verified)
+
+    let filtered = candidates.filter((s) => s.distanceKm <= opts.radiusKm)
+
+    // Nearest-fallback: in a sparse marketplace the map shouldn't be empty when stores
+    // exist just beyond the radius. If nothing is in range, surface the nearest matches
+    // (sorted by distance) and flag it so the UI can say "showing nearest" + fit to them.
+    const outsideRadius = filtered.length === 0 && candidates.length > 0
+    if (outsideRadius) filtered = candidates
 
     const total = filtered.length
     const data = filtered.slice(opts.offset, opts.offset + opts.limit)
 
     return {
       data,
-      meta: { total, limit: opts.limit, offset: opts.offset, hasMore: opts.offset + opts.limit < total },
+      meta: { total, limit: opts.limit, offset: opts.offset, hasMore: opts.offset + opts.limit < total, outsideRadius },
     }
   },
 

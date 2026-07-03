@@ -14,7 +14,7 @@
         class="space-y-8 text-sm leading-relaxed text-gray-700 dark:text-neutral-300"
       >
         <p>
-          Welcome to <strong>{{ config.public.siteName || 'styleX' }}</strong
+          Welcome to <strong>{{ config.public.siteName || 'MarketX' }}</strong
           >. Your privacy matters to us. This policy explains what data we
           collect, why we collect it, and how you can control it. By using our
           platform you agree to the practices described here.
@@ -266,7 +266,7 @@ import RightSideNavLinks from '~~/layers/core/app/layouts/children/RightSideNavL
 const config = useRuntimeConfig()
 
 useSeoMeta({
-  title: `Privacy Policy · ${useRuntimeConfig().public.siteName || 'styleX'}`,
-  description: `Learn how ${useRuntimeConfig().public.siteName || 'styleX'} collects, uses, and protects your personal data.`,
+  title: `Privacy Policy · ${useRuntimeConfig().public.siteName || 'MarketX'}`,
+  description: `Learn how ${useRuntimeConfig().public.siteName || 'MarketX'} collects, uses, and protects your personal data.`,
 })
 </script>

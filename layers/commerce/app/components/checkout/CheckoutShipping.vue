@@ -1,8 +1,13 @@
 <template>
   <div
-    class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900"
+    :class="
+      embedded
+        ? ''
+        : 'rounded-2xl border border-gray-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900'
+    "
   >
     <h2
+      v-if="!embedded"
       class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-neutral-400"
     >
       {{ storeName ? `Ships from ${storeName}` : 'Shipping' }}
@@ -151,6 +156,8 @@ const props = defineProps<{
   activeCurrency: SupportedCurrency
   /** When set (multi-seller cart), shown as the card header "Ships from {storeName}". */
   storeName?: string
+  /** Render without the card wrapper/header — for nesting inside a seller package card. */
+  embedded?: boolean
 }>()
 
 const emit = defineEmits<{

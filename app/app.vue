@@ -20,9 +20,13 @@
 
 <script setup lang="ts">
 import UploadProgressBar from '~~/layers/core/app/components/UploadProgressBar.vue'
+import { useSeo } from '~~/layers/core/app/composables/useSeo'
+import { useSettings } from '~~/layers/profile/app/composables/useSettings'
+import { watch } from 'vue'
+import { useColorMode } from '#imports'
 
 const colorMode = useColorMode()
-colorMode.preference = colorMode.preference || 'dark'
+colorMode.preference = colorMode.preference || 'light'
 
 const { defaults } = useSeo()
 defaults()

@@ -7,6 +7,7 @@ import { notificationQueue } from '~~/server/queues/notification.queue'
 import { emailQueue } from '~~/server/queues/email.queue'
 import { walletService } from '../../../services/wallet.service'
 import { orderRepository } from '../../../repositories/order.repository'
+import { paymentService } from '~~/layers/payments/server/services/payment.service'
 import { squareService } from '~~/layers/square/server/services/square.service'
 import { buildOrderStatusEmail } from '~~/server/utils/email/emailService'
 
@@ -58,10 +59,20 @@ export default defineEventHandler(async (event) => {
       return { success: true, data: { status: 'already_paid', orderIds } }
     }
 
-    // 3. Verify with Paystack (one transaction covers the whole purchase)
-    const result = await paystack.verifyTransaction(reference)
+    // 3. Money-gate: verify with the provider AND assert the collected amount
+    // covers what the group owes (items + shipping), recomputed from the DB —
+    // never trusting the client-supplied amounts from checkout.
+    const expectedMinor = orders.reduce(
+      (s, o) => s + o.totalAmount + (o.shippingCost ?? 0),
+      0,
+    )
+    const confirm = await paymentService.confirmPayment({
+      reference,
+      expectedMinor,
+      expectedCurrency: 'NGN',
+    })
 
-    if (result.data.status === 'success') {
+    if (confirm.ok) {
       // Per order: atomic flip — only the first caller (vs the webhook) gets
       // count > 0, so side effects run once per order (no double-crediting).
       for (const o of orders) {
@@ -86,9 +97,36 @@ export default defineEventHandler(async (event) => {
       return { success: true, data: { status: 'paid', orderIds } }
     }
 
-    // Payment failed or abandoned — fail every order in the group
-    await Promise.all(orders.map((o) => orderRepository.updatePaymentStatus(o.id, 'FAILED')))
-    return { success: true, data: { status: result.data.status, orderIds } }
+    // Amount/currency mismatch = tampering or a bug — refuse to confirm, leave
+    // the orders PENDING for support/reconciliation. Never mark a short payment PAID.
+    if (
+      confirm.status === 'amount_mismatch' ||
+      confirm.status === 'currency_mismatch'
+    ) {
+      logger.logError(
+        '[POST /api/commerce/payments/verify] payment mismatch — refusing to confirm',
+        new Error(confirm.reason ?? confirm.status),
+        {
+          requestId: event.context?.requestId,
+          reference,
+          expectedMinor,
+          actualMinor: confirm.actualMinor,
+        },
+      )
+      throw createError({
+        statusCode: 409,
+        statusMessage:
+          'Payment could not be confirmed (amount mismatch). Please contact support.',
+      })
+    }
+
+    // Genuine failure — fail + cancel + restore stock (else it leaks, since the
+    // expiry cron only reclaims UNPAID). Abandoned/pending is left UNPAID so the
+    // buyer can still complete; the cron reclaims it after 30 min.
+    if (confirm.status === 'failed') {
+      await Promise.all(orders.map((o) => orderRepository.failAndRestore(o.id)))
+    }
+    return { success: true, data: { status: confirm.status, orderIds } }
   } catch (error: unknown) {
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
     if (error instanceof ZodError)

@@ -23,7 +23,11 @@ defineRouteMeta({
               username: { type: 'string', minLength: 3, maxLength: 30 },
               password: { type: 'string' },
               confirmPassword: { type: 'string' },
-              role: { type: 'string', enum: ['user', 'seller'], default: 'user' },
+              role: {
+                type: 'string',
+                enum: ['user', 'seller'],
+                default: 'user',
+              },
             },
           },
         },
@@ -77,7 +81,9 @@ export default defineEventHandler(async (event) => {
       })
     }
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
-    logger.logError('[POST /api/auth/register]', error, { requestId: event.context?.requestId })
+    logger.logError('[POST /api/auth/register]', error, {
+      requestId: event.context?.requestId,
+    })
     throw createError({
       statusCode: 500,
       statusMessage: 'Registration failed. Please try again.',

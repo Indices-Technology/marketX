@@ -64,6 +64,7 @@
             :selected-slug="selectedSeller?.store_slug ?? null"
             :radius-km="radiusKm"
             :view-mode="viewMode"
+            :outside-radius="outsideRadius"
             class="map-fill"
             @select-seller="onSelectSeller"
             @select-square="onSelectSquare"
@@ -214,10 +215,21 @@
           />
         </div>
 
+        <!-- ── Nearest-fallback banner (stores exist but beyond the radius) ── -->
+        <Transition name="fade">
+          <div
+            v-if="locationGranted && outsideRadius && sellers.length"
+            class="map-nearest-banner"
+          >
+            <Icon name="mdi:map-marker-distance" size="14" class="shrink-0" />
+            <span>No stores within {{ radiusKm }} km — showing the {{ sellers.length }} nearest</span>
+          </div>
+        </Transition>
+
         <!-- ── Floating count badge (mobile, no selection) ───────────────── -->
         <Transition name="fade">
           <div
-            v-if="locationGranted && !selectedSeller && sellers.length > 0"
+            v-if="locationGranted && !selectedSeller && !outsideRadius && sellers.length > 0"
             class="map-count-badge lg:hidden"
           >
             <Icon name="mdi:store-outline" size="13" />
@@ -265,6 +277,7 @@ const {
   userLng,
   activeFilter,
   radiusKm,
+  outsideRadius,
   categorySlug,
   requestLocation,
   fetchSellers,
@@ -509,6 +522,35 @@ onMounted(async () => {
 }
 .map-sheet > * {
   pointer-events: auto;
+}
+
+/* ── Nearest-fallback banner ──────────────────────────────────────────────────── */
+.map-nearest-banner {
+  position: absolute;
+  top: calc(max(env(safe-area-inset-top, 0px), 12px) + 56px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: calc(100% - 24px);
+  border-radius: 14px;
+  background: rgba(244, 63, 94, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #fff;
+  text-align: center;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+}
+@media (min-width: 1024px) {
+  .map-nearest-banner {
+    top: 16px;
+  }
 }
 
 /* ── Count badge ──────────────────────────────────────────────────────────────── */
