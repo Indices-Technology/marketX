@@ -10,7 +10,7 @@
           <h2
             class="text-sm font-bold uppercase tracking-wider text-gray-700 dark:text-neutral-300"
           >
-            Fresh Drops
+            Fresh from the markets
           </h2>
         </div>
         <button
@@ -54,7 +54,7 @@
           <h2
             class="text-sm font-bold uppercase tracking-wider text-gray-700 dark:text-neutral-300"
           >
-            Hot Deals
+            Deals across the markets
           </h2>
         </div>
         <button
@@ -98,7 +98,7 @@
           <h2
             class="text-sm font-bold uppercase tracking-wider text-gray-700 dark:text-neutral-300"
           >
-            Pre-loved
+            Pre-loved from traders
           </h2>
         </div>
         <button
@@ -160,7 +160,7 @@
           <h2
             class="text-sm font-bold uppercase tracking-wider text-gray-700 dark:text-neutral-300"
           >
-            Trending Tags
+            Popular in the markets
           </h2>
         </div>
         <div

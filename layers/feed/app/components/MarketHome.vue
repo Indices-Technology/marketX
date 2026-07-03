@@ -1,8 +1,8 @@
 <!-- Market home — rendered inside HomeLayout by the auth-aware index.vue -->
 <template>
   <div class="w-full space-y-10 px-1 sm:px-2">
-    <!-- ─── 0. SEARCH (hero) ──────────────────────────────────────────────── -->
-    <section class="pt-1">
+    <!-- ─── 0. SEARCH (hero) — mobile/tablet only; desktop uses the right-rail search -->
+    <section class="pt-1 lg:hidden">
       <form class="relative" role="search" @submit.prevent="goSearch">
         <Icon
           name="mdi:magnify"
@@ -54,6 +54,7 @@
         :products="deals"
         :priority="true"
         label="Today's deals"
+        hide-header
         @open-product="openProduct"
       />
     </section>
@@ -275,6 +276,7 @@
         v-else-if="freshItems.length"
         :products="freshItems"
         label="Fresh from the market"
+        hide-header
         @open-product="openProduct"
       />
     </section>

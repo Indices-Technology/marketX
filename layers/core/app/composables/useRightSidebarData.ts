@@ -42,11 +42,23 @@ export interface SidebarDeal {
   media?: Array<{ url: string; type: string }>
 }
 
+export interface SidebarSquare {
+  id: string
+  name: string
+  slug: string
+  accentColor?: string | null
+  city?: string | null
+  state?: string | null
+  memberCount?: number
+  productCount?: number
+}
+
 interface CacheState {
   trendingTags: SidebarTag[]
   trendingProducts: SidebarProduct[]
   featuredSellers: SidebarSeller[]
   activeDeals: SidebarDeal[]
+  squares: SidebarSquare[]
   fetchedAt: number
 }
 
@@ -66,7 +78,7 @@ export const useRightSidebarData = () => {
     loadingTrending.value = true
     loadingDeals.value = true
 
-    const [tRes, dRes] = await Promise.allSettled([
+    const [tRes, dRes, sRes] = await Promise.allSettled([
       $fetch<{
         success: boolean
         data: {
@@ -78,6 +90,9 @@ export const useRightSidebarData = () => {
       $fetch<{ success: boolean; data: SidebarDeal[] }>(
         '/api/feed/deals?limit=4',
       ),
+      $fetch<{ success: boolean; data: SidebarSquare[] }>(
+        '/api/squares?type=CATEGORY&limit=5',
+      ),
     ])
 
     loadingTrending.value = false
@@ -85,12 +100,14 @@ export const useRightSidebarData = () => {
 
     const td = tRes.status === 'fulfilled' ? tRes.value?.data : null
     const dd = dRes.status === 'fulfilled' ? dRes.value?.data ?? [] : []
+    const sd = sRes.status === 'fulfilled' ? sRes.value?.data ?? [] : []
 
     cache.value = {
       trendingTags: td?.trendingTags ?? [],
       trendingProducts: (td?.trendingProducts ?? []).slice(0, 5),
       featuredSellers: td?.featuredSellers ?? [],
       activeDeals: dd,
+      squares: sd,
       fetchedAt: Date.now(),
     }
   }
@@ -100,6 +117,7 @@ export const useRightSidebarData = () => {
     trendingProducts: computed(() => cache.value?.trendingProducts ?? []),
     featuredSellers: computed(() => cache.value?.featuredSellers ?? []),
     activeDeals: computed(() => cache.value?.activeDeals ?? []),
+    squares: computed(() => cache.value?.squares ?? []),
     loadingTrending,
     loadingDeals,
     hasData: computed(() => !!cache.value),

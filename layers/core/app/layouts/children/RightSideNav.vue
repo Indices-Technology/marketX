@@ -192,14 +192,87 @@
     >
       <div class="pb-8">
 
-        <!-- ── Who to Follow ────────────────────────────────────────────────── -->
+        <!-- ── Markets by category (category squares) ───────────────────────── -->
+        <div
+          v-if="squares.length || !hasData"
+          class="border-b border-gray-100 dark:border-neutral-800"
+        >
+          <div class="flex items-center justify-between px-4 pb-2 pt-4">
+            <h3 class="text-[17px] font-extrabold text-gray-900 dark:text-white">
+              Markets by category
+            </h3>
+            <NuxtLink
+              to="/squares"
+              class="text-[13px] font-medium text-brand hover:underline"
+              >All markets</NuxtLink
+            >
+          </div>
+
+          <div v-if="squares.length">
+            <NuxtLink
+              v-for="sq in squares.slice(0, 4)"
+              :key="sq.id"
+              :to="`/squares/${sq.slug}`"
+              class="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-gray-50 dark:hover:bg-neutral-800/60"
+            >
+              <div
+                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-[13px] font-black text-white"
+                :style="`background: ${sq.accentColor || '#f59e0b'}`"
+              >
+                {{ sq.name.slice(0, 2).toUpperCase() }}
+              </div>
+              <div class="min-w-0 flex-1">
+                <p
+                  class="truncate text-[13px] font-bold text-gray-900 dark:text-white"
+                >
+                  {{ sq.name }}
+                </p>
+                <p class="truncate text-[11px] text-gray-500 dark:text-neutral-400">
+                  {{ sq.memberCount ?? 0 }} traders<span
+                    v-if="sq.productCount != null"
+                  >
+                    · {{ sq.productCount }} goods</span
+                  >
+                </p>
+              </div>
+              <Icon
+                name="mdi:chevron-right"
+                size="18"
+                class="shrink-0 text-gray-300 dark:text-neutral-600"
+              />
+            </NuxtLink>
+          </div>
+
+          <!-- Skeleton -->
+          <div v-else-if="!hasData">
+            <div
+              v-for="i in 3"
+              :key="i"
+              class="flex items-center gap-3 px-4 py-2.5"
+            >
+              <div
+                class="h-10 w-10 shrink-0 animate-pulse rounded-xl bg-gray-200 dark:bg-neutral-800"
+              />
+              <div class="flex-1 space-y-2">
+                <div
+                  class="h-3 w-28 animate-pulse rounded bg-gray-200 dark:bg-neutral-800"
+                />
+                <div
+                  class="h-2.5 w-20 animate-pulse rounded bg-gray-200 dark:bg-neutral-800"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Traders to discover ──────────────────────────────────────────── -->
         <div class="border-b border-gray-100 dark:border-neutral-800">
           <div class="flex items-center justify-between px-4 pb-2 pt-4">
-            <h3 class="text-[17px] font-extrabold text-gray-900 dark:text-white">Who to follow</h3>
+            <h3 class="text-[17px] font-extrabold text-gray-900 dark:text-white">Traders to discover</h3>
             <NuxtLink
               to="/sellers"
               class="text-[13px] font-medium text-brand hover:underline"
-            >Show more</NuxtLink>
+            >See all</NuxtLink>
           </div>
 
           <!-- Skeleton (only when no fallback data yet) -->
@@ -264,7 +337,7 @@
                   :class="
                     followedIds.has(seller.id)
                       ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700'
-                      : 'bg-gray-900 text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100'
+                      : 'bg-brand text-white hover:bg-brand/90'
                   "
                   @click.stop.prevent="toggleFollow(seller)"
                 >
@@ -281,7 +354,7 @@
           class="border-b border-gray-100 dark:border-neutral-800"
         >
           <div class="flex items-center justify-between px-4 pb-2 pt-4">
-            <h3 class="text-[17px] font-extrabold text-gray-900 dark:text-white">Flash Sales</h3>
+            <h3 class="text-[17px] font-extrabold text-gray-900 dark:text-white">Deals in the market</h3>
             <NuxtLink
               to="/deals"
               class="text-[13px] font-medium text-brand hover:underline"
@@ -347,7 +420,12 @@
         <!-- ── What's Happening ─────────────────────────────────────────────── -->
         <div class="border-b border-gray-100 dark:border-neutral-800">
           <div class="flex items-center justify-between px-4 pb-2 pt-4">
-            <h3 class="text-[17px] font-extrabold text-gray-900 dark:text-white">What's happening</h3>
+            <h3 class="text-[17px] font-extrabold text-gray-900 dark:text-white">Trending goods</h3>
+            <NuxtLink
+              to="/discover?tab=products"
+              class="text-[13px] font-medium text-brand hover:underline"
+              >See all</NuxtLink
+            >
           </div>
 
           <!-- Skeleton -->
@@ -363,28 +441,11 @@
             </div>
           </div>
 
-          <!-- Trending hashtags -->
+          <!-- Product rows -->
           <div v-else>
-            <div
-              v-for="tag in trendingTags.slice(0, 5)"
-              :key="tag.id"
-              class="cursor-pointer px-4 py-3 transition-colors hover:bg-gray-50 dark:hover:bg-neutral-800/60"
-              @click="navigateTo(`/discover?tag=${tag.name}`)"
-            >
-              <p class="text-[11px] text-gray-400 dark:text-neutral-500">Trending · Products</p>
-              <p class="text-[14px] font-bold text-gray-900 dark:text-white">#{{ tag.name }}</p>
-              <p class="text-[11px] text-gray-500 dark:text-neutral-400">
-                {{ formatNumber(tag._count?.products ?? 0) }} products
-              </p>
-            </div>
-
-            <!-- Trending products -->
             <template v-if="trendingProducts.length">
-              <p class="px-4 pb-1.5 pt-3 text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-neutral-500">
-                Trending Products
-              </p>
               <NuxtLink
-                v-for="p in trendingProducts.slice(0, 3)"
+                v-for="p in trendingProducts.slice(0, 5)"
                 :key="p.id"
                 :to="`/product/${p.slug}`"
                 class="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-gray-50 dark:hover:bg-neutral-800/60"
@@ -404,7 +465,7 @@
                 </div>
                 <div class="min-w-0 flex-1">
                   <p class="truncate text-[13px] font-semibold text-gray-900 dark:text-white">{{ p.title }}</p>
-                  <p class="text-[11px] text-gray-400 dark:text-neutral-500">
+                  <p class="text-[11px] text-gray-500 dark:text-neutral-400">
                     {{ p.seller?.store_name ?? p.store_slug }}
                   </p>
                 </div>
@@ -414,8 +475,8 @@
 
             <!-- Empty state -->
             <div
-              v-if="!trendingTags.length && !trendingProducts.length && hasData"
-              class="px-4 py-5 text-center text-[13px] text-gray-400 dark:text-neutral-500"
+              v-if="!trendingProducts.length && hasData"
+              class="px-4 py-5 text-center text-[13px] text-gray-500 dark:text-neutral-400"
             >
               Nothing trending right now
             </div>
@@ -484,10 +545,10 @@ const profileStore = useProfileStore()
 const authStore = useAuthStore()
 const { data: layoutData } = useLayoutData()
 const {
-  trendingTags,
   trendingProducts,
   featuredSellers,
   activeDeals,
+  squares,
   loadingTrending,
   loadingDeals,
   hasData,
