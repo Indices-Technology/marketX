@@ -66,6 +66,12 @@ const sellerFullSelect = {
 } satisfies Prisma.SellerProfileSelect
 
 const productInclude = {
+  media: {
+    where: { isBgMusic: false },
+    select: { url: true },
+    take: 1,
+    orderBy: { created_at: 'asc' as const },
+  },
   variants: {
     select: { size: true, stock: true, price: true },
     orderBy: { size: 'asc' as const },
@@ -125,6 +131,7 @@ function mapProduct(
     id: String(p.id),
     slug: p.slug,
     title: p.title,
+    imageUrl: p.media[0]?.url ?? null,
     description: p.description ?? null,
     price: p.price,
     discount: p.discount ?? null,

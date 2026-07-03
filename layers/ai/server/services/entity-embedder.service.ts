@@ -4,37 +4,14 @@
 //
 // Text is built locally, SHA-256 hashed, then sent to OpenAI only when the
 // content has actually changed (same hash = no API call, no DB write).
+//
+// This is the WRITE path of the vector index. The READ path (semantic query)
+// lives in /api/ai/search — both share the embedding model via embedText().
 
 import { createHash } from 'crypto'
 import { prisma } from '~~/server/utils/db'
 import { aiContextService } from './ai-context.service'
-
-// ── OpenAI embedding (fetch — no SDK dependency needed) ───────────────────────
-
-async function callOpenAIEmbedding(text: string): Promise<number[]> {
-  const apiKey = process.env.OPENAI_API_KEY
-  if (!apiKey) throw new Error('OPENAI_API_KEY not configured')
-
-  const res = await fetch('https://api.openai.com/v1/embeddings', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({ model: 'text-embedding-3-small', input: text }),
-  })
-
-  if (!res.ok) {
-    const err = await res.text().catch(() => '')
-    throw new Error(`OpenAI embeddings API error ${res.status}: ${err}`)
-  }
-
-  const data = (await res.json()) as { data: Array<{ embedding: number[] }> }
-  const vec = data.data[0]?.embedding
-  if (!vec || vec.length !== 1536)
-    throw new Error(`Unexpected vector length: ${vec?.length}`)
-  return vec
-}
+import { embedText } from '../utils/openai-embedding'
 
 // ── Content hash ──────────────────────────────────────────────────────────────
 
@@ -141,7 +118,7 @@ async function upsertEmbedding(
   })
 
   // Generate and write vector
-  const vec = await callOpenAIEmbedding(text)
+  const vec = await embedText(text)
   const vecStr = `[${vec.join(',')}]`
 
   await prisma.$executeRaw`
@@ -168,17 +145,34 @@ export const entityEmbedder = {
         const ctx = await aiContextService.getProduct(productId)
         if (!ctx) return
 
-        const text = buildProductText(ctx as any)
+        const c = ctx as any
+        const text = buildProductText(c)
+        const inStockSizes: string[] = (c.variants ?? [])
+          .filter((v: any) => v.stock > 0)
+          .map((v: any) => v.size)
         const metadata: Record<string, unknown> = {
           entityType: 'PRODUCT',
           entityId: String(productId),
-          title: (ctx as any).title,
-          price: (ctx as any).price,
-          discount: (ctx as any).discount ?? null,
-          slug: (ctx as any).slug,
-          imageUrl: (ctx as any).media?.[0]?.url ?? null,
-          inStock: (ctx as any).variants?.some((v: any) => v.stock > 0) ?? true,
-          sellerName: (ctx as any).seller?.storeName,
+          title: c.title,
+          // Plain-text, truncated — so search hits carry readable specifics,
+          // not just a matchable vector.
+          description: c.description
+            ? c.description.replace(/<[^>]+>/g, '').slice(0, 300)
+            : null,
+          price: c.price,
+          discount: c.discount ?? null,
+          condition: c.condition ?? null,
+          isThrift: c.isThrift ?? false,
+          isDeal: c.isDeal ?? false,
+          averageRating: c.averageRating ?? null,
+          totalReviews: c.totalReviews ?? 0,
+          categories: c.categories ?? [],
+          tags: c.tags ?? [],
+          slug: c.slug,
+          imageUrl: c.imageUrl ?? null,
+          inStock: c.variants?.some((v: any) => v.stock > 0) ?? true,
+          inStockSizes,
+          sellerName: c.seller?.storeName,
         }
 
         await upsertEmbedding('PRODUCT', String(productId), text, metadata)

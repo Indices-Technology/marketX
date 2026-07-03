@@ -27,6 +27,7 @@ Users post content, tag products, follow sellers, buy directly from the feed, an
 18. [Environment Variables](#18-environment-variables)
 19. [Scheduled Tasks (Cron)](#19-scheduled-tasks)
 20. [Key Decisions & Trade-offs](#20-key-decisions--trade-offs)
+21. [AI & Semantic Search (Dassah integration)](#21-ai--semantic-search)
 
 ---
 
@@ -853,4 +854,48 @@ The `Embedding.embedding` column is `vector(1536)` — a pgvector type Prisma ca
 
 ---
 
-*Last updated: May 2026*
+## 21. AI & Semantic Search
+
+The `layers/ai/` layer serves **Dassah** (the conversational assistant, a separate repo/deployment) over internal-only endpoints guarded by `requireDassahInternal` (`X-Dassah-Internal: $DASSAH_INTERNAL_KEY`). Dassah owns no commerce data — it reads MarketX through these endpoints.
+
+### Two retrieval paths — keep them separate
+
+MarketX exposes product/seller/square data to the assistant two distinct ways. When adding or changing a search surface, be deliberate about which one you're touching.
+
+| | **Embeddings (semantic)** | **Raw query (keyword / attribute)** |
+|---|---|---|
+| **What** | meaning-based recall via pgvector cosine | exact `ILIKE` / column filters / id lookups |
+| **Endpoint** | `POST /api/ai/search` (text → embed → cosine) | `GET /api/commerce/products?search=`, `GET /api/search`, `GET /api/commerce/products/by-slug/{slug}`, `GET /api/squares/{slug}`, `?squareSlug=`, `?sellerId=` |
+| **Backed by** | `Embedding` table (`vector(1536)`) | normal Prisma queries over `Products`/`SellerProfile`/`Square` |
+| **Good for** | "modest wear" → abaya/kaftan; vibe/synonym discovery across all 3 entity types | exact titles, price bounds, one product/store/market by slug |
+| **Cost** | one OpenAI embed call per query | none |
+
+**Rule of thumb:** if the caller needs *meaning*, it goes through `/api/ai/search`. If it needs *exactness*, it goes through the commerce/search/squares REST endpoints. Nothing else should call OpenAI or read the `Embedding` vector column.
+
+### The embedding pipeline (write path)
+
+`entity-embedder.service.ts` runs **fire-and-forget** after any product/seller/square create or update:
+1. Builds a rich text blob (`buildProductText` / `buildSellerText` / `buildSquareText`) from the full AI context (`ai-context.service.ts`).
+2. SHA-256 hashes it; **skips OpenAI + the DB write if the hash is unchanged** (idempotent, cheap).
+3. Embeds via the shared `embedText()` in `layers/ai/server/utils/openai-embedding.ts` (`text-embedding-3-small`, 1536-dim) and writes the vector with `$executeRaw` (pgvector is not Prisma-serializable — see §20).
+4. Stores enriched **metadata** alongside the vector — for products: `title`, `description` (≤300, plain text), `condition`, `discount`, `averageRating`/`totalReviews`, `categories`, `tags`, `imageUrl`, `inStock`, `inStockSizes`, `sellerName`. This is what search results carry back, so a hit is **card-ready without a second fetch**.
+
+> `embedText()` is the single source of truth for the model + dimensions, shared by the write path (embedder) and the read path (`/api/ai/search`), so they can never drift.
+
+### Endpoint map (`layers/ai/server/api/ai/`)
+
+| Endpoint | Purpose | Path type |
+|---|---|---|
+| `POST /api/ai/search` | **semantic** search (embed query → cosine), returns products/sellers/squares by relevance | embeddings |
+| `POST /api/ai/embeddings/search` | low-level cosine search over a **pre-computed** vector (used by Dassah's passive RAG hint) | embeddings |
+| `POST /api/ai/embeddings/upsert` | store a vector for an entity (Dassah's batch indexer) | embeddings |
+| `GET /api/ai/context/{product\|seller\|square}/{id}` | full structured context for one entity | raw query |
+| `GET /api/ai/context/batch` | paged context for the indexer | raw query |
+| `GET/PUT /api/ai/profile/{userId}` | user AI profile (measurements, preferences) | raw query |
+| `POST /api/ai/logs/{turn\|guard}` | turn + guardrail logging | raw query |
+
+All of the above are **rate-limit-excluded** (`server/middleware/rate-limit.ts`) and must never be exposed through the public gateway.
+
+---
+
+*Last updated: July 2026*
