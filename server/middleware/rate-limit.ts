@@ -82,6 +82,7 @@ export default defineEventHandler(async (event) => {
     // Internal Dassah endpoints — authenticated by X-Dassah-Internal key, not rate-limited
     if (path.startsWith('/api/ai/context/')) return
     if (path.startsWith('/api/ai/embeddings/')) return
+    if (path.startsWith('/api/ai/search')) return
     if (path.startsWith('/api/ai/profile/')) return
     if (path.startsWith('/api/ai/logs/')) return
 

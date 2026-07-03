@@ -46,6 +46,7 @@ export interface ProductAIContext {
   id: string // int → string for uniform entity_id storage
   slug: string
   title: string
+  imageUrl: string | null // first non-audio media, for card rendering
   description: string | null
   price: number
   discount: number | null
