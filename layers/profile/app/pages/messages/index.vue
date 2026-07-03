@@ -218,6 +218,7 @@ definePageMeta({ middleware: 'auth' })
 useSeo().setInboxPage()
 
 const router = useRouter()
+const route = useRoute()
 const socialApi = useSocialApi()
 const searchApi = useSearchApi()
 const { fetchConversations, createConversation, createStoreConversation, isInitialConversationLoad, conversations } = useChat()
@@ -333,8 +334,24 @@ const startConversation = async (targetId: string, type: 'USER' | 'SELLER' = 'US
   }
 }
 
+// Deep-link: /messages?seller=<store-slug> (from the product page / map "message store")
+const openSellerFromQuery = async () => {
+  const slug = route.query.seller
+  if (typeof slug !== 'string' || !slug) return
+  try {
+    const res: any = await $fetch(`/api/seller/by-slug/${slug}`)
+    const sellerId = res?.data?.id ?? res?.id
+    if (!sellerId) return
+    const conv = await createStoreConversation(sellerId)
+    if (conv?.id) router.replace(`/messages/${conv.id}`)
+  } catch {
+    // ignore — leave the user on the inbox
+  }
+}
+
 onMounted(() => {
   fetchConversations()
   loadFollowing() // preload so compose panel opens instantly
+  openSellerFromQuery() // deep-link support
 })
 </script>

@@ -29,6 +29,7 @@ const productFeedInclude = {
 const productInclude = {
   seller: {
     select: {
+      id: true,
       store_slug: true,
       store_logo: true,
       store_name: true,
@@ -71,6 +72,7 @@ const productInclude = {
       tag: { select: { id: true, name: true } },
     },
   },
+  square: { select: { name: true, slug: true } },
 }
 
 import type { CreateProductInput, UpdateProductInput } from '../schemas/product.schema'
@@ -262,6 +264,7 @@ export const productRepository = {
       storeSlug?: string
       isThrift?: boolean
       categorySlug?: string
+      squareSlug?: string
       minDiscount?: number
       minPrice?: number
       maxPrice?: number
@@ -276,6 +279,9 @@ export const productRepository = {
     if (filters.isThrift !== undefined) where.isThrift = filters.isThrift
     if (filters.categorySlug) {
       where.category = { some: { category: { slug: filters.categorySlug } } }
+    }
+    if (filters.squareSlug) {
+      where.square = { slug: filters.squareSlug }
     }
     if (filters.search) {
       where.OR = [

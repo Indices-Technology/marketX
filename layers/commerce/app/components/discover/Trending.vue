@@ -44,6 +44,41 @@
       </div>
     </section>
 
+    <!-- Fresh from a featured market — context-aware, market-specific section -->
+    <section v-if="isBrowseTab && featuredMarket && marketProducts.length">
+      <div class="mb-3 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <Icon name="mdi:store-marker-outline" size="18" class="text-brand" />
+          <h2 class="text-base font-bold text-gray-900 dark:text-white">
+            Fresh from {{ featuredMarket.name }}
+          </h2>
+        </div>
+        <NuxtLink
+          :to="`/squares/${featuredMarket.slug}`"
+          class="text-xs font-semibold text-brand hover:underline"
+        >
+          Visit market →
+        </NuxtLink>
+      </div>
+      <div class="scroll-strip-wrap">
+        <div
+          class="scrollbar-hide -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth px-4 pb-2"
+        >
+          <div
+            v-for="product in marketProducts"
+            :key="product.id"
+            class="w-40 shrink-0 snap-start"
+          >
+            <ProductCardMini
+              :product="product"
+              @open-detail="emit('open-detail', $event)"
+            />
+          </div>
+        </div>
+        <div class="scroll-fade-right" />
+      </div>
+    </section>
+
     <!-- Horizontal strips -->
     <section>
       <div class="mb-3 flex items-center justify-between">
@@ -301,12 +336,25 @@
               </div>
               <div class="w-full min-w-0">
                 <p
-                  class="truncate text-[11px] font-bold text-gray-900 group-hover:text-brand dark:text-neutral-100"
+                  class="flex items-center justify-center gap-0.5 truncate text-[11px] font-bold text-gray-900 group-hover:text-brand dark:text-neutral-100"
                 >
-                  {{ seller.store_name }}
+                  <span class="truncate">{{ seller.store_name }}</span>
+                  <Icon
+                    v-if="seller.is_verified"
+                    name="mdi:check-decagram"
+                    size="11"
+                    class="shrink-0 text-blue-500"
+                  />
                 </p>
                 <p class="text-[10px] text-gray-500 dark:text-neutral-400">
-                  {{ formatNum(seller.followers_count || 0) }} followers
+                  <span
+                    v-if="seller.averageRating"
+                    class="font-semibold text-amber-500"
+                    >★ {{ seller.averageRating.toFixed(1) }}</span
+                  >
+                  <span v-else
+                    >{{ formatNum(seller.followers_count || 0) }} followers</span
+                  >
                 </p>
               </div>
             </NuxtLink>
@@ -339,12 +387,25 @@
             </div>
             <div class="w-full min-w-0">
               <p
-                class="truncate text-xs font-bold text-gray-900 transition-colors group-hover:text-brand dark:text-neutral-100"
+                class="flex items-center justify-center gap-0.5 truncate text-xs font-bold text-gray-900 transition-colors group-hover:text-brand dark:text-neutral-100"
               >
-                {{ seller.store_name }}
+                <span class="truncate">{{ seller.store_name }}</span>
+                <Icon
+                  v-if="seller.is_verified"
+                  name="mdi:check-decagram"
+                  size="12"
+                  class="shrink-0 text-blue-500"
+                />
               </p>
               <p class="text-[11px] text-gray-500 dark:text-neutral-400">
-                {{ formatNum(seller.followers_count || 0) }} followers
+                <span
+                  v-if="seller.averageRating"
+                  class="font-semibold text-amber-500"
+                  >★ {{ seller.averageRating.toFixed(1) }}</span
+                >
+                <span v-else
+                  >{{ formatNum(seller.followers_count || 0) }} followers</span
+                >
               </p>
             </div>
           </NuxtLink>
@@ -411,6 +472,8 @@ const stripsLoading = ref(true)
 
 const marketStrip = ref<any[]>([])
 const marketsLoading = ref(true)
+const featuredMarket = ref<any | null>(null)
+const marketProducts = ref<IProduct[]>([])
 
 const loadMarkets = async () => {
   marketsLoading.value = true
@@ -420,6 +483,16 @@ const loadMarkets = async () => {
       limit: 8,
     })
     marketStrip.value = res.data ?? []
+
+    // Feature the top market with a "Fresh from {market}" strip of its goods.
+    const top = marketStrip.value[0]
+    if (top) {
+      featuredMarket.value = top
+      const pr: any = await $fetch(
+        `/api/commerce/products?squareSlug=${top.slug}&sortBy=newest&limit=8`,
+      )
+      marketProducts.value = pr?.data?.products ?? []
+    }
   } catch {
     //
   } finally {

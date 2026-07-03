@@ -13,6 +13,30 @@
 > [BottomNavMobile.vue](../layers/core/app/layouts/children/BottomNavMobile.vue),
 > [HeaderNavMobile.vue](../layers/core/app/layouts/children/HeaderNavMobile.vue).
 
+## 0. Implementation status
+
+**Shipped (homepage):**
+- ✅ **Q1** market vocabulary sweep + **Q3** `styleX`→`MarketX` brand fix
+- ✅ **C1** search hero (mobile/tablet; desktop uses the rail search)
+- ✅ **C3/Q2** Squares → destination "spotlight" cards + per-square accent color + goods count
+- ✅ **C4/C5** product-card trust: verified tick, ★ rating, trader location, **market chip**,
+  trader-attribution link, 44px touch targets; feed enrichment (`averageRating`,
+  `is_verified`, `locationLabel`, `square`) on deals/fresh/trending selects
+- ✅ **C6** right rail de-Twitterified → **Markets near you · Traders to discover · Deals in
+  the market · Trending goods** (hashtag trends removed)
+- ✅ **C7** never-vanish empty states (posts section)
+- ✅ **M5** left nav grouped **Shop / Sell / You**
+- ✅ Redundancy fixes: one search per breakpoint; center=geographic markets, rail="Markets
+  by category"
+
+**Reverted by product decision:** Q4/Q5 bottom-nav cart + nav taxonomy (bar kept as-is).
+
+**Not yet done:** **C8** full a11y sweep (partial — many `gray-400→gray-500` done), **M4**
+homepage reorder, **MA1–MA6** larger identity features (Enter-the-market, Ask-the-market,
+Market Passport, unified color tokens, micro-interactions — need backend/design).
+
+> Discover-page redesign shipped separately — see [DISCOVER_REVIEW.md](./DISCOVER_REVIEW.md).
+
 ## 1. Scores (pre-redesign baseline)
 
 | Dimension | Score | Note |

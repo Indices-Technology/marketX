@@ -31,6 +31,8 @@ export default defineEventHandler(async (event) => {
         sellerId,
         isThrift: query.isThrift,
         categorySlug: query.categorySlug as string,
+        squareSlug: query.squareSlug as string,
+        storeSlug: query.storeSlug as string,
         minDiscount,
         minPrice,
         maxPrice,

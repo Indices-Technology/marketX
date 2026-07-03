@@ -15,7 +15,9 @@
 
       <!-- Actions -->
       <div class="flex shrink-0 items-center gap-1">
+        <!-- Hidden on Discover — that page has its own prominent search -->
         <button
+          v-if="route.path !== '/discover'"
           aria-label="Search"
           class="header-button"
           @click="$emit('open-search')"
@@ -58,11 +60,13 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import { useNotificationStore } from '~~/layers/profile/app/stores/notification.store'
 
 defineEmits(['open-notifications', 'open-cart', 'open-search'])
 
+const route = useRoute()
 const profileStore = useProfileStore()
 const notificationStore = useNotificationStore()
 

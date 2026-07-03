@@ -128,6 +128,17 @@
         </div>
       </div>
 
+      <!-- Market — the good belongs to a market square -->
+      <NuxtLink
+        v-if="product.square"
+        :to="`/squares/${product.square.slug}`"
+        class="flex w-fit max-w-full items-center gap-1 truncate rounded-full bg-brand/5 px-1.5 py-0.5 text-[10px] font-medium text-brand/80 transition hover:bg-brand/10"
+        @click.stop
+      >
+        <Icon name="mdi:store-marker-outline" size="10" class="shrink-0" />
+        <span class="truncate">{{ product.square.name }}</span>
+      </NuxtLink>
+
       <!-- Rating · trader location — shown when the feed provides trust data -->
       <div
         v-if="product.averageRating || product.seller?.locationLabel"
