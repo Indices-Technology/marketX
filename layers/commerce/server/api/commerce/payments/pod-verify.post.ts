@@ -9,6 +9,8 @@ import { notificationQueue } from '~~/server/queues/notification.queue'
 import { emailQueue } from '~~/server/queues/email.queue'
 import { orderRepository } from '../../../repositories/order.repository'
 import { buildOrderStatusEmail } from '~~/server/utils/email/emailService'
+import { paymentService } from '~~/layers/payments/server/services/payment.service'
+import { podService } from '~~/layers/pod/server/services/pod.service'
 
 const schema = z.object({ reference: z.string().min(1) })
 
@@ -72,12 +74,49 @@ export default defineEventHandler(async (event) => {
       return { success: true, data: { status: 'already_confirmed', orderIds } }
     }
 
-    // 3. Verify shipping payment with Paystack (one transaction for the purchase)
-    const result = await paystack.verifyTransaction(reference)
+    // 3. Money-gate: POD collects the SHIPPING fee only. Assert the collected
+    // amount covers the group's shipping total, recomputed from the DB.
+    const expectedMinor = orders.reduce(
+      (s, o) => s + (o.shippingCost ?? 0),
+      0,
+    )
+    const confirm = await paymentService.confirmPayment({
+      reference,
+      expectedMinor,
+      expectedCurrency: 'NGN',
+    })
 
-    if (result.data.status !== 'success') {
-      await Promise.all(orders.map((o) => orderRepository.updatePaymentStatus(o.id, 'FAILED')))
-      return { success: true, data: { status: result.data.status, orderIds } }
+    if (!confirm.ok) {
+      if (
+        confirm.status === 'amount_mismatch' ||
+        confirm.status === 'currency_mismatch'
+      ) {
+        logger.logError(
+          '[POST /api/commerce/payments/pod-verify] payment mismatch — refusing to confirm',
+          new Error(confirm.reason ?? confirm.status),
+          {
+            requestId: event.context?.requestId,
+            reference,
+            expectedMinor,
+            actualMinor: confirm.actualMinor,
+          },
+        )
+        throw createError({
+          statusCode: 409,
+          statusMessage:
+            'Shipping payment could not be confirmed (amount mismatch). Please contact support.',
+        })
+      }
+      // Genuine failure — fail + cancel + restore stock + cancel the POD leg.
+      // Abandoned/pending is left UNPAID for the expiry cron / buyer retry.
+      if (confirm.status === 'failed') {
+        await Promise.all(orders.map((o) => orderRepository.failAndRestore(o.id)))
+        await prisma.podDelivery.updateMany({
+          where: { orderId: { in: orderIds } },
+          data: { state: 'CANCELLED' },
+        })
+      }
+      return { success: true, data: { status: confirm.status, orderIds } }
     }
 
     // 4 & 5. Per order: atomic flip, then notify (once per order, vs webhook race)
@@ -96,6 +135,16 @@ export default defineEventHandler(async (event) => {
         )
       }
     }
+
+    // POD lifecycle: freight deposit is now paid. Advance state, then debit the
+    // platform fee (moved here from pod-initialize — bug #2). Idempotent + safe
+    // to also run from the webhook.
+    await prisma.podDelivery.updateMany({
+      where: { orderId: { in: orderIds }, state: 'DEPOSIT_PENDING' },
+      data: { state: 'DEPOSIT_PAID' },
+    })
+    await podService.debitSellerPodFees(orderIds)
+
     // One buyer confirmation email for the purchase
     if (user.email && !user.email.includes('@checkout.marketx.app')) {
       const { subject, html, text } = buildOrderStatusEmail(orderIds[0]!, 'CONFIRMED')

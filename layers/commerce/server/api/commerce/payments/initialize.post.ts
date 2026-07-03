@@ -9,10 +9,14 @@ import { orderService } from '../../../services/order.service'
 import { orderRepository } from '../../../repositories/order.repository'
 import { resolveAffiliateCode } from '~~/server/utils/affiliate-ref'
 
-
 const schema = z.object({
   items: z
-    .array(z.object({ variantId: z.number(), quantity: z.number().positive() }))
+    .array(
+      z.object({
+        variantId: z.number().int(),
+        quantity: z.number().int().positive(),
+      }),
+    )
     .min(1),
   name: z.string().min(1),
   email: z.string().email().optional(),
@@ -31,10 +35,13 @@ const schema = z.object({
         carrier: z.string().optional(),
         service: z.string().optional(),
         estimatedDays: z.string().optional(),
+        token: z.string().optional(),
       }),
     )
     .optional(),
-  currency: z.string().default('NGN'),
+  // Paystack settles NGN here — lock it so the client can't dictate currency
+  // (the confirmPayment gate also rejects a non-NGN settlement at verify).
+  currency: z.enum(['NGN']).default('NGN'),
   callback_url: z.string().url().optional(),
   affiliateCode: z.string().optional(),
 })
@@ -60,20 +67,32 @@ export default defineEventHandler(async (event) => {
     )
 
     // 2. One Paystack reference for the whole purchase, set on every order
-    const reference = `stylex_${group.purchaseGroupId.slice(0, 8)}_${Date.now()}`
-    await orderRepository.setPaymentRefForGroup(group.purchaseGroupId, reference)
+    const reference = `marketx_${group.purchaseGroupId.slice(0, 8)}_${Date.now()}`
+    await orderRepository.setPaymentRefForGroup(
+      group.purchaseGroupId,
+      reference,
+    )
 
     // 3. Initialize Paystack transaction
     // Priority: email from checkout form → account email (if real TLD) → generated placeholder
-    const FAKE_TLDS = new Set(['test', 'demo', 'local', 'example', 'invalid', 'localhost'])
+    const FAKE_TLDS = new Set([
+      'test',
+      'demo',
+      'local',
+      'example',
+      'invalid',
+      'localhost',
+    ])
     const isRealEmail = (e: string | null | undefined): e is string => {
       if (!e) return false
       const tld = e.split('.').pop()?.toLowerCase() ?? ''
       return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e) && !FAKE_TLDS.has(tld)
     }
-    const email = isRealEmail(body.email) ? body.email
-      : isRealEmail(user.email) ? user.email
-      : `user_${user.id}@checkout.marketx.app`
+    const email = isRealEmail(body.email)
+      ? body.email
+      : isRealEmail(user.email)
+        ? user.email
+        : `user_${user.id}@checkout.marketx.app`
     // Charge the whole purchase: items + shipping across all per-seller orders.
     const amount = group.itemsTotal + group.shippingTotal
     const ps = await paystack.initializeTransaction({
@@ -98,16 +117,31 @@ export default defineEventHandler(async (event) => {
   } catch (error: unknown) {
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
     if (error instanceof ZodError)
-      throw createError({ statusCode: 400, statusMessage: 'Invalid request body' })
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Invalid request body',
+      })
     if (error instanceof UserError)
-      throw createError({ statusCode: error.status, statusMessage: error.message })
+      throw createError({
+        statusCode: error.status,
+        statusMessage: error.message,
+      })
     // Surface Paystack-specific errors so the client can show the real reason
     const msg: string = error instanceof Error ? error.message : ''
     if (msg.startsWith('Paystack:')) {
-      logger.logError('[POST /api/commerce/payments/initialize] Paystack error', error, { requestId: event.context?.requestId })
+      logger.logError(
+        '[POST /api/commerce/payments/initialize] Paystack error',
+        error,
+        { requestId: event.context?.requestId },
+      )
       throw createError({ statusCode: 502, statusMessage: msg })
     }
-    logger.logError('[POST /api/commerce/payments/initialize]', error, { requestId: event.context?.requestId })
-    throw createError({ statusCode: 500, statusMessage: 'Payment initialization failed' })
+    logger.logError('[POST /api/commerce/payments/initialize]', error, {
+      requestId: event.context?.requestId,
+    })
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Payment initialization failed',
+    })
   }
 })

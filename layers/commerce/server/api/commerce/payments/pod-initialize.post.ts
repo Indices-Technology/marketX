@@ -12,11 +12,16 @@ import { orderService } from '../../../services/order.service'
 import { orderRepository } from '../../../repositories/order.repository'
 import { resolveAffiliateCode } from '~~/server/utils/affiliate-ref'
 import { walletRepository } from '../../../repositories/wallet.repository'
-import { notificationQueue } from '~~/server/queues/notification.queue'
+import { podService } from '~~/layers/pod/server/services/pod.service'
 
 const schema = z.object({
   items: z
-    .array(z.object({ variantId: z.number(), quantity: z.number().positive() }))
+    .array(
+      z.object({
+        variantId: z.number().int(),
+        quantity: z.number().int().positive(),
+      }),
+    )
     .min(1),
   name: z.string().min(1),
   address: z.string().min(1),
@@ -34,49 +39,13 @@ const schema = z.object({
         carrier: z.string().optional(),
         service: z.string().optional(),
         estimatedDays: z.string().optional(),
+        token: z.string().optional(),
       }),
     )
     .optional(),
   callback_url: z.string().url().optional(),
   affiliateCode: z.string().optional(),
 })
-
-/** Notify each unique seller of a new POD order */
-async function notifySellersPOD(orderId: number, buyerName: string, totalAmount: number) {
-  const items = await prisma.orderItem.findMany({
-    where: { orderId },
-    include: {
-      variant: {
-        include: {
-          product: {
-            include: { seller: { select: { profileId: true, store_name: true } } },
-          },
-        },
-      },
-    },
-  })
-
-  const seen = new Set<string>()
-  for (const item of items) {
-    const sellerId = item.variant?.product?.seller?.profileId
-    if (!sellerId || seen.has(sellerId)) continue
-    seen.add(sellerId)
-
-    const amountNGN = (totalAmount / 100).toLocaleString('en-NG', {
-      style: 'currency',
-      currency: 'NGN',
-      maximumFractionDigits: 0,
-    })
-
-    notificationQueue.enqueue({
-      userId: sellerId,
-      type: 'ORDER',
-      actorId: sellerId,
-      orderId,
-      message: `📦 New Pay-on-Delivery order #${orderId} from ${buyerName} · ${amountNGN} to collect on delivery. Shipping fee secured.`,
-    })
-  }
-}
 
 export default defineEventHandler(async (event) => {
   try {
@@ -120,6 +89,20 @@ export default defineEventHandler(async (event) => {
           400,
         )
       }
+    }
+
+    // Select the POD provider (courier-COD). GIG covers Nigeria; BYOP is gated.
+    const podProvider = podService.selectProvider({
+      destinationState: buyerState,
+      country: body.country,
+      sellerOptIn: true,
+    })
+    if (!podProvider) {
+      throw new UserError(
+        'POD_UNAVAILABLE',
+        'Pay on Delivery is not available for your location right now.',
+        400,
+      )
     }
 
     // 2. Create the orders (one per seller, PENDING/UNPAID, pay_on_delivery)
@@ -197,25 +180,26 @@ export default defineEventHandler(async (event) => {
       callback_url: body.callback_url,
     })
 
-    // 5. Paystack confirmed — now debit platform fees atomically (per seller)
-    await prisma.$transaction(async (tx) => {
-      for (const [sellerId, { orderId, fee }] of sellerFees) {
-        const wallet = await tx.sellerWallet.findUniqueOrThrow({ where: { sellerId } })
-        await tx.sellerWallet.update({
-          where: { id: wallet.id },
-          data: { balance: { decrement: fee } },
-        })
-        await tx.transaction.create({
+    // 5. Record the POD lifecycle per order (freight deposit PENDING). The
+    //    platform fee is deliberately NOT debited here — `initializeTransaction`
+    //    only opens the checkout, the buyer hasn't paid yet. The debit moves to
+    //    pod-verify (after the deposit is confirmed), so abandoned POD checkouts
+    //    never charge the seller.
+    await Promise.all(
+      group.orders.map((ord) => {
+        const freight = podService.splitFreight(ord.shippingCost ?? 0)
+        return prisma.podDelivery.create({
           data: {
-            walletId: wallet.id,
-            amount: fee,
-            type: 'PLATFORM_FEE_DEBIT',
-            description: `POD platform fee (${PLATFORM_FEE_PERCENT}%) — Order #${orderId}`,
-            orderId,
+            orderId: ord.id,
+            provider: podProvider.id,
+            state: 'DEPOSIT_PENDING',
+            freightDepositMinor: freight.depositMinor,
+            freightTaxMinor: freight.taxMinor,
+            codAmountMinor: ord.totalAmount,
           },
         })
-      }
-    })
+      }),
+    )
 
     return {
       success: true,

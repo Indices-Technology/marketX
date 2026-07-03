@@ -56,26 +56,78 @@
       </button>
     </div>
 
-    <!-- POD info banner -->
+    <!-- POD "how it works" — numbered steps so simple users grasp it at a glance -->
     <div
       v-if="modelValue === 'pod'"
-      class="mt-2 flex items-start gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-3.5 py-3 text-[12px] text-emerald-700 dark:border-emerald-900/30 dark:bg-emerald-900/10 dark:text-emerald-400"
+      class="mt-2 space-y-2.5 rounded-xl border border-emerald-100 bg-emerald-50/70 p-3.5 dark:border-emerald-900/30 dark:bg-emerald-900/10"
     >
-      <Icon name="mdi:information-outline" size="14" class="mt-0.5 shrink-0" />
-      <span
-        >Pay <strong>{{ fmtPNGN(shippingCostMajor) }}</strong> shipping now to
-        confirm your order. Pay the product amount (<strong>{{
-          fmtPNGN(cartTotal)
-        }}</strong>) in cash when your delivery arrives. Shipping fee is
-        non-refundable if you refuse delivery.</span
+      <p
+        class="text-[11px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400"
       >
+        How Pay on Delivery works
+      </p>
+
+      <!-- Step 1: pay shipping now -->
+      <div class="flex items-center gap-3">
+        <div
+          class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-[12px] font-bold text-white"
+        >
+          1
+        </div>
+        <div class="min-w-0 flex-1">
+          <p
+            class="text-[12.5px] font-semibold text-gray-800 dark:text-neutral-200"
+          >
+            Pay shipping now
+          </p>
+          <p class="text-[11px] text-gray-500 dark:text-neutral-400">
+            Locks your order &amp; the courier
+          </p>
+        </div>
+        <span
+          class="shrink-0 font-display text-[14px] font-bold text-gray-900 dark:text-neutral-100"
+        >
+          {{ fmtPNGN(shippingCostMajor) }}
+        </span>
+      </div>
+
+      <!-- Step 2: pay product on delivery -->
+      <div class="flex items-center gap-3">
+        <div
+          class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 border-emerald-400 text-[12px] font-bold text-emerald-600 dark:text-emerald-400"
+        >
+          2
+        </div>
+        <div class="min-w-0 flex-1">
+          <p
+            class="text-[12.5px] font-semibold text-gray-800 dark:text-neutral-200"
+          >
+            Pay for the product on delivery
+          </p>
+          <p class="text-[11px] text-gray-500 dark:text-neutral-400">
+            Cash to the courier when it arrives
+          </p>
+        </div>
+        <span
+          class="shrink-0 font-display text-[14px] font-bold text-gray-900 dark:text-neutral-100"
+        >
+          {{ fmtPNGN(cartTotal) }}
+        </span>
+      </div>
+
+      <p
+        class="flex items-start gap-1.5 border-t border-emerald-100 pt-2 text-[11px] text-emerald-700/80 dark:border-emerald-900/30 dark:text-emerald-400/80"
+      >
+        <Icon name="mdi:information-outline" size="13" class="mt-0.5 shrink-0" />
+        The shipping fee isn't refunded if you refuse the delivery.
+      </p>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useCurrency } from '~~/layers/core/app/composables/useCurrency'
-const props = defineProps<{
+defineProps<{
   modelValue: 'paystack' | 'paypal' | 'pod'
   country: string
   shippingCostMajor: number

@@ -11,6 +11,7 @@ import { notificationQueue } from '~~/server/queues/notification.queue'
 import { emailQueue } from '~~/server/queues/email.queue'
 import { buildNewOrderSellerEmail } from '~~/server/utils/email/emailService'
 import { analyticsService } from './analytics.service'
+import { verifyShippingQuote } from '~~/layers/shipping/server/utils/quoteToken'
 
 export interface PlaceOrderInput {
   items: Array<{ variantId: number; quantity: number }>
@@ -26,10 +27,12 @@ export interface PlaceOrderInput {
   /** Per-seller shipping selections from checkout — used to split shipping per order. */
   shippingBreakdown?: Array<{
     storeSlug: string
-    amount: number // kobo
+    amount: number // kobo (client-sent — trusted only when the token verifies)
     carrier?: string
     service?: string
     estimatedDays?: string
+    /** Signed quote token from /api/shipping/rates — re-derives the amount. */
+    token?: string
   }>
 }
 
@@ -175,7 +178,13 @@ export const orderService = {
     // single shippingCost to the first group (legacy callers without a breakdown).
     const breakdownMap = new Map<
       string,
-      { amount: number; carrier?: string; service?: string; estimatedDays?: string }
+      {
+        amount: number
+        carrier?: string
+        service?: string
+        estimatedDays?: string
+        token?: string
+      }
     >()
     for (const b of data.shippingBreakdown ?? []) {
       breakdownMap.set(b.storeSlug, {
@@ -183,6 +192,7 @@ export const orderService = {
         carrier: b.carrier,
         service: b.service,
         estimatedDays: b.estimatedDays,
+        token: b.token,
       })
     }
     const hasBreakdown = breakdownMap.size > 0
@@ -242,11 +252,25 @@ export const orderService = {
         const groupTotal = groupLines.reduce((s, l) => s + l.price, 0)
         const groupCut = groupLines.reduce((s, l) => s + l.affiliateCut, 0)
         const bd = breakdownMap.get(storeSlug)
-        const groupShipping = hasBreakdown
-          ? bd?.amount ?? 0
-          : idx === 0
-            ? fallbackShipping
-            : 0
+        // Re-derive the shipping charge from the signed quote token so a tampered
+        // client amount (e.g. ₦0) can't stick. Fall back to the client amount
+        // only when there's no token yet (legacy clients) — logged as unverified.
+        let groupShipping: number
+        if (hasBreakdown) {
+          const claims = verifyShippingQuote(bd?.token)
+          if (claims && claims.s === storeSlug) {
+            groupShipping = claims.a
+          } else {
+            groupShipping = bd?.amount ?? 0
+            if (bd?.token || groupShipping > 0)
+              console.warn(
+                '[placeOrder] shipping amount not verified by a quote token',
+                { storeSlug, clientAmount: groupShipping },
+              )
+          }
+        } else {
+          groupShipping = idx === 0 ? fallbackShipping : 0
+        }
         shippingTotal += groupShipping
         const shippingZone = bd?.carrier
           ? `${bd.carrier} ${bd.service ?? ''}`.trim()

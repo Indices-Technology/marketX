@@ -1,7 +1,8 @@
 // POST /api/commerce/payments/webhook
 // Paystack sends this after a transaction completes (even if user closes the tab).
 // Set this URL in the Paystack dashboard: https://yourdomain.com/api/commerce/payments/webhook
-import crypto from 'crypto'
+import { paymentService } from '~~/layers/payments/server/services/payment.service'
+import { podService } from '~~/layers/pod/server/services/pod.service'
 import { notificationQueue } from '~~/server/queues/notification.queue'
 import { emailQueue } from '~~/server/queues/email.queue'
 import { walletService } from '../../../services/wallet.service'
@@ -37,76 +38,94 @@ async function notifySellers(orderId: number) {
 }
 
 export default defineEventHandler(async (event) => {
-  const secret = process.env.PAYSTACK_SECRET_KEY
-  if (!secret)
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'Server misconfigured',
-    })
-
-  // 1. Validate Paystack signature
-  const signature = getHeader(event, 'x-paystack-signature')
+  // 1. Signature-verify + parse via the payment provider (throws on bad sig)
   const rawBody = await readRawBody(event)
-  if (!rawBody || !signature)
+  if (!rawBody)
     throw createError({ statusCode: 400, statusMessage: 'Bad request' })
 
-  const hash = crypto.createHmac('sha512', secret).update(rawBody).digest('hex')
-  if (hash !== signature)
+  let webhook
+  try {
+    webhook = await paymentService.parseWebhook(rawBody, {
+      'x-paystack-signature': getHeader(event, 'x-paystack-signature'),
+    })
+  } catch {
     throw createError({ statusCode: 401, statusMessage: 'Invalid signature' })
+  }
+  if (!webhook) return { success: true } // event we don't handle
 
-  // 2. Parse event
-  const payload = JSON.parse(rawBody)
-  const { event: eventType, data } = payload
+  const reference = webhook.reference
+  const orders = await prisma.orders.findMany({
+    where: { paymentRef: reference },
+  })
+  if (!orders.length) return { success: true }
 
-  if (eventType === 'charge.success') {
-    const reference: string = data?.reference
-    if (!reference) return { success: true }
+  // 2. Money-gate: assert the signed amount covers what the group owes. POD
+  // collects shipping only; card collects items + shipping. Recompute from DB.
+  const isPod = orders[0]!.paymentMethod === 'pay_on_delivery'
+  const expectedMinor = orders.reduce(
+    (s, o) => s + (isPod ? 0 : o.totalAmount) + (o.shippingCost ?? 0),
+    0,
+  )
+  if (!paymentService.amountCovers(expectedMinor, webhook.amountMinor)) {
+    logger.logError(
+      '[POST /api/commerce/payments/webhook] amount mismatch — not confirming',
+      new Error(`expected ≥ ${expectedMinor} minor, got ${webhook.amountMinor}`),
+      { reference },
+    )
+    return { success: true } // ack Paystack, but never confirm a short payment
+  }
 
-    // One reference is shared across all per-seller orders of a purchase.
-    const orders = await prisma.orders.findMany({ where: { paymentRef: reference } })
-    if (!orders.length) return { success: true }
-
-    let creditedAny = false
-    for (const order of orders) {
-      if (order.paymentMethod === 'pay_on_delivery') {
-        // POD: shipping fee payment — atomic update guards against duplicate delivery
-        const { count } = await prisma.orders.updateMany({
-          where: { id: order.id, paymentStatus: { in: ['UNPAID', 'PENDING'] } },
-          data: { paymentStatus: 'SHIPPING_PAID', status: 'CONFIRMED' },
-        })
-        if (count > 0) {
-          notifySellers(order.id).catch((e) => logger.error('Webhook POD notify failed', { orderId: order.id, error: e?.message ?? e }))
-        }
-      } else {
-        // Online payment: full amount paid — atomic update guards against duplicate delivery
-        const { count } = await prisma.orders.updateMany({
-          where: { id: order.id, paymentStatus: { notIn: ['PAID', 'FAILED'] } },
-          data: { paymentStatus: 'PAID', status: 'CONFIRMED' },
-        })
-        if (count > 0) {
-          creditedAny = true
-          notifySellers(order.id).catch((e) => logger.error('Webhook notify failed', { orderId: order.id, error: e?.message ?? e }))
-          walletService
-            .creditSellersOnPayment(order.id)
-            .catch((e) => logger.error('Webhook wallet credit failed', { orderId: order.id, error: e?.message ?? e }))
-          squareService
-            .creditAssociationsForOrder(order.id)
-            .catch((e) => logger.error('Webhook association credit failed', { orderId: order.id, error: e?.message ?? e }))
-        }
+  // 3. Confirm each per-seller order (atomic once-only vs the verify endpoint)
+  let creditedAny = false
+  const podConfirmedIds: number[] = []
+  for (const order of orders) {
+    if (order.paymentMethod === 'pay_on_delivery') {
+      const { count } = await prisma.orders.updateMany({
+        where: { id: order.id, paymentStatus: { in: ['UNPAID', 'PENDING'] } },
+        data: { paymentStatus: 'SHIPPING_PAID', status: 'CONFIRMED' },
+      })
+      if (count > 0) {
+        podConfirmedIds.push(order.id)
+        notifySellers(order.id).catch((e) => logger.error('Webhook POD notify failed', { orderId: order.id, error: e?.message ?? e }))
+      }
+    } else {
+      const { count } = await prisma.orders.updateMany({
+        where: { id: order.id, paymentStatus: { notIn: ['PAID', 'FAILED'] } },
+        data: { paymentStatus: 'PAID', status: 'CONFIRMED' },
+      })
+      if (count > 0) {
+        creditedAny = true
+        notifySellers(order.id).catch((e) => logger.error('Webhook notify failed', { orderId: order.id, error: e?.message ?? e }))
+        walletService
+          .creditSellersOnPayment(order.id)
+          .catch((e) => logger.error('Webhook wallet credit failed', { orderId: order.id, error: e?.message ?? e }))
+        squareService
+          .creditAssociationsForOrder(order.id)
+          .catch((e) => logger.error('Webhook association credit failed', { orderId: order.id, error: e?.message ?? e }))
       }
     }
+  }
 
-    // One buyer confirmation email for the whole purchase — fire-and-forget
-    if (creditedAny) {
-      prisma.profile
-        .findUnique({ where: { id: orders[0]!.userId }, select: { email: true } })
-        .then((buyer) => {
-          if (!buyer?.email || buyer.email.includes('@checkout.marketx.app')) return
-          const { subject, html, text } = buildOrderStatusEmail(orders[0]!.id, 'CONFIRMED')
-          emailQueue.enqueue({ to: buyer.email, subject, html, text, type: 'ORDER_CONFIRMATION' })
-        })
-        .catch(() => {})
-    }
+  // POD confirmed via webhook (buyer may never hit pod-verify): advance the POD
+  // lifecycle + debit the platform fee. Idempotent with pod-verify.
+  if (podConfirmedIds.length) {
+    await prisma.podDelivery.updateMany({
+      where: { orderId: { in: podConfirmedIds }, state: 'DEPOSIT_PENDING' },
+      data: { state: 'DEPOSIT_PAID' },
+    })
+    await podService.debitSellerPodFees(podConfirmedIds)
+  }
+
+  // One buyer confirmation email for the whole purchase — fire-and-forget
+  if (creditedAny) {
+    prisma.profile
+      .findUnique({ where: { id: orders[0]!.userId }, select: { email: true } })
+      .then((buyer) => {
+        if (!buyer?.email || buyer.email.includes('@checkout.marketx.app')) return
+        const { subject, html, text } = buildOrderStatusEmail(orders[0]!.id, 'CONFIRMED')
+        emailQueue.enqueue({ to: buyer.email, subject, html, text, type: 'ORDER_CONFIRMATION' })
+      })
+      .catch(() => {})
   }
 
   // Always return 200 to Paystack

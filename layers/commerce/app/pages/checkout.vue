@@ -450,6 +450,9 @@ const shippingBreakdown = computed(() =>
       service: sel?.service ?? 'Flat',
       provider: sel?.provider ?? null,
       amount: Math.round(groupShippingMajor(g.slug) * 100), // kobo
+      // Signed quote token — lets the server re-derive the shipping charge
+      // instead of trusting `amount`.
+      token: sel?.token,
       estimatedDays:
         sel?.estimatedDays ?? shippingCalculation.value?.estimatedDays ?? '',
     }

@@ -366,10 +366,48 @@ model Orders {
   orderItem       OrderItem[]
   user            Profile        @relation("BuyerOrders", fields: [userId], references: [id])
   affiliate       Profile?       @relation("AffiliateOrders", fields: [affiliateUserId], references: [id])
+  podDelivery     PodDelivery?
 
   @@index([paymentRef])
   @@index([purchaseGroupId])
   @@index([userId, created_at(sort: Desc)])  // buyer order list: WHERE userId=X ORDER BY created_at DESC (getUserOrders)
+}
+
+/// Pay-on-Delivery lifecycle for a POD order (one per Orders row). Owns the POD
+/// state machine + money-in-transit (freight deposit, courier remittance,
+/// settlement, denied-delivery refund). See docs/POD.md.
+model PodDelivery {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId             Int       @unique
+  order               Orders    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  /// 'gig' | 'byop'
+  provider            String
+  /// POD_TRANSITIONS state machine (docs/POD.md §2)
+  state               String    @default("INITIATED")
+  /// Buyer's prepaid freight deposit (kobo)
+  freightDepositMinor Int
+  /// Platform tax withheld from the freight (kobo)
+  freightTaxMinor     Int       @default(0)
+  /// Product cash the courier collects on delivery (kobo)
+  codAmountMinor      Int
+  trackingRef         String?
+  /// DELIVERED_COLLECTED | ATTEMPT_FAILED | RETURNED
+  attemptOutcome      String?
+  /// Provider attestation / buyer-confirmation evidence
+  attemptProof        Json?
+  attemptedAt         DateTime? @db.Timestamptz(6)
+  /// BYOP buyer-confirm-or-timeout window for the freight refund
+  disputeWindowEndsAt DateTime? @db.Timestamptz(6)
+  remittedAmountMinor Int?
+  remittedAt          DateTime? @db.Timestamptz(6)
+  reconciledAt        DateTime? @db.Timestamptz(6)
+  settledAt           DateTime? @db.Timestamptz(6)
+  freightRefundedAt   DateTime? @db.Timestamptz(6)
+  created_at          DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime  @updatedAt @db.Timestamptz(6)
+
+  @@index([state])
+  @@index([provider, state])
 }
 
 model OrderItem {
