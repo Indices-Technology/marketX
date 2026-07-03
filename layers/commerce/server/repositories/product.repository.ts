@@ -29,6 +29,7 @@ const productFeedInclude = {
 const productInclude = {
   seller: {
     select: {
+      id: true,
       store_slug: true,
       store_logo: true,
       store_name: true,

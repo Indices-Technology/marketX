@@ -423,13 +423,20 @@
                 <Icon name="mdi:store-outline" size="14" />
                 View Store
               </NuxtLink>
-              <NuxtLink
-                :to="`/messages?seller=${product.seller.store_slug}`"
-                class="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-brand px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#d81b36]"
+              <button
+                :disabled="messageLoading || !product.seller?.id"
+                class="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-brand px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#d81b36] disabled:opacity-60"
+                @click="messageStore"
               >
-                <Icon name="mdi:message-outline" size="14" />
+                <Icon
+                  :name="
+                    messageLoading ? 'eos-icons:loading' : 'mdi:message-outline'
+                  "
+                  size="14"
+                  :class="messageLoading ? 'animate-spin' : ''"
+                />
                 Chat with Seller
-              </NuxtLink>
+              </button>
             </div>
           </div>
 
@@ -940,6 +947,7 @@ import VideoPlayer from '~~/layers/core/app/components/VideoPlayer.vue'
 import ProductReviews from '~~/layers/commerce/app/components/ProductReviews.vue'
 import ProductCardMini from '~~/layers/commerce/app/components/ProductCardMini.vue'
 import { useRecentlyViewed } from '~~/layers/commerce/app/composables/useRecentlyViewed'
+import { useChatApi } from '~~/layers/profile/app/services/chat.api'
 import { useProductApi } from '~~/layers/commerce/app/services/product.api'
 import { useCart } from '~~/layers/commerce/app/composables/useCart'
 import { useAffiliate } from '~~/layers/commerce/app/composables/useAffiliate'
@@ -1030,6 +1038,27 @@ const loadRelated = async () => {
 }
 
 const goToProduct = (p: IProduct) => navigateTo(`/product/${p.slug}`)
+
+// ── Message the trader (creates/opens the store conversation) ────────────────
+const chatApi = useChatApi()
+const messageLoading = ref(false)
+const messageStore = async () => {
+  const sellerId = product.value?.seller?.id
+  if (!sellerId) return
+  messageLoading.value = true
+  try {
+    const res: any = await chatApi.createStoreConversation(
+      sellerId,
+      product.value?.id,
+    )
+    const conversationId = res?.data?.id
+    if (conversationId) await navigateTo(`/messages/${conversationId}`)
+  } catch {
+    notify({ type: 'error', text: 'Could not open conversation' })
+  } finally {
+    messageLoading.value = false
+  }
+}
 
 // ── Recently viewed ──────────────────────────────────────────────────────────
 const recentlyViewed = useRecentlyViewed()

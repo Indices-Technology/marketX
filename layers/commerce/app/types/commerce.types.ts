@@ -8,6 +8,7 @@ import type {
 
 export interface IProduct extends Products {
   seller?: {
+    id?: string | null
     store_slug: string
     store_logo?: string | null
     store_name?: string | null
