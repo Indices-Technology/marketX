@@ -132,7 +132,7 @@
               <!-- Full search page link -->
               <div class="border-t border-gray-100 p-2.5 dark:border-neutral-800">
                 <NuxtLink
-                  :to="`/search?q=${encodeURIComponent(searchQuery)}`"
+                  :to="`/discover?q=${encodeURIComponent(searchQuery)}`"
                   class="flex items-center justify-center gap-1.5 rounded-xl py-2 text-[13px] font-semibold text-brand transition-colors hover:bg-brand/5"
                   @click="clearSearch"
                 >

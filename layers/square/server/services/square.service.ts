@@ -109,7 +109,7 @@ export const squareService = {
       where,
       select: {
         ...SQUARE_CARD_SELECT,
-        _count: { select: { followers: true } },
+        _count: { select: { followers: true, products: true } },
       },
       orderBy: [{ type: 'asc' }, { memberCount: 'desc' }],
       take: limit + 1,
@@ -121,6 +121,7 @@ export const squareService = {
       ({ _count, ...s }) => ({
         ...s,
         followerCount: _count.followers,
+        productCount: _count.products,
       }),
     )
 

@@ -1,6 +1,25 @@
 <!-- Market home — rendered inside HomeLayout by the auth-aware index.vue -->
 <template>
   <div class="w-full space-y-10 px-1 sm:px-2">
+    <!-- ─── 0. SEARCH (hero) ──────────────────────────────────────────────── -->
+    <section class="pt-1">
+      <form class="relative" role="search" @submit.prevent="goSearch">
+        <Icon
+          name="mdi:magnify"
+          size="20"
+          class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-neutral-500"
+        />
+        <input
+          v-model="searchQuery"
+          type="search"
+          enterkeyhint="search"
+          placeholder="Search markets, traders or goods"
+          aria-label="Search markets, traders or goods"
+          class="w-full rounded-full border border-gray-200 bg-white py-3 pl-11 pr-4 text-sm text-gray-900 placeholder-gray-500 shadow-sm transition focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/25 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white dark:placeholder-neutral-500"
+        />
+      </form>
+    </section>
+
     <!-- ─── 1. DEALS ──────────────────────────────────────────────────────── -->
     <!-- Today's deals — hidden entirely when there are no live (<48h) flash deals -->
     <section v-if="dealsLoading || deals.length">
@@ -294,6 +313,33 @@
           @open-product="openProduct"
         />
       </div>
+
+      <!-- Empty — encourage exploration instead of a dangling header -->
+      <div
+        v-else
+        class="rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-4 py-8 text-center dark:border-neutral-700 dark:bg-neutral-800/40"
+      >
+        <Icon
+          name="mdi:storefront-outline"
+          size="28"
+          class="mx-auto text-gray-300 dark:text-neutral-600"
+        />
+        <p
+          class="mt-2 text-sm font-semibold text-gray-600 dark:text-neutral-300"
+        >
+          The market is quiet right now
+        </p>
+        <p class="mt-0.5 text-[12px] text-gray-500 dark:text-neutral-400">
+          Follow traders and markets to see their latest here.
+        </p>
+        <NuxtLink
+          to="/squares"
+          class="mt-3 inline-flex items-center gap-1 rounded-full bg-brand px-4 py-1.5 text-[12px] font-bold text-white transition hover:bg-brand/90"
+        >
+          Explore markets
+          <Icon name="mdi:arrow-right" size="13" />
+        </NuxtLink>
+      </div>
     </section>
 
     <!-- ─── 6. MAP CTA ────────────────────────────────────────────────────── -->
@@ -359,6 +405,15 @@ import type { IFeedItem } from '~~/layers/feed/app/types/feed.types'
 import type { IProduct } from '~~/layers/social/app/types/post.types'
 
 defineEmits<{ 'sign-in': [] }>()
+
+// ── Hero search — routes to the full search page ────────────────────────────────
+const searchQuery = ref('')
+const goSearch = () =>
+  navigateTo(
+    searchQuery.value.trim()
+      ? `/discover?q=${encodeURIComponent(searchQuery.value.trim())}`
+      : '/discover',
+  )
 
 const {
   selectedProduct,

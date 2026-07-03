@@ -48,7 +48,7 @@
 
       <!-- Like button (top-right) -->
       <button
-        class="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 shadow-sm backdrop-blur-sm transition-all hover:scale-110 active:scale-95 dark:bg-black/40"
+        class="absolute right-2 top-2 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 shadow-sm backdrop-blur-sm transition-all hover:scale-110 active:scale-95 dark:bg-black/40"
         :class="
           calm && !localLiked
             ? 'opacity-0 group-hover:opacity-100 focus:opacity-100'
@@ -89,13 +89,26 @@
       </h3>
 
       <div class="flex items-center justify-between gap-1">
-        <p
+        <component
+          :is="product.seller?.store_slug ? 'NuxtLink' : 'span'"
           v-if="product.seller?.store_name"
-          class="flex min-w-0 items-center gap-1 truncate text-[10px] text-gray-400 dark:text-neutral-500"
+          :to="
+            product.seller?.store_slug
+              ? `/sellers/profile/${product.seller.store_slug}`
+              : undefined
+          "
+          class="flex min-w-0 items-center gap-1 truncate text-[11px] text-gray-500 transition-colors hover:text-brand dark:text-neutral-400"
+          @click.stop
         >
-          <Icon name="mdi:storefront-outline" size="10" class="shrink-0" />
+          <Icon name="mdi:storefront-outline" size="11" class="shrink-0" />
           <span class="truncate">{{ product.seller.store_name }}</span>
-        </p>
+          <Icon
+            v-if="product.seller?.is_verified"
+            name="mdi:check-decagram"
+            size="11"
+            class="shrink-0 text-blue-500"
+          />
+        </component>
         <div v-if="!calm" class="flex shrink-0 items-center gap-1.5">
           <!-- Relative time — visible in Fresh Drops context -->
           <span
@@ -113,6 +126,35 @@
             {{ localLikeCount }}
           </span>
         </div>
+      </div>
+
+      <!-- Rating · trader location — shown when the feed provides trust data -->
+      <div
+        v-if="product.averageRating || product.seller?.locationLabel"
+        class="flex items-center gap-1.5 text-[10px] text-gray-500 dark:text-neutral-400"
+      >
+        <span
+          v-if="product.averageRating"
+          class="flex shrink-0 items-center gap-0.5 font-semibold text-amber-500"
+        >
+          <Icon name="mdi:star" size="11" />
+          {{ product.averageRating.toFixed(1) }}
+          <span class="font-normal text-gray-400 dark:text-neutral-500"
+            >({{ product.totalReviews ?? 0 }})</span
+          >
+        </span>
+        <span
+          v-if="product.averageRating && product.seller?.locationLabel"
+          class="text-gray-300 dark:text-neutral-600"
+          >·</span
+        >
+        <span
+          v-if="product.seller?.locationLabel"
+          class="flex min-w-0 items-center gap-0.5 truncate"
+        >
+          <Icon name="mdi:map-marker-outline" size="10" class="shrink-0" />
+          <span class="truncate">{{ product.seller.locationLabel }}</span>
+        </span>
       </div>
 
       <!-- Price row -->
@@ -135,7 +177,7 @@
         <!-- Cart — small ghost icon, not a prominent CTA -->
         <button
           :disabled="lowestStock === 0 || isAddingToCart"
-          class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-40"
+          class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-40"
           :class="
             cartAdded
               ? 'bg-green-500/15 text-green-600'

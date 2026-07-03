@@ -315,7 +315,26 @@ watch(
   },
 )
 
+// Search deep-link: /discover?q=… (used by the homepage search hero + right rail)
+const applySearchParam = (q: string) => {
+  searchInput.value = q
+  activeTab.value = 'products' as typeof activeTab.value
+}
+
+watch(
+  () => route.query.q,
+  (val) => {
+    if (val && typeof val === 'string') applySearchParam(val)
+  },
+)
+
 onMounted(() => {
+  const q = route.query.q as string | undefined
+  if (q) {
+    applySearchParam(q)
+    return
+  }
+
   const tagName = route.query.tagName as string | undefined
   if (tagName) {
     applyTagNameParam(tagName)

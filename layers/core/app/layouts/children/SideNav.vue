@@ -14,6 +14,7 @@
     <!-- Scrollable nav area — profile stays pinned below this -->
     <div class="nav-scroll min-h-0 flex-1 overflow-y-auto">
       <!-- Primary Navigation -->
+      <p class="nav-group-label">Shop</p>
       <nav class="flex flex-col space-y-1">
         <NuxtLink to="/" class="nav-button group" :class="{ active: isHome }">
           <Icon :name="isHome ? 'mdi:home' : 'mdi:home-outline'" size="24" />
@@ -43,6 +44,11 @@
           <span class="nav-text">Squares</span>
         </NuxtLink>
       </nav>
+
+      <!-- Sell -->
+      <ClientOnly>
+        <p v-if="profileStore.isLoggedIn" class="nav-group-label mt-4">Sell</p>
+      </ClientOnly>
 
       <!-- Seller entry point: Start Selling (users without a store) -->
       <ClientOnly>
@@ -189,10 +195,10 @@
         </div>
       </ClientOnly>
 
-      <!-- Divider -->
-      <div class="mx-2 my-3 h-px bg-gray-200 dark:bg-neutral-800" />
+      <!-- You -->
+      <p class="nav-group-label mt-4">You</p>
 
-      <!-- User actions (logged-in only) -->
+      <!-- User actions -->
       <nav class="flex flex-col space-y-1">
         <!-- Sell / Create -->
         <ClientOnly>
@@ -454,6 +460,10 @@ onUnmounted(() => document.removeEventListener('click', onClickOutside, true))
 
 .nav-text {
   @apply hidden text-[15px] xl:inline;
+}
+
+.nav-group-label {
+  @apply hidden px-3 pb-1 pt-1 text-[11px] font-bold uppercase tracking-widest text-gray-500 xl:block dark:text-neutral-500;
 }
 
 .menu-item {

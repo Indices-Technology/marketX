@@ -171,12 +171,20 @@
           <Icon name="mdi:map-marker-outline" size="11" class="shrink-0" />
           {{ [square.city, square.state].filter(Boolean).join(', ') }}
         </p>
-        <div
-          class="mt-2 flex items-center gap-1.5 text-[11px] font-semibold"
-          :style="`color: ${accent}`"
-        >
-          <Icon name="mdi:store-outline" size="13" />
-          {{ square.memberCount ?? 0 }} traders
+        <div class="mt-2 flex items-center gap-1.5 text-[11px]">
+          <span
+            class="flex items-center gap-1 font-semibold"
+            :style="`color: ${accent}`"
+          >
+            <Icon name="mdi:store-outline" size="13" />
+            {{ square.memberCount ?? 0 }} traders
+          </span>
+          <span
+            v-if="square.productCount != null"
+            class="text-gray-400 dark:text-neutral-500"
+          >
+            · {{ square.productCount }} goods
+          </span>
           <span
             class="ml-auto inline-flex items-center gap-1 text-gray-400 dark:text-neutral-500"
           >
@@ -337,6 +345,7 @@ const props = withDefaults(
       type: 'GEOGRAPHIC' | 'CATEGORY'
       memberCount?: number
       followerCount?: number
+      productCount?: number
     }
     variant?: 'full' | 'compact' | 'spotlight'
     following?: boolean
