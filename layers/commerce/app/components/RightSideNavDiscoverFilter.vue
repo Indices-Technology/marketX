@@ -137,15 +137,89 @@
         </FilterSection>
       </template>
 
-      <!-- ── Browse / Trending ──────────────────────────────────── -->
+      <!-- ── Browse / Trending — discovery, not a time filter ───── -->
       <template v-else-if="activeTab === 'browse' || activeTab === 'trending'">
-        <FilterSection label="Time range">
-          <OptionList
-            :options="TIME_OPTIONS"
-            :active="filters.trending.timeRange"
-            @select="filters.trending.timeRange = $event"
-          />
-        </FilterSection>
+        <!-- Markets by category -->
+        <div v-if="sidebarSquares.length">
+          <p
+            class="mb-2 text-[11px] font-bold uppercase tracking-widest text-gray-500 dark:text-neutral-500"
+          >
+            Markets by category
+          </p>
+          <div class="space-y-0.5">
+            <NuxtLink
+              v-for="sq in sidebarSquares.slice(0, 4)"
+              :key="sq.id"
+              :to="`/squares/${sq.slug}`"
+              class="flex items-center gap-2.5 rounded-lg px-1.5 py-2 transition hover:bg-gray-50 dark:hover:bg-neutral-800/60"
+            >
+              <div
+                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[11px] font-black text-white"
+                :style="`background:${sq.accentColor || '#f59e0b'}`"
+              >
+                {{ sq.name.slice(0, 2).toUpperCase() }}
+              </div>
+              <div class="min-w-0 flex-1">
+                <p
+                  class="truncate text-[12px] font-semibold text-gray-900 dark:text-white"
+                >
+                  {{ sq.name }}
+                </p>
+                <p
+                  class="truncate text-[10px] text-gray-500 dark:text-neutral-400"
+                >
+                  {{ sq.memberCount ?? 0 }} traders
+                </p>
+              </div>
+            </NuxtLink>
+          </div>
+        </div>
+
+        <!-- Popular traders -->
+        <div v-if="sidebarSellers.length">
+          <p
+            class="mb-2 text-[11px] font-bold uppercase tracking-widest text-gray-500 dark:text-neutral-500"
+          >
+            Popular traders
+          </p>
+          <div class="space-y-0.5">
+            <NuxtLink
+              v-for="s in sidebarSellers.slice(0, 4)"
+              :key="s.id"
+              :to="`/sellers/profile/${s.store_slug}`"
+              class="flex items-center gap-2.5 rounded-lg px-1.5 py-2 transition hover:bg-gray-50 dark:hover:bg-neutral-800/60"
+            >
+              <StoreAvatar
+                :store-name="s.store_name ?? undefined"
+                :logo="s.store_logo ?? undefined"
+                size="sm"
+              />
+              <div class="min-w-0 flex-1">
+                <p
+                  class="flex items-center gap-1 truncate text-[12px] font-semibold text-gray-900 dark:text-white"
+                >
+                  <span class="truncate">{{ s.store_name }}</span>
+                  <Icon
+                    v-if="s.is_verified"
+                    name="mdi:check-decagram"
+                    size="12"
+                    class="shrink-0 text-blue-500"
+                  />
+                </p>
+                <p class="text-[10px] text-gray-500 dark:text-neutral-400">
+                  {{ formatNum(s.followers_count || 0) }} followers
+                </p>
+              </div>
+            </NuxtLink>
+          </div>
+        </div>
+
+        <div
+          v-if="!sidebarSquares.length && !sidebarSellers.length && sidebarHasData"
+          class="text-[12px] text-gray-500 dark:text-neutral-400"
+        >
+          Explore the markets to discover traders.
+        </div>
       </template>
 
       <!-- ── Tags ───────────────────────────────────────────────── -->
@@ -174,9 +248,26 @@ import FilterSection from './discover/DiscoverFilterSection.vue'
 import PriceRange from './discover/DiscoverPriceRange.vue'
 import OptionList from './discover/DiscoverFilterOptionList.vue'
 import { useDiscoverFilters } from '../composables/useDiscoverFilters'
+import StoreAvatar from '~~/layers/profile/app/components/StoreAvatar.vue'
+import { useRightSidebarData } from '~~/layers/core/app/composables/useRightSidebarData'
 
 const { activeTab, filters, hasActiveFilters, resetFilters } =
   useDiscoverFilters()
+
+const {
+  squares: sidebarSquares,
+  featuredSellers: sidebarSellers,
+  hasData: sidebarHasData,
+  load: loadSidebar,
+} = useRightSidebarData()
+
+onMounted(() => loadSidebar())
+
+const formatNum = (n: number) => {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`
+  return n.toString()
+}
 
 const SORT_OPTIONS = [
   { value: 'newest' as const, label: 'Newest', icon: 'mdi:lightning-bolt' },
@@ -209,13 +300,6 @@ const MEMBER_OPTIONS = [
   { value: 25, label: '25+ sellers' },
   { value: 50, label: '50+ sellers' },
   { value: 100, label: '100+ sellers' },
-]
-
-const TIME_OPTIONS = [
-  { value: 'all' as const, label: 'All time' },
-  { value: 'today' as const, label: 'Today' },
-  { value: 'week' as const, label: 'This week' },
-  { value: 'month' as const, label: 'This month' },
 ]
 
 const TAG_SORT_OPTIONS = [

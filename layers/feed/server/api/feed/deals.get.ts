@@ -68,6 +68,7 @@ export default defineEventHandler(async (event) => {
               is_verified: true,
             },
           },
+          square: { select: { name: true, slug: true } },
           media: {
             where: { isBgMusic: false },
             select: { id: true, url: true, type: true },

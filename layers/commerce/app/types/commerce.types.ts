@@ -15,6 +15,7 @@ export interface IProduct extends Products {
     is_verified?: boolean | null
     locationLabel?: string | null
   }
+  square?: { name: string; slug: string } | null
   media?: Array<{
     id: string
     url: string

@@ -14,6 +14,8 @@ const PRODUCT_SELECT = {
   sellerId: true,
   viewCount: true,
   affiliateCommission: true,
+  averageRating: true,
+  totalReviews: true,
   media: {
     where: { isBgMusic: false },
     select: { id: true, url: true, type: true, isBgMusic: true },
@@ -21,8 +23,15 @@ const PRODUCT_SELECT = {
     orderBy: { created_at: 'asc' as const },
   },
   seller: {
-    select: { store_name: true, store_slug: true, default_currency: true },
+    select: {
+      store_name: true,
+      store_slug: true,
+      default_currency: true,
+      is_verified: true,
+      locationLabel: true,
+    },
   },
+  square: { select: { name: true, slug: true } },
   variants: {
     select: { id: true, stock: true, price: true, size: true },
     take: 3,
@@ -57,6 +66,8 @@ export default defineEventHandler(async (event) => {
             store_logo: true,
             store_banner: true,
             is_verified: true,
+            averageRating: true,
+            totalReviews: true,
             followers_count: true,
             _count: { select: { products: true } },
           },

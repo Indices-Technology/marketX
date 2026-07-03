@@ -301,12 +301,25 @@
               </div>
               <div class="w-full min-w-0">
                 <p
-                  class="truncate text-[11px] font-bold text-gray-900 group-hover:text-brand dark:text-neutral-100"
+                  class="flex items-center justify-center gap-0.5 truncate text-[11px] font-bold text-gray-900 group-hover:text-brand dark:text-neutral-100"
                 >
-                  {{ seller.store_name }}
+                  <span class="truncate">{{ seller.store_name }}</span>
+                  <Icon
+                    v-if="seller.is_verified"
+                    name="mdi:check-decagram"
+                    size="11"
+                    class="shrink-0 text-blue-500"
+                  />
                 </p>
                 <p class="text-[10px] text-gray-500 dark:text-neutral-400">
-                  {{ formatNum(seller.followers_count || 0) }} followers
+                  <span
+                    v-if="seller.averageRating"
+                    class="font-semibold text-amber-500"
+                    >★ {{ seller.averageRating.toFixed(1) }}</span
+                  >
+                  <span v-else
+                    >{{ formatNum(seller.followers_count || 0) }} followers</span
+                  >
                 </p>
               </div>
             </NuxtLink>
@@ -339,12 +352,25 @@
             </div>
             <div class="w-full min-w-0">
               <p
-                class="truncate text-xs font-bold text-gray-900 transition-colors group-hover:text-brand dark:text-neutral-100"
+                class="flex items-center justify-center gap-0.5 truncate text-xs font-bold text-gray-900 transition-colors group-hover:text-brand dark:text-neutral-100"
               >
-                {{ seller.store_name }}
+                <span class="truncate">{{ seller.store_name }}</span>
+                <Icon
+                  v-if="seller.is_verified"
+                  name="mdi:check-decagram"
+                  size="12"
+                  class="shrink-0 text-blue-500"
+                />
               </p>
               <p class="text-[11px] text-gray-500 dark:text-neutral-400">
-                {{ formatNum(seller.followers_count || 0) }} followers
+                <span
+                  v-if="seller.averageRating"
+                  class="font-semibold text-amber-500"
+                  >★ {{ seller.averageRating.toFixed(1) }}</span
+                >
+                <span v-else
+                  >{{ formatNum(seller.followers_count || 0) }} followers</span
+                >
               </p>
             </div>
           </NuxtLink>
