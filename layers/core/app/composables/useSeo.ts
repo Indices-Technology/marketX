@@ -174,26 +174,38 @@ export const useSeo = () => {
 
   // ── Product pages ────────────────────────────────────────────────────────
 
-  const setProductPage = (product: {
-    title?: string
-    description?: string | null
-    imageUrl?: string | null
-    slug?: string
-    price?: number
-    sellerName?: string
-  }) => {
-    const title = product.title || 'Product'
-    const seller = product.sellerName ? ` by ${product.sellerName}` : ''
-    const desc =
-      product.description ||
-      `Buy ${title}${seller} on ${siteName}. Fast delivery across Nigeria and worldwide shipping available.`
+  // Accepts a getter so SEO stays reactive — call once in setup(); the meta
+  // updates as the (lazily-fetched) product loads or changes. Registering
+  // useSeoMeta inside a watcher (post-await) breaks lifecycle-hook injection.
+  const setProductPage = (
+    getProduct: () => {
+      title?: string
+      description?: string | null
+      imageUrl?: string | null
+      slug?: string
+      price?: number
+      sellerName?: string
+    },
+  ) => {
+    const buildDesc = () => {
+      const p = getProduct()
+      const title = p.title || 'Product'
+      const seller = p.sellerName ? ` by ${p.sellerName}` : ''
+      return (
+        p.description ||
+        `Buy ${title}${seller} on ${siteName}. Fast delivery across Nigeria and worldwide shipping available.`
+      )
+    }
     useSeoMeta({
-      title,
-      description: desc,
-      ogTitle: `${title} | ${siteName}`,
-      ogDescription: desc,
-      ogImage: product.imageUrl || defaultImage,
-      ogUrl: product.slug ? `${baseURL}/product/${product.slug}` : undefined,
+      title: () => getProduct().title || 'Product',
+      description: buildDesc,
+      ogTitle: () => `${getProduct().title || 'Product'} | ${siteName}`,
+      ogDescription: buildDesc,
+      ogImage: () => getProduct().imageUrl || defaultImage,
+      ogUrl: () => {
+        const s = getProduct().slug
+        return s ? `${baseURL}/product/${s}` : undefined
+      },
       ogType: 'product',
     })
   }

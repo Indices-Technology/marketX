@@ -71,6 +71,7 @@ const productInclude = {
       tag: { select: { id: true, name: true } },
     },
   },
+  square: { select: { name: true, slug: true } },
 }
 
 import type { CreateProductInput, UpdateProductInput } from '../schemas/product.schema'

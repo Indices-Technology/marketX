@@ -102,6 +102,7 @@
             <!-- Nav arrows (multiple images) -->
             <template v-if="mediaItems.length > 1">
               <button
+                aria-label="Previous image"
                 class="absolute left-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-md hover:bg-black/50"
                 @click="
                   currentIndex =
@@ -111,6 +112,7 @@
                 <Icon name="mdi:chevron-left" size="22" />
               </button>
               <button
+                aria-label="Next image"
                 class="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-md hover:bg-black/50"
                 @click="currentIndex = (currentIndex + 1) % mediaItems.length"
               >
@@ -122,6 +124,7 @@
                 <button
                   v-for="(_, i) in mediaItems"
                   :key="i"
+                  :aria-label="`Go to image ${i + 1}`"
                   class="h-2 rounded-full transition-all"
                   :class="
                     i === currentIndex ? 'w-5 bg-brand' : 'w-2 bg-white/60'
@@ -432,20 +435,44 @@
 
           <!-- Title & price -->
           <div>
+            <!-- Market — the good lives inside a market square -->
+            <NuxtLink
+              v-if="product.square"
+              :to="`/squares/${product.square.slug}`"
+              class="mb-1.5 inline-flex items-center gap-1 rounded-full bg-brand/5 px-2.5 py-1 text-[12px] font-medium text-brand transition hover:bg-brand/10"
+            >
+              <Icon name="mdi:store-marker-outline" size="13" />
+              {{ product.square.name }}
+            </NuxtLink>
             <h1
               class="text-2xl font-bold leading-snug text-gray-900 dark:text-neutral-100"
             >
               {{ product.title }}
             </h1>
-            <!-- View count -->
-            <p
-              v-if="product.viewCount > 0"
-              class="mt-1 flex items-center gap-1 text-[11px] text-gray-400 dark:text-neutral-500"
+            <!-- Social proof: product rating + views -->
+            <div
+              class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-gray-500 dark:text-neutral-400"
             >
-              <Icon name="mdi:eye-outline" size="12" />
-              {{ product.viewCount.toLocaleString() }}
-              {{ product.viewCount === 1 ? 'view' : 'views' }}
-            </p>
+              <a
+                v-if="product.averageRating"
+                href="#reviews"
+                class="flex items-center gap-0.5 font-semibold text-amber-500"
+              >
+                <Icon name="mdi:star" size="12" />
+                {{ product.averageRating.toFixed(1) }}
+                <span class="font-normal text-gray-500 dark:text-neutral-400"
+                  >({{ product.totalReviews ?? 0 }} reviews)</span
+                >
+              </a>
+              <span
+                v-if="product.viewCount > 0"
+                class="flex items-center gap-1"
+              >
+                <Icon name="mdi:eye-outline" size="12" />
+                {{ product.viewCount.toLocaleString() }}
+                {{ product.viewCount === 1 ? 'view' : 'views' }}
+              </span>
+            </div>
             <div class="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <span class="text-2xl font-bold text-brand">{{
                 formatProductPrice(discountedPrice, 'NGN')
@@ -634,79 +661,270 @@
             </div>
           </div>
 
-          <!-- Description -->
-          <div
-            v-if="product.description"
-            class="rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-neutral-800 dark:bg-neutral-800/50"
-          >
-            <p
-              class="mb-2 text-[11px] font-bold uppercase tracking-widest text-gray-400 dark:text-neutral-500"
-            >
-              Description
-            </p>
-            <!-- eslint-disable-next-line vue/no-v-html — sanitized by DOMPurify -->
-            <div
-              class="product-desc text-sm leading-relaxed text-gray-700 dark:text-neutral-300"
-              v-html="safeDescription"
-            />
+          <!-- Trust & protection -->
+          <div class="grid grid-cols-2 gap-2">
+            <div class="trust-chip">
+              <Icon
+                name="mdi:shield-check-outline"
+                size="15"
+                class="shrink-0 text-emerald-500"
+              />
+              Buyer protection
+            </div>
+            <div class="trust-chip">
+              <Icon
+                name="mdi:lock-outline"
+                size="15"
+                class="shrink-0 text-emerald-500"
+              />
+              Secure payments
+            </div>
+            <div class="trust-chip">
+              <Icon
+                name="mdi:backup-restore"
+                size="15"
+                class="shrink-0 text-emerald-500"
+              />
+              Easy returns
+            </div>
+            <div class="trust-chip">
+              <Icon
+                name="mdi:magnify-scan"
+                size="15"
+                class="shrink-0 text-emerald-500"
+              />
+              Inspect on delivery
+            </div>
           </div>
 
-          <!-- Product details grid -->
+          <!-- Product info accordion -->
           <div
-            v-if="productDetails.length"
-            class="rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-neutral-800 dark:bg-neutral-800/50"
+            class="divide-y divide-gray-200 overflow-hidden rounded-2xl border border-gray-200 dark:divide-neutral-800 dark:border-neutral-800"
           >
-            <p
-              class="mb-3 text-[11px] font-bold uppercase tracking-widest text-gray-400 dark:text-neutral-500"
-            >
-              Details
-            </p>
-            <dl class="grid grid-cols-2 gap-x-4 gap-y-3">
-              <template v-for="attr in productDetails" :key="attr.label">
-                <div>
-                  <dt
-                    class="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-neutral-500"
-                  >
-                    {{ attr.label }}
-                  </dt>
-                  <dd
-                    class="mt-0.5 text-sm font-medium text-gray-800 dark:text-neutral-200"
-                  >
-                    {{ attr.value }}
-                  </dd>
-                </div>
-              </template>
-            </dl>
-            <!-- Tags -->
-            <div
-              v-if="productTags.length"
-              class="mt-3 border-t border-gray-200 pt-3 dark:border-neutral-700"
-            >
-              <dt
-                class="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-neutral-500"
-              >
-                Tags
-              </dt>
-              <div class="flex flex-wrap gap-1.5">
-                <span
-                  v-for="tag in productTags"
-                  :key="tag"
-                  class="rounded-full bg-brand/10 px-2.5 py-0.5 text-[11px] font-medium text-brand"
-                >
-                  #{{ tag }}
-                </span>
+            <!-- Description -->
+            <details v-if="product.description" open class="group">
+              <summary class="acc-summary">
+                Description
+                <Icon name="mdi:chevron-down" size="18" class="acc-chev" />
+              </summary>
+              <div class="px-4 pb-4">
+                <!-- eslint-disable-next-line vue/no-v-html — sanitized by DOMPurify -->
+                <div
+                  class="product-desc text-sm leading-relaxed text-gray-700 dark:text-neutral-300"
+                  v-html="safeDescription"
+                />
               </div>
-            </div>
+            </details>
+
+            <!-- Specifications -->
+            <details v-if="productDetails.length" class="group">
+              <summary class="acc-summary">
+                Specifications
+                <Icon name="mdi:chevron-down" size="18" class="acc-chev" />
+              </summary>
+              <div class="px-4 pb-4">
+                <dl class="grid grid-cols-2 gap-x-4 gap-y-3">
+                  <template v-for="attr in productDetails" :key="attr.label">
+                    <div>
+                      <dt
+                        class="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-neutral-500"
+                      >
+                        {{ attr.label }}
+                      </dt>
+                      <dd
+                        class="mt-0.5 text-sm font-medium text-gray-800 dark:text-neutral-200"
+                      >
+                        {{ attr.value }}
+                      </dd>
+                    </div>
+                  </template>
+                </dl>
+                <div
+                  v-if="productTags.length"
+                  class="mt-3 border-t border-gray-200 pt-3 dark:border-neutral-700"
+                >
+                  <p
+                    class="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-neutral-500"
+                  >
+                    Tags
+                  </p>
+                  <div class="flex flex-wrap gap-1.5">
+                    <span
+                      v-for="tag in productTags"
+                      :key="tag"
+                      class="rounded-full bg-brand/10 px-2.5 py-0.5 text-[11px] font-medium text-brand"
+                    >
+                      #{{ tag }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </details>
+
+            <!-- Delivery & Returns -->
+            <details class="group">
+              <summary class="acc-summary">
+                Delivery &amp; Returns
+                <Icon name="mdi:chevron-down" size="18" class="acc-chev" />
+              </summary>
+              <div
+                class="space-y-2 px-4 pb-4 text-[13px] text-gray-600 dark:text-neutral-300"
+              >
+                <p
+                  v-if="product.seller.pod_enabled"
+                  class="flex items-start gap-1.5"
+                >
+                  <Icon
+                    name="mdi:truck-delivery-outline"
+                    size="15"
+                    class="mt-0.5 shrink-0 text-emerald-500"
+                  />
+                  <span
+                    >Pay on delivery available<template
+                      v-if="product.seller.pod_delivery_days"
+                    >
+                      — delivered in {{ product.seller.pod_delivery_days }}–{{
+                        product.seller.pod_delivery_days + 2
+                      }}
+                      days</template
+                    >.</span
+                  >
+                </p>
+                <p class="flex items-start gap-1.5">
+                  <Icon
+                    name="mdi:magnify-scan"
+                    size="15"
+                    class="mt-0.5 shrink-0 text-emerald-500"
+                  />
+                  Inspect your order on delivery before you pay (where POD
+                  applies).
+                </p>
+                <p class="flex items-start gap-1.5">
+                  <Icon
+                    name="mdi:backup-restore"
+                    size="15"
+                    class="mt-0.5 shrink-0 text-emerald-500"
+                  />
+                  Returns accepted for damaged or not-as-described items —
+                  contact the trader within the return window.
+                </p>
+                <p class="flex items-start gap-1.5">
+                  <Icon
+                    name="mdi:shield-check-outline"
+                    size="15"
+                    class="mt-0.5 shrink-0 text-emerald-500"
+                  />
+                  Payments are held securely until you confirm your order.
+                </p>
+              </div>
+            </details>
           </div>
         </div>
       </div>
 
+      <!-- ── More from this trader ── -->
+      <section v-if="traderProducts.length" class="mt-10">
+        <div class="mb-3 flex items-center justify-between">
+          <h2 class="text-lg font-bold text-gray-900 dark:text-white">
+            More from {{ product.seller.store_name }}
+          </h2>
+          <NuxtLink
+            :to="`/sellers/profile/${product.seller.store_slug}`"
+            class="text-xs font-semibold text-brand hover:underline"
+          >
+            Visit store →
+          </NuxtLink>
+        </div>
+        <div
+          class="rail-scroll -mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-2"
+        >
+          <div
+            v-for="p in traderProducts"
+            :key="p.id"
+            class="w-40 shrink-0 snap-start"
+          >
+            <ProductCardMini :product="p" @open-detail="goToProduct" />
+          </div>
+        </div>
+      </section>
+
+      <!-- ── More from this market ── -->
+      <section v-if="product.square && marketProducts.length" class="mt-10">
+        <div class="mb-3 flex items-center justify-between">
+          <h2 class="text-lg font-bold text-gray-900 dark:text-white">
+            More from {{ product.square.name }}
+          </h2>
+          <NuxtLink
+            :to="`/squares/${product.square.slug}`"
+            class="text-xs font-semibold text-brand hover:underline"
+          >
+            Visit market →
+          </NuxtLink>
+        </div>
+        <div
+          class="rail-scroll -mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-2"
+        >
+          <div
+            v-for="p in marketProducts"
+            :key="p.id"
+            class="w-40 shrink-0 snap-start"
+          >
+            <ProductCardMini :product="p" @open-detail="goToProduct" />
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Recently viewed ── -->
+      <section v-if="recentlyViewedItems.length" class="mt-10">
+        <h2 class="mb-3 text-lg font-bold text-gray-900 dark:text-white">
+          Recently viewed
+        </h2>
+        <div
+          class="rail-scroll -mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-2"
+        >
+          <div
+            v-for="p in recentlyViewedItems"
+            :key="p.id"
+            class="w-40 shrink-0 snap-start"
+          >
+            <ProductCardMini :product="p" @open-detail="goToProduct" />
+          </div>
+        </div>
+      </section>
+
       <!-- ── Reviews ── -->
-      <div class="mt-10">
+      <div id="reviews" class="mt-10 scroll-mt-24">
         <h2 class="mb-4 text-lg font-bold text-gray-900 dark:text-white">
           Customer Reviews
         </h2>
         <ProductReviews :product-id="product.id" />
+      </div>
+
+      <!-- Mobile sticky buy bar (sits above the bottom nav) -->
+      <div
+        class="fixed inset-x-0 bottom-16 z-30 flex items-center gap-3 border-t border-gray-200 bg-white/95 px-4 py-2.5 backdrop-blur-md md:hidden dark:border-neutral-800 dark:bg-neutral-950/95"
+        style="padding-bottom: calc(0.625rem + env(safe-area-inset-bottom, 0px))"
+      >
+        <p class="min-w-0 flex-1 truncate text-lg font-extrabold text-brand">
+          {{ formatProductPrice(discountedPrice, 'NGN') }}
+        </p>
+        <BaseButton
+          variant="primary"
+          class="shrink-0 touch-manipulation px-6 py-3"
+          :loading="addingToCart"
+          :disabled="
+            addingToCart || !selectedVariantId || selectedVariant?.stock === 0
+          "
+          @click="handleAddToCart"
+        >
+          <Icon
+            v-if="!addingToCart"
+            name="mdi:cart-plus"
+            size="16"
+            class="mr-1"
+          />
+          {{ addingToCart ? 'Adding…' : 'Add to Cart' }}
+        </BaseButton>
       </div>
     </div>
   </HomeLayout>
@@ -720,6 +938,8 @@ import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 import VideoPlayer from '~~/layers/core/app/components/VideoPlayer.vue'
 import ProductReviews from '~~/layers/commerce/app/components/ProductReviews.vue'
+import ProductCardMini from '~~/layers/commerce/app/components/ProductCardMini.vue'
+import { useRecentlyViewed } from '~~/layers/commerce/app/composables/useRecentlyViewed'
 import { useProductApi } from '~~/layers/commerce/app/services/product.api'
 import { useCart } from '~~/layers/commerce/app/composables/useCart'
 import { useAffiliate } from '~~/layers/commerce/app/composables/useAffiliate'
@@ -739,6 +959,7 @@ import { useShareModal } from '~~/layers/social/app/composables/useShareModal'
 import { notify } from '@kyvg/vue3-notification'
 import type { Category } from '~~/shared/types/category'
 import type { Tag } from '~~/shared/types/tag'
+import type { IProduct } from '~~/layers/commerce/app/types/commerce.types'
 
 // ── Route ────────────────────────────────────────────────────────────────────
 const route = useRoute()
@@ -760,12 +981,68 @@ onMounted(() => {
 })
 
 // ── Data fetch ───────────────────────────────────────────────────────────────
-const { data, pending, status } = await useLazyAsyncData(
+const { data, pending, status } = useLazyAsyncData(
   `product-${slug.value}`,
   () => useProductApi().getProductBySlug(slug.value),
   { server: false },
 )
 const product = computed(() => data.value?.data ?? null)
+
+// SEO — registered once in setup(); getters keep it reactive as the product loads.
+setProductPage(() => ({
+  title: product.value?.title,
+  description: product.value?.description,
+  imageUrl: product.value?.media?.[0]?.url,
+  slug: product.value?.slug,
+  sellerName: product.value?.seller?.store_name,
+}))
+
+// ── Related discovery: more from this trader / market ────────────────────────
+const traderProducts = ref<IProduct[]>([])
+const marketProducts = ref<IProduct[]>([])
+
+const loadRelated = async () => {
+  const p = product.value
+  if (!p) return
+  const excludeId = p.id
+  try {
+    const [tr, mk] = await Promise.all([
+      p.seller?.store_slug
+        ? $fetch<any>(
+            `/api/commerce/products?storeSlug=${p.seller.store_slug}&limit=10`,
+          )
+        : Promise.resolve(null),
+      p.square?.slug
+        ? $fetch<any>(
+            `/api/commerce/products?squareSlug=${p.square.slug}&sortBy=newest&limit=10`,
+          )
+        : Promise.resolve(null),
+    ])
+    traderProducts.value = (tr?.data?.products ?? [])
+      .filter((x: IProduct) => x.id !== excludeId)
+      .slice(0, 8)
+    marketProducts.value = (mk?.data?.products ?? [])
+      .filter((x: IProduct) => x.id !== excludeId)
+      .slice(0, 8)
+  } catch {
+    //
+  }
+}
+
+const goToProduct = (p: IProduct) => navigateTo(`/product/${p.slug}`)
+
+// ── Recently viewed ──────────────────────────────────────────────────────────
+const recentlyViewed = useRecentlyViewed()
+const recentlyViewedItems = ref<IProduct[]>([])
+const captureRecentlyViewed = () => {
+  const p = product.value
+  if (!p) return
+  // Snapshot the list *before* adding the current product.
+  recentlyViewedItems.value = recentlyViewed
+    .get()
+    .filter((x) => x.id !== p.id) as IProduct[]
+  recentlyViewed.add(p)
+}
 
 // ── Gallery ──────────────────────────────────────────────────────────────────
 const currentIndex = ref(0)
@@ -779,7 +1056,11 @@ watch(
   () => product.value?.id,
   (id) => {
     currentIndex.value = 0
-    if (id) trackProduct(id)
+    if (id) {
+      trackProduct(id)
+      loadRelated()
+      captureRecentlyViewed()
+    }
   },
 )
 
@@ -946,23 +1227,28 @@ const askDasah = () => {
 }
 
 // ── SEO ──────────────────────────────────────────────────────────────────────
-watch(
-  product,
-  (p) => {
-    if (p)
-      setProductPage({
-        title: p.title,
-        description: p.description,
-        imageUrl: p.media?.[0]?.url,
-        slug: p.slug,
-        sellerName: p.seller?.store_name,
-      })
-  },
-  { immediate: true },
-)
 </script>
 
 <style scoped>
+.rail-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.rail-scroll::-webkit-scrollbar {
+  display: none;
+}
+.trust-chip {
+  @apply flex items-center gap-1.5 rounded-xl border border-gray-200 px-2.5 py-2 text-[11px] font-medium text-gray-600 dark:border-neutral-800 dark:text-neutral-300;
+}
+.acc-summary {
+  @apply flex cursor-pointer list-none items-center justify-between p-4 text-sm font-bold text-gray-900 dark:text-white;
+}
+.acc-summary::-webkit-details-marker {
+  display: none;
+}
+.acc-chev {
+  @apply text-gray-400 transition-transform duration-200 group-open:rotate-180;
+}
 .product-desc :deep(p) {
   margin-bottom: 0.6em;
 }

@@ -127,6 +127,7 @@ export const productService = {
     const repoFilters = {
       status, search, sellerId, isThrift, categorySlug,
       squareSlug: filters?.squareSlug,
+      storeSlug: filters?.storeSlug,
       minDiscount: filters?.minDiscount,
       minPrice: filters?.minPrice,
       maxPrice: filters?.maxPrice,
