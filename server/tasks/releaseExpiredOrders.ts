@@ -69,7 +69,7 @@ export default defineTask({
           .createNotification({
             userId: order.userId,
             type: 'ORDER',
-            actorId: order.userId,
+            orderId: order.id,
             message: `Your order #${order.id} was cancelled because payment was not completed within ${EXPIRY_MINUTES} minutes. Items have been returned to stock.`,
           })
           .catch(() => {})

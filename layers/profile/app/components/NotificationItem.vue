@@ -1,126 +1,126 @@
 <template>
   <div
-    class="flex cursor-pointer items-start gap-3 border-b border-gray-200 p-4 transition-colors hover:bg-gray-50 dark:border-neutral-800 dark:hover:bg-neutral-900"
-    :class="{ 'bg-blue-50 dark:bg-blue-900/10': !notification.read }"
-    @click="handleClick"
+    role="button"
+    tabindex="0"
+    class="flex w-full cursor-pointer items-start gap-3 border-b border-gray-200 px-4 py-3.5 text-left transition-colors hover:bg-gray-50 dark:border-neutral-800/50 dark:hover:bg-neutral-900"
+    :class="{ 'bg-brand/5 dark:bg-brand/10': !notification.read }"
+    @click="onRowClick"
   >
-    <!-- Actor Avatar -->
-    <img
-      :src="actorAvatar"
-      :alt="actorName"
-      class="h-12 w-12 shrink-0 rounded-full object-cover"
-    />
+    <!-- Avatar (links to the actor's profile when we have one) -->
+    <div class="relative shrink-0">
+      <NuxtLink
+        v-if="notification.actor?.username"
+        :to="`/profile/${notification.actor.username}`"
+        @click.stop="onLinkClick"
+      >
+        <img
+          v-if="notification.actor?.avatar"
+          :src="imgAvatar(notification.actor.avatar)"
+          class="h-10 w-10 rounded-full object-cover"
+        />
+        <div
+          v-else
+          class="flex h-10 w-10 items-center justify-center rounded-full bg-brand"
+        >
+          <Icon :name="view.icon" size="18" class="text-white" />
+        </div>
+      </NuxtLink>
+      <div
+        v-else
+        class="flex h-10 w-10 items-center justify-center rounded-full bg-brand"
+      >
+        <Icon :name="view.icon" size="18" class="text-white" />
+      </div>
+      <span
+        class="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-white ring-1 ring-gray-200 dark:bg-neutral-950 dark:ring-neutral-800"
+      >
+        <Icon :name="view.icon" size="11" class="text-brand" />
+      </span>
+    </div>
 
-    <!-- Content -->
+    <!-- Text (segmented: actor name / order id are links) -->
     <div class="min-w-0 flex-1">
-      <p class="text-sm text-gray-800 dark:text-neutral-200">
-        <span class="font-semibold">{{ actorName }}</span>
-        <span class="ml-1">{{ notificationMessage }}</span>
+      <p
+        class="text-sm leading-snug text-gray-900 dark:text-neutral-100"
+        :class="{ 'font-semibold': !notification.read }"
+      >
+        <template v-for="(seg, i) in view.segments" :key="i">
+          <NuxtLink
+            v-if="seg.to"
+            :to="seg.to"
+            class="font-semibold text-brand hover:underline"
+            @click.stop="onLinkClick"
+            >{{ seg.text }}</NuxtLink
+          >
+          <span v-else>{{ seg.text }}</span>
+        </template>
       </p>
-      <p class="mt-1 text-xs text-gray-500 dark:text-neutral-400">
-        {{ timeAgo(notification.createdAt) }}
+      <p class="mt-0.5 text-[11px] text-gray-400 dark:text-neutral-500">
+        {{ timeAgo(notification.created_at) }}
       </p>
     </div>
 
-    <!-- Action/Preview -->
-    <div class="shrink-0">
-      <!-- Follow Back Button -->
-      <FollowButton
-        v-if="notification.type === 'FOLLOW'"
-        :user-id="notification.actorId"
-        :username="actorName"
-        class="rounded-lg px-3 py-1 text-xs"
-      />
-
-      <!-- Post Preview Image -->
-      <img
-        v-else-if="postPreview"
-        :src="postPreview"
-        alt="Post"
-        class="h-12 w-12 rounded object-cover"
-      />
-    </div>
-
-    <!-- Unread Indicator -->
-    <div
+    <!-- Unread dot -->
+    <span
       v-if="!notification.read"
-      class="h-2 w-2 shrink-0 rounded-full bg-brand"
-    ></div>
+      class="mt-2 h-2 w-2 shrink-0 rounded-full bg-brand"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { useNotifications } from '~/layers/user/app/composables/useNotifications'
-import type { INotification } from '~/layers/profile/app/types/profile.types'
-import { formatAvatarUrl } from '~~/shared/utils/formatters'
-import FollowButton from './FollowButton.vue'
+import { imgAvatar } from '~~/layers/core/app/utils/cloudinary'
+import type { INotification } from '~~/layers/profile/app/types/profile.types'
+import { presentNotification } from '~~/layers/profile/app/utils/notificationPresenter'
+import { useNotificationApi } from '~~/layers/profile/app/services/notification.api'
+import { useNotificationStore } from '~~/layers/profile/app/stores/notification.store'
 
-const props = defineProps<{
-  notification: INotification
-}>()
+const props = defineProps<{ notification: INotification }>()
+// `navigate` lets a host (e.g. the slide-over panel) close itself on click.
+const emit = defineEmits<{ navigate: [] }>()
 
 const router = useRouter()
-const { markAsRead } = useNotifications()
+const api = useNotificationApi()
+const store = useNotificationStore()
 
-const actorAvatar = computed(() => {
-  // Get actor avatar from notification data
-  return formatAvatarUrl(props.notification.actorId)
-})
+const view = computed(() => presentNotification(props.notification))
 
-const actorName = computed(() => {
-  // Get actor name from notification data
-  return props.notification.actorId // Update based on your data structure
-})
-
-const notificationMessage = computed(() => {
-  const messages: Record<string, string> = {
-    FOLLOW: 'started following you',
-    LIKE_POST: 'liked your post',
-    COMMENT_POST: 'commented on your post',
-    LIKE_COMMENT: 'liked your comment',
-    MENTION: 'mentioned you in a post',
-    TAG: 'tagged you in a post',
-  }
-  return messages[props.notification.type] || props.notification.message
-})
-
-const postPreview = computed(() => {
-  // Return post preview image if applicable
-  return null // Update based on your data structure
-})
-
-const timeAgo = (date: string) => {
-  const seconds = Math.floor(
-    (new Date().getTime() - new Date(date).getTime()) / 1000,
-  )
-  if (seconds < 60) return 'just now'
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`
-  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`
-  return new Date(date).toLocaleDateString()
+// Fire-and-forget so navigation is instant.
+const markRead = () => {
+  if (props.notification.read) return
+  api
+    .markAsRead(props.notification.id)
+    .then(() => store.markAsRead(props.notification.id))
+    .catch(() => {
+      /* silent */
+    })
 }
 
-const handleClick = async () => {
-  // Mark as read
-  if (!props.notification.read) {
-    await markAsRead(props.notification.id)
-  }
+// Actor-name / order-id links: NuxtLink navigates; we just mark read + notify host.
+const onLinkClick = () => {
+  markRead()
+  emit('navigate')
+}
 
-  // Navigate based on notification type
-  const routes: Record<string, string> = {
-    FOLLOW: `/profile/${actorName.value}`,
-    LIKE_POST: `/post/${props.notification.postId}`,
-    COMMENT_POST: `/post/${props.notification.postId}`,
-    LIKE_COMMENT: `/post/${props.notification.postId}`,
-    MENTION: `/post/${props.notification.postId}`,
-    TAG: `/post/${props.notification.postId}`,
-  }
+// Whole-row click → the notification's primary destination.
+const onRowClick = () => {
+  markRead()
+  emit('navigate')
+  if (view.value.to) router.push(view.value.to)
+}
 
-  const route = routes[props.notification.type]
-  if (route) {
-    router.push(route)
-  }
+const timeAgo = (dateStr: string) => {
+  const diff = Date.now() - new Date(dateStr).getTime()
+  const s = Math.floor(diff / 1000)
+  if (s < 60) return 'Just now'
+  const m = Math.floor(s / 60)
+  if (m < 60) return `${m}m ago`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `${h}h ago`
+  const d = Math.floor(h / 24)
+  if (d < 7) return `${d}d ago`
+  return new Date(dateStr).toLocaleDateString()
 }
 </script>
