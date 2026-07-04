@@ -3,16 +3,30 @@
     <div class="mx-auto max-w-2xl px-4 py-6 sm:px-6">
       <!-- Header -->
       <div class="mb-5 flex items-center gap-3">
-        <NuxtLink to="/support" class="rounded-full p-2 hover:bg-gray-100 dark:hover:bg-neutral-800">
+        <NuxtLink
+          to="/support"
+          class="rounded-full p-2 hover:bg-gray-100 dark:hover:bg-neutral-800"
+        >
           <Icon name="mdi:arrow-left" size="22" />
         </NuxtLink>
         <div class="min-w-0 flex-1">
           <div class="flex items-center gap-2">
-            <span class="font-mono text-[11px] font-bold text-gray-400">{{ ticketRef(ticket?.ticketNumber || 0) }}</span>
-            <BaseBadge v-if="ticket?.type === 'DISPUTE'" variant="danger" size="sm">Dispute</BaseBadge>
-            <BaseBadge v-if="ticket" :variant="statusMeta.variant" size="sm">{{ statusMeta.label }}</BaseBadge>
+            <span class="font-mono text-[11px] font-bold text-gray-400">{{
+              ticketRef(ticket?.ticketNumber || 0)
+            }}</span>
+            <BaseBadge
+              v-if="ticket?.type === 'DISPUTE'"
+              variant="danger"
+              size="sm"
+              >Dispute</BaseBadge
+            >
+            <BaseBadge v-if="ticket" :variant="statusMeta.variant" size="sm">{{
+              statusMeta.label
+            }}</BaseBadge>
           </div>
-          <h1 class="truncate text-lg font-bold text-gray-900 dark:text-neutral-100">
+          <h1
+            class="truncate text-lg font-bold text-gray-900 dark:text-neutral-100"
+          >
             {{ ticket?.subject || 'Ticket' }}
           </h1>
         </div>
@@ -39,7 +53,11 @@
 
       <!-- Thread -->
       <div v-if="pending" class="space-y-3">
-        <div v-for="i in 3" :key="i" class="h-16 animate-pulse rounded-2xl bg-gray-100 dark:bg-neutral-800" />
+        <div
+          v-for="i in 3"
+          :key="i"
+          class="h-16 animate-pulse rounded-2xl bg-gray-100 dark:bg-neutral-800"
+        />
       </div>
       <div v-else class="space-y-3">
         <div
@@ -52,20 +70,35 @@
             class="max-w-[80%] rounded-2xl px-3.5 py-2.5"
             :class="bubbleClass(m)"
           >
-            <p class="mb-0.5 text-[10px] font-bold uppercase tracking-wide opacity-60">
+            <p
+              class="mb-0.5 text-[10px] font-bold uppercase tracking-wide opacity-60"
+            >
               {{ roleLabel(m) }}
             </p>
-            <p class="whitespace-pre-wrap text-sm leading-relaxed">{{ m.body }}</p>
-            <p class="mt-1 text-[10px] opacity-50">{{ formatTime(m.created_at) }}</p>
+            <p class="whitespace-pre-wrap text-sm leading-relaxed">
+              {{ m.body }}
+            </p>
+            <p class="mt-1 text-[10px] opacity-50">
+              {{ formatTime(m.created_at) }}
+            </p>
           </div>
         </div>
       </div>
 
       <!-- Reply box -->
       <div v-if="ticket && ticket.status !== 'CLOSED'" class="mt-5">
-        <BaseTextarea v-model="replyText" :rows="3" placeholder="Type your reply…" />
+        <BaseTextarea
+          v-model="replyText"
+          :rows="3"
+          placeholder="Type your reply…"
+        />
         <div class="mt-2 flex justify-end">
-          <BaseButton :loading="sending" :disabled="!replyText.trim()" @click="send">Send reply</BaseButton>
+          <BaseButton
+            :loading="sending"
+            :disabled="!replyText.trim()"
+            @click="send"
+            >Send reply</BaseButton
+          >
         </div>
       </div>
       <div
@@ -81,9 +114,15 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useAsyncData } from 'nuxt/app'
+import { definePageMeta } from '#imports'
+import { useRoute } from 'vue-router'
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
-import { useSupport, SUPPORT_STATUS_META, ticketRef } from '~~/layers/support/app/composables/useSupport'
+import {
+  useSupport,
+  SUPPORT_STATUS_META,
+  ticketRef,
+} from '~~/layers/support/app/composables/useSupport'
 import BaseBadge from '~~/layers/ui/app/components/BaseBadge.vue'
 import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 import BaseTextarea from '~~/layers/ui/app/components/BaseTextarea.vue'
@@ -124,19 +163,32 @@ const { data, pending, refresh } = await useAsyncData<{ data: Ticket | null }>(
 const ticket = computed(() => data.value?.data ?? null)
 const messages = computed(() => ticket.value?.messages ?? [])
 const statusMeta = computed(
-  () => SUPPORT_STATUS_META[ticket.value?.status || ''] ?? { label: '', variant: 'muted' },
+  () =>
+    SUPPORT_STATUS_META[ticket.value?.status || ''] ?? {
+      label: '',
+      variant: 'muted',
+    },
 )
 
 const replyText = ref('')
 const sending = ref(false)
 
-const isMine = (m: Message) => !!m.authorId && m.authorId === profileStore.userId
+const isMine = (m: Message) =>
+  !!m.authorId && m.authorId === profileStore.userId
 const roleLabel = (m: Message) =>
-  m.authorRole === 'AGENT' ? 'Support' : m.authorRole === 'SYSTEM' ? 'System' : m.authorRole === 'SELLER' ? 'Seller' : 'You'
+  m.authorRole === 'AGENT'
+    ? 'Support'
+    : m.authorRole === 'SYSTEM'
+      ? 'System'
+      : m.authorRole === 'SELLER'
+        ? 'Seller'
+        : 'You'
 
 function bubbleClass(m: Message) {
-  if (m.authorRole === 'SYSTEM') return 'bg-amber-50 text-amber-800 dark:bg-amber-900/20 dark:text-amber-300'
-  if (m.authorRole === 'AGENT') return 'bg-brand/10 text-gray-800 dark:bg-brand/15 dark:text-neutral-100'
+  if (m.authorRole === 'SYSTEM')
+    return 'bg-amber-50 text-amber-800 dark:bg-amber-900/20 dark:text-amber-300'
+  if (m.authorRole === 'AGENT')
+    return 'bg-brand/10 text-gray-800 dark:bg-brand/15 dark:text-neutral-100'
   return isMine(m)
     ? 'bg-brand text-white'
     : 'bg-gray-100 text-gray-800 dark:bg-neutral-800 dark:text-neutral-100'
@@ -160,6 +212,11 @@ async function close() {
 }
 
 function formatTime(d: string): string {
-  return new Date(d).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+  return new Date(d).toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
 }
 </script>

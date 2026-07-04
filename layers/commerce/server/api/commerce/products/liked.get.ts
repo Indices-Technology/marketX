@@ -6,6 +6,17 @@ import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
 export default defineEventHandler(async (event) => {
   const user = await requireAuth(event)
   const query = getQuery(event)
+
+  // Lightweight mode: just the liked product IDs (unpaginated, tiny payload) —
+  // used to seed per-user liked state in feeds/reels without shipping full products.
+  if (query.idsOnly === 'true') {
+    const likes = await prisma.like.findMany({
+      where: { userId: user.id },
+      select: { productId: true },
+    })
+    return { success: true, data: likes.map((l) => l.productId) }
+  }
+
   const limit = Math.min(Number(query.limit) || 24, 50)
   const offset = Number(query.offset) || 0
 

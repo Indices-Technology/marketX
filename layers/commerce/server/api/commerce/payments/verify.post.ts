@@ -31,12 +31,15 @@ async function notifySellers(orderId: number, buyerName: string) {
     const sellerId = item.variant?.product?.seller?.profileId
     if (!sellerId || seen.has(sellerId)) continue
     seen.add(sellerId)
-    notificationQueue.enqueue({
-      userId: sellerId,
-      type: 'ORDER',
-      actorId: sellerId,
-      message: `New order #${orderId} received from ${buyerName}`,
-    })
+    notificationQueue.enqueue(
+      {
+        userId: sellerId,
+        type: 'ORDER',
+        actorId: sellerId,
+        message: `New order #${orderId} received from ${buyerName}`,
+      },
+      { dedupeKey: `order-paid:${orderId}:seller:${sellerId}` },
+    )
   }
 }
 
@@ -92,7 +95,10 @@ export default defineEventHandler(async (event) => {
       // One buyer confirmation email for the purchase
       if (user.email && !user.email.includes('@checkout.marketx.app')) {
         const { subject, html, text } = buildOrderStatusEmail(orderIds[0]!, 'CONFIRMED')
-        emailQueue.enqueue({ to: user.email, subject, html, text, type: 'ORDER_CONFIRMATION' })
+        emailQueue.enqueue(
+          { to: user.email, subject, html, text, type: 'ORDER_CONFIRMATION' },
+          { dedupeKey: `order-confirm:${reference}` },
+        )
       }
       return { success: true, data: { status: 'paid', orderIds } }
     }

@@ -98,7 +98,12 @@ export const supportRepository = {
     offset: number
   }) {
     const where: Prisma.SupportTicketWhereInput = {}
-    if (opts.status) where.status = opts.status as never
+    // 'ACTIVE' = the working queue: everything not yet resolved/closed.
+    if (opts.status === 'ACTIVE') {
+      where.status = { in: ['OPEN', 'IN_PROGRESS', 'PENDING_USER'] } as never
+    } else if (opts.status) {
+      where.status = opts.status as never
+    }
     if (opts.priority) where.priority = opts.priority as never
     if (opts.type) where.type = opts.type as never
     if (opts.assignedAgentId) where.assignedAgentId = opts.assignedAgentId

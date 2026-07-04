@@ -21,6 +21,8 @@ export interface ApiServiceOptions {
   skipCsrf?: boolean
   /** Suppress auto-notification for this call (use for background/fire-and-forget requests) */
   silent?: boolean
+  /** Abort signal — lets callers cancel stale in-flight requests (e.g. rapid tab switches) */
+  signal?: AbortSignal
 }
 
 export class BaseApiClient {
@@ -53,7 +55,33 @@ export class BaseApiClient {
     }
   }
 
+  // In-flight registry for GET dedup (client-only). Coalesces concurrent
+  // identical reads into a single network request.
+  private static _inflightGets = new Map<string, Promise<unknown>>()
+
   protected async request<T>(
+    endpoint: string,
+    options: ApiServiceOptions = {},
+  ): Promise<T> {
+    const method = (options.method ?? 'GET').toUpperCase()
+    // Only dedup idempotent GETs, and only on the client — sharing an in-flight
+    // promise across SSR requests could leak one user's response to another.
+    const canDedup = import.meta.client && method === 'GET'
+    if (!canDedup) return this._send<T>(endpoint, options)
+
+    const key = `${endpoint}::${options.params ? JSON.stringify(options.params) : ''}`
+    const existing = BaseApiClient._inflightGets.get(key) as
+      | Promise<T>
+      | undefined
+    if (existing) return existing
+
+    const p = this._send<T>(endpoint, options)
+    BaseApiClient._inflightGets.set(key, p)
+    void p.finally(() => BaseApiClient._inflightGets.delete(key))
+    return p
+  }
+
+  private async _send<T>(
     endpoint: string,
     options: ApiServiceOptions = {},
   ): Promise<T> {
@@ -109,6 +137,11 @@ export class BaseApiClient {
         headers,
       })) as T
     } catch (e: unknown) {
+      // Caller cancelled (e.g. superseded by a newer request) — rethrow quietly,
+      // never show a "network error" toast for an intentional abort.
+      if (options.signal?.aborted || (e as { name?: string })?.name === 'AbortError') {
+        throw e
+      }
       const error = e as {
         status?: number
         statusCode?: number

@@ -183,7 +183,7 @@ const queueParams = computed<Record<string, string | boolean>>(() => {
     case 'unassigned': return { unassigned: true }
     case 'mine': return { mine: true }
     case 'disputes': return { type: 'DISPUTE' }
-    case 'open': return { status: 'IN_PROGRESS' }
+    case 'open': return { status: 'ACTIVE' }
     default: return {}
   }
 })

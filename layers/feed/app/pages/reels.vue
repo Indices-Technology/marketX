@@ -123,6 +123,7 @@ import ReelItem from '~~/layers/feed/app/components/ReelItem.vue'
 import ProductDetailModal from '~~/layers/commerce/app/components/modals/ProductDetailModal.vue'
 import type { IFeedItem } from '~~/layers/feed/app/types/feed.types'
 import { useFeed } from '~~/layers/feed/app/composables/useFeed'
+import { useLikedProducts } from '~~/layers/commerce/app/composables/useLikedProducts'
 
 // ─── SEO ──────────────────────────────────────────────────────────────
 useSeoMeta({
@@ -264,6 +265,12 @@ const setupObservers = () => {
 onMounted(async () => {
   await fetchReels(true)
   nextTick(() => setupObservers())
+  // Seed "already liked" state in the background — deferred to idle so it never
+  // competes with first paint or the initial feed request.
+  const idle =
+    (window as any).requestIdleCallback ??
+    ((cb: () => void) => setTimeout(cb, 400))
+  idle(() => useLikedProducts().ensureLoaded())
 })
 
 watch(

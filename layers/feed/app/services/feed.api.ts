@@ -31,10 +31,11 @@ export class FeedApiClient extends BaseApiClient {
    * Fetch following feed (posts from followed users/sellers)
    */
   async getFollowingFeed(options: IFeedOptions = {}): Promise<IFeedResponse> {
-    const { limit = 20, offset = 0 } = options
+    const { limit = 20, offset = 0, signal } = options
 
     return this.request(`/api/feed/following?limit=${limit}&offset=${offset}`, {
       method: 'GET',
+      signal,
     })
   }
 
@@ -42,11 +43,12 @@ export class FeedApiClient extends BaseApiClient {
    * Fetch discover feed (algorithmic recommendations)
    */
   async getDiscoverFeed(options: IFeedOptions = {}): Promise<IFeedResponse> {
-    const { limit = 20, offset = 0 } = options
+    const { limit = 20, offset = 0, signal } = options
 
     return this.request(`/api/feed/discover?limit=${limit}&offset=${offset}`, {
       method: 'GET',
       skipAuth: true,
+      signal,
     })
   }
 

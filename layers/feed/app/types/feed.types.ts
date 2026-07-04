@@ -84,4 +84,5 @@ export interface IFeedOptions {
   offset?: number
   type?: 'all' | 'posts' | 'products'
   userId?: string // Filter by specific user/seller
+  signal?: AbortSignal // cancel a stale in-flight fetch (e.g. rapid tab switch)
 }

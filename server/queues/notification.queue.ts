@@ -40,12 +40,18 @@ const _queue = queueConnection
   : null
 
 export const notificationQueue = {
-  /** Fire-and-forget — never await this. */
-  enqueue(data: NotificationJob): void {
+  /**
+   * Fire-and-forget — never await this.
+   *
+   * Pass `dedupeKey` to make the enqueue idempotent: BullMQ ignores a second job
+   * with a jobId that's still known (waiting/active/retained), so duplicate
+   * triggers (double-tap, webhook races) create exactly one notification.
+   */
+  enqueue(data: NotificationJob, opts?: { dedupeKey?: string }): void {
     if (_queue) {
-      _queue.add('notify', data).catch((e) =>
-        console.error('[notification.queue] enqueue error:', e),
-      )
+      _queue
+        .add('notify', data, opts?.dedupeKey ? { jobId: opts.dedupeKey } : undefined)
+        .catch((e) => console.error('[notification.queue] enqueue error:', e))
     } else {
       // Fallback: run inline when Redis not configured
       notificationService.createNotification(data).catch((e) =>

@@ -46,12 +46,18 @@ const _queue = queueConnection
   : null
 
 export const emailQueue = {
-  /** Fire-and-forget — never await this. */
-  enqueue(data: EmailJob): void {
+  /**
+   * Fire-and-forget — never await this.
+   *
+   * Pass `dedupeKey` to make the enqueue idempotent: BullMQ ignores a second job
+   * with a jobId that's still known (waiting/active/retained), so duplicate
+   * triggers (webhook + verify race, double-submit) send exactly one email.
+   */
+  enqueue(data: EmailJob, opts?: { dedupeKey?: string }): void {
     if (_queue) {
-      _queue.add('send', data).catch((e) =>
-        console.error('[email.queue] enqueue error:', e),
-      )
+      _queue
+        .add('send', data, opts?.dedupeKey ? { jobId: opts.dedupeKey } : undefined)
+        .catch((e) => console.error('[email.queue] enqueue error:', e))
     } else {
       // Fallback: run inline when Redis not configured
       _sendEmail(data).catch((e) =>

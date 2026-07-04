@@ -37,12 +37,23 @@
         v-else-if="!tickets.length"
         class="rounded-2xl border border-dashed border-gray-200 bg-white py-16 text-center dark:border-neutral-800 dark:bg-neutral-900"
       >
-        <Icon name="mdi:message-text-outline" size="40" class="mb-3 text-gray-300 dark:text-neutral-600" />
-        <h3 class="text-base font-bold text-gray-900 dark:text-neutral-100">No tickets yet</h3>
-        <p class="mx-auto mt-1 max-w-xs text-sm text-gray-500 dark:text-neutral-400">
-          Have a question or a problem with an order? Open a ticket and our team will help.
+        <Icon
+          name="mdi:message-text-outline"
+          size="40"
+          class="mb-3 text-gray-300 dark:text-neutral-600"
+        />
+        <h3 class="text-base font-bold text-gray-900 dark:text-neutral-100">
+          No tickets yet
+        </h3>
+        <p
+          class="mx-auto mt-1 max-w-xs text-sm text-gray-500 dark:text-neutral-400"
+        >
+          Have a question or a problem with an order? Open a ticket and our team
+          will help.
         </p>
-        <BaseButton class="mt-4" size="sm" @click="showNew = true">Contact support</BaseButton>
+        <BaseButton class="mt-4" size="sm" @click="showNew = true"
+          >Contact support</BaseButton
+        >
       </div>
 
       <!-- List -->
@@ -56,14 +67,24 @@
           <div class="flex items-start justify-between gap-3">
             <div class="min-w-0">
               <div class="flex items-center gap-2">
-                <span class="font-mono text-[11px] font-bold text-gray-400">{{ ticketRef(t.ticketNumber) }}</span>
-                <BaseBadge v-if="t.type === 'DISPUTE'" variant="danger" size="sm">Dispute</BaseBadge>
+                <span class="font-mono text-[11px] font-bold text-gray-400">{{
+                  ticketRef(t.ticketNumber)
+                }}</span>
+                <BaseBadge
+                  v-if="t.type === 'DISPUTE'"
+                  variant="danger"
+                  size="sm"
+                  >Dispute</BaseBadge
+                >
               </div>
-              <h3 class="mt-0.5 truncate text-[15px] font-semibold text-gray-900 dark:text-neutral-100">
+              <h3
+                class="mt-0.5 truncate text-[15px] font-semibold text-gray-900 dark:text-neutral-100"
+              >
                 {{ t.subject }}
               </h3>
               <p class="mt-0.5 text-xs text-gray-400 dark:text-neutral-500">
-                {{ t.category }} · updated {{ timeAgo(t.lastMessageAt || t.created_at) }}
+                {{ t.category }} · updated
+                {{ timeAgo(t.lastMessageAt || t.created_at) }}
               </p>
             </div>
             <BaseBadge :variant="statusMeta(t.status).variant" size="sm">
@@ -82,9 +103,14 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useAsyncData } from 'nuxt/app'
+import { definePageMeta } from '#imports'
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import SupportNewTicketModal from '~~/layers/support/app/components/SupportNewTicketModal.vue'
-import { useSupport, SUPPORT_STATUS_META, ticketRef } from '~~/layers/support/app/composables/useSupport'
+import {
+  useSupport,
+  SUPPORT_STATUS_META,
+  ticketRef,
+} from '~~/layers/support/app/composables/useSupport'
 import BaseBadge from '~~/layers/ui/app/components/BaseBadge.vue'
 import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 
@@ -113,7 +139,8 @@ const { data, pending, refresh } = await useAsyncData(
 )
 const tickets = computed(() => data.value?.items ?? [])
 
-const statusMeta = (s: string) => SUPPORT_STATUS_META[s] ?? { label: s, variant: 'muted' }
+const statusMeta = (s: string) =>
+  SUPPORT_STATUS_META[s] ?? { label: s, variant: 'muted' }
 
 function onCreated(id: string) {
   showNew.value = false
