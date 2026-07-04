@@ -44,6 +44,7 @@ const typeMap: Record<string, string> = {
   SQUARE_REQUEST: 'SQUARE_REQUEST',
   SQUARE_OFFER: 'SQUARE_OFFER',
   WALL_SHOUTOUT: 'WALL_SHOUTOUT',
+  SUPPORT: 'SUPPORT',
 }
 
 export const notificationService = {

@@ -3,7 +3,7 @@ import { requireAdmin } from '~~/server/layers/shared/middleware/requireRole'
 import { adminService } from '~~/layers/admin/server/services/admin.service'
 
 const schema = z.object({
-  role: z.enum(['user', 'moderator', 'admin']),
+  role: z.enum(['user', 'moderator', 'admin', 'support_agent']),
 })
 
 export default defineEventHandler(async (event) => {

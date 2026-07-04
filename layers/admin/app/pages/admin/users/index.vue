@@ -136,8 +136,9 @@
             </td>
             <td class="px-4 py-3">
               <span
-                class="rounded bg-gray-100 px-2 py-0.5 text-[10px] font-semibold capitalize text-gray-600 dark:bg-neutral-800 dark:text-neutral-400"
-                >{{ user.role }}</span
+                class="rounded px-2 py-0.5 text-[10px] font-semibold capitalize"
+                :class="roleBadgeClass(user.role)"
+                >{{ roleLabel(user.role) }}</span
               >
             </td>
             <td class="px-4 py-3 font-mono text-gray-700 dark:text-neutral-300">
@@ -205,6 +206,16 @@ import { useAdminApi } from '~~/layers/admin/app/services/admin.api'
 import AdminUserActions from '../../../components/AdminUserActions.vue'
 
 definePageMeta({ middleware: 'admin', layout: 'admin-layout' })
+
+function roleLabel(role: string) {
+  return role === 'support_agent' ? 'Support Agent' : role
+}
+function roleBadgeClass(role: string) {
+  if (role === 'admin') return 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400'
+  if (role === 'support_agent') return 'bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400'
+  if (role === 'moderator') return 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400'
+  return 'bg-gray-100 text-gray-600 dark:bg-neutral-800 dark:text-neutral-400'
+}
 
 const LIMIT = 20
 const search = ref('')

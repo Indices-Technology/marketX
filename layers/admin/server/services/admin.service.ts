@@ -225,11 +225,15 @@ export const adminService = {
     const result = await adminRepository.setUserRole(userId, role)
 
     const roleLabel =
-      role === 'moderator' ? 'Moderator' : role === 'admin' ? 'Admin' : 'User'
-    const message =
-      role === 'moderator' || role === 'admin'
-        ? `You have been granted ${roleLabel} access on MarketX`
-        : `Your account role has been updated to ${roleLabel}`
+      role === 'moderator' ? 'Moderator'
+      : role === 'admin' ? 'Admin'
+      : role === 'support_agent' ? 'Support Agent'
+      : 'User'
+    const isGrant =
+      role === 'moderator' || role === 'admin' || role === 'support_agent'
+    const message = isGrant
+      ? `You have been granted ${roleLabel} access on MarketX`
+      : `Your account role has been updated to ${roleLabel}`
     notificationQueue.enqueue({
       userId,
       type: 'GENERAL',

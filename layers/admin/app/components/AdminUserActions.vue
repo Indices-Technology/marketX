@@ -57,7 +57,7 @@
           v-for="r in availableRoles"
           :key="r.value"
           class="flex w-full items-center gap-2 px-3 py-2 transition-colors hover:bg-gray-50 dark:hover:bg-neutral-800"
-          :class="r.value === 'admin' ? 'text-rose-600 dark:text-rose-400' : 'text-gray-600 dark:text-neutral-400'"
+          :class="r.value === 'admin' ? 'text-rose-600 dark:text-rose-400' : r.value === 'support_agent' ? 'text-sky-600 dark:text-sky-400' : 'text-gray-600 dark:text-neutral-400'"
           @click="changeRole(r.value)"
         >
           <Icon :name="r.icon" size="15" />
@@ -147,27 +147,33 @@ const isSuspended = computed(
   () => props.user.suspendedUntil && new Date(props.user.suspendedUntil) > new Date(),
 )
 
-const ROLE_OPTIONS: Record<string, { label: string; icon: string; value: 'user' | 'moderator' | 'admin' }[]> = {
+type RoleValue = 'user' | 'moderator' | 'admin' | 'support_agent'
+
+const ROLE_OPTIONS: Record<string, { label: string; icon: string; value: RoleValue }[]> = {
   user: [
     { label: 'Promote to Moderator', icon: 'mdi:shield-account-outline', value: 'moderator' },
   ],
   moderator: [
     { label: 'Demote to User', icon: 'mdi:account-outline', value: 'user' },
   ],
+  support_agent: [
+    { label: 'Remove agent role', icon: 'mdi:account-outline', value: 'user' },
+  ],
   admin: [],
 }
 
 const availableRoles = computed(() => {
   const base = ROLE_OPTIONS[props.user.role] ?? []
-  if (isAdmin.value && props.user.role !== 'admin') {
-    if (props.user.role === 'user') {
-      return [...base, { label: 'Promote to Admin', icon: 'mdi:shield-crown-outline', value: 'admin' }]
-    }
-    if (props.user.role === 'moderator') {
-      return [...base, { label: 'Promote to Admin', icon: 'mdi:shield-crown-outline', value: 'admin' }]
-    }
+  // Granting privileged roles is admin-only (matches the requireAdmin endpoint).
+  if (!isAdmin.value || props.user.role === 'admin') return base
+
+  const extra: { label: string; icon: string; value: RoleValue }[] = []
+  // Support agent is orthogonal to moderator/admin — offer it to anyone not already one.
+  if (props.user.role !== 'support_agent') {
+    extra.push({ label: 'Make Support Agent', icon: 'mdi:headset', value: 'support_agent' })
   }
-  return base
+  extra.push({ label: 'Promote to Admin', icon: 'mdi:shield-crown-outline', value: 'admin' })
+  return [...base, ...extra]
 })
 
 function openSuspend(ban: boolean) {
@@ -209,7 +215,7 @@ async function toggleActive(isActive: boolean) {
   } catch {}
 }
 
-async function changeRole(role: 'user' | 'moderator' | 'admin') {
+async function changeRole(role: RoleValue) {
   open.value = false
   try {
     await adminApi.setUserRole(props.user.id, role)

@@ -40,6 +40,12 @@
           label="Sellers"
         />
         <AdminNavItem
+          to="/support/agent"
+          icon="mdi:headset"
+          label="Support"
+          :admin-only="true"
+        />
+        <AdminNavItem
           to="/admin/audit-logs"
           icon="mdi:text-search"
           label="Audit Logs"
@@ -111,6 +117,13 @@
             to="/admin/sellers"
             icon="mdi:store-outline"
             label="Sellers"
+            @click="mobileOpen = false"
+          />
+          <AdminNavItem
+            to="/support/agent"
+            icon="mdi:headset"
+            label="Support"
+            :admin-only="true"
             @click="mobileOpen = false"
           />
           <AdminNavItem

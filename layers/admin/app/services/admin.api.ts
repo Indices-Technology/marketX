@@ -32,7 +32,7 @@ class AdminApiClient extends BaseApiClient {
     return this.request<any>(`/api/admin/users/${id}/toggle`, { method: 'PATCH', body: { isActive } })
   }
 
-  setUserRole(id: string, role: 'user' | 'moderator' | 'admin') {
+  setUserRole(id: string, role: 'user' | 'moderator' | 'admin' | 'support_agent') {
     return this.request<any>(`/api/admin/users/${id}/role`, { method: 'PATCH', body: { role } })
   }
 
