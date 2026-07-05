@@ -79,10 +79,7 @@
               <!-- Avatar Wrapper with Fixed Dimensions -->
               <div class="relative flex shrink-0 items-center justify-center">
                 <img
-                  :src="
-                    seller.store_logo ||
-                    `https://api.dicebear.com/7.x/initials/svg?seed=${seller.store_name}`
-                  "
+                  :src="avatarSrc(seller.store_logo, seller.store_name)"
                   :alt="seller.store_name"
                   class="h-10 w-10 shrink-0 rounded-full border border-gray-200 bg-white object-cover transition-all group-hover:border-brand/30 dark:border-neutral-700 dark:bg-neutral-900"
                 />
@@ -234,6 +231,7 @@ import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import { useSellerStore } from '~~/layers/seller/app/store/seller.store'
 import { useLayoutData } from '~~/layers/core/app/composables/useLayoutData'
 import { useSocialApi } from '~~/layers/profile/app/services/social.api'
+import { avatarSrc } from '~~/layers/core/app/utils/cloudinary'
 import type { Seller } from '~~/shared/types/seller'
 
 import Avatar from '~~/layers/profile/app/components/Avatar.vue'

@@ -83,10 +83,7 @@
                 >
                   <div class="flex min-w-0 items-center gap-3">
                     <img
-                      :src="
-                        item.avatar ||
-                        `https://api.dicebear.com/7.x/initials/svg?seed=${item.name}`
-                      "
+                      :src="avatarSrc(item.avatar, item.name)"
                       :alt="item.name"
                       class="h-11 w-11 shrink-0 rounded-xl border border-gray-200 object-cover dark:border-neutral-800"
                     />
@@ -166,10 +163,7 @@
                 >
                   <div class="flex min-w-0 items-center gap-3">
                     <img
-                      :src="
-                        item.avatar ||
-                        `https://api.dicebear.com/7.x/initials/svg?seed=${item.name || item.username}`
-                      "
+                      :src="avatarSrc(item.avatar, item.name || item.username)"
                       :alt="item.name || item.username"
                       class="h-11 w-11 shrink-0 rounded-xl border border-gray-200 object-cover dark:border-neutral-800"
                     />
@@ -237,6 +231,7 @@
 import { ref, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
+import { avatarSrc } from '~~/layers/core/app/utils/cloudinary'
 import UserRow from '../../components/UserRow.vue'
 import { useSocialApi } from '../../services/social.api'
 import { useSearchApi } from '~~/layers/core/app/services/search.api'

@@ -14,8 +14,20 @@ and proof-gated settlement.
 
 | Provider | Model | Cash control | Attestation | Status |
 |---|---|---|---|---|
-| **GIG** | Courier-COD | courier → platform → seller | trusted (courier reports outcome + remits) | live target |
+| **GIG** | Courier-COD | courier → platform → seller | trusted (courier reports outcome + remits) | **DISABLED — GIG's API exposes no COD endpoint yet** |
 | **BYOP** | Bring-Your-Own-Provider / seller self-delivers | seller holds cash | weak (self-reported) | **registered but gated (`enabled: false`)** |
+
+> **⚠️ POD is currently OFF ("Coming soon").** No provider is enabled, so POD is
+> disabled at every surface:
+> - GIG provider `enabled: false` ([gig.pod.ts](../layers/pod/server/providers/gig.pod.ts)) → `pod-initialize` rejects POD orders.
+> - Checkout hides the POD option (`POD_ENABLED = false` in [CheckoutPaymentMethod.vue](../layers/commerce/app/components/checkout/CheckoutPaymentMethod.vue)).
+> - Seller store settings show a **"Coming soon"** badge instead of the toggle.
+>
+> Re-enable by flipping the GIG provider + the checkout flag once GIG ships a COD endpoint.
+
+**Seller requirement (when re-enabled):** GIG is the only collector, so a seller can
+only offer POD with a **ship-from origin** set — already enforced in `pod-initialize`
+(rejects POD when any cart seller lacks `shipFromCity` + state).
 
 `IPodProvider` mirrors `IShippingProvider`/`IPaymentProvider`. New POD couriers = one
 file + `enabled: true`. BYOP stays gated until we're satisfied with its proof flow.
@@ -121,7 +133,11 @@ layers/pod/server/
 
 ## 7. Build status (July 2026)
 
-**Done & live:**
+> **Currently DISABLED — "Coming soon" (see §1).** Everything below is built but **not
+> user-reachable**: no POD provider is enabled, so `pod-initialize` throws
+> `POD_UNAVAILABLE`, checkout hides the option, and seller settings show a badge.
+
+**Built (dormant until re-enabled):**
 - `PodDelivery` table migrated (`20260702000000_pod_delivery`); client regenerated; verified queryable.
 - `layers/pod` scaffold: `IPodProvider`, `POD_TRANSITIONS` state machine, GIG provider
   (delegates the COD booking to the shipping GIG provider via `settlementMode: CARRIER_COD`),
@@ -130,10 +146,22 @@ layers/pod/server/
   (`DEPOSIT_PENDING`, freight split) and no longer debits the seller; `pod-verify` +
   `webhook` advance to `DEPOSIT_PAID` and run `debitSellerPodFees` (idempotent) — **bug #2 fixed.**
 - Freight deposit is server-derived via the signed shipping-quote token (see PAYMENTS.md #3).
+- **Eligibility gated on GIG usability:** `pod-initialize` rejects POD unless every
+  cart seller has a **ship-from origin** (GIG's the only collector). Seller store
+  settings' POD section states it's GIG-fulfilled and warns when no origin is set.
 
 **Pending / BLOCKED:**
-- Courier-collect **settlement + remittance** (`DELIVERED_COLLECTED → REMITTED → SETTLED`)
-  and the **denied-delivery proof-gated freight refund** — `gig.pod.ts` `parseOutcome`/
+- **COD booking not yet invoked** (`DEPOSIT_PAID → COD_BOOKED`). `gig.pod.book`
+  delegates to the shipping GIG provider (`CARRIER_COD`), but nothing calls it in
+  the flow yet — and the buyer's **destination state** isn't persisted on the order,
+  so the booking point needs that plumbed (store it on `PodDelivery`, or book at the
+  seller's ship action where the full address is available).
+- **Re-enabling POD:** GIG's live API has **no COD endpoint** — the blocker. Once it
+  ships one, flip `gigPodProvider.enabled` → `true` ([gig.pod.ts](../layers/pod/server/providers/gig.pod.ts)),
+  set `POD_ENABLED = true` in [CheckoutPaymentMethod.vue](../layers/commerce/app/components/checkout/CheckoutPaymentMethod.vue),
+  and restore the seller-settings toggle (currently a "Coming soon" badge).
+- Courier-collect **settlement + remittance** (`COD_BOOKED → … → SETTLED`) and the
+  **denied-delivery proof-gated freight refund** — `gig.pod.ts` `parseOutcome`/
   `parseRemittance` are stubs. **Blocked** on capturing a real GIG COD outcome/remittance
   webhook payload (same "capture a real response" approach used for GIG pricing).
 - BYOP proof/dispute flow (needed before un-gating BYOP).

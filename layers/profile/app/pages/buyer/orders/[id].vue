@@ -85,7 +85,9 @@
               :key="item.id"
               class="flex items-start gap-3 p-4"
             >
-              <div class="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-gray-100 dark:bg-neutral-800">
+              <div
+                class="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-gray-100 dark:bg-neutral-800"
+              >
                 <BaseImage
                   v-if="item.variant?.product?.media?.[0]?.url"
                   :src="item.variant.product.media[0].url"
@@ -155,51 +157,59 @@
         <!-- Price breakdown -->
         <BaseCard>
           <div class="space-y-2">
-          <!-- POD split view -->
-          <template v-if="order.paymentMethod === 'pay_on_delivery'">
-            <div
-              v-if="order.shippingCost"
-              class="flex justify-between text-sm text-gray-500 dark:text-neutral-400"
-            >
-              <span>Shipping <span class="text-green-600 dark:text-green-400">(paid)</span></span>
-              <span>{{ formatPrice(order.shippingCost) }}</span>
-            </div>
-            <div
-              class="flex justify-between border-t border-gray-200 pt-2 text-base font-bold text-emerald-700 dark:border-neutral-800 dark:text-emerald-400"
-            >
-              <span>Due on delivery (cash)</span>
-              <span>{{ formatPrice(order.totalAmount) }}</span>
-            </div>
-            <p class="text-xs text-gray-400 dark:text-neutral-500">
-              Shipping paid via Paystack · Product amount due in cash on delivery
-            </p>
-          </template>
+            <!-- POD split view -->
+            <template v-if="order.paymentMethod === 'pay_on_delivery'">
+              <div
+                v-if="order.shippingCost"
+                class="flex justify-between text-sm text-gray-500 dark:text-neutral-400"
+              >
+                <span
+                  >Shipping
+                  <span class="text-green-600 dark:text-green-400"
+                    >(paid)</span
+                  ></span
+                >
+                <span>{{ formatPrice(order.shippingCost) }}</span>
+              </div>
+              <div
+                class="flex justify-between border-t border-gray-200 pt-2 text-base font-bold text-emerald-700 dark:border-neutral-800 dark:text-emerald-400"
+              >
+                <span>Due on delivery (cash)</span>
+                <span>{{ formatPrice(order.totalAmount) }}</span>
+              </div>
+              <p class="text-xs text-gray-400 dark:text-neutral-500">
+                Shipping paid via Paystack · Product amount due in cash on
+                delivery
+              </p>
+            </template>
 
-          <!-- Standard payment -->
-          <template v-else>
-            <div
-              class="flex justify-between text-sm text-gray-500 dark:text-neutral-400"
-            >
-              <span>Subtotal</span>
-              <span>{{ formatPrice(order.totalAmount) }}</span>
-            </div>
-            <div
-              v-if="order.shippingCost"
-              class="flex justify-between text-sm text-gray-500 dark:text-neutral-400"
-            >
-              <span>Shipping</span>
-              <span>{{ formatPrice(order.shippingCost) }}</span>
-            </div>
-            <div
-              class="flex justify-between border-t border-gray-200 pt-2 text-base font-bold text-gray-900 dark:border-neutral-800 dark:text-neutral-100"
-            >
-              <span>Total</span>
-              <span>{{ formatPrice(order.totalAmount + (order.shippingCost || 0)) }}</span>
-            </div>
-            <p class="text-xs text-gray-400 dark:text-neutral-500">
-              Paid via {{ order.paymentMethod }}
-            </p>
-          </template>
+            <!-- Standard payment -->
+            <template v-else>
+              <div
+                class="flex justify-between text-sm text-gray-500 dark:text-neutral-400"
+              >
+                <span>Subtotal</span>
+                <span>{{ formatPrice(order.totalAmount) }}</span>
+              </div>
+              <div
+                v-if="order.shippingCost"
+                class="flex justify-between text-sm text-gray-500 dark:text-neutral-400"
+              >
+                <span>Shipping</span>
+                <span>{{ formatPrice(order.shippingCost) }}</span>
+              </div>
+              <div
+                class="flex justify-between border-t border-gray-200 pt-2 text-base font-bold text-gray-900 dark:border-neutral-800 dark:text-neutral-100"
+              >
+                <span>Total</span>
+                <span>{{
+                  formatPrice(order.totalAmount + (order.shippingCost || 0))
+                }}</span>
+              </div>
+              <p class="text-xs text-gray-400 dark:text-neutral-500">
+                Paid via {{ order.paymentMethod }}
+              </p>
+            </template>
           </div>
         </BaseCard>
 
@@ -215,8 +225,32 @@
         >
           Cancel Order
         </BaseButton>
+
+        <!-- Get help / open a dispute -->
+        <BaseButton
+          v-if="order"
+          variant="secondary"
+          size="lg"
+          class="w-full"
+          @click="showHelp = true"
+        >
+          {{
+            canDispute
+              ? 'Report a problem with this order'
+              : 'Get help with this order'
+          }}
+        </BaseButton>
       </div>
     </div>
+
+    <SupportNewTicketModal
+      v-model="showHelp"
+      :order-id="orderId"
+      :dispute="canDispute"
+      default-category="ORDER"
+      :default-subject="`Help with Order #${orderId}`"
+      @created="onHelpCreated"
+    />
   </HomeLayout>
 </template>
 
@@ -230,6 +264,7 @@ import { notify } from '@kyvg/vue3-notification'
 import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 import BaseBadge from '~~/layers/ui/app/components/BaseBadge.vue'
 import BaseCard from '~~/layers/ui/app/components/BaseCard.vue'
+import SupportNewTicketModal from '~~/layers/support/app/components/SupportNewTicketModal.vue'
 
 definePageMeta({ middleware: 'auth' })
 
@@ -243,6 +278,14 @@ const order = ref<any>(null)
 const isLoading = ref(true)
 const error = ref('')
 const cancelling = ref(false)
+
+// Support / dispute — a paid order can be disputed; otherwise it's a plain help ticket.
+const showHelp = ref(false)
+const canDispute = computed(() => order.value?.paymentStatus === 'PAID')
+function onHelpCreated(id: string) {
+  showHelp.value = false
+  if (id) navigateTo(`/support/${id}`)
+}
 
 const ORDER_STEPS = ['Pending', 'Confirmed', 'Shipped', 'Delivered']
 const STEP_MAP: Record<string, number> = {
@@ -272,7 +315,10 @@ const handleCancel = async () => {
     order.value = res?.data
     notify({ type: 'success', text: 'Order cancelled' })
   } catch (e: any) {
-    notify({ type: 'error', text: extractErrorMessage(e, 'Could not cancel order') })
+    notify({
+      type: 'error',
+      text: extractErrorMessage(e, 'Could not cancel order'),
+    })
   } finally {
     cancelling.value = false
   }

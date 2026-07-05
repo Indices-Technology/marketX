@@ -1,5 +1,3 @@
-
-
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["postgresqlExtensions"]
@@ -33,21 +31,21 @@ model Profile {
   // People I am following (I am the follower)
   following         Follow[]       @relation("UserAsFollower")
 
-  likes             Like[]            @relation("ProfileLikes")
-  media             Media[]           @relation("MediaAuthor")
-  sentMessages      Message[]         @relation("MessageSender")
-  sentNotifications Notification[]    @relation("NotificationFromActor")
-  notifications     Notification[]    @relation("NotificationToProfile")
-  orders            Orders[]          @relation("BuyerOrders")
-  posts             Post[]            @relation("UserPosts")
-  savedPosts        SavedPost[]       @relation("UserSavedPosts")
-  postLikes         PostLike[]        @relation("UserProfileLikes")
-  sellerProfile     SellerProfile[]   @relation("SellerProfile")
-  shares            Share[]           @relation("ProfileShares")
-  stories           Story[]           @relation("UserStories")
-  sessions          Session[]         @relation("UserSessions")
+  likes             Like[]          @relation("ProfileLikes")
+  media             Media[]         @relation("MediaAuthor")
+  sentMessages      Message[]       @relation("MessageSender")
+  sentNotifications Notification[]  @relation("NotificationFromActor")
+  notifications     Notification[]  @relation("NotificationToProfile")
+  orders            Orders[]        @relation("BuyerOrders")
+  posts             Post[]          @relation("UserPosts")
+  savedPosts        SavedPost[]     @relation("UserSavedPosts")
+  postLikes         PostLike[]      @relation("UserProfileLikes")
+  sellerProfile     SellerProfile[] @relation("SellerProfile")
+  shares            Share[]         @relation("ProfileShares")
+  stories           Story[]         @relation("UserStories")
+  sessions          Session[]       @relation("UserSessions")
 
-  affiliateCode      String?        @unique
+  affiliateCode String? @unique
 
   email_verification EmailVerificationToken[]
   password_reset     PasswordResetToken[]
@@ -55,28 +53,33 @@ model Profile {
   user_settings      UserSettings?
   aiConfig           UserAIConfig?
   aiProfile          UserAIProfile?
-  affiliateOrders    Orders[]       @relation("AffiliateOrders")
-  reviews            Review[]       @relation("UserReviews")
+  affiliateOrders    Orders[]                 @relation("AffiliateOrders")
+  reviews            Review[]                 @relation("UserReviews")
   buyerWallet        BuyerWallet?
 
   // ── Squares ──────────────────────────────────────────────────────────────
-  squareOfficerRoles     SquareOfficer[]      @relation("SquareOfficers")
-  squareFollows          UserSquareFollow[]   @relation("UserSquareFollows")
-  squareMembershipsVerified SquareMembership[] @relation("SquareMembershipVerifier")
-  squarePayoutRequests   SquarePayout[]       @relation("SquarePayoutRequests")
-  squareAnnouncements    SquareAnnouncement[] @relation("AnnouncementAuthor")
-  squareRequests         SquareRequest[]      @relation("SquareRequestBuyer")
-  sellerReviews          SellerReview[]       @relation("SellerReviewAuthor")
+  squareOfficerRoles        SquareOfficer[]      @relation("SquareOfficers")
+  squareFollows             UserSquareFollow[]   @relation("UserSquareFollows")
+  squareMembershipsVerified SquareMembership[]   @relation("SquareMembershipVerifier")
+  squarePayoutRequests      SquarePayout[]       @relation("SquarePayoutRequests")
+  squareAnnouncements       SquareAnnouncement[] @relation("AnnouncementAuthor")
+  squareRequests            SquareRequest[]      @relation("SquareRequestBuyer")
+  sellerReviews             SellerReview[]       @relation("SellerReviewAuthor")
 
   // ── Moderation ────────────────────────────────────────────────────────────
-  isActive           Boolean          @default(true)
-  strikeCount        Int              @default(0)
-  bannedAt           DateTime?        @db.Timestamptz(6)
-  suspendedUntil     DateTime?        @db.Timestamptz(6)
-  reportsFiled       Report[]         @relation("ReportsFiled")
-  reportsModerated   Report[]         @relation("ReportsModerated")
-  suspensions        UserSuspension[] @relation("UserSuspensions")
-  suspensionsIssued  UserSuspension[] @relation("SuspensionsIssued")
+  isActive          Boolean          @default(true)
+  strikeCount       Int              @default(0)
+  bannedAt          DateTime?        @db.Timestamptz(6)
+  suspendedUntil    DateTime?        @db.Timestamptz(6)
+  reportsFiled      Report[]         @relation("ReportsFiled")
+  reportsModerated  Report[]         @relation("ReportsModerated")
+  suspensions       UserSuspension[] @relation("UserSuspensions")
+  suspensionsIssued UserSuspension[] @relation("SuspensionsIssued")
+
+  // ── Support ──────────────────────────────────────────────────────────────
+  supportTicketsRequested SupportTicket[]  @relation("SupportRequester")
+  supportTicketsAssigned  SupportTicket[]  @relation("SupportAgent")
+  supportMessages         SupportMessage[] @relation("SupportMessageAuthor")
 }
 
 model SellerProfile {
@@ -110,27 +113,27 @@ model SellerProfile {
   shipFromCountry       String                 @default("NG")
   shipFromPhone         String?
   // ── GPS / Discovery ──────────────────────────────────────────────────────
-  latitude       Float?
-  longitude      Float?
-  city           String?
-  state          String?
-  locationLabel  String?  // human-readable e.g. "Yaba, Lagos"
-  hideLocation   Boolean  @default(false)  // ghost mode — hides from map
-  lastActiveAt   DateTime? @db.Timestamptz(6) // updated on dashboard visit — drives online status
-  businessHours  Json?    // { mon:{open,close,closed}, tue:..., ... } — weekly schedule
-  timezone       String   @default("Africa/Lagos") // IANA timezone for open/closed computation
+  latitude              Float?
+  longitude             Float?
+  city                  String?
+  state                 String?
+  locationLabel         String? // human-readable e.g. "Yaba, Lagos"
+  hideLocation          Boolean                @default(false) // ghost mode — hides from map
+  lastActiveAt          DateTime?              @db.Timestamptz(6) // updated on dashboard visit — drives online status
+  businessHours         Json? // { mon:{open,close,closed}, tue:..., ... } — weekly schedule
+  timezone              String                 @default("Africa/Lagos") // IANA timezone for open/closed computation
   // ── Pay on Delivery ──────────────────────────────────────────────────────
-  pod_enabled        Boolean  @default(false)   // seller opts into POD
-  pod_zones          Json?                       // string[] of eligible state names e.g. ["Lagos","Abuja"]
-  pod_delivery_days  Int      @default(3)        // promised delivery window in days
+  pod_enabled           Boolean                @default(false) // seller opts into POD
+  pod_zones             Json? // string[] of eligible state names e.g. ["Lagos","Abuja"]
+  pod_delivery_days     Int                    @default(3) // promised delivery window in days
   // ── Bring-your-own-shipping (BYOS) — seller self-delivery config ──────────
   /// SellerShippingConfig JSON: { selfEnabled, flatRateMinor?, freeOverMinor?, pickupEnabled?, pickupNote?, etaText?, zoneRates? }
-  shippingConfig     Json?
+  shippingConfig        Json?
   // ── Squares ──────────────────────────────────────────────────────────────
   /// Denormalised for fast feed queries — mirrors the SquareMembership where isPrimary = true
-  primarySquareId   String?           @db.Uuid
-  squareMemberships SquareMembership[] @relation("SellerSquareMemberships")
-  squareOffers      SquareOffer[]      @relation("SquareOfferSeller")
+  primarySquareId       String?                @db.Uuid
+  squareMemberships     SquareMembership[]     @relation("SellerSquareMemberships")
+  squareOffers          SquareOffer[]          @relation("SquareOfferSeller")
   media                 Media[]                @relation("MediaSeller")
   products              Products[]             @relation("SellerProducts")
   profile               Profile                @relation("SellerProfile", fields: [profileId], references: [id], onDelete: Cascade)
@@ -139,13 +142,14 @@ model SellerProfile {
   verificationDocuments VerificationDocument[]
   conversations         Conversation[]         @relation("ConversationSeller")
   sellerReviews         SellerReview[]         @relation("SellerReviews")
+  supportTickets        SupportTicket[]        @relation("SupportSeller")
   // ── Rating (denormalised — updated on every review write) ────────────────
   averageRating         Float?
   totalReviews          Int                    @default(0)
 
   @@unique([profileId, store_slug])
   @@index([profileId])
-  @@index([is_active, followers_count(sort: Desc)])  // featured: WHERE is_active=true ORDER BY followers_count DESC
+  @@index([is_active, followers_count(sort: Desc)]) // featured: WHERE is_active=true ORDER BY followers_count DESC
 }
 
 model Conversation {
@@ -199,78 +203,78 @@ model Message {
 }
 
 model Products {
-  id             Int                 @id @default(autoincrement())
-  title          String
-  slug           String              @unique
-  description    String?
-  price          Float
-  discount       Float?
-  status         ProductStatus?      @default(DRAFT)
-  sellerId       String              @db.Uuid
-  created_at     DateTime            @default(now()) @db.Timestamptz(6)
-  updated_at     DateTime            @updatedAt @db.Timestamptz(6)
-  soldCount      Int                 @default(0)
-  viewCount      Int                 @default(0)
-  cartCount      Int                 @default(0)
-  averageRating  Float?
-  totalReviews   Int                 @default(0)
-  isFeatured     Boolean             @default(false)
-  bannerImageUrl String?
-  SKU            String?             @unique
-  isAccessory    Boolean             @default(false)
-  store_slug     String
+  id                  Int                 @id @default(autoincrement())
+  title               String
+  slug                String              @unique
+  description         String?
+  price               Float
+  discount            Float?
+  status              ProductStatus?      @default(DRAFT)
+  sellerId            String              @db.Uuid
+  created_at          DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime            @updatedAt @db.Timestamptz(6)
+  soldCount           Int                 @default(0)
+  viewCount           Int                 @default(0)
+  cartCount           Int                 @default(0)
+  averageRating       Float?
+  totalReviews        Int                 @default(0)
+  isFeatured          Boolean             @default(false)
+  bannerImageUrl      String?
+  SKU                 String?             @unique
+  isAccessory         Boolean             @default(false)
+  store_slug          String
   // embedding      Unsupported("vector")?
-  isThrift              Boolean             @default(false)
-  affiliateCommission   Float?
-  socialCaptions        Json?
+  isThrift            Boolean             @default(false)
+  affiliateCommission Float?
+  socialCaptions      Json?
   // ── Unified Product Post ──────────────────────────────────────────────────
   /// Publish this product into the main social feed as a Post
-  showInFeed     Boolean  @default(false)
+  showInFeed          Boolean             @default(false)
   /// Publish this product into the Reels surface
-  showInReels    Boolean  @default(false)
+  showInReels         Boolean             @default(false)
   /// The auto-created Post record linked to this product (1-to-1)
-  linkedPostId   String?  @unique @db.Uuid
-  linkedPost     Post?    @relation("ProductLinkedPost", fields: [linkedPostId], references: [id], onDelete: SetNull)
+  linkedPostId        String?             @unique @db.Uuid
+  linkedPost          Post?               @relation("ProductLinkedPost", fields: [linkedPostId], references: [id], onDelete: SetNull)
   // ── Deals ──────────────────────────────────────────────────────────────────
   /// True when this product is a time-limited flash deal
-  isDeal         Boolean  @default(false)
+  isDeal              Boolean             @default(false)
   /// When the deal expires (null = no expiry / always-on deal)
-  dealEndsAt     DateTime? @db.Timestamptz(6)
+  dealEndsAt          DateTime?           @db.Timestamptz(6)
   // ── Pre-loved / Thrift ────────────────────────────────────────────────────
   /// Physical condition for pre-loved/thrift items
-  condition      String?  // NEW_WITH_TAGS | LIKE_NEW | GOOD | FAIR | POOR
+  condition           String? // NEW_WITH_TAGS | LIKE_NEW | GOOD | FAIR | POOR
   /// The Square this product belongs to — inherited from the seller's primary Square
-  squareId       String?  @db.Uuid
-  square         Square?  @relation("SquareProducts", fields: [squareId], references: [id], onDelete: SetNull)
-  comments       Comment[]
-  conversations  Conversation[]      @relation("ConversationProduct")
-  likes          Like[]
-  media          Media[]
-  messages       Message[]           @relation("ProductMessages")
-  notifications  Notification[]      @relation("NotificationToProduct")
-  category       ProductCategories[] @relation("ProductCategory")
-  taggedInPosts  ProductPostTag[]
-  appearsIn      ProductRelation[]   @relation("AppearsIn")
-  styledWith     ProductRelation[]   @relation("StyledWith")
-  tags           ProductTags[]       @relation("ProductTag")
-  variants       ProductVariant[]
-  offers         ProductOffer[]
-  reviews        Review[]            @relation("ProductReviews")
-  squareOffers   SquareOffer[]
-  seller         SellerProfile       @relation("SellerProducts", fields: [sellerId], references: [id], onDelete: Cascade)
-  shares         Share[]             @relation("ProductShare")
-  stories        Story[]
+  squareId            String?             @db.Uuid
+  square              Square?             @relation("SquareProducts", fields: [squareId], references: [id], onDelete: SetNull)
+  comments            Comment[]
+  conversations       Conversation[]      @relation("ConversationProduct")
+  likes               Like[]
+  media               Media[]
+  messages            Message[]           @relation("ProductMessages")
+  notifications       Notification[]      @relation("NotificationToProduct")
+  category            ProductCategories[] @relation("ProductCategory")
+  taggedInPosts       ProductPostTag[]
+  appearsIn           ProductRelation[]   @relation("AppearsIn")
+  styledWith          ProductRelation[]   @relation("StyledWith")
+  tags                ProductTags[]       @relation("ProductTag")
+  variants            ProductVariant[]
+  offers              ProductOffer[]
+  reviews             Review[]            @relation("ProductReviews")
+  squareOffers        SquareOffer[]
+  seller              SellerProfile       @relation("SellerProducts", fields: [sellerId], references: [id], onDelete: Cascade)
+  shares              Share[]             @relation("ProductShare")
+  stories             Story[]
 
   moderationStatus ModerationStatus @default(ACTIVE)
   reportCount      Int              @default(0)
 
-  analytics      ProductAnalytics[]
+  analytics ProductAnalytics[]
 
   @@index([sellerId])
-  @@index([status, created_at(sort: Desc)])  // feed/shop queries: WHERE status='PUBLISHED' ORDER BY created_at DESC
-  @@index([status, isDeal, created_at(sort: Desc)])  // shop-today deal filter
-  @@index([status, showInFeed, created_at(sort: Desc)])  // home feed product injection
-  @@index([status, isThrift, created_at(sort: Desc)])  // pre-loved feed
+  @@index([status, created_at(sort: Desc)]) // feed/shop queries: WHERE status='PUBLISHED' ORDER BY created_at DESC
+  @@index([status, isDeal, created_at(sort: Desc)]) // shop-today deal filter
+  @@index([status, showInFeed, created_at(sort: Desc)]) // home feed product injection
+  @@index([status, isThrift, created_at(sort: Desc)]) // pre-loved feed
   @@index([moderationStatus])
 }
 
@@ -286,7 +290,7 @@ model ProductAnalytics {
   revenue       Float    @default(0)
   affiliatePaid Float    @default(0)
 
-  product       Products @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product Products @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([productId, date])
   @@index([storeSlug, date])
@@ -323,54 +327,55 @@ model ProductOffer {
 }
 
 model Orders {
-  id              Int            @id @default(autoincrement())
-  userId          String         @db.Uuid
+  id                Int             @id @default(autoincrement())
+  userId            String          @db.Uuid
   /// Legacy Stripe reference — now used as generic payment reference
-  stripeId        String         @unique
+  stripeId          String          @unique
   /// Payment reference (populated after payment init). Shared across all the
   /// per-seller orders of one checkout, so it is NOT unique.
-  paymentRef      String?
+  paymentRef        String?
   /// Groups the per-seller orders created from one checkout/payment.
-  purchaseGroupId String?        @db.Uuid
+  purchaseGroupId   String?         @db.Uuid
   /// The chosen shipping option for this seller's parcel { carrier, service, amount, estimatedDays }.
   shippingBreakdown Json?
-  paymentStatus   PaymentStatus  @default(UNPAID)
-  name            String
-  address         String
-  zipcode         String
-  county          String
-  country         String
+  paymentStatus     PaymentStatus   @default(UNPAID)
+  name              String
+  address           String
+  zipcode           String
+  county            String
+  country           String
   /// Shipping cost in cents
-  shippingCost    Int            @default(0)
-  shippingZone    String?
-  estimatedDays   String?
-  totalAmount     Int
-  status          OrderStatus    @default(PENDING)
-  created_at      DateTime       @default(now()) @db.Timestamptz(6)
-  updated_at      DateTime       @updatedAt @db.Timestamptz(6)
-  paymentMethod   String
-  shipper          String?
-  trackingNumber   String?
+  shippingCost      Int             @default(0)
+  shippingZone      String?
+  estimatedDays     String?
+  totalAmount       Int
+  status            OrderStatus     @default(PENDING)
+  created_at        DateTime        @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime        @updatedAt @db.Timestamptz(6)
+  paymentMethod     String
+  shipper           String?
+  trackingNumber    String?
   /// URL to the shipping label PDF (populated after shipment is created)
-  labelUrl         String?
+  labelUrl          String?
   /// Which shipping provider created this shipment: 'sendbox' | 'shippo'
-  shippingProvider String?
-  payoutAmount     Int?
+  shippingProvider  String?
+  payoutAmount      Int?
   /// Timestamp when seller marked the order as shipped
-  shippedAt        DateTime?
+  shippedAt         DateTime?
   /// Affiliate who referred this order (if any)
-  affiliateUserId  String?        @db.Uuid
+  affiliateUserId   String?         @db.Uuid
   /// Total affiliate cut for this order in cents
-  affiliateCut     Int            @default(0)
-  notifications   Notification[] @relation("NotificationToOrder")
-  orderItem       OrderItem[]
-  user            Profile        @relation("BuyerOrders", fields: [userId], references: [id])
-  affiliate       Profile?       @relation("AffiliateOrders", fields: [affiliateUserId], references: [id])
-  podDelivery     PodDelivery?
+  affiliateCut      Int             @default(0)
+  notifications     Notification[]  @relation("NotificationToOrder")
+  orderItem         OrderItem[]
+  user              Profile         @relation("BuyerOrders", fields: [userId], references: [id])
+  affiliate         Profile?        @relation("AffiliateOrders", fields: [affiliateUserId], references: [id])
+  podDelivery       PodDelivery?
+  supportTickets    SupportTicket[] @relation("SupportOrder")
 
   @@index([paymentRef])
   @@index([purchaseGroupId])
-  @@index([userId, created_at(sort: Desc)])  // buyer order list: WHERE userId=X ORDER BY created_at DESC (getUserOrders)
+  @@index([userId, created_at(sort: Desc)]) // buyer order list: WHERE userId=X ORDER BY created_at DESC (getUserOrders)
 }
 
 /// Pay-on-Delivery lifecycle for a POD order (one per Orders row). Owns the POD
@@ -410,6 +415,125 @@ model PodDelivery {
   @@index([provider, state])
 }
 
+/// Support ticket / order dispute. See docs/SUPPORT.md.
+model SupportTicket {
+  id           String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Human-facing reference, shown as MX-<n>
+  ticketNumber Int               @unique @default(autoincrement())
+  type         SupportTicketType @default(SUPPORT)
+  category     SupportCategory   @default(OTHER)
+  priority     SupportPriority   @default(NORMAL)
+  status       SupportStatus     @default(OPEN)
+  source       SupportSource     @default(WEB)
+  subject      String
+
+  /// Nullable → supports guest / checkout-placeholder buyers (guestEmail set instead)
+  requesterId String?  @db.Uuid
+  requester   Profile? @relation("SupportRequester", fields: [requesterId], references: [id], onDelete: SetNull)
+  guestEmail  String?
+
+  assignedAgentId String?  @db.Uuid
+  assignedAgent   Profile? @relation("SupportAgent", fields: [assignedAgentId], references: [id], onDelete: SetNull)
+
+  // ── Context links ──────────────────────────────────────────────────────────
+  orderId   Int?
+  order     Orders?        @relation("SupportOrder", fields: [orderId], references: [id], onDelete: SetNull)
+  productId Int?
+  /// Seller counterparty (required for a DISPUTE)
+  sellerId  String?        @db.Uuid
+  seller    SellerProfile? @relation("SupportSeller", fields: [sellerId], references: [id], onDelete: SetNull)
+
+  // ── Dispute resolution ──────────────────────────────────────────────────────
+  resolution     String?
+  disputeOutcome DisputeOutcome?
+  /// Partial refund amount in cents (PARTIAL_REFUND outcome)
+  refundAmount   Int?
+
+  lastMessageAt DateTime? @db.Timestamptz(6)
+  resolvedAt    DateTime? @db.Timestamptz(6)
+  closedAt      DateTime? @db.Timestamptz(6)
+  created_at    DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime  @updatedAt @db.Timestamptz(6)
+
+  messages SupportMessage[] @relation("TicketMessages")
+
+  @@index([status, priority, created_at(sort: Desc)])
+  @@index([requesterId, created_at(sort: Desc)])
+  @@index([assignedAgentId, status])
+  @@index([type, status])
+  @@index([orderId])
+}
+
+model SupportMessage {
+  id           String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ticketId     String            @db.Uuid
+  ticket       SupportTicket     @relation("TicketMessages", fields: [ticketId], references: [id], onDelete: Cascade)
+  /// Null = SYSTEM message
+  authorId     String?           @db.Uuid
+  author       Profile?          @relation("SupportMessageAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  authorRole   SupportAuthorRole @default(REQUESTER)
+  body         String
+  /// [{ url, name }] Cloudinary uploads
+  attachments  Json?
+  /// Agent-only note, hidden from requester/seller
+  internalNote Boolean           @default(false)
+  created_at   DateTime          @default(now()) @db.Timestamptz(6)
+
+  @@index([ticketId, created_at])
+}
+
+enum SupportTicketType {
+  SUPPORT
+  DISPUTE
+}
+
+enum SupportCategory {
+  ORDER
+  PAYMENT
+  DELIVERY
+  ACCOUNT
+  SELLER
+  PRODUCT
+  REFUND
+  OTHER
+}
+
+enum SupportPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum SupportStatus {
+  OPEN
+  IN_PROGRESS
+  PENDING_USER
+  RESOLVED
+  CLOSED
+}
+
+enum SupportSource {
+  WEB
+  EMAIL
+  CHECKOUT
+  ORDER
+}
+
+enum SupportAuthorRole {
+  REQUESTER
+  SELLER
+  AGENT
+  SYSTEM
+}
+
+enum DisputeOutcome {
+  REFUND_BUYER
+  RELEASE_SELLER
+  PARTIAL_REFUND
+  REJECTED
+}
+
 model OrderItem {
   id           Int            @id @default(autoincrement())
   orderId      Int
@@ -425,15 +549,15 @@ model OrderItem {
 }
 
 model CartItem {
-  id          String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  quantity    Int
+  id         String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  quantity   Int
   /// Effective unit price (after discount) at time of add — used to detect price changes
-  priceAtAdd  Float?
-  created_at  DateTime       @default(now())
-  userId      String         @db.Uuid
-  variantId   Int
-  user        Profile        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  variant     ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  priceAtAdd Float?
+  created_at DateTime       @default(now())
+  userId     String         @db.Uuid
+  variantId  Int
+  user       Profile        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  variant    ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
 
   @@unique([userId, variantId])
 }
@@ -555,8 +679,8 @@ model Story {
   media      Media     @relation(fields: [mediaId], references: [id], onDelete: Cascade)
   product    Products? @relation(fields: [productId], references: [id])
 
-  @@index([expiresAt])  // active story filter: WHERE expiresAt > NOW()
-  @@index([authorId, expiresAt])  // user-specific active stories
+  @@index([expiresAt]) // active story filter: WHERE expiresAt > NOW()
+  @@index([authorId, expiresAt]) // user-specific active stories
 }
 
 model Post {
@@ -593,25 +717,25 @@ model Post {
 
   /// Wall target — when set this post is a shoutout on another profile's wall.
   /// wallTargetType: "USER" or "STORE"; wallTargetSlug: username or store_slug.
-  wallTargetType   String?
-  wallTargetSlug   String?
+  wallTargetType String?
+  wallTargetSlug String?
 
   @@index([authorId])
-  @@index([created_at(sort: Desc)])  // feed ordering: ORDER BY created_at DESC
-  @@index([visibility, created_at(sort: Desc)])  // filtered feed: WHERE visibility='PUBLIC' ORDER BY created_at DESC
+  @@index([created_at(sort: Desc)]) // feed ordering: ORDER BY created_at DESC
+  @@index([visibility, created_at(sort: Desc)]) // filtered feed: WHERE visibility='PUBLIC' ORDER BY created_at DESC
   @@index([moderationStatus])
-  @@index([wallTargetType, wallTargetSlug, created_at(sort: Desc)])  // wall feed
+  @@index([wallTargetType, wallTargetSlug, created_at(sort: Desc)]) // wall feed
 }
 
 model SavedPost {
-  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId     String   @db.Uuid
-  postId     String   @db.Uuid
-  createdAt  DateTime @default(now()) @db.Timestamptz(6)
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @db.Uuid
+  postId    String   @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
 
   // Relations
-  user       Profile  @relation("UserSavedPosts", fields: [userId], references: [id], onDelete: Cascade)
-  post       Post     @relation("PostSavedBy", fields: [postId], references: [id], onDelete: Cascade)
+  user Profile @relation("UserSavedPosts", fields: [userId], references: [id], onDelete: Cascade)
+  post Post    @relation("PostSavedBy", fields: [postId], references: [id], onDelete: Cascade)
 
   // Safety: A user can't save the same post twice
   @@unique([userId, postId])
@@ -677,35 +801,35 @@ model PostLike {
 }
 
 model Follow {
-  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  
-  followerId     String   @db.Uuid
-  followingId    String   @db.Uuid
-  followingType  String   @default("USER") // "USER" or "SELLER"
-  created_at     DateTime @default(now())
-  
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  followerId    String   @db.Uuid
+  followingId   String   @db.Uuid
+  followingType String   @default("USER") // "USER" or "SELLER"
+  created_at    DateTime @default(now())
+
   // Only the follower has a strict database-level relationship
-  follower       Profile  @relation("UserAsFollower", fields: [followerId], references: [id], onDelete: Cascade)
+  follower Profile @relation("UserAsFollower", fields: [followerId], references: [id], onDelete: Cascade)
 
   @@unique([followerId, followingId, followingType])
   @@index([followerId])
   @@index([followingId])
-  @@index([followerId, followingType])  // stories: WHERE followerId=X AND followingType=Y
+  @@index([followerId, followingType]) // stories: WHERE followerId=X AND followingType=Y
 }
 
 model Share {
-  id          Int      @id @default(autoincrement())
-  userId      String   @db.Uuid
-  productId   Int?
-  postId      String?  @db.Uuid
-  platform    String?  // e.g., 'whatsapp', 'instagram', 'internal'
-  shareUrl    String?
-  created_at  DateTime @default(now())
+  id         Int      @id @default(autoincrement())
+  userId     String   @db.Uuid
+  productId  Int?
+  postId     String?  @db.Uuid
+  platform   String? // e.g., 'whatsapp', 'instagram', 'internal'
+  shareUrl   String?
+  created_at DateTime @default(now())
 
   // Relations
-  product     Products? @relation("ProductShare", fields: [productId], references: [id], onDelete: Cascade)
-  post        Post?     @relation("PostShares", fields: [postId], references: [id], onDelete: Cascade)
-  profile     Profile   @relation("ProfileShares", fields: [userId], references: [id], onDelete: Cascade)
+  product Products? @relation("ProductShare", fields: [productId], references: [id], onDelete: Cascade)
+  post    Post?     @relation("PostShares", fields: [postId], references: [id], onDelete: Cascade)
+  profile Profile   @relation("ProfileShares", fields: [userId], references: [id], onDelete: Cascade)
 
   // Remove the strict unique constraint if you want users to share multiple times
   // or keep it if you only want to track unique platform shares per user
@@ -729,7 +853,7 @@ model Media {
   seller     SellerProfile? @relation("MediaSeller", fields: [sellerId], references: [id])
   postId     String?        @db.Uuid
   isBgMusic  Boolean        @default(false)
-  post       Post?    @relation("PostMedia", fields: [postId], references: [id], onDelete: Cascade)
+  post       Post?          @relation("PostMedia", fields: [postId], references: [id], onDelete: Cascade)
   story      Story?
 
   musicTitle     String?
@@ -778,15 +902,15 @@ model VerificationDocument {
 }
 
 model Notification {
-  id         Int              @id @default(autoincrement())
-  userId     String           @db.Uuid
-  message    String
-  type       NotificationType
-  read       Boolean          @default(false)
-  orderId    Int?
-  productId  Int?
-  created_at DateTime         @default(now()) @db.Timestamptz(6)
-  updated_at DateTime         @updatedAt @db.Timestamptz(6)
+  id             Int              @id @default(autoincrement())
+  userId         String           @db.Uuid
+  message        String
+  type           NotificationType
+  read           Boolean          @default(false)
+  orderId        Int?
+  productId      Int?
+  created_at     DateTime         @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime         @updatedAt @db.Timestamptz(6)
   actorId        String?          @db.Uuid
   commentId      String?          @db.Uuid
   postId         String?          @db.Uuid
@@ -950,19 +1074,19 @@ model UserSettings {
 }
 
 model Review {
-  id         String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   productId  Int
-  authorId   String        @db.Uuid
+  authorId   String   @db.Uuid
   orderId    Int?
-  rating     Int           // 1-5
+  rating     Int // 1-5
   title      String?
   body       String?
-  verified   Boolean       @default(false)
-  created_at DateTime      @default(now()) @db.Timestamptz(6)
-  updated_at DateTime      @updatedAt @db.Timestamptz(6)
+  verified   Boolean  @default(false)
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
 
-  product    Products      @relation("ProductReviews", fields: [productId], references: [id], onDelete: Cascade)
-  author     Profile       @relation("UserReviews", fields: [authorId], references: [id], onDelete: Cascade)
+  product Products @relation("ProductReviews", fields: [productId], references: [id], onDelete: Cascade)
+  author  Profile  @relation("UserReviews", fields: [authorId], references: [id], onDelete: Cascade)
 
   @@unique([productId, authorId])
   @@index([productId])
@@ -972,19 +1096,19 @@ model Review {
 /// A buyer's review of a seller store (not a specific product).
 /// Gated on at least one completed order from that seller.
 model SellerReview {
-  id         String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  sellerId   String        @db.Uuid
-  authorId   String        @db.Uuid
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sellerId   String   @db.Uuid
+  authorId   String   @db.Uuid
   orderId    Int?
-  rating     Int           // 1-5
+  rating     Int // 1-5
   title      String?
   body       String?
-  verified   Boolean       @default(true)  // always true — gated on completed order
-  created_at DateTime      @default(now()) @db.Timestamptz(6)
-  updated_at DateTime      @updatedAt @db.Timestamptz(6)
+  verified   Boolean  @default(true) // always true — gated on completed order
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
 
-  seller     SellerProfile @relation("SellerReviews", fields: [sellerId], references: [id], onDelete: Cascade)
-  author     Profile       @relation("SellerReviewAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  seller SellerProfile @relation("SellerReviews", fields: [sellerId], references: [id], onDelete: Cascade)
+  author Profile       @relation("SellerReviewAuthor", fields: [authorId], references: [id], onDelete: Cascade)
 
   @@unique([sellerId, authorId])
   @@index([sellerId])
@@ -999,8 +1123,8 @@ model SellerReview {
 /// surface in MarketX.
 model Square {
   id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name        String       @unique  // "Computer Village Square"
-  slug        String       @unique  // "computer-village"
+  name        String       @unique // "Computer Village Square"
+  slug        String       @unique // "computer-village"
   description String?
   type        SquareType   @default(CATEGORY)
   status      SquareStatus @default(PENDING)
@@ -1008,14 +1132,14 @@ model Square {
   // Branding
   bannerUrl   String?
   iconUrl     String?
-  accentColor String?      // hex — allows per-square UI theming
+  accentColor String? // hex — allows per-square UI theming
 
   // Geographic data (GEOGRAPHIC squares only)
   latitude        Float?
   longitude       Float?
   city            String?
   state           String?
-  country         String   @default("NG")
+  country         String  @default("NG")
   physicalAddress String?
 
   // Association financial config — how much of GMV goes to the association
@@ -1030,11 +1154,11 @@ model Square {
   updated_at DateTime @updatedAt @db.Timestamptz(6)
 
   // Relations
-  officers     SquareOfficer[]
-  memberships  SquareMembership[]
-  followers    UserSquareFollow[]
-  wallet       SquareWallet?
-  transactions SquareTransaction[]
+  officers      SquareOfficer[]
+  memberships   SquareMembership[]
+  followers     UserSquareFollow[]
+  wallet        SquareWallet?
+  transactions  SquareTransaction[]
   posts         Post[]               @relation("SquarePosts")
   products      Products[]           @relation("SquareProducts")
   announcements SquareAnnouncement[]
@@ -1107,12 +1231,12 @@ model UserSquareFollow {
 model SquareWallet {
   id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   squareId       String   @unique @db.Uuid
-  balance        Float    @default(0)  // available for withdrawal
-  totalEarned    Float    @default(0)  // all-time gross earnings
+  balance        Float    @default(0) // available for withdrawal
+  totalEarned    Float    @default(0) // all-time gross earnings
   totalWithdrawn Float    @default(0)
   updated_at     DateTime @updatedAt
 
-  square       Square             @relation(fields: [squareId], references: [id], onDelete: Cascade)
+  square       Square              @relation(fields: [squareId], references: [id], onDelete: Cascade)
   transactions SquareTransaction[]
   payouts      SquarePayout[]
 }
@@ -1125,9 +1249,9 @@ model SquareTransaction {
   squareId     String   @db.Uuid
   walletId     String   @db.Uuid
   orderId      Int
-  sellerAmount Float    // order value used to compute the cut
-  cutPercent   Float    // associationCutPercent at time of transaction
-  cutAmount    Float    // actual amount credited to the wallet
+  sellerAmount Float // order value used to compute the cut
+  cutPercent   Float // associationCutPercent at time of transaction
+  cutAmount    Float // actual amount credited to the wallet
   created_at   DateTime @default(now()) @db.Timestamptz(6)
 
   square Square       @relation(fields: [squareId], references: [id])
@@ -1143,7 +1267,7 @@ model SquarePayout {
   walletId       String    @db.Uuid
   amount         Float
   status         String    @default("PENDING") // PENDING | COMPLETED | FAILED
-  bankAccount    Json      // snapshot of account details at time of payout
+  bankAccount    Json // snapshot of account details at time of payout
   transactionRef String?
   requestedAt    DateTime  @default(now()) @db.Timestamptz(6)
   completedAt    DateTime? @db.Timestamptz(6)
@@ -1176,25 +1300,25 @@ model SquareAnnouncement {
 /// the Square respond with SquareOffers (an existing product). The buyer's
 /// contact is never exposed — completion happens on-platform via checkout.
 model SquareRequest {
-  id               String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  squareId         String              @db.Uuid
-  buyerId          String              @db.Uuid
-  categoryId       Int?
-  title            String              // ≤80, validated in Zod; may be masked by content guard
-  budgetMin        Int?                // kobo
-  budgetMax        Int?                // kobo
-  condition        String?             // NEW_WITH_TAGS | LIKE_NEW | GOOD | FAIR | POOR | null = any
-  sizeSpec         String?
-  deliverTo        String?             // state / area for shipping feasibility
-  note             String?             // ≤300, content-guard masked
-  referencePhotoUrl String?
-  visibility       String              @default("square") // square | followed | public
-  respondersOnlyVerified Boolean        @default(false)
-  isAnonymous      Boolean             @default(false)
-  status           SquareRequestStatus @default(OPEN)
-  expiresAt        DateTime            @db.Timestamptz(6)
-  created_at       DateTime            @default(now()) @db.Timestamptz(6)
-  updated_at       DateTime            @updatedAt @db.Timestamptz(6)
+  id                     String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  squareId               String              @db.Uuid
+  buyerId                String              @db.Uuid
+  categoryId             Int?
+  title                  String // ≤80, validated in Zod; may be masked by content guard
+  budgetMin              Int? // kobo
+  budgetMax              Int? // kobo
+  condition              String? // NEW_WITH_TAGS | LIKE_NEW | GOOD | FAIR | POOR | null = any
+  sizeSpec               String?
+  deliverTo              String? // state / area for shipping feasibility
+  note                   String? // ≤300, content-guard masked
+  referencePhotoUrl      String?
+  visibility             String              @default("square") // square | followed | public
+  respondersOnlyVerified Boolean             @default(false)
+  isAnonymous            Boolean             @default(false)
+  status                 SquareRequestStatus @default(OPEN)
+  expiresAt              DateTime            @db.Timestamptz(6)
+  created_at             DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at             DateTime            @updatedAt @db.Timestamptz(6)
 
   square Square        @relation(fields: [squareId], references: [id], onDelete: Cascade)
   buyer  Profile       @relation("SquareRequestBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
@@ -1213,7 +1337,7 @@ model SquareOffer {
   sellerId   String            @db.Uuid
   productId  Int
   variantId  Int?
-  message    String?           // ≤200, content-guard masked
+  message    String? // ≤200, content-guard masked
   status     SquareOfferStatus @default(PENDING)
   created_at DateTime          @default(now()) @db.Timestamptz(6)
 
@@ -1240,28 +1364,28 @@ enum SquareOfferStatus {
 
 enum SquareType {
   GEOGRAPHIC // anchored to a real physical market e.g. Computer Village
-  CATEGORY   // online-first / dispersed sellers e.g. Ankara & Fabrics
+  CATEGORY // online-first / dispersed sellers e.g. Ankara & Fabrics
 }
 
 enum SquareStatus {
-  PENDING    // registered, awaiting admin activation
-  ACTIVE     // live and visible
-  SUSPENDED  // temporarily disabled
+  PENDING // registered, awaiting admin activation
+  ACTIVE // live and visible
+  SUSPENDED // temporarily disabled
 }
 
 enum SquareOfficerRole {
-  CHAIRMAN   // full admin — approvals, finances, announcements
-  SECRETARY  // operational — onboarding, membership management
-  TREASURER  // financial read — sees earnings and withdrawals
-  MODERATOR  // content — can flag/remove posts in the square
-  GOVT_REP   // read-only observer for regulatory purposes
+  CHAIRMAN // full admin — approvals, finances, announcements
+  SECRETARY // operational — onboarding, membership management
+  TREASURER // financial read — sees earnings and withdrawals
+  MODERATOR // content — can flag/remove posts in the square
+  GOVT_REP // read-only observer for regulatory purposes
 }
 
 enum SquareMembershipStatus {
-  PENDING    // seller applied, awaiting officer approval
-  ACTIVE     // approved and active
-  SUSPENDED  // membership suspended
-  REJECTED   // request explicitly denied by officer
+  PENDING // seller applied, awaiting officer approval
+  ACTIVE // approved and active
+  SUSPENDED // membership suspended
+  REJECTED // request explicitly denied by officer
 }
 
 enum ProductStatus {
@@ -1294,7 +1418,7 @@ enum PaymentStatus {
   PAID
   FAILED
   REFUNDED
-  SHIPPING_PAID  // POD: shipping fee paid upfront, product amount due on delivery
+  SHIPPING_PAID // POD: shipping fee paid upfront, product amount due on delivery
 }
 
 enum VerificationStatus {
@@ -1322,6 +1446,7 @@ enum NotificationType {
   SQUARE_REQUEST
   SQUARE_OFFER
   WALL_SHOUTOUT
+  SUPPORT
 }
 
 enum VisibilityType {
@@ -1378,21 +1503,21 @@ enum ModerationAction {
 }
 
 model Report {
-  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  reporterId    String         @db.Uuid
+  id            String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  reporterId    String            @db.Uuid
   contentType   ContentType
   contentId     String
   reason        ReportReason
   note          String?
-  status        ReportStatus   @default(PENDING)
-  moderatorId   String?        @db.Uuid
+  status        ReportStatus      @default(PENDING)
+  moderatorId   String?           @db.Uuid
   moderatorNote String?
   action        ModerationAction?
-  createdAt     DateTime       @default(now()) @db.Timestamptz(6)
-  resolvedAt    DateTime?      @db.Timestamptz(6)
+  createdAt     DateTime          @default(now()) @db.Timestamptz(6)
+  resolvedAt    DateTime?         @db.Timestamptz(6)
 
-  reporter      Profile        @relation("ReportsFiled", fields: [reporterId], references: [id], onDelete: Cascade)
-  moderator     Profile?       @relation("ReportsModerated", fields: [moderatorId], references: [id], onDelete: SetNull)
+  reporter  Profile  @relation("ReportsFiled", fields: [reporterId], references: [id], onDelete: Cascade)
+  moderator Profile? @relation("ReportsModerated", fields: [moderatorId], references: [id], onDelete: SetNull)
 
   @@index([status, createdAt(sort: Desc)])
   @@index([contentType, contentId])
@@ -1404,13 +1529,13 @@ model UserSuspension {
   userId      String    @db.Uuid
   moderatorId String    @db.Uuid
   reason      String
-  expiresAt   DateTime? @db.Timestamptz(6)  // null = permanent ban
-  liftedAt    DateTime? @db.Timestamptz(6)  // set when admin lifts early
+  expiresAt   DateTime? @db.Timestamptz(6) // null = permanent ban
+  liftedAt    DateTime? @db.Timestamptz(6) // set when admin lifts early
   liftedById  String?   @db.Uuid
   createdAt   DateTime  @default(now()) @db.Timestamptz(6)
 
-  user        Profile   @relation("UserSuspensions", fields: [userId], references: [id], onDelete: Cascade)
-  moderator   Profile   @relation("SuspensionsIssued", fields: [moderatorId], references: [id], onDelete: Cascade)
+  user      Profile @relation("UserSuspensions", fields: [userId], references: [id], onDelete: Cascade)
+  moderator Profile @relation("SuspensionsIssued", fields: [moderatorId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([expiresAt])
@@ -1422,9 +1547,9 @@ model UserAIConfig {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   profileId String   @unique @db.Uuid
   profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  provider  String   // 'anthropic' | 'openai'
-  model     String   // e.g. 'claude-sonnet-4-6', 'gpt-4o'
-  apiKey    String   // AES-256-GCM encrypted — never returned to clients
+  provider  String // 'anthropic' | 'openai'
+  model     String // e.g. 'claude-sonnet-4-6', 'gpt-4o'
+  apiKey    String // AES-256-GCM encrypted — never returned to clients
   createdAt DateTime @default(now()) @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @db.Timestamptz(6)
 
@@ -1437,17 +1562,17 @@ model UserAIConfig {
 /// `embedding` uses Prisma's Unsupported type so Prisma tracks the column without
 /// trying to serialize/deserialize it. All vector reads/writes use $queryRaw / $executeRaw.
 model Embedding {
-  id          String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  entityType  String                      // PRODUCT | SELLER | SQUARE
-  entityId    String                      // source PK cast to string
+  id          String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  entityType  String // PRODUCT | SELLER | SQUARE
+  entityId    String // source PK cast to string
   /// Denormalised snapshot used at query time: name, imageUrl, price, slug, location, …
   metadata    Json
   /// SHA-256 of the source text — indexer skips re-embedding when unchanged
   contentHash String
   /// pgvector column — read/write via $queryRaw / $executeRaw only
   embedding   Unsupported("vector(1536)")?
-  indexedAt   DateTime                    @default(now()) @db.Timestamptz(6)
-  updatedAt   DateTime                    @updatedAt @db.Timestamptz(6)
+  indexedAt   DateTime                     @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime                     @updatedAt @db.Timestamptz(6)
 
   @@unique([entityType, entityId])
   @@index([entityType])
@@ -1470,7 +1595,7 @@ model UserAIProfile {
   createdAt    DateTime @default(now()) @db.Timestamptz(6)
   updatedAt    DateTime @updatedAt @db.Timestamptz(6)
 
-  profile      Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profile Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -1481,7 +1606,7 @@ model AiTurnLog {
   id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId            String   @db.Uuid
   sessionId         String
-  channel           String   // dassai-web | dassai-seller-web
+  channel           String // dassai-web | dassai-seller-web
   intent            String?
   userMessage       String   @db.Text
   assistantResponse String   @db.Text
@@ -1505,7 +1630,7 @@ model AiTurnLog {
 model GuardRailEvent {
   id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId        String   @db.Uuid
-  type          String   // PROMPT_INJECTION | PII_DETECTED | UNAUTHORIZED_TOOL | RATE_LIMIT
+  type          String // PROMPT_INJECTION | PII_DETECTED | UNAUTHORIZED_TOOL | RATE_LIMIT
   inputFragment String?  @db.Text
   createdAt     DateTime @default(now()) @db.Timestamptz(6)
 

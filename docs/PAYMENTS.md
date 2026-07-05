@@ -85,6 +85,10 @@ The unit suite (`npm run test:unit`) does **not** cover these server endpoints;
 the payment specs are Playwright and need a live server. Run this in a **Paystack
 sandbox**:
 
+> **Note:** Pay-on-Delivery (rows 6–8) is currently **disabled — "Coming soon"**
+> (GIG's API has no COD endpoint yet; see [POD.md](./POD.md) §1). Those rows apply
+> only once POD is re-enabled. Card rows (1–5, 9) are live.
+
 | # | Do | Expect |
 |---|---|---|
 | 1 | Card checkout, complete payment | order `PAID`/`CONFIRMED`, seller wallet credited, buyer emailed |

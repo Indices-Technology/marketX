@@ -13,7 +13,16 @@ import { startNotificationWorker } from '../queues/notification.queue'
 import { startEmailWorker } from '../queues/email.queue'
 import { startPodReminderCron } from '../queues/pod-reminder.queue'
 
+// Guard against double-start. In dev, Nitro HMR can re-evaluate this plugin
+// module and re-run the bootstrap, stacking duplicate Workers on the SHARED
+// queue (each pulls jobs → duplicate/mis-typed notifications). A globalThis flag
+// survives module re-eval within the same process, so workers start exactly once.
+const _g = globalThis as unknown as { __mxWorkersStarted?: boolean }
+
 export default defineNitroPlugin(() => {
+  if (_g.__mxWorkersStarted) return
+  _g.__mxWorkersStarted = true
+
   const audit = startAuditWorker()
   const notification = startNotificationWorker()
   const email = startEmailWorker()

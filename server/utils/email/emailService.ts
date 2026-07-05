@@ -583,9 +583,13 @@ export function buildRoleChangeEmail(
   role: string,
   appName = 'MarketX',
 ): { subject: string; html: string; text: string } {
-  const isPromotion = role === 'moderator' || role === 'admin'
+  const isPromotion =
+    role === 'moderator' || role === 'admin' || role === 'support_agent'
   const roleLabel =
-    role === 'moderator' ? 'Moderator' : role === 'admin' ? 'Admin' : 'User'
+    role === 'moderator' ? 'Moderator'
+    : role === 'admin' ? 'Admin'
+    : role === 'support_agent' ? 'Support Agent'
+    : 'User'
   const subject = isPromotion
     ? `🎉 You've been granted ${roleLabel} access on ${appName}`
     : `Your ${appName} role has been updated`
@@ -636,6 +640,63 @@ p{font-size:15px;color:#333;line-height:1.6;margin:0 0 12px}
 </div><div class="ft">&copy; ${new Date().getFullYear()} ${appName}. All rights reserved.</div></div>
 </body></html>`
   return { subject, html, text: `Account Restored\n\n${detail}` }
+}
+
+// ── Support / disputes ───────────────────────────────────────────────────────
+
+/** Acknowledgement when a ticket is created (works for guest emails too). */
+export function buildSupportTicketCreatedEmail(
+  ref: string,
+  subjectLine: string,
+  appName = 'MarketX',
+): { subject: string; html: string; text: string } {
+  const subject = `[${ref}] We've received your request`
+  const detail = `Thanks for reaching out. Your support ticket <strong>${ref}</strong> — "${subjectLine}" — has been logged. Our team typically replies within 24 hours. You can reply to this email or track it in the app.`
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+body{font-family:Arial,sans-serif;background:#f4f4f4;margin:0;padding:0}
+.wrap{max-width:480px;margin:40px auto;background:#fff;border-radius:12px;overflow:hidden}
+.hd{background:#e31837;padding:28px 32px;text-align:center}
+.hd h1{color:#fff;margin:0;font-size:20px}
+.bd{padding:32px}
+.badge{display:inline-block;font-size:13px;background:#e0f2fe;color:#075985;padding:4px 10px;border-radius:20px;margin-bottom:16px;font-weight:600}
+p{font-size:15px;color:#333;line-height:1.6;margin:0 0 12px}
+.ft{text-align:center;padding:16px;font-size:12px;color:#aaa}
+</style></head><body>
+<div class="wrap"><div class="hd"><h1>${appName} Support</h1></div>
+<div class="bd"><span class="badge">🎫 ${ref}</span>
+<p>${detail}</p>
+</div><div class="ft">&copy; ${new Date().getFullYear()} ${appName}. All rights reserved.</div></div>
+</body></html>`
+  return {
+    subject,
+    html,
+    text: `We've received your request (${ref})\n\n${subjectLine}\n\nOur team typically replies within 24 hours.`,
+  }
+}
+
+/** An agent replied, or the ticket status/resolution changed. */
+export function buildSupportReplyEmail(
+  ref: string,
+  message: string,
+  appName = 'MarketX',
+): { subject: string; html: string; text: string } {
+  const subject = `[${ref}] New reply from ${appName} Support`
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+body{font-family:Arial,sans-serif;background:#f4f4f4;margin:0;padding:0}
+.wrap{max-width:480px;margin:40px auto;background:#fff;border-radius:12px;overflow:hidden}
+.hd{background:#e31837;padding:28px 32px;text-align:center}
+.hd h1{color:#fff;margin:0;font-size:20px}
+.bd{padding:32px}
+.badge{display:inline-block;font-size:13px;background:#f1f5f9;color:#334155;padding:4px 10px;border-radius:20px;margin-bottom:16px;font-weight:600}
+.quote{border-left:3px solid #e31837;padding:4px 0 4px 14px;color:#444;font-size:15px;line-height:1.6;margin:0 0 12px}
+.ft{text-align:center;padding:16px;font-size:12px;color:#aaa}
+</style></head><body>
+<div class="wrap"><div class="hd"><h1>${appName} Support</h1></div>
+<div class="bd"><span class="badge">🎫 ${ref}</span>
+<div class="quote">${message.replace(/\n/g, '<br>')}</div>
+</div><div class="ft">&copy; ${new Date().getFullYear()} ${appName}. All rights reserved.</div></div>
+</body></html>`
+  return { subject, html, text: `New reply on ${ref}\n\n${message}` }
 }
 
 /**

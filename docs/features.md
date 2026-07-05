@@ -4,9 +4,35 @@ A reference inventory of the current MarketX platform surface. Doubles as the
 **scope reference for the mobile (Android/iOS) build** and as onboarding docs.
 
 **Architecture:** Nuxt 3/4 layered monorepo. Dependency order:
-`ui → ai → core → feed → seller → profile → shipping → commerce → social → map → square → admin`.
+`ui → ai → core → feed → seller → profile → shipping → commerce → social → map → square → admin → support`.
 
 **Availability key:** 🌐 web · 📱 mobile-target · 🛠️ admin-only (web).
+
+---
+
+## North Star
+
+> **MarketX is building Africa's digital market infrastructure** — the physical
+> market (Computer Village, Balogun, Bodija) rebuilt as software.
+
+Every feature in this catalog is *supporting evidence* for that one sentence — not
+a standalone product. Describe them in the language of the market, not the app:
+
+| Not this | This |
+|---|---|
+| "Squares" | Buyers broadcast a request; every trader in the market offers; the buyer picks one → checkout. The part Amazon/Jumia structurally **can't** copy. |
+| "Dasah AI" | An AI commerce operating system — finds the right product for buyers, helps merchants sell, tracks orders, recommends stores and markets. |
+| "Escrow / POD" | *"I paid and they vanished"* — solved. Funds are held until delivery is confirmed. |
+| "Messaging" | Buyers negotiate directly with trusted traders ("last price?", "collect tomorrow?"). |
+| "Wall" | A living storefront that makes each trader feel present. |
+| "Reels" | Traders promote products with short-form video. |
+| "Stories" | Merchants update followers in real time. |
+
+**Read the moat in this order:** the market itself (**Squares**, §10), the operating
+system that runs it (**Dasah AI**, §14), and the trust layer that makes it safe
+(**Escrow / POD**, §5). Everything else is distribution (feed, reels, stories, wall,
+maps), retention (messaging, notifications, wallet), and rails (payments, shipping,
+affiliate) — growth *inside* the market, not separate products.
 
 ---
 
@@ -129,13 +155,22 @@ A two-sided promote-and-earn program layered on the catalog.
 - Mark-read / mark-all-read / delete (ownership-enforced).
 - Delivery via BullMQ (Redis) with inline fallback.
 
-## 14. Dasah AI — In-App Assistant 🌐📱 *(see standalone Dasah app, separate)*
-- Conversational AI embedded in the app (buyer & seller modes).
-- Product discovery & recommendations; add-to-cart via chat.
-- Context/embeddings over the user's session; guardrails on outputs.
-- Surfaces: Dasah chat widget + mobile AI chat.
-- *Note:* a standalone Dasah product (independent MarketX-API consumer) is in
-  development separately; the in-app assistant is the embedded surface.
+## 14. Dasah AI — In-App Assistant 🌐📱 *(agent brain in the standalone Dasah app)*
+- Conversational AI embedded in the app (buyer & seller modes), with rich result cards.
+- **Semantic (vector) discovery** — `semantic_search` matches **products, stores AND
+  markets** by *meaning*, not just keywords (e.g. "modest wear" → abaya/kaftan sellers),
+  backed by a pgvector index (OpenAI embeddings) kept in sync with MarketX data.
+- **Keyword / raw search** — exact product titles & price filters via the commerce APIs.
+- **Deep entity detail** — `product_detail` (full description, every variant/size + stock,
+  categories, tags, rating), `view_store` (a store + its products), `view_market`
+  (a market/square + its products).
+- Add-to-cart, payment links, order tracking, disputes, and seller tools via chat.
+- Context/embeddings over the user's session + persisted user AI profile; output guardrails.
+- Surfaces: Dasah chat widget + mobile AI chat; product / store / **market** cards.
+- *Architecture:* the agent runs in a **standalone Dasah app** (independent MarketX-API
+  consumer). MarketX exposes internal AI endpoints — embeddings write + `/api/ai/search`
+  (semantic read) — with two clearly-separated retrieval paths: **embeddings** (meaning) vs
+  **raw query** (exact). See [ARCHITECTURE.md](ARCHITECTURE.md) §21.
 
 ## 15. Map / Location 🌐📱
 - Seller pins on map; location-based discovery.
@@ -143,8 +178,23 @@ A two-sided promote-and-earn program layered on the catalog.
 - **Ghost mode** (`hideLocation`) — sellers excluded from map & precise location
   never exposed.
 
-## 16. Admin 🛠️ *(web-only — out of mobile scope)*
+## 16. Customer Support & Disputes 🌐📱
+- **Support tickets** — users (and guests, via email) open categorised tickets;
+  threaded messages; close. Ticket refs `MX-<n>`.
+- **Order disputes** — buyers raise a dispute on a paid order (buyer ↔ seller,
+  MarketX mediates); anti-leakage guard on shared contact info.
+- **Agent console** (`/support/agent`) — queue with filters (open / unassigned /
+  mine / disputes), assign, reply (public **or** internal note), set status /
+  priority, and **resolve** with an outcome. Dispute outcomes: **REFUND_BUYER**
+  (reverses the seller credit; card refunds actioned manually), **PARTIAL_REFUND**,
+  **RELEASE_SELLER**, **REJECTED**.
+- Real-time + email notifications on ticket create / reply / resolve.
+- **Access:** tickets & disputes are user-facing; the agent console is gated to the
+  **`support_agent`** (or admin) role — assigned from Admin (§17).
+
+## 17. Admin 🛠️ *(web-only — out of mobile scope)*
 - Users, sellers, reports, audit logs management.
+- **Assign the `support_agent` role** (promote / demote users) + support-queue link.
 - Legal/team-chart, moderation surfaces.
 
 ---
@@ -165,7 +215,8 @@ A two-sided promote-and-earn program layered on the catalog.
 ## Mobile build scope notes
 - Target both **Android + iOS** from one Flutter codebase (native modules where needed).
 - Consume the **existing MarketX REST APIs** — no new backend.
-- **In mobile scope:** §1–§15. **Out:** §16 (admin, web-only).
+- **In mobile scope:** §1–§16. **Out:** §17 (admin, web-only). Within §16, buyer
+  **tickets & disputes** are in scope; the **agent console** is agent-only (web).
 - v1 vs later phases to be agreed — a sensible v1 = identity + feed + marketplace +
   checkout/payments + orders + seller basics + messaging + notifications; with
-  squares, Dasah, affiliate, wallet, and map following in phase 2.
+  squares, Dasah, affiliate, wallet, support, and map following in phase 2.

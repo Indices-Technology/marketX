@@ -41,8 +41,8 @@
           />
           <button
             v-if="searchQuery"
-            @click="searchQuery = ''"
             class="absolute inset-y-0 right-0 flex items-center pr-5 text-gray-400 hover:text-gray-600 dark:hover:text-neutral-300"
+            @click="searchQuery = ''"
           >
             <Icon name="mdi:close-circle" size="22" />
           </button>
@@ -121,13 +121,13 @@
           <button
             v-for="category in categories"
             :key="category.id"
-            @click="activeCategory = category.id"
             class="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-xl border px-5 py-2.5 text-sm font-semibold transition-all"
             :class="
               activeCategory === category.id
                 ? 'border-brand bg-brand text-white shadow-md shadow-brand/20'
                 : 'border-gray-200 bg-white text-gray-600 hover:border-brand/30 hover:bg-brand/5 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-brand/10'
             "
+            @click="activeCategory = category.id"
           >
             <Icon :name="category.icon" size="18" />
             {{ category.label }}
@@ -152,8 +152,11 @@
               We couldn't find any articles matching "{{ searchQuery }}"
             </p>
             <button
-              @click="searchQuery = ''; activeCategory = 'all'"
               class="mt-4 font-semibold text-brand hover:underline"
+              @click="
+                searchQuery = '';
+                activeCategory = 'all';
+              "
             >
               Clear Search
             </button>
@@ -346,9 +349,10 @@
             </a>
             <button
               class="flex w-full items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/10 px-8 py-3.5 font-bold text-white transition-all hover:bg-white/20 active:scale-95 sm:w-auto"
+              @click="showContact = true"
             >
-              <Icon name="mdi:chat-processing-outline" size="20" />
-              Live Chat
+              <Icon name="mdi:ticket-confirmation-outline" size="20" />
+              Submit a ticket
             </button>
           </div>
         </div>
@@ -359,6 +363,9 @@
     <template #right-sidebar>
       <RightSideNavLinks />
     </template>
+
+    <!-- Contact / ticket modal -->
+    <SupportNewTicketModal v-model="showContact" @created="onTicketCreated" />
   </HomeLayout>
 </template>
 
@@ -366,6 +373,7 @@
 import { ref, computed } from 'vue'
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import RightSideNavLinks from '~~/layers/core/app/layouts/children/RightSideNavLinks.vue'
+import SupportNewTicketModal from '~~/layers/support/app/components/SupportNewTicketModal.vue'
 import { useSeo } from '~~/layers/core/app/composables/useSeo'
 
 useSeo().setHelpPage()
@@ -375,6 +383,13 @@ const config = useRuntimeConfig()
 // State
 const searchQuery = ref('')
 const activeCategory = ref('all')
+
+// Contact / support ticket
+const showContact = ref(false)
+function onTicketCreated(id: string) {
+  showContact.value = false
+  if (id) navigateTo(`/support/${id}`)
+}
 
 // Categories
 const categories = [

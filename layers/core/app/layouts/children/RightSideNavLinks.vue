@@ -158,12 +158,12 @@
         <p class="mb-3 text-[11px] text-gray-600 dark:text-neutral-400">
           Our team typically responds in under 24hrs.
         </p>
-        <a
-          :href="`mailto:${config.public.supportEmail || 'support@marketx.com'}`"
+        <NuxtLink
+          to="/support"
           class="block w-full rounded-xl bg-brand py-2.5 text-xs font-bold text-white transition-all hover:bg-[#d81b36] hover:shadow-md active:scale-95"
         >
           Contact Support
-        </a>
+        </NuxtLink>
       </div>
     </div>
   </div>

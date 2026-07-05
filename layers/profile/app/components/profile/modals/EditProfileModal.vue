@@ -9,10 +9,7 @@
       <!-- Avatar -->
       <div class="flex items-center gap-6">
         <img
-          :src="
-            formData.avatar ||
-            `https://avatar.iran.liara.run/public/boy?username=${profile.username}`
-          "
+          :src="avatarSrc(formData.avatar, profile.username)"
           class="h-24 w-24 rounded-full object-cover"
           alt="Profile avatar"
         />
@@ -88,6 +85,7 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
 import type { IProfile } from '~~/layers/profile/app/types/profile.types'
+import { avatarSrc } from '~~/layers/core/app/utils/cloudinary'
 import { useProfile } from '~~/layers/profile/app/composables/useProfile'
 import BaseModal from '~~/layers/ui/app/components/BaseModal.vue'
 import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'

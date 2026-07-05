@@ -14,36 +14,44 @@
     </button>
     <slot v-else name="trigger" :open="open" :toggle="toggle" :close="close" />
 
-    <Transition name="dropdown">
-      <div v-if="open" :class="menuClasses" role="menu">
-        <slot :close="close">
-          <button
-            v-for="item in items"
-            :key="item.value"
-            type="button"
-            role="menuitem"
-            :disabled="item.disabled"
-            :class="itemClasses(item)"
-            @click="selectItem(item)"
-          >
-            <Icon
-              v-if="item.icon"
-              :name="item.icon"
-              size="16"
-              class="shrink-0"
-            />
-            <span class="min-w-0 flex-1 truncate text-left">{{
-              item.label
-            }}</span>
-          </button>
-        </slot>
-      </div>
-    </Transition>
+    <Teleport to="body">
+      <Transition name="dropdown">
+        <div
+          v-if="open"
+          ref="menuRef"
+          :class="menuClasses"
+          :style="menuStyle"
+          role="menu"
+        >
+          <slot :close="close">
+            <button
+              v-for="item in items"
+              :key="item.value"
+              type="button"
+              role="menuitem"
+              :disabled="item.disabled"
+              :class="itemClasses(item)"
+              @click="selectItem(item)"
+            >
+              <Icon
+                v-if="item.icon"
+                :name="item.icon"
+                size="16"
+                class="shrink-0"
+              />
+              <span class="min-w-0 flex-1 truncate text-left">{{
+                item.label
+              }}</span>
+            </button>
+          </slot>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, nextTick, onBeforeUnmount } from 'vue'
 import { onClickOutside } from '@vueuse/core'
 
 type DropdownItem = {
@@ -78,6 +86,10 @@ const emit = defineEmits<{
 }>()
 
 const rootRef = ref<HTMLElement | null>(null)
+const menuRef = ref<HTMLElement | null>(null)
+// Menu is teleported to <body> and positioned with fixed coords so no ancestor
+// `overflow` (e.g. a scrolling table) can clip it. Off-screen until measured.
+const menuStyle = ref<Record<string, string>>({ top: '-9999px', left: '-9999px' })
 const internalOpen = ref(false)
 const isControlled = computed(() => props.modelValue !== undefined)
 const open = computed(() =>
@@ -98,7 +110,9 @@ const selectItem = (item: DropdownItem) => {
   close()
 }
 
-onClickOutside(rootRef, close)
+// Menu lives outside rootRef (teleported), so ignore it here or clicks inside
+// the menu would count as "outside" and close it prematurely.
+onClickOutside(rootRef, close, { ignore: [menuRef] })
 
 watch(
   () => props.modelValue,
@@ -107,6 +121,52 @@ watch(
   },
 )
 
+// ── Fixed-position placement (teleported to body) ─────────────────────────────
+const GAP = 8 // px between trigger and menu / viewport edges
+
+function updatePosition() {
+  const trigger = rootRef.value
+  const menu = menuRef.value
+  if (!trigger || !menu) return
+
+  const r = trigger.getBoundingClientRect()
+  const mW = menu.offsetWidth
+  const mH = menu.offsetHeight
+  const vw = window.innerWidth
+  const vh = window.innerHeight
+
+  // Horizontal: align to the requested edge, then clamp into the viewport.
+  let left = props.placement === 'right' ? r.right - mW : r.left
+  left = Math.max(GAP, Math.min(left, vw - mW - GAP))
+
+  // Vertical: open downward; flip up if it would overflow and there's room above.
+  let top = r.bottom + GAP
+  if (top + mH > vh - GAP && r.top - GAP - mH > GAP) {
+    top = r.top - GAP - mH
+  }
+  top = Math.max(GAP, Math.min(top, vh - mH - GAP))
+
+  menuStyle.value = { top: `${top}px`, left: `${left}px` }
+}
+
+watch(open, async (value) => {
+  if (value) {
+    await nextTick()
+    updatePosition()
+    // Reposition (not close) as the trigger moves under the fixed menu.
+    window.addEventListener('scroll', updatePosition, true)
+    window.addEventListener('resize', updatePosition)
+  } else {
+    window.removeEventListener('scroll', updatePosition, true)
+    window.removeEventListener('resize', updatePosition)
+  }
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('scroll', updatePosition, true)
+  window.removeEventListener('resize', updatePosition)
+})
+
 const triggerClasses = computed(() => [
   'inline-flex h-9 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700 shadow-sm transition-colors',
   'hover:border-gray-300 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30',
@@ -114,8 +174,7 @@ const triggerClasses = computed(() => [
 ])
 
 const menuClasses = computed(() => [
-  'absolute top-[calc(100%+0.5rem)] z-30 overflow-hidden rounded-xl border border-gray-200 bg-white py-1 shadow-xl shadow-gray-200/70 dark:border-neutral-800 dark:bg-neutral-900 dark:shadow-black/40',
-  props.placement === 'right' ? 'right-0' : 'left-0',
+  'fixed z-50 overflow-hidden rounded-xl border border-gray-200 bg-white py-1 shadow-xl shadow-gray-200/70 dark:border-neutral-800 dark:bg-neutral-900 dark:shadow-black/40',
   {
     sm: 'w-44',
     md: 'w-56',

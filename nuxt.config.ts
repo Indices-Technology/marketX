@@ -81,6 +81,7 @@ export default defineNuxtConfig({
     './layers/map',
     './layers/square',
     './layers/admin',
+    './layers/support',
   ],
 
   icon: {

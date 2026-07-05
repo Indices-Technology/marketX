@@ -54,41 +54,57 @@ export default defineEventHandler(async (event) => {
     const ipAddress = getHeader(event, 'x-forwarded-for') || getClientIP(event) || 'unknown'
     const userAgent = getHeader(event, 'user-agent') || 'unknown'
 
-    // 1. Verify seller supports POD for this zone
-    // Derive state from shippingZone (format "State · Zone" or just "State")
-    const buyerState = body.shippingZone?.split('·')[0]?.trim() || body.county || ''
-
-    if (buyerState) {
-      // Find sellers for items in this order and check POD eligibility
-      const variantIds = body.items.map((i) => i.variantId)
-      const sellers = await prisma.productVariant.findMany({
-        where: { id: { in: variantIds } },
-        select: {
-          product: {
-            select: {
-              seller: {
-                select: { pod_enabled: true, pod_zones: true },
+    // 1. Verify every seller can offer POD:
+    //    - opted in (pod_enabled)
+    //    - has a ship-from origin — GIG (the only COD collector) picks up there
+    //    - the buyer's state is in the seller's POD zones (when the state is known)
+    // Buyer state derived from shippingZone ("State · Zone") or county.
+    const buyerState =
+      body.shippingZone?.split('·')[0]?.trim() || body.county || ''
+    const variantIds = body.items.map((i) => i.variantId)
+    const sellers = await prisma.productVariant.findMany({
+      where: { id: { in: variantIds } },
+      select: {
+        product: {
+          select: {
+            seller: {
+              select: {
+                pod_enabled: true,
+                pod_zones: true,
+                shipFromCity: true,
+                shipFromState: true,
+                state: true,
               },
             },
           },
         },
-      })
+      },
+    })
 
-      const anySellerDisablesPOD = sellers.some((v) => {
-        const s = v.product?.seller
-        if (!s?.pod_enabled) return true
-        if (!s.pod_zones) return false // no zone restriction = all zones allowed
+    const anySellerDisablesPOD = sellers.some((v) => {
+      const s = v.product?.seller
+      if (!s?.pod_enabled) return true
+      // GIG needs a ship-from origin (city + state) to collect on delivery.
+      const hasOrigin = !!(s.shipFromCity && (s.shipFromState || s.state))
+      if (!hasOrigin) return true
+      // Zone restriction only when we know the buyer's state and the seller set zones.
+      if (buyerState && s.pod_zones) {
         const zones = s.pod_zones as string[]
-        return !zones.some((z) => buyerState.toLowerCase().includes(z.toLowerCase()))
-      })
-
-      if (anySellerDisablesPOD) {
-        throw new UserError(
-          'POD_NOT_AVAILABLE',
-          'Pay on Delivery is not available for your location or one of the sellers in your cart.',
-          400,
+        if (
+          zones.length &&
+          !zones.some((z) => buyerState.toLowerCase().includes(z.toLowerCase()))
         )
+          return true
       }
+      return false
+    })
+
+    if (anySellerDisablesPOD) {
+      throw new UserError(
+        'POD_NOT_AVAILABLE',
+        "Pay on Delivery isn't available for a seller in your cart — they may not have set a pickup address, or they don't deliver to your area.",
+        400,
+      )
     }
 
     // Select the POD provider (courier-COD). GIG covers Nigeria; BYOP is gated.

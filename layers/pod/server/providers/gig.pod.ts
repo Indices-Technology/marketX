@@ -32,7 +32,9 @@ const toAddress = (a: PodBookingRequest['origin']): Address => ({
 export const gigPodProvider: IPodProvider = {
   id: 'gig',
   name: 'GIG Logistics (COD)',
-  enabled: true, // live target; endpoint wiring + migration still gate real use
+  // DISABLED (July 2026): GIG's live API doesn't expose a COD endpoint yet, so we
+  // can't register the cash collection. Flip to true once GIG ships COD.
+  enabled: false,
   capabilities: { collectsCash: true, remits: true, trustedAttestation: true },
 
   canHandle(ctx: PodRouteContext): boolean {

@@ -21,6 +21,7 @@ const RESERVED = new Set([
   'landing',
   'about',
   'help',
+  'support',
   'privacy',
   'terms',
   'forgot-password',

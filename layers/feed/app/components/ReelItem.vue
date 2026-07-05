@@ -212,6 +212,15 @@
         </NuxtLink>
       </div>
 
+      <!-- View count -->
+      <p
+        v-if="reel.viewCount"
+        class="text-shadow flex items-center gap-1 text-[12px] font-medium text-white/70"
+      >
+        <Icon name="mdi:play-outline" size="14" />
+        {{ formatCount(reel.viewCount) }} views
+      </p>
+
       <!-- Caption -->
       <p
         v-if="reel.caption"
@@ -251,9 +260,10 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useState } from '#imports'
 import type { IFeedItem } from '~~/layers/feed/app/types/feed.types'
-import { usePostStore } from '~~/layers/social/app/store/post.store'
-import { usePost } from '~~/layers/social/app/composables/usePost'
-import { imgThumb, imgAvatar } from '~~/layers/core/app/utils/cloudinary'
+import { useProduct } from '~~/layers/commerce/app/composables/useProduct'
+import { useLikedProducts } from '~~/layers/commerce/app/composables/useLikedProducts'
+import { useViewTracker } from '~~/layers/core/app/composables/useViewTracker'
+import { imgThumb, avatarSrc } from '~~/layers/core/app/utils/cloudinary'
 import { useCurrency } from '~~/layers/core/app/composables/useCurrency'
 
 const props = defineProps<{
@@ -276,9 +286,19 @@ const soundEnabled = useState('feed-sound-enabled', () => false)
 // Reels with bgMusic keep the video track silent (audio is the separate <audio> element)
 const isMuted = computed(() => !!(props.reel.bgMusic) || !soundEnabled.value)
 
-// Stores & Actions
-const postStore = usePostStore()
-const { likePost, unlikePost } = usePost()
+// Reels are PRODUCTS — likes & views target the product APIs, not the post system.
+const { likeProduct, unlikeProduct } = useProduct()
+const { isLiked: isProductLiked, markLiked, markUnliked } = useLikedProducts()
+const { trackProduct } = useViewTracker()
+
+// `reel.id` is the prefixed feed id (`product-<n>`); the real product id lives on
+// `reel.product.id`. Fall back to stripping the prefix if the product is absent.
+const productId = computed(() => {
+  const pid = props.reel.product?.id
+  return pid != null
+    ? Number(pid)
+    : Number(String(props.reel.id).replace(/^product-/, ''))
+})
 
 // Computed Data — check mediaItems first, fall back to legacy media field
 const videoUrl = computed(() => {
@@ -289,7 +309,9 @@ const videoUrl = computed(() => {
 const taggedProduct = computed(
   () => props.reel.taggedProducts?.[0] ?? props.reel.product ?? null,
 )
-const isLiked = computed(() => postStore.isPostLiked(props.reel.id))
+// Liked state comes from the shared liked-products store (seeded lazily on the
+// reels page), so the heart reflects the user's real likes and persists across reloads.
+const isLiked = computed(() => isProductLiked(productId.value))
 const localLikeCount = ref(props.reel.likeCount || 0)
 
 // Product float thumbnail — first non-VIDEO media, Cloudinary-optimised
@@ -309,10 +331,7 @@ const authorAvatar = computed(() => {
     (props.reel.author?.role === 'seller'
       ? (props.reel.product as any)?.seller?.store_logo
       : null) ?? props.reel.author?.avatar
-  return (
-    imgAvatar(raw) ||
-    `https://api.dicebear.com/7.x/avataaars/svg?seed=${props.reel.author?.username}`
-  )
+  return avatarSrc(raw, props.reel.author?.username)
 })
 
 // ─── PRODUCT FLOAT-UP ─────────────────────────────────────────────────
@@ -375,6 +394,7 @@ onMounted(() => {
     if (props.reel.bgMusic) musicEl.value?.play().catch(() => {})
     scheduleProductFloat()
     scheduleUnmuteHint()
+    trackProduct(productId.value)
   }
 })
 
@@ -387,6 +407,7 @@ watch(
       if (props.reel.bgMusic) musicEl.value?.play().catch(() => {})
       scheduleProductFloat()
       scheduleUnmuteHint()
+      trackProduct(productId.value)
     } else {
       videoEl.value.pause()
       videoEl.value.currentTime = 0
@@ -451,13 +472,20 @@ onUnmounted(() => {
 
 // ─── INTERACTIONS ─────────────────────────────────────────────────────
 const handleLike = async () => {
-  // Optimistic UI update
-  if (isLiked.value) {
-    localLikeCount.value--
-    await unlikePost(props.reel.id)
-  } else {
-    localLikeCount.value++
-    await likePost(props.reel.id)
+  const wasLiked = isLiked.value
+  const id = productId.value
+  // Optimistic UI update (store drives the heart; count is local to this reel)
+  if (wasLiked) markUnliked(id)
+  else markLiked(id)
+  localLikeCount.value += wasLiked ? -1 : 1
+  try {
+    if (wasLiked) await unlikeProduct(id)
+    else await likeProduct(id)
+  } catch {
+    // Revert on failure (e.g. not signed in → 401)
+    if (wasLiked) markLiked(id)
+    else markUnliked(id)
+    localLikeCount.value += wasLiked ? 1 : -1
   }
 }
 

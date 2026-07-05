@@ -121,7 +121,7 @@
                   @click="startConversation(item.id, item.type)"
                 >
                   <img
-                    :src="item.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${item.name || item.username}`"
+                    :src="avatarSrc(item.avatar, item.name || item.username)"
                     :alt="item.name || item.username"
                     class="h-10 w-10 shrink-0 rounded-xl object-cover"
                     :class="item.type === 'SELLER' ? 'rounded-xl' : 'rounded-full'"
@@ -209,6 +209,7 @@
 <script setup lang="ts">
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import ConversationItem from '../../components/ConversationItem.vue'
+import { avatarSrc } from '~~/layers/core/app/utils/cloudinary'
 import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { useSocialApi } from '../../services/social.api'
 import { useSearchApi } from '~~/layers/core/app/services/search.api'

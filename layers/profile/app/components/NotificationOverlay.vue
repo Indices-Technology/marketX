@@ -68,62 +68,12 @@
 
             <!-- Items -->
             <template v-else-if="notifications.length > 0">
-              <button
+              <NotificationItem
                 v-for="notif in notifications"
                 :key="notif.id"
-                class="flex w-full items-start gap-3 border-b border-gray-200 px-4 py-3.5 text-left transition-colors hover:bg-gray-50 dark:border-neutral-800/50 dark:hover:bg-neutral-900"
-                :class="{ 'bg-brand/5 dark:bg-brand/10': !notif.read }"
-                @click="handleNotifClick(notif)"
-              >
-                <!-- Avatar -->
-                <div class="relative shrink-0">
-                  <img
-                    v-if="notif.actor?.avatar"
-                    :src="imgAvatar(notif.actor.avatar)"
-                    class="h-10 w-10 rounded-full object-cover"
-                  />
-                  <div
-                    v-else
-                    class="flex h-10 w-10 items-center justify-center rounded-full bg-brand"
-                  >
-                    <Icon
-                      :name="typeIcon(notif.type)"
-                      size="18"
-                      class="text-white"
-                    />
-                  </div>
-                  <span
-                    class="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-white ring-1 ring-gray-200 dark:bg-neutral-950 dark:ring-neutral-800"
-                  >
-                    <Icon
-                      :name="typeIcon(notif.type)"
-                      size="11"
-                      class="text-brand"
-                    />
-                  </span>
-                </div>
-
-                <!-- Text -->
-                <div class="min-w-0 flex-1">
-                  <p
-                    class="text-sm leading-snug text-gray-900 dark:text-neutral-100"
-                    :class="{ 'font-semibold': !notif.read }"
-                  >
-                    {{ notif.message }}
-                  </p>
-                  <p
-                    class="mt-0.5 text-[11px] text-gray-400 dark:text-neutral-500"
-                  >
-                    {{ timeAgo(notif.created_at) }}
-                  </p>
-                </div>
-
-                <!-- Unread dot -->
-                <span
-                  v-if="!notif.read"
-                  class="mt-2 h-2 w-2 shrink-0 rounded-full bg-brand"
-                />
-              </button>
+                :notification="notif"
+                @navigate="$emit('close')"
+              />
 
               <!-- Load more -->
               <div v-if="hasMore" class="p-4 text-center">
@@ -168,17 +118,15 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { onClickOutside } from '@vueuse/core'
-import { useRouter } from 'vue-router'
 import { useNotificationStore } from '~~/layers/profile/app/stores/notification.store'
 import { useNotificationApi } from '~~/layers/profile/app/services/notification.api'
-import { imgAvatar } from '~~/layers/core/app/utils/cloudinary'
 import type { INotification } from '~~/layers/profile/app/types/profile.types'
+import NotificationItem from './NotificationItem.vue'
 
 const props = defineProps<{ isOpen: boolean }>()
 const emit = defineEmits(['close'])
 
 const panelEl = ref<HTMLElement | null>(null)
-const router = useRouter()
 
 onClickOutside(panelEl, () => {
   if (props.isOpen) emit('close')
@@ -228,59 +176,6 @@ const load = async (reset = false) => {
 
 const loadMore = () => load(false)
 
-/** Map notification type → destination URL, or null if no navigation */
-const getRoute = (notif: INotification): string | null => {
-  switch (notif.type) {
-    case 'NEW_FOLLOWER':
-      return notif.actor?.username ? `/profile/${notif.actor.username}` : null
-
-    // Post interactions — navigate to the actor's profile since there's no /post/[id] page yet
-    case 'POST_LIKE':
-    case 'NEW_COMMENT':
-    case 'REPLY':
-    case 'COMMENT_LIKE':
-    case 'NEW_POST':
-      return notif.actor?.username ? `/profile/${notif.actor.username}` : null
-
-    // Message notifications (MESSAGE type maps to GENERAL in DB)
-    case 'GENERAL':
-      return notif.conversation?.id
-        ? `/messages/${notif.conversation.id}`
-        : '/messages'
-
-    case 'ORDER':
-      return notif.orderId ? `/buyer/orders/${notif.orderId}` : null
-
-    case 'PRODUCT':
-    case 'PRODUCT_SHARE':
-    case 'REVIEW':
-      return notif.product?.slug ? `/product/${notif.product.slug}` : null
-
-    default:
-      // Fallback: go to actor profile if we have one
-      return notif.actor?.username ? `/profile/${notif.actor.username}` : null
-  }
-}
-
-const handleNotifClick = async (notif: INotification) => {
-  // Mark as read
-  if (!notif.read) {
-    try {
-      await api.markAsRead(notif.id)
-      store.markAsRead(notif.id)
-    } catch {
-      /* silent */
-    }
-  }
-
-  // Navigate
-  const route = getRoute(notif)
-  if (route) {
-    emit('close')
-    router.push(route)
-  }
-}
-
 const handleMarkAllRead = async () => {
   try {
     await api.markAllAsRead()
@@ -290,34 +185,6 @@ const handleMarkAllRead = async () => {
   } catch {
     /* silent */
   }
-}
-
-const typeIcon = (type: string) =>
-  ({
-    POST_LIKE: 'mdi:heart',
-    NEW_COMMENT: 'mdi:comment-outline',
-    REPLY: 'mdi:comment-text-outline',
-    NEW_FOLLOWER: 'mdi:account-plus-outline',
-    COMMENT_LIKE: 'mdi:heart-outline',
-    ORDER: 'mdi:package-variant-closed',
-    GENERAL: 'mdi:bell-outline',
-    NEW_POST: 'mdi:image-outline',
-    PRODUCT_SHARE: 'mdi:share-outline',
-    REVIEW: 'mdi:star-outline',
-    PRODUCT: 'mdi:tag-outline',
-  })[type] ?? 'mdi:bell-outline'
-
-const timeAgo = (dateStr: string) => {
-  const diff = Date.now() - new Date(dateStr).getTime()
-  const s = Math.floor(diff / 1000)
-  if (s < 60) return 'Just now'
-  const m = Math.floor(s / 60)
-  if (m < 60) return `${m}m ago`
-  const h = Math.floor(m / 60)
-  if (h < 24) return `${h}h ago`
-  const d = Math.floor(h / 24)
-  if (d < 7) return `${d}d ago`
-  return new Date(dateStr).toLocaleDateString()
 }
 
 watch(

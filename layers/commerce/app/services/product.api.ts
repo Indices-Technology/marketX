@@ -109,6 +109,13 @@ export class ProductApiClient extends BaseApiClient {
     })
   }
 
+  async getLikedProductIds() {
+    return this.request<{ success: boolean; data: number[] }>(
+      '/api/commerce/products/liked?idsOnly=true',
+      { method: 'GET' },
+    )
+  }
+
   async getCategories() {
     return this.request('/api/commerce/categories', {
       method: 'GET',

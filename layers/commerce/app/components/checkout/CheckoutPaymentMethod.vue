@@ -34,9 +34,9 @@
         <Icon name="logos:paypal" size="18" />
         PayPal
       </button>
-      <!-- POD — Nigerian address + non-zero shipping fee + every seller has opted in -->
+      <!-- POD — disabled until GIG exposes a COD endpoint (POD_ENABLED flag) -->
       <button
-        v-if="country === 'NG' && shippingCostMajor > 0 && podAvailable"
+        v-if="POD_ENABLED && country === 'NG' && shippingCostMajor > 0 && podAvailable"
         type="button"
         :class="
           modelValue === 'pod'
@@ -138,6 +138,9 @@ defineProps<{
 const emit = defineEmits<{
   'update:modelValue': [value: 'paystack' | 'paypal' | 'pod']
 }>()
+
+// Pay-on-Delivery is disabled until GIG exposes a COD endpoint. Flip to re-enable.
+const POD_ENABLED = false
 
 const { formatProductNGN } = useCurrency()
 const fmtPNGN = (majorNGN: number) => formatProductNGN(majorNGN)

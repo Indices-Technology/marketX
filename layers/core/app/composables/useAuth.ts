@@ -15,6 +15,7 @@ import { useProfileApi } from '~~/layers/profile/app/services/profile.api'
 import { useNotificationStore } from '~~/layers/profile/app/stores/notification.store'
 import { useSellerStore } from '~~/layers/seller/app/store/seller.store'
 import { useCartStore } from '~~/layers/commerce/app/stores/cart.store'
+import { useLikedProducts } from '~~/layers/commerce/app/composables/useLikedProducts'
 import { useCart } from '~~/layers/commerce/app/composables/useCart'
 import { useSettings } from '~~/layers/profile/app/composables/useSettings'
 import { useChat } from '~~/layers/profile/app/composables/useChat'
@@ -206,6 +207,7 @@ export const useAuth = () => {
     useNotificationStore().clearNotifications()
     useSellerStore().clearAllSellers()
     useCartStore().clearStore()
+    useLikedProducts().reset()
   }
 
   const logout = async () => {

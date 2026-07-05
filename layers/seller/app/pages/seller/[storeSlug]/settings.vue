@@ -525,22 +525,30 @@
           <div class="flex items-center justify-between">
             <div>
               <h2 class="text-[14px] font-semibold text-gray-900 dark:text-neutral-100">Pay on Delivery</h2>
-              <p class="mt-0.5 text-[12px] text-gray-400 dark:text-neutral-500">Buyers pay shipping upfront, product amount collected on delivery.</p>
+              <p class="mt-0.5 text-[12px] text-gray-400 dark:text-neutral-500">Buyers prepay shipping; a courier collects the product amount in cash on delivery. We're finishing the courier integration.</p>
             </div>
-            <button
-              type="button"
-              @click="form.pod_enabled = !form.pod_enabled"
-              class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors"
-              :class="form.pod_enabled ? 'bg-brand' : 'bg-gray-200 dark:bg-neutral-700'"
+            <span
+              class="shrink-0 rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
             >
-              <span
-                class="inline-block h-4 w-4 translate-x-1 transform rounded-full bg-white shadow transition-transform"
-                :class="form.pod_enabled ? 'translate-x-6' : 'translate-x-1'"
-              />
-            </button>
+              Coming soon
+            </span>
           </div>
 
-          <template v-if="form.pod_enabled">
+          <!-- POD config hidden until the courier COD integration is live -->
+          <template v-if="false">
+            <!-- GIG (the only POD courier) picks up from the ship-from origin -->
+            <p
+              v-if="!form.shipFromAddress || !form.shipFromCity"
+              class="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-[12px] text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-400"
+            >
+              <Icon name="mdi:alert-outline" size="15" class="mt-0.5 shrink-0" />
+              <span>
+                Pay on Delivery is fulfilled by <strong>GIG Logistics</strong>,
+                which picks up from your <strong>Shipping Origin</strong>. Add
+                your ship-from address above, or POD won't be offered to buyers.
+              </span>
+            </p>
+
             <!-- Delivery window -->
             <div>
               <label class="mb-1.5 block text-[12px] font-semibold text-gray-600 dark:text-neutral-400">

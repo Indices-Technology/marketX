@@ -38,25 +38,97 @@ if (!redis) {
  * @param ttl   - Seconds until the key expires
  * @param fn    - Async function that returns the fresh value from DB
  */
+// In-process single-flight registry: concurrent misses on the SAME key share one
+// `fn()` execution instead of each hammering the DB (cache-stampede protection).
+const _inflight = new Map<string, Promise<unknown>>()
+
 export async function remember<T>(
   key: string,
   ttl: number,
   fn: () => Promise<T>,
 ): Promise<T> {
-  if (!redis) return fn()
+  // ttl <= 0 is an explicit "bypass" (e.g. creator sees their own fresh content).
+  // Never write with a non-positive TTL — Upstash `ex: 0` is invalid and would
+  // otherwise risk a non-expiring key. Just compute fresh.
+  if (!redis || ttl <= 0) return fn()
 
   try {
     const cached = await redis.get<T>(key)
     if (cached !== null && cached !== undefined) return cached
 
-    const fresh = await fn()
-    // Store as JSON string; Upstash SDK handles serialisation
-    await redis.set(key, fresh, { ex: ttl })
-    return fresh
+    // Coalesce concurrent misses for this key into a single DB call + write.
+    const existing = _inflight.get(key) as Promise<T> | undefined
+    if (existing) return existing
+
+    const compute = (async () => {
+      const fresh = await fn()
+      // Store as JSON string; Upstash SDK handles serialisation
+      await redis.set(key, fresh, { ex: ttl })
+      return fresh
+    })()
+
+    _inflight.set(key, compute)
+    try {
+      return await compute
+    } finally {
+      _inflight.delete(key)
+    }
   } catch (err) {
     // Redis error → fall through to DB, never crash the request
     console.error('[cache] remember error:', err)
     return fn()
+  }
+}
+
+// Single-flight registry for `once()` (write idempotency), kept separate from
+// the read `remember` registry so their lifecycles never interfere.
+const _onceInflight = new Map<string, Promise<unknown>>()
+
+/**
+ * Write-safe idempotency: run `fn` at most once per `key` within `ttl`, and
+ * return the same result for repeat calls (e.g. a double-submitted order).
+ *
+ * Differs from `remember` in the ways that matter for WRITES:
+ *  - On `fn` error it **rethrows** — it never retries and never caches a failure,
+ *    so a genuinely failed operation can be safely re-attempted by the caller.
+ *  - Redis get/set failures are swallowed (the op still runs exactly once,
+ *    caller-scoped) so a Redis blip never blocks or double-runs a write.
+ */
+export async function once<T>(
+  key: string,
+  ttl: number,
+  fn: () => Promise<T>,
+): Promise<T> {
+  // No store (or bypass) → run once in this request; no cross-request dedup.
+  if (!redis || ttl <= 0) return fn()
+
+  let prior: T | null = null
+  try {
+    prior = await redis.get<T>(key)
+  } catch {
+    /* Redis read blip — fall through and compute */
+  }
+  if (prior !== null && prior !== undefined) return prior
+
+  // Coalesce concurrent duplicates in this process.
+  const existing = _onceInflight.get(key) as Promise<T> | undefined
+  if (existing) return existing
+
+  const compute = (async () => {
+    const fresh = await fn() // may throw → propagates (no retry, no cache)
+    try {
+      await redis!.set(key, fresh, { ex: ttl, nx: true })
+    } catch {
+      /* Redis write blip — result already produced; just return it */
+    }
+    return fresh
+  })()
+
+  _onceInflight.set(key, compute)
+  try {
+    return await compute
+  } finally {
+    _onceInflight.delete(key)
   }
 }
 

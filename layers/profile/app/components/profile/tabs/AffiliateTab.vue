@@ -305,7 +305,7 @@
             >
               <div class="flex items-center gap-3">
                 <img
-                  :src="promoter.avatar ? imgAvatar(promoter.avatar) : `https://api.dicebear.com/7.x/avataaars/svg?seed=${promoter.username}`"
+                  :src="avatarSrc(promoter.avatar, promoter.username)"
                   class="h-10 w-10 rounded-full bg-gray-100 object-cover dark:bg-neutral-800"
                 />
                 <div>
@@ -409,7 +409,7 @@ import { useCurrency } from '~~/layers/core/app/composables/useCurrency'
 import { useAffiliateApi } from '~~/layers/commerce/app/services/affiliate.api'
 import { computed, onMounted, ref } from 'vue'
 import type { Promoter, Referral } from '~~/layers/commerce/app/types/affiliate'
-import { imgThumb, imgAvatar, productThumb } from '~~/layers/core/app/utils/cloudinary'
+import { imgThumb, productThumb, avatarSrc } from '~~/layers/core/app/utils/cloudinary'
 
 const toast = useToast()
 const sellerStore = useSellerStore()

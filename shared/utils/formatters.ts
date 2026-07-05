@@ -1,7 +1,5 @@
 /**
- * Generate a fallback avatar URL from a username using DiceBear.
+ * Generate a local initials avatar (inline SVG data URI) from a username.
+ * No external service — always renders, never blocked by CSP.
  */
-export function formatAvatarUrl(username?: string | null): string {
-  const seed = username ?? 'user'
-  return `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(seed)}`
-}
+export { initialsAvatar as formatAvatarUrl } from './avatar'
