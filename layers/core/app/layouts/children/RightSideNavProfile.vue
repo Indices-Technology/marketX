@@ -72,10 +72,7 @@
           >
             <div class="flex items-center gap-3">
               <img
-                :src="
-                  viewedProfileStore.store_logo ||
-                  `https://api.dicebear.com/7.x/initials/svg?seed=${viewedProfileStore.store_name}`
-                "
+                :src="avatarSrc(viewedProfileStore.store_logo, viewedProfileStore.store_name)"
                 :alt="viewedProfileStore.store_name"
                 class="h-11 w-11 shrink-0 rounded-full border-2 border-white object-cover shadow-sm dark:border-neutral-900"
               />
@@ -129,10 +126,7 @@
             class="group -mx-2 flex items-center gap-3 rounded-xl border border-transparent p-2 transition-all hover:border-gray-200 hover:bg-white hover:shadow-sm dark:hover:border-neutral-700 dark:hover:bg-neutral-800/60"
           >
             <img
-              :src="
-                seller.store_logo ||
-                `https://api.dicebear.com/7.x/initials/svg?seed=${seller.store_name}`
-              "
+              :src="avatarSrc(seller.store_logo, seller.store_name)"
               :alt="seller.store_name"
               class="h-9 w-9 shrink-0 rounded-full border border-gray-200 object-cover dark:border-neutral-700"
             />
@@ -244,6 +238,7 @@ import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import { useSellerStore } from '~~/layers/seller/app/store/seller.store'
 import { useLayoutData } from '~~/layers/core/app/composables/useLayoutData'
 import { useProfileApi } from '~~/layers/profile/app/services/profile.api'
+import { avatarSrc } from '~~/layers/core/app/utils/cloudinary'
 
 const route = useRoute()
 const profileStore = useProfileStore()

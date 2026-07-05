@@ -1,4 +1,5 @@
 import type { Media as MediaModel } from '@prisma/client'
+import { initialsAvatar } from '~~/shared/utils/avatar'
 
 /**
  * Format a product price stored as a major NGN unit (e.g. 5000 → ₦5,000).
@@ -32,13 +33,8 @@ const getMediaThumbnailUrl = (media?: MediaModel): string => {
 
 const formatAvatarUrl = (
   username: string | null | undefined,
-  gender: string = 'boy',
-): string => {
-  if (!username) {
-    return `https://avatar.iran.liara.run/public/${gender}?username=user` // A fallback avatar image
-  }
-  return `https://avatar.iran.liara.run/public/${gender}?username=${username}`
-}
+  _gender: string = 'boy',
+): string => initialsAvatar(username)
 
 function timeAgo(date: Date | string | null | undefined): string {
   if (!date) return ''

@@ -263,7 +263,7 @@ import type { IFeedItem } from '~~/layers/feed/app/types/feed.types'
 import { useProduct } from '~~/layers/commerce/app/composables/useProduct'
 import { useLikedProducts } from '~~/layers/commerce/app/composables/useLikedProducts'
 import { useViewTracker } from '~~/layers/core/app/composables/useViewTracker'
-import { imgThumb, imgAvatar } from '~~/layers/core/app/utils/cloudinary'
+import { imgThumb, avatarSrc } from '~~/layers/core/app/utils/cloudinary'
 import { useCurrency } from '~~/layers/core/app/composables/useCurrency'
 
 const props = defineProps<{
@@ -331,10 +331,7 @@ const authorAvatar = computed(() => {
     (props.reel.author?.role === 'seller'
       ? (props.reel.product as any)?.seller?.store_logo
       : null) ?? props.reel.author?.avatar
-  return (
-    imgAvatar(raw) ||
-    `https://api.dicebear.com/7.x/avataaars/svg?seed=${props.reel.author?.username}`
-  )
+  return avatarSrc(raw, props.reel.author?.username)
 })
 
 // ─── PRODUCT FLOAT-UP ─────────────────────────────────────────────────

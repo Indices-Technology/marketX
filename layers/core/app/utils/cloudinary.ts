@@ -1,3 +1,5 @@
+import { initialsAvatar } from '~~/shared/utils/avatar'
+
 /**
  * Build an optimised Cloudinary URL by injecting transformation parameters.
  *
@@ -69,6 +71,16 @@ export const imgFeed = (url: string | null | undefined) =>
 /** Preset: small avatar */
 export const imgAvatar = (url: string | null | undefined) =>
   cloudinaryUrl(url, { width: 96, height: 96, crop: 'fill' })
+
+/**
+ * Canonical avatar source: an optimised real avatar, or a LOCAL initials avatar
+ * (inline SVG data URI) when there's none. Never returns an external URL, so it
+ * can't be blocked by CSP or fail because a third-party avatar service is down.
+ */
+export const avatarSrc = (
+  url: string | null | undefined,
+  seed?: string | null,
+): string => (url ? imgAvatar(url) : initialsAvatar(seed))
 
 /** Preset: full-width modal/detail view */
 export const imgDetail = (url: string | null | undefined) =>

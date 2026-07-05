@@ -10,11 +10,7 @@
         <!-- Avatar -->
         <div class="relative shrink-0">
           <img
-            :src="
-              profile.avatar
-                ? imgAvatar(profile.avatar)
-                : `https://api.dicebear.com/9.x/initials/svg?seed=${profile.username}`
-            "
+            :src="avatarSrc(profile.avatar, profile.username)"
             :alt="profile.username || 'Avatar'"
             class="h-20 w-20 rounded-full object-cover ring-2 ring-gray-100 sm:h-28 sm:w-28 dark:ring-neutral-800"
             loading="eager"
@@ -214,7 +210,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { IProfile, IProfileStats } from '../../types/profile.types'
-import { imgAvatar } from '~~/layers/core/app/utils/cloudinary'
+import { avatarSrc } from '~~/layers/core/app/utils/cloudinary'
 import { safeExternalUrl } from '~~/shared/utils/safeUrl'
 
 const props = defineProps<{

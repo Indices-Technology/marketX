@@ -28,21 +28,15 @@
           @click="openPost(post)"
           class="group relative aspect-square overflow-hidden rounded"
         >
-          <!-- Post Image/Video -->
+          <!-- Post thumbnail (image, or a poster derived from a video) -->
           <img
-            v-if="post.media?.[0]?.type === 'image'"
-            :src="imgThumb(post.media[0].url)"
+            v-if="post.media?.[0]?.url"
+            :src="thumbFor(post.media[0])"
             :alt="post.caption"
             class="h-full w-full object-cover"
             loading="lazy"
             decoding="async"
           />
-          <video
-            v-else-if="post.media?.[0]?.type === 'video'"
-            :src="post.media[0].url"
-            class="h-full w-full object-cover"
-            muted
-          ></video>
 
           <!-- Overlay on Hover -->
           <div
@@ -95,7 +89,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from '#imports'
-import { imgThumb } from '~~/layers/core/app/utils/cloudinary'
+import { imgThumb, videoThumb } from '~~/layers/core/app/utils/cloudinary'
 import { usePostApi } from '~~/layers/social/app/services/post.api'
 import PostDetailModal from '~~/layers/social/app/components/modals/PostDetailModal.vue'
 import type { IPost } from '~~/layers/social/app/types/post.types'
@@ -118,14 +112,16 @@ onMounted(() => {
   fetchTaggedPosts()
 })
 
+// Endpoint returns { success, data: Post[], meta }
 const fetchTaggedPosts = async () => {
   isLoading.value = true
   try {
     const response = await postApi.getTaggedPosts(props.username, 9, 1)
-    taggedPosts.value = response.items
-    hasMore.value = response.meta?.hasMore ?? false
+    taggedPosts.value = response?.data ?? []
+    hasMore.value = response?.meta?.hasMore ?? false
   } catch (error) {
     console.error('Failed to fetch tagged posts:', error)
+    taggedPosts.value = []
   } finally {
     isLoading.value = false
   }
@@ -136,14 +132,19 @@ const loadMore = async () => {
   try {
     page.value++
     const response = await postApi.getTaggedPosts(props.username, 9, page.value)
-    taggedPosts.value.push(...response.items)
-    hasMore.value = response.meta?.hasMore ?? false
+    taggedPosts.value.push(...(response?.data ?? []))
+    hasMore.value = response?.meta?.hasMore ?? false
   } catch (error) {
     console.error('Failed to load more posts:', error)
   } finally {
     isLoadingMore.value = false
   }
 }
+
+// Image → optimised thumbnail; video → a derived poster JPEG (never a raw
+// video URL in an <img>, which renders broken).
+const thumbFor = (m: { url: string; type?: string | null }) =>
+  (m.type ?? '').toUpperCase() === 'VIDEO' ? videoThumb(m.url) : imgThumb(m.url)
 
 const openPost = (post: IPost) => {
   router.push(`/post/${post.id}`)

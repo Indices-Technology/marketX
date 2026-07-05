@@ -42,10 +42,7 @@
             @click="goToProfile(user.username)"
           >
             <img
-              :src="
-                user.avatar ||
-                `https://avatar.iran.liara.run/public/boy?username=${user.username}`
-              "
+              :src="avatarSrc(user.avatar, user.username)"
               :alt="user.username"
               class="h-12 w-12 flex-shrink-0 rounded-full object-cover"
             />
@@ -86,6 +83,7 @@ import { useFollow } from '~~/layers/profile/app/composables/useFollow'
 import BaseModal from '~~/layers/ui/app/components/BaseModal.vue'
 import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 import BaseInput from '~~/layers/ui/app/components/BaseInput.vue'
+import { avatarSrc } from '~~/layers/core/app/utils/cloudinary'
 
 const props = defineProps<{
   type: 'followers' | 'following'
