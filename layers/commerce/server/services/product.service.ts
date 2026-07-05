@@ -194,6 +194,14 @@ export const productService = {
 
     const validated = updateProductSchema.parse(data)
 
+    // Snapshot the current status/seller so we can detect a draft → published
+    // transition and notify followers once (the create path only fires when a
+    // product is created already-PUBLISHED).
+    const prev = await prisma.product.findUnique({
+      where: { id },
+      select: { status: true, sellerId: true, title: true },
+    })
+
     // Snapshot current variant stocks before update (only when variants are changing)
     const stocksBefore = validated.variants?.length
       ? await prisma.productVariant.findMany({
@@ -219,6 +227,34 @@ export const productService = {
         ipAddress,
         userAgent,
       })
+
+    // Draft → Published: notify the seller's followers (parity with create).
+    // Gated on the transition so re-saving an already-published product never
+    // re-notifies.
+    if (
+      validated.status === 'PUBLISHED' &&
+      prev?.status !== 'PUBLISHED' &&
+      prev?.sellerId
+    ) {
+      const listedTitle = validated.title ?? prev.title
+      prisma.follow
+        .findMany({
+          where: { followingId: prev.sellerId, followingType: 'SELLER' },
+          select: { followerId: true },
+        })
+        .then((followers) => {
+          for (const f of followers) {
+            notificationQueue.enqueue({
+              userId: f.followerId,
+              type: 'PRODUCT',
+              actorId: authorId ?? userId,
+              productId: id,
+              message: `A store you follow listed a new product: "${listedTitle}"`,
+            })
+          }
+        })
+        .catch(() => {})
+    }
 
     // Back-in-stock and low-stock alerts
     if (validated.variants?.length && stocksBefore.length) {

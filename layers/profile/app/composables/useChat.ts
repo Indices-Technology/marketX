@@ -12,18 +12,23 @@ function normalizeConversation(raw: any, currentUserId: string): IConversation {
   let otherUser = null
 
   if (raw.sellerId) {
-    // Store conversation — represent the store as the "other party"
-    // The UI will use otherUser.isStore + otherUser.storeName + otherUser.avatar
-    otherUser = raw.seller
-      ? {
-          id: raw.seller.id,
-          username: raw.seller.store_name || raw.seller.storeSlug,
-          name: raw.seller.store_name,
-          avatar: raw.seller.store_logo || null,
-          isStore: true,
-          storeSlug: raw.seller.storeSlug,
-        }
-      : null
+    // Store conversation. Whose side is `currentUser` on?
+    //  - Store owner viewing → the other party is the BUYER (participant1).
+    //  - Buyer viewing        → the other party is the STORE.
+    if (raw.seller?.profileId === currentUserId) {
+      otherUser = raw.participant1 ?? null
+    } else {
+      otherUser = raw.seller
+        ? {
+            id: raw.seller.id,
+            username: raw.seller.store_slug || raw.seller.store_name,
+            name: raw.seller.store_name,
+            avatar: raw.seller.store_logo || null,
+            isStore: true,
+            storeSlug: raw.seller.store_slug,
+          }
+        : null
+    }
   } else {
     otherUser =
       raw.participant1Id === currentUserId
@@ -111,6 +116,13 @@ export const useChat = () => {
     channel.bind('new_message', (data: { conversationId: string; message: IMessage }) => {
       chatStore.addConversationMessage(data.conversationId, data.message)
       chatStore.bumpConversation(data.conversationId, data.message)
+      // Real-time unread badge: bump unless it's our own message or we're
+      // already looking at that conversation.
+      const mine = data.message.senderId === profileStore.userId
+      const viewing =
+        typeof window !== 'undefined' &&
+        window.location.pathname === `/messages/${data.conversationId}`
+      if (!mine && !viewing) chatStore.incrementUnread(data.conversationId)
     })
 
     channel.bind('message_sent', (data: { conversationId: string; message: IMessage }) => {
@@ -146,6 +158,8 @@ export const useChat = () => {
       const userId = profileStore.userId ?? ''
       const normalized = raw.map((c) => normalizeConversation(c, userId))
       chatStore.setConversations(normalized)
+      const totalUnread = res?.data?.totalUnread ?? res?.totalUnread
+      if (typeof totalUnread === 'number') chatStore.setTotalUnread(totalUnread)
       return normalized
     } catch (err: any) {
       chatStore.setError(
@@ -154,6 +168,42 @@ export const useChat = () => {
       throw err
     } finally {
       chatStore.setLoading(false)
+    }
+  }
+
+  // Lightweight total-unread poll for nav badges (no full conversation load).
+  const fetchUnreadCount = async () => {
+    try {
+      const res: any = await chatApi.getUnreadCount()
+      const count = res?.data?.count ?? res?.count ?? 0
+      chatStore.setTotalUnread(count)
+      return count
+    } catch {
+      return 0
+    }
+  }
+
+  // Fetch a single conversation and upsert it into the store. Needed because the
+  // list is participant-scoped (a store owner isn't a "participant"), and to
+  // reliably surface fields like `currentProduct` on deep-link / refresh.
+  const fetchConversation = async (id: string) => {
+    try {
+      const res: any = await chatApi.getConversation(id)
+      const raw = res?.data ?? res
+      if (!raw?.id) return null
+      const normalized = normalizeConversation(raw, profileStore.userId ?? '')
+      if (chatStore.getConversationById(normalized.id)) {
+        chatStore.setConversations(
+          chatStore.conversations.map((c) =>
+            c.id === normalized.id ? normalized : c,
+          ),
+        )
+      } else {
+        chatStore.addConversation(normalized)
+      }
+      return normalized
+    } catch {
+      return null
     }
   }
 
@@ -248,6 +298,8 @@ export const useChat = () => {
     connectSocket,
     disconnectSocket,
     fetchConversations,
+    fetchConversation,
+    fetchUnreadCount,
     fetchMessages,
     sendMessage,
     createConversation,

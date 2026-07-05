@@ -13,6 +13,33 @@ export const useChatStore = defineStore('chat', () => {
     reset,
   } = useAsyncStatus()
   const error = ref<string | null>(null)
+  const totalUnread = ref(0)
+
+  const setTotalUnread = (n: number) => {
+    totalUnread.value = Math.max(0, n)
+  }
+
+  // A new inbound message (socket) bumps the conversation's unread + the total.
+  const incrementUnread = (id: string) => {
+    const conv = conversations.value.find((c) => c.id === id) as
+      | (IConversation & { unreadCount?: number })
+      | undefined
+    if (conv) conv.unreadCount = (conv.unreadCount ?? 0) + 1
+    totalUnread.value += 1
+  }
+
+  // Optimistically clear a conversation's unread when the user opens it, and
+  // subtract it from the running total (the server also marks it read).
+  const markConversationRead = (id: string) => {
+    const conv = conversations.value.find((c) => c.id === id) as
+      | (IConversation & { unreadCount?: number })
+      | undefined
+    const had = conv?.unreadCount ?? 0
+    if (conv && had > 0) {
+      conv.unreadCount = 0
+      totalUnread.value = Math.max(0, totalUnread.value - had)
+    }
+  }
 
   const getConversationById = (id: string) =>
     conversations.value.find((c) => c.id === id)
@@ -102,6 +129,7 @@ export const useChatStore = defineStore('chat', () => {
     conversations.value = []
     messagesByConversation.value = {}
     currentConversation.value = null
+    totalUnread.value = 0
     reset()
     error.value = null
   }
@@ -114,6 +142,10 @@ export const useChatStore = defineStore('chat', () => {
     hasFetchedConversations,
     isInitialConversationLoad,
     error,
+    totalUnread,
+    setTotalUnread,
+    markConversationRead,
+    incrementUnread,
     getConversationById,
     getConversationMessages,
     getMessageById,

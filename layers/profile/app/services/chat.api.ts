@@ -8,6 +8,16 @@ export class ChatApiClient extends BaseApiClient {
     )
   }
 
+  async getConversation(conversationId: string): Promise<any> {
+    return this.request(`/api/chat/conversations/${conversationId}`, {
+      method: 'GET',
+    })
+  }
+
+  async getUnreadCount(): Promise<any> {
+    return this.request('/api/chat/unread-count', { method: 'GET' })
+  }
+
   async createConversation(targetId: string): Promise<any> {
     return this.request('/api/chat/conversations', {
       method: 'POST',

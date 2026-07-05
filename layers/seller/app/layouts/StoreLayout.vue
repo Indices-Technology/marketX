@@ -62,6 +62,11 @@
           >
             <Icon name="mdi:message-outline" size="22" />
             <span>Messages</span>
+            <span
+              v-if="chatStore.totalUnread > 0"
+              class="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-brand px-1.5 text-[10px] font-bold text-white"
+              >{{ chatStore.totalUnread > 99 ? '99+' : chatStore.totalUnread }}</span
+            >
           </NuxtLink>
           <NuxtLink
             :to="`/seller/${storeSlug}/analytics`"
@@ -173,6 +178,21 @@
           <span>Orders</span>
         </NuxtLink>
         <NuxtLink
+          :to="`/seller/${storeSlug}/messages`"
+          class="mobile-tab"
+          active-class="mobile-tab-active"
+        >
+          <div class="relative">
+            <Icon name="mdi:message-outline" size="24" />
+            <span
+              v-if="chatStore.totalUnread > 0"
+              class="absolute -right-1.5 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-brand px-1 text-[9px] font-bold text-white"
+              >{{ chatStore.totalUnread > 99 ? '99+' : chatStore.totalUnread }}</span
+            >
+          </div>
+          <span>Messages</span>
+        </NuxtLink>
+        <NuxtLink
           :to="`/seller/${storeSlug}/analytics`"
           class="mobile-tab"
           active-class="mobile-tab-active"
@@ -218,9 +238,17 @@
 
 <script setup lang="ts">
 import StoreSwitcher from '~~/layers/seller/app/components/StoreSwitcher.vue'
+import { useChat } from '~~/layers/profile/app/composables/useChat'
+import { useChatStore } from '~~/layers/profile/app/stores/chat.store'
 
 const route = useRoute()
 const storeSlug = computed(() => route.params.storeSlug as string | undefined)
+
+const chatStore = useChatStore()
+const { fetchUnreadCount } = useChat()
+onMounted(() => {
+  fetchUnreadCount()
+})
 </script>
 
 <style scoped>

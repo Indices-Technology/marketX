@@ -106,6 +106,65 @@
         </Transition>
       </div>
 
+      <!-- Flash Deal toggle -->
+      <div
+        class="rounded-xl border bg-white dark:bg-neutral-800"
+        :class="form.isDeal ? 'border-amber-200 dark:border-amber-800/30' : 'border-gray-200 dark:border-neutral-700'"
+      >
+        <button
+          type="button"
+          class="flex w-full items-center justify-between px-4 py-3"
+          @click="form.isDeal = !form.isDeal"
+        >
+          <div class="flex items-center gap-3">
+            <div
+              class="flex h-9 w-9 items-center justify-center rounded-lg"
+              :class="form.isDeal ? 'bg-amber-50 dark:bg-amber-900/20' : 'bg-gray-100 dark:bg-neutral-700'"
+            >
+              <Icon
+                name="mdi:tag-outline"
+                size="18"
+                :class="form.isDeal ? 'text-amber-500' : 'text-gray-500 dark:text-neutral-400'"
+              />
+            </div>
+            <div class="text-left">
+              <p class="text-sm font-medium text-gray-900 dark:text-neutral-100">Flash Deal</p>
+              <p class="text-xs text-gray-400 dark:text-neutral-500">Shows in Deals section with countdown timer</p>
+            </div>
+          </div>
+          <div
+            class="relative h-6 w-11 shrink-0 rounded-full transition-colors"
+            :class="form.isDeal ? 'bg-amber-500' : 'bg-gray-200 dark:bg-neutral-600'"
+          >
+            <div
+              class="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform"
+              :class="form.isDeal ? 'translate-x-5' : 'translate-x-0.5'"
+            />
+          </div>
+        </button>
+        <Transition
+          enter-active-class="transition-all duration-200"
+          enter-from-class="opacity-0 -translate-y-1"
+          enter-to-class="opacity-100 translate-y-0"
+          leave-active-class="transition-all duration-150"
+          leave-from-class="opacity-100"
+          leave-to-class="opacity-0"
+        >
+          <div
+            v-if="form.isDeal"
+            class="border-t border-amber-100 px-4 pb-4 pt-3 dark:border-amber-900/30"
+          >
+            <label class="mb-1.5 block text-xs font-semibold text-gray-600 dark:text-neutral-400">Deal ends at</label>
+            <input
+              v-model="form.dealEndsAt"
+              type="datetime-local"
+              :min="minDealDate"
+              class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-200 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
+            />
+          </div>
+        </Transition>
+      </div>
+
       <!-- Share to Reels (Premium + video required) -->
       <div
         class="rounded-xl border bg-white dark:bg-neutral-800"
@@ -231,65 +290,6 @@
                 {{ c.label }}
               </button>
             </div>
-          </div>
-        </Transition>
-      </div>
-
-      <!-- Flash Deal toggle -->
-      <div
-        class="rounded-xl border bg-white dark:bg-neutral-800"
-        :class="form.isDeal ? 'border-amber-200 dark:border-amber-800/30' : 'border-gray-200 dark:border-neutral-700'"
-      >
-        <button
-          type="button"
-          class="flex w-full items-center justify-between px-4 py-3"
-          @click="form.isDeal = !form.isDeal"
-        >
-          <div class="flex items-center gap-3">
-            <div
-              class="flex h-9 w-9 items-center justify-center rounded-lg"
-              :class="form.isDeal ? 'bg-amber-50 dark:bg-amber-900/20' : 'bg-gray-100 dark:bg-neutral-700'"
-            >
-              <Icon
-                name="mdi:tag-outline"
-                size="18"
-                :class="form.isDeal ? 'text-amber-500' : 'text-gray-500 dark:text-neutral-400'"
-              />
-            </div>
-            <div class="text-left">
-              <p class="text-sm font-medium text-gray-900 dark:text-neutral-100">Flash Deal</p>
-              <p class="text-xs text-gray-400 dark:text-neutral-500">Shows in Deals section with countdown timer</p>
-            </div>
-          </div>
-          <div
-            class="relative h-6 w-11 shrink-0 rounded-full transition-colors"
-            :class="form.isDeal ? 'bg-amber-500' : 'bg-gray-200 dark:bg-neutral-600'"
-          >
-            <div
-              class="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform"
-              :class="form.isDeal ? 'translate-x-5' : 'translate-x-0.5'"
-            />
-          </div>
-        </button>
-        <Transition
-          enter-active-class="transition-all duration-200"
-          enter-from-class="opacity-0 -translate-y-1"
-          enter-to-class="opacity-100 translate-y-0"
-          leave-active-class="transition-all duration-150"
-          leave-from-class="opacity-100"
-          leave-to-class="opacity-0"
-        >
-          <div
-            v-if="form.isDeal"
-            class="border-t border-amber-100 px-4 pb-4 pt-3 dark:border-amber-900/30"
-          >
-            <label class="mb-1.5 block text-xs font-semibold text-gray-600 dark:text-neutral-400">Deal ends at</label>
-            <input
-              v-model="form.dealEndsAt"
-              type="datetime-local"
-              :min="minDealDate"
-              class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-200 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
-            />
           </div>
         </Transition>
       </div>

@@ -152,6 +152,19 @@ export const updateSellerProfileSchema = z
 
     auto_answer_enabled: z.boolean().optional(),
 
+    // ── Media watermark (reels/video) ────────────────────────────────────────
+    watermark_enabled: z.boolean().optional(),
+    // Kept short + trimmed so overlays stay legible. Empty string → null so the
+    // render helper falls back to the store name.
+    watermark_text: z.preprocess(
+      (val) => (typeof val === 'string' ? val.trim().slice(0, 24) || null : val),
+      z
+        .string()
+        .max(24, 'Watermark must be 24 characters or less')
+        .nullable()
+        .optional(),
+    ),
+
     default_currency: z
       .enum(['NGN', 'USD', 'GBP', 'EUR', 'GHS', 'KES', 'ZAR'])
       .optional(),

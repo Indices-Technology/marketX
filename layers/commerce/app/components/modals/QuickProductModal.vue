@@ -102,7 +102,15 @@
               <div
                 v-if="!coverPreview"
                 @click="triggerImagePick"
-                class="flex aspect-video w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 transition-colors hover:border-brand dark:border-neutral-700 dark:bg-neutral-800"
+                @dragover.prevent="coverDragging = true"
+                @dragleave.prevent="coverDragging = false"
+                @drop.prevent="onCoverDrop"
+                class="flex aspect-video w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed transition-colors"
+                :class="
+                  coverDragging
+                    ? 'border-brand bg-brand/10'
+                    : 'border-gray-200 bg-gray-50 hover:border-brand dark:border-neutral-700 dark:bg-neutral-800'
+                "
               >
                 <div
                   v-if="uploadingCover"
@@ -115,7 +123,7 @@
                     class="text-gray-300 dark:text-neutral-600"
                   />
                   <p class="text-xs text-gray-400 dark:text-neutral-500">
-                    Tap to add photo
+                    Drop a photo/video, or tap to browse
                   </p>
                 </template>
               </div>
@@ -244,7 +252,7 @@
               <div>
                 <label
                   class="mb-1.5 block text-xs font-semibold text-gray-600 dark:text-neutral-400"
-                  >Price (â‚¦) *</label
+                  >Price (₦) *</label
                 >
                 <BaseInput v-model="form.price" type="number" min="0" placeholder="0" />
               </div>
@@ -283,10 +291,14 @@
               class="rounded-lg border border-brand/20 bg-brand/5 px-3 py-3 dark:border-brand/30 dark:bg-brand/10"
             >
               <label
-                class="mb-1.5 block text-xs font-semibold text-gray-600 dark:text-neutral-400"
-                >Affiliate Commission (â‚¦)
+                class="mb-1 block text-xs font-semibold text-gray-600 dark:text-neutral-400"
+                >Affiliate Commission (₦)
                 <span class="font-normal text-gray-400">(optional)</span></label
               >
+              <p class="mb-2 text-[11px] text-gray-500 dark:text-neutral-400">
+                Reward creators who promote this —
+                <span class="font-semibold">only charged after a sale</span>.
+              </p>
               <BaseInput
                 v-model="form.affiliateCommission"
                 type="number"
@@ -333,22 +345,62 @@
                 <Icon name="mdi:loading" size="14" class="animate-spin" />
                 Loadingâ€¦
               </div>
-              <div v-else class="flex flex-wrap gap-1.5">
-                <button
-                  v-for="cat in categories"
-                  :key="cat.id"
-                  type="button"
-                  @click="toggleCategory(cat.id)"
-                  class="rounded-full border px-2.5 py-1 text-xs font-medium transition-colors"
-                  :class="
-                    selectedCategoryIds.includes(cat.id)
-                      ? 'border-brand bg-brand text-white'
-                      : 'border-gray-200 bg-gray-100 text-gray-600 hover:border-brand dark:border-neutral-600 dark:bg-neutral-700 dark:text-neutral-300'
-                  "
-                >
-                  {{ cat.name }}
-                </button>
-              </div>
+              <template v-else>
+                <input
+                  v-if="categories.length > 8"
+                  v-model="categorySearch"
+                  type="text"
+                  placeholder="Search categories…"
+                  class="mb-2 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 placeholder-gray-400 focus:border-brand focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+                />
+                <div class="flex flex-wrap gap-1.5">
+                  <button
+                    v-for="cat in filteredCategories"
+                    :key="cat.id"
+                    type="button"
+                    @click="toggleCategory(cat.id)"
+                    class="rounded-full border px-2.5 py-1 text-xs font-medium transition-colors"
+                    :class="
+                      selectedCategoryIds.includes(cat.id)
+                        ? 'border-brand bg-brand text-white'
+                        : 'border-gray-200 bg-gray-100 text-gray-600 hover:border-brand dark:border-neutral-600 dark:bg-neutral-700 dark:text-neutral-300'
+                    "
+                  >
+                    {{ cat.name }}
+                  </button>
+                  <p
+                    v-if="filteredCategories.length === 0"
+                    class="text-xs text-gray-400 dark:text-neutral-500"
+                  >
+                    No categories match “{{ categorySearch }}”.
+                  </p>
+                </div>
+              </template>
+            </div>
+
+            <!-- Required checklist -->
+            <div
+              class="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-gray-50 px-3 py-2 dark:bg-neutral-800/60"
+            >
+              <span class="text-[11px] font-semibold text-gray-400 dark:text-neutral-500"
+                >Required</span
+              >
+              <span
+                v-for="r in requirements"
+                :key="r.label"
+                class="flex items-center gap-1 text-[11px] font-medium"
+                :class="
+                  r.done
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : 'text-gray-400 dark:text-neutral-500'
+                "
+              >
+                <Icon
+                  :name="r.done ? 'mdi:check-circle' : 'mdi:circle-outline'"
+                  size="13"
+                />
+                {{ r.label }}
+              </span>
             </div>
 
             <!-- Error -->
@@ -466,9 +518,23 @@ function extractVideoThumbnail(file: File): Promise<File> {
   })
 }
 
+const coverDragging = ref(false)
+
 const onImagePicked = async (e: Event) => {
   const file = (e.target as HTMLInputElement).files?.[0]
-  if (!file) return
+  if (file) await processCoverFile(file)
+  if (imageInputRef.value) imageInputRef.value.value = ''
+}
+
+const onCoverDrop = async (e: DragEvent) => {
+  coverDragging.value = false
+  const file = e.dataTransfer?.files?.[0]
+  if (file && (file.type.startsWith('image/') || file.type.startsWith('video/'))) {
+    await processCoverFile(file)
+  }
+}
+
+const processCoverFile = async (file: File) => {
   coverFile.value = file
   coverPreview.value = URL.createObjectURL(file)
   uploadingCover.value = true
@@ -604,12 +670,31 @@ const form = reactive({
 const categories = ref<Array<{ id: number; name: string; slug: string }>>([])
 const categoriesLoading = ref(false)
 const selectedCategoryIds = ref<number[]>([])
+const categorySearch = ref('')
+
+// Keep selected categories visible even when they don't match the search.
+const filteredCategories = computed(() => {
+  const q = categorySearch.value.trim().toLowerCase()
+  if (!q) return categories.value
+  return categories.value.filter(
+    (c) =>
+      c.name.toLowerCase().includes(q) || selectedCategoryIds.value.includes(c.id),
+  )
+})
 
 const toggleCategory = (id: number) => {
   const idx = selectedCategoryIds.value.indexOf(id)
   if (idx === -1) selectedCategoryIds.value.push(id)
   else selectedCategoryIds.value.splice(idx, 1)
 }
+
+// Required-fields checklist shown above the submit button.
+const requirements = computed(() => [
+  { label: 'Store', done: !!selectedSeller.value },
+  { label: 'Title', done: form.title.trim().length >= 2 },
+  { label: 'Price', done: form.price !== '' && Number(form.price) >= 0 },
+  { label: 'Quantity', done: Number(form.stock) >= 1 },
+])
 
 const canSubmit = computed(
   () =>
@@ -694,6 +779,7 @@ watch(
       selectedMusic.value = null
       bgMusicResult.value = null
       selectedCategoryIds.value = []
+      categorySearch.value = ''
       submitError.value = null
       submitted.value = false
       // Keep selectedSeller â€” convenient for repeat additions

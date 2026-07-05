@@ -263,7 +263,11 @@ import type { IFeedItem } from '~~/layers/feed/app/types/feed.types'
 import { useProduct } from '~~/layers/commerce/app/composables/useProduct'
 import { useLikedProducts } from '~~/layers/commerce/app/composables/useLikedProducts'
 import { useViewTracker } from '~~/layers/core/app/composables/useViewTracker'
-import { imgThumb, avatarSrc } from '~~/layers/core/app/utils/cloudinary'
+import {
+  imgThumb,
+  avatarSrc,
+  videoWatermarkUrl,
+} from '~~/layers/core/app/utils/cloudinary'
 import { useCurrency } from '~~/layers/core/app/composables/useCurrency'
 
 const props = defineProps<{
@@ -300,11 +304,32 @@ const productId = computed(() => {
     : Number(String(props.reel.id).replace(/^product-/, ''))
 })
 
-// Computed Data — check mediaItems first, fall back to legacy media field
+// Seller watermark label (null when the store hasn't opted in). Falls back to
+// the store name, then the author's handle, when no custom label is set.
+const watermarkLabel = computed<string | null>(() => {
+  const s: any = (props.reel.product as any)?.seller
+  if (!s?.watermark_enabled) return null
+  const label = (
+    s.watermark_text ||
+    s.store_name ||
+    props.reel.author?.username ||
+    ''
+  ).trim()
+  return label || null
+})
+
+// Computed Data — check mediaItems first, fall back to legacy media field.
+// When the seller opted into a watermark, deliver a Cloudinary-overlaid,
+// optimised rendition; otherwise serve the URL untouched.
 const videoUrl = computed(() => {
   const fromItems = props.reel.mediaItems?.find((m) => m.type === 'VIDEO')
-  if (fromItems) return fromItems.url
-  return props.reel.media?.type === 'VIDEO' ? props.reel.media.url : ''
+  const raw = fromItems
+    ? fromItems.url
+    : props.reel.media?.type === 'VIDEO'
+      ? props.reel.media.url
+      : ''
+  if (!raw) return ''
+  return watermarkLabel.value ? videoWatermarkUrl(raw, watermarkLabel.value) : raw
 })
 const taggedProduct = computed(
   () => props.reel.taggedProducts?.[0] ?? props.reel.product ?? null,

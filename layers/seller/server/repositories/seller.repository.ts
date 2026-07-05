@@ -220,6 +220,9 @@ export const sellerRepository = {
       pod_delivery_days?: number
       // BYOS
       shippingConfig?: Record<string, unknown> | null
+      // Media watermark
+      watermark_enabled?: boolean
+      watermark_text?: string | null
     },
   ): Promise<any> {
     // Verify ownership
@@ -285,6 +288,13 @@ export const sellerRepository = {
         ...(data.pod_delivery_days !== undefined && { pod_delivery_days: data.pod_delivery_days }),
         // BYOS (bring-your-own-shipping) config
         ...(data.shippingConfig !== undefined && { shippingConfig: data.shippingConfig }),
+        // Media watermark (reels/video)
+        ...(data.watermark_enabled !== undefined && {
+          watermark_enabled: data.watermark_enabled,
+        }),
+        ...(data.watermark_text !== undefined && {
+          watermark_text: data.watermark_text || null,
+        }),
       },
     })
   },

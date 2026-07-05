@@ -136,6 +136,58 @@ export const videoFeedUrl = (
     format: 'auto',
   })
 
+/** Max characters allowed in a watermark label — keeps it legible and cheap. */
+export const WATERMARK_MAX_LEN = 24
+
+/**
+ * Normalise a watermark label: strip anything that isn't a safe, legible
+ * character and cap the length. Shared by the settings input, the API schema,
+ * and the render helper so all three agree on what's valid.
+ */
+export function sanitizeWatermarkText(text: string | null | undefined): string {
+  return (text ?? '')
+    .replace(/[^\w @&.'-]/g, '') // letters, digits, _ and a few safe symbols
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, WATERMARK_MAX_LEN)
+}
+
+/**
+ * Overlay a text watermark on a Cloudinary video and serve an optimised (720p,
+ * auto-format) rendition. The overlay is applied at delivery time — the original
+ * upload stays clean — and Cloudinary caches the derived asset after the first
+ * request. Non-Cloudinary URLs (or empty text) fall back to the plain optimised
+ * video so callers never have to branch.
+ */
+export function videoWatermarkUrl(
+  url: string | null | undefined,
+  text: string | null | undefined,
+  opts: { eco?: boolean } = {},
+): string {
+  const { eco = false } = opts
+  if (!url) return ''
+  const label = sanitizeWatermarkText(text)
+  if (!url.includes('cloudinary.com') || !label) return videoFeedUrl(url, eco)
+
+  const uploadMarker = '/upload/'
+  const idx = url.indexOf(uploadMarker)
+  if (idx === -1) return url
+
+  const before = url.slice(0, idx + uploadMarker.length)
+  let after = url.slice(idx + uploadMarker.length)
+  // Strip any existing leading transform segment so we don't stack them.
+  if (/^[a-z0-9_,:.%-]+\//i.test(after)) after = after.replace(/^[^/]+\//, '')
+
+  // Cloudinary text layers require the label URL-encoded (spaces → %20, etc.).
+  const encoded = encodeURIComponent(label)
+  const base = `w_720,c_limit,q_${eco ? 'auto:eco' : 'auto:good'},f_auto`
+  // Bold white label, slightly transparent, bottom-right with a small inset.
+  const overlay = `l_text:Arial_36_bold:${encoded},co_white,o_70`
+  const apply = 'fl_layer_apply,g_south_east,x_28,y_28'
+
+  return `${before}${base}/${overlay}/${apply}/${after}`
+}
+
 /**
  * Derive a static poster/thumbnail from a Cloudinary video URL.
  * Seeks to 0.5 s and returns a compressed JPEG.

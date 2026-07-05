@@ -397,6 +397,7 @@ import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import { useNotificationStore } from '~~/layers/profile/app/stores/notification.store'
 import { useSellerStore } from '~~/layers/seller/app/store/seller.store'
 import { useChatStore } from '~~/layers/profile/app/stores/chat.store'
+import { useChat } from '~~/layers/profile/app/composables/useChat'
 import Avatar from '~~/layers/profile/app/components/Avatar.vue'
 
 const emit = defineEmits(['create', 'open-notifications', 'open-cart'])
@@ -414,12 +415,8 @@ const isDiscover = computed(() => route.path === '/discover')
 const isSquares = computed(() => route.path.startsWith('/squares'))
 const isSellerRoute = computed(() => route.path.startsWith('/seller'))
 const unreadCount = computed(() => notificationStore.unreadCount)
-const messageCount = computed(() =>
-  chatStore.conversations.reduce(
-    (sum, c: any) => sum + (c.unreadCount ?? c.unread_count ?? 0),
-    0,
-  ),
-)
+// Server-computed total across ALL conversations (not just the loaded page).
+const messageCount = computed(() => chatStore.totalUnread)
 
 const menuOpen = ref(false)
 const storePickerOpen = ref(false)
@@ -433,7 +430,11 @@ const onClickOutside = (e: MouseEvent) => {
     storePickerOpen.value = false
 }
 
-onMounted(() => document.addEventListener('click', onClickOutside, true))
+const { fetchUnreadCount } = useChat()
+onMounted(() => {
+  document.addEventListener('click', onClickOutside, true)
+  if (profileStore.isLoggedIn) fetchUnreadCount()
+})
 onUnmounted(() => document.removeEventListener('click', onClickOutside, true))
 </script>
 

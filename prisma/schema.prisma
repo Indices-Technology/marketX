@@ -104,6 +104,9 @@ model SellerProfile {
   auto_answer_enabled   Boolean                @default(false)
   default_currency      String                 @default("NGN")
   isPremium             Boolean                @default(false)
+  // ── Media watermark (reels/video) ─────────────────────────────────────────
+  watermark_enabled     Boolean                @default(false)
+  watermark_text        String? // null → falls back to store_name at render time
   // Shipping origin — where this store ships from
   shipFromName          String?
   shipFromAddress       String?

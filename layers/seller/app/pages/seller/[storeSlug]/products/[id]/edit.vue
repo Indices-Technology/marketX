@@ -383,16 +383,25 @@
               Cancel
             </NuxtLink>
             <button
-              type="submit"
+              type="button"
+              :disabled="isLoading || isAnyUploading"
+              class="flex-1 rounded-xl border border-gray-200 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+              @click="submitAs('DRAFT')"
+            >
+              {{ isLoading && form.status === 'DRAFT' ? 'Saving…' : 'Save as draft' }}
+            </button>
+            <button
+              type="button"
               :disabled="isLoading || isAnyUploading"
               class="flex-1 rounded-xl bg-brand py-3 font-semibold text-white transition-colors hover:bg-[#d81b36] disabled:opacity-50"
+              @click="submitAs('PUBLISHED')"
             >
               {{
                 isAnyUploading
-                  ? 'Uploading...'
-                  : isLoading
-                    ? 'Saving...'
-                    : 'Save Changes'
+                  ? 'Uploading…'
+                  : isLoading && form.status === 'PUBLISHED'
+                    ? 'Publishing…'
+                    : 'Save & publish'
               }}
             </button>
           </div>
@@ -706,6 +715,12 @@ onMounted(async () => {
     categories.value = (catRes.value as any).data || []
   categoriesLoading.value = false
 })
+
+// Draft vs Publish are explicit buttons — set the status, then submit.
+const submitAs = (status: 'DRAFT' | 'PUBLISHED') => {
+  form.status = status
+  handleSubmit()
+}
 
 const handleSubmit = async () => {
   successMsg.value = null
