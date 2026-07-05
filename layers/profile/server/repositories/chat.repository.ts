@@ -23,11 +23,19 @@ const sellerSelect = {
   is_verified: true,
 } as const
 
-/** Minimal product context shown in conversation list */
+/** Product context surfaced in the conversation (banner + list) */
 const productSelect = {
   id: true,
   title: true,
   slug: true,
+  price: true,
+  bannerImageUrl: true,
+  media: {
+    where: { isBgMusic: false },
+    select: { url: true, type: true },
+    take: 1,
+    orderBy: { created_at: 'asc' as const },
+  },
 } as const
 
 /** Shared conversation include — used by all conversation queries */
@@ -180,5 +188,46 @@ export const chatRepository = {
 
   async deleteMessage(messageId: string) {
     return await prisma.message.delete({ where: { id: messageId } })
+  },
+
+  // ========== READ / UNREAD ==========
+
+  /** Mark every message the reader DIDN'T send in this conversation as read. */
+  async markConversationRead(conversationId: string, readerId: string) {
+    return await prisma.message.updateMany({
+      where: { conversationId, senderId: { not: readerId }, read: false },
+      data: { read: true },
+    })
+  },
+
+  /** Unread count per conversation (messages not sent by, and not yet read by, the user). */
+  async unreadCountsByConversation(userId: string, conversationIds: string[]) {
+    if (!conversationIds.length) return []
+    return await prisma.message.groupBy({
+      by: ['conversationId'],
+      where: {
+        conversationId: { in: conversationIds },
+        senderId: { not: userId },
+        read: false,
+      },
+      _count: { _all: true },
+    })
+  },
+
+  /** Total unread across every conversation the user is part of (participant OR store owner). */
+  async totalUnreadForUser(userId: string) {
+    return await prisma.message.count({
+      where: {
+        senderId: { not: userId },
+        read: false,
+        conversation: {
+          OR: [
+            { participant1Id: userId },
+            { participant2Id: userId },
+            { seller: { profileId: userId } },
+          ],
+        },
+      },
+    })
   },
 }

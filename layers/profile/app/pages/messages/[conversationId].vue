@@ -75,6 +75,39 @@
         </div>
       </div>
 
+      <!-- Product context — the item this conversation started from -->
+      <NuxtLink
+        v-if="currentProduct"
+        :to="`/product/${currentProduct.slug}`"
+        class="flex shrink-0 items-center gap-3 border-b border-gray-200 bg-brand/5 px-4 py-2.5 transition-colors hover:bg-brand/10 dark:border-neutral-800 dark:bg-brand/10"
+      >
+        <div
+          class="h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-neutral-800"
+        >
+          <img
+            :src="productThumb(currentProduct)"
+            :alt="currentProduct.title"
+            class="h-full w-full object-cover"
+          />
+        </div>
+        <div class="min-w-0 flex-1">
+          <p class="text-[11px] font-medium text-brand">About this product</p>
+          <p
+            class="truncate text-sm font-semibold text-gray-900 dark:text-neutral-100"
+          >
+            {{ currentProduct.title }}
+          </p>
+          <p class="text-xs text-gray-500 dark:text-neutral-400">
+            {{ formatPrice(currentProduct.price || 0) }}
+          </p>
+        </div>
+        <Icon
+          name="mdi:chevron-right"
+          size="20"
+          class="shrink-0 text-gray-400"
+        />
+      </NuxtLink>
+
       <!-- Messages Area -->
       <div
         ref="messagesContainer"
@@ -136,14 +169,16 @@ import MessageBubble from '../../components/MessageBubble.vue'
 import Avatar from '../../components/Avatar.vue'
 import StoreAvatar from '../../components/StoreAvatar.vue'
 import { useChatStore } from '~~/layers/profile/app/stores/chat.store'
-
 import { useChat } from '~~/layers/profile/app/composables/useChat'
+import { productThumb } from '~~/layers/core/app/utils/cloudinary'
+import { useCurrency } from '~~/layers/core/app/composables/useCurrency'
 
 definePageMeta({ middleware: 'auth' })
 
 const route = useRoute()
 const chatStore = useChatStore()
-const { fetchConversations, fetchMessages, sendMessage, isLoading } = useChat()
+const { fetchConversations, fetchConversation, fetchMessages, sendMessage, isLoading } =
+  useChat()
 
 const conversationId = computed(() => route.params.conversationId as string)
 const conversation = computed(() =>
@@ -154,6 +189,11 @@ const messages = computed(() =>
 )
 const otherUser = computed(() => conversation.value?.otherUser)
 const isStoreConversation = computed(() => !!(otherUser.value as any)?.isStore)
+const currentProduct = computed(
+  () => (conversation.value as any)?.currentProduct ?? null,
+)
+
+const { formatPrice } = useCurrency()
 
 const messageText = ref('')
 const messagesContainer = ref<HTMLElement | null>(null)
@@ -174,9 +214,16 @@ onMounted(async () => {
   if (!chatStore.conversations.length) {
     await fetchConversations().catch(() => {})
   }
+  // The list is participant-scoped and paginated — fetch this conversation
+  // directly if it's missing, so the header + product context always resolve.
+  if (!conversation.value) {
+    await fetchConversation(conversationId.value)
+  }
   // Header data is now as resolved as it's going to be — stop skeleton
   headerReady.value = true
   await fetchMessages(conversationId.value)
+  // Opening the thread clears its unread (server marks it read on fetch).
+  chatStore.markConversationRead(conversationId.value)
   scrollToBottom()
 })
 
@@ -184,6 +231,7 @@ onMounted(async () => {
 watch(conversationId, async (id) => {
   if (id) {
     await fetchMessages(id)
+    chatStore.markConversationRead(id)
     scrollToBottom()
   }
 })

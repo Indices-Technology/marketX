@@ -45,33 +45,101 @@
         </div>
       </Transition>
 
-      <!-- Header -->
-      <div class="mb-6 flex items-start justify-between">
-        <div>
-          <div class="mb-1 flex flex-wrap items-center gap-2">
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-neutral-100">
-              {{ seller?.store_name ?? storeSlug }}
-            </h1>
-            <span
-              v-if="seller?.is_verified"
-              class="flex items-center gap-0.5 rounded-full bg-blue-500 px-2 py-0.5 text-[11px] font-bold text-white"
-            >
-              <Icon name="mdi:check-circle" size="11" /> Verified
-            </span>
-            <span
-              class="rounded-full px-2 py-0.5 text-[11px] font-bold"
-              :class="
-                seller?.is_active
-                  ? 'bg-emerald-500 text-white'
-                  : 'bg-gray-400 text-white'
-              "
-            >
-              {{ seller?.is_active ? 'Active' : 'Inactive' }}
-            </span>
+      <!-- TODAY — greeting + yesterday's numbers + suggested action -->
+      <div
+        class="mb-6 rounded-2xl border border-gray-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900"
+      >
+        <p class="text-lg font-bold text-gray-900 dark:text-white">
+          {{ greeting }}, {{ firstName }} 👋
+        </p>
+        <p class="text-[12px] text-gray-400 dark:text-neutral-500">
+          Here's how {{ seller?.store_name ?? 'your store' }} did yesterday
+        </p>
+        <div class="mt-4 grid grid-cols-4 gap-2 sm:gap-3">
+          <div
+            class="rounded-xl bg-gray-50 p-3 text-center dark:bg-neutral-800/50"
+          >
+            <p class="text-lg font-bold text-gray-900 dark:text-white">
+              {{ yesterday?.views ?? 0 }}
+            </p>
+            <p class="text-[10px] text-gray-400 dark:text-neutral-500">Visitors</p>
           </div>
-          <p class="text-[13px] text-gray-400 dark:text-neutral-500">
-            @{{ storeSlug }}
+          <div
+            class="rounded-xl bg-gray-50 p-3 text-center dark:bg-neutral-800/50"
+          >
+            <p class="text-lg font-bold text-gray-900 dark:text-white">
+              {{ yesterday?.orders ?? 0 }}
+            </p>
+            <p class="text-[10px] text-gray-400 dark:text-neutral-500">Orders</p>
+          </div>
+          <div
+            class="rounded-xl bg-gray-50 p-3 text-center dark:bg-neutral-800/50"
+          >
+            <p class="text-lg font-bold text-gray-900 dark:text-white">
+              {{ formatKobo(yesterday?.revenue ?? 0) }}
+            </p>
+            <p class="text-[10px] text-gray-400 dark:text-neutral-500">Sales</p>
+          </div>
+          <div
+            class="rounded-xl bg-gray-50 p-3 text-center dark:bg-neutral-800/50"
+          >
+            <p class="text-lg font-bold text-gray-900 dark:text-white">
+              {{ yesterday?.unitsSold ?? 0 }}
+            </p>
+            <p class="text-[10px] text-gray-400 dark:text-neutral-500">Units</p>
+          </div>
+        </div>
+
+        <p
+          v-if="weekSummary"
+          class="mt-3 text-[11px] text-gray-400 dark:text-neutral-500"
+        >
+          This week:
+          <span class="font-semibold text-gray-600 dark:text-neutral-300">{{
+            formatKobo(weekSummary.revenue)
+          }}</span>
+          · {{ weekSummary.orders }} orders · {{ weekSummary.views }} visitors
+        </p>
+
+        <NuxtLink
+          v-if="suggestion"
+          :to="suggestion.to"
+          class="mt-4 flex items-center gap-2.5 rounded-xl bg-brand/5 px-3 py-2.5 transition-colors hover:bg-brand/10 dark:bg-brand/10"
+        >
+          <Icon :name="suggestion.icon" size="18" class="shrink-0 text-brand" />
+          <p
+            class="min-w-0 flex-1 text-[13px] text-gray-700 dark:text-neutral-300"
+          >
+            {{ suggestion.text }}
           </p>
+          <span class="shrink-0 text-[12px] font-semibold text-brand"
+            >{{ suggestion.cta }} →</span
+          >
+        </NuxtLink>
+      </div>
+
+      <!-- Action bar (store name already shown in the sidebar + greeting) -->
+      <div class="mb-6 flex items-center justify-between gap-3">
+        <div class="flex min-w-0 flex-wrap items-center gap-2">
+          <span
+            v-if="seller?.is_verified"
+            class="flex items-center gap-0.5 rounded-full bg-blue-500 px-2 py-0.5 text-[11px] font-bold text-white"
+          >
+            <Icon name="mdi:check-circle" size="11" /> Verified
+          </span>
+          <span
+            class="rounded-full px-2 py-0.5 text-[11px] font-bold"
+            :class="
+              seller?.is_active
+                ? 'bg-emerald-500 text-white'
+                : 'bg-gray-400 text-white'
+            "
+          >
+            {{ seller?.is_active ? 'Active' : 'Inactive' }}
+          </span>
+          <span class="truncate text-[13px] text-gray-400 dark:text-neutral-500">
+            @{{ storeSlug }}
+          </span>
         </div>
 
         <div class="flex shrink-0 gap-2">
@@ -93,49 +161,6 @@
         </div>
       </div>
 
-      <!-- Quick actions strip -->
-      <div class="mb-6 grid grid-cols-4 gap-3">
-        <NuxtLink
-          :to="`/seller/${storeSlug}/products/create`"
-          class="flex flex-col items-center gap-2 rounded-2xl border border-gray-200 bg-white px-2 py-4 text-center transition-all hover:border-brand/30 hover:shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
-        >
-          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-brand/10 dark:bg-brand/20">
-            <Icon name="mdi:plus-box" size="22" class="text-brand" />
-          </div>
-          <span class="text-[11px] font-semibold text-gray-700 dark:text-neutral-300">Add Product</span>
-        </NuxtLink>
-        <NuxtLink
-          :to="`/seller/${storeSlug}/orders`"
-          class="relative flex flex-col items-center gap-2 rounded-2xl border border-gray-200 bg-white px-2 py-4 text-center transition-all hover:border-brand/30 hover:shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
-        >
-          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-900/20">
-            <Icon name="mdi:shopping-outline" size="22" class="text-amber-600 dark:text-amber-400" />
-          </div>
-          <span class="text-[11px] font-semibold text-gray-700 dark:text-neutral-300">Orders</span>
-          <span
-            v-if="pendingOrderCount > 0"
-            class="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-brand text-[9px] font-bold text-white"
-          >{{ pendingOrderCount }}</span>
-        </NuxtLink>
-        <NuxtLink
-          :to="`/seller/${storeSlug}/messages`"
-          class="flex flex-col items-center gap-2 rounded-2xl border border-gray-200 bg-white px-2 py-4 text-center transition-all hover:border-brand/30 hover:shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
-        >
-          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-900/20">
-            <Icon name="mdi:message-text-outline" size="22" class="text-blue-600 dark:text-blue-400" />
-          </div>
-          <span class="text-[11px] font-semibold text-gray-700 dark:text-neutral-300">Messages</span>
-        </NuxtLink>
-        <NuxtLink
-          :to="`/seller/${storeSlug}/settings`"
-          class="flex flex-col items-center gap-2 rounded-2xl border border-gray-200 bg-white px-2 py-4 text-center transition-all hover:border-brand/30 hover:shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
-        >
-          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 dark:bg-neutral-800">
-            <Icon name="mdi:cog-outline" size="22" class="text-gray-500 dark:text-neutral-400" />
-          </div>
-          <span class="text-[11px] font-semibold text-gray-700 dark:text-neutral-300">Settings</span>
-        </NuxtLink>
-      </div>
 
       <!-- Store completeness score -->
       <div
@@ -143,17 +168,28 @@
         class="mb-6 rounded-xl border border-brand/20 bg-brand/5 p-4 dark:bg-brand/10"
       >
         <div class="mb-3 flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <Icon name="mdi:star-circle-outline" size="20" class="text-brand" />
-            <p class="text-sm font-semibold text-gray-900 dark:text-white">
-              Store completeness — {{ completeness }}%
-            </p>
+          <div class="flex items-center gap-2.5">
+            <Icon name="mdi:shield-star-outline" size="22" class="text-brand" />
+            <div>
+              <p class="text-sm font-semibold text-gray-900 dark:text-white">
+                Store Strength
+              </p>
+              <div class="mt-0.5 flex items-center gap-0.5">
+                <Icon
+                  v-for="n in 5"
+                  :key="n"
+                  :name="n <= strengthStars ? 'mdi:star' : 'mdi:star-outline'"
+                  size="14"
+                  class="text-amber-400"
+                />
+                <span class="ml-1.5 text-[11px] text-gray-500 dark:text-neutral-400"
+                  >{{ completeness }}%</span
+                >
+              </div>
+            </div>
           </div>
           <span class="text-xs text-gray-500 dark:text-neutral-400"
-            >{{ missingItems.length }} item{{
-              missingItems.length !== 1 ? 's' : ''
-            }}
-            missing</span
+            >{{ missingItems.length }} to unlock</span
           >
         </div>
         <!-- Bar -->
@@ -165,24 +201,25 @@
             :style="{ width: `${completeness}%` }"
           />
         </div>
-        <!-- Checklist -->
+        <!-- Checklist — completed items are static, missing ones link to the fix -->
         <div class="flex flex-wrap gap-2">
-          <span
-            v-for="item in completenessItems"
-            :key="item.label"
-            class="flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium"
-            :class="
-              item.done
-                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                : 'bg-gray-100 text-gray-500 dark:bg-neutral-700 dark:text-neutral-400'
-            "
-          >
-            <Icon
-              :name="item.done ? 'mdi:check-circle' : 'mdi:circle-outline'"
-              size="12"
-            />
-            {{ item.label }}
-          </span>
+          <template v-for="item in completenessItems" :key="item.label">
+            <span
+              v-if="item.done"
+              class="flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+            >
+              <Icon name="mdi:check-circle" size="12" />
+              {{ item.label }}
+            </span>
+            <NuxtLink
+              v-else
+              :to="item.to"
+              class="flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-medium text-gray-500 transition-colors hover:bg-brand/10 hover:text-brand dark:bg-neutral-700 dark:text-neutral-400 dark:hover:bg-brand/20"
+            >
+              <Icon name="mdi:plus-circle-outline" size="12" />
+              {{ item.label }}
+            </NuxtLink>
+          </template>
         </div>
       </div>
 
@@ -259,13 +296,6 @@
           <p class="mt-0.5 text-[12px] text-gray-500 dark:text-neutral-400">
             Orders
           </p>
-          <div v-if="pendingOrderCount > 0" class="mt-1">
-            <span
-              class="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-            >
-              {{ pendingOrderCount }} pending
-            </span>
-          </div>
         </NuxtLink>
       </div>
 
@@ -432,12 +462,14 @@ import { useProduct } from '~~/layers/commerce/app/composables/useProduct'
 import { useOrderApi } from '~~/layers/commerce/app/services/order.api'
 import { useWalletApi } from '~~/layers/commerce/app/services/wallet.api'
 import { videoThumb, imgThumb } from '~~/layers/core/app/utils/cloudinary'
+import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import BaseBadge from '~~/layers/ui/app/components/BaseBadge.vue'
 
 definePageMeta({ middleware: 'auth', layout: 'store-layout' })
 
 const route = useRoute()
 const storeSlug = computed(() => route.params.storeSlug as string)
+const profileStore = useProfileStore()
 
 const { loadPublicSeller, loadUserSellers, sellers, currentSeller } =
   useSellerManagement()
@@ -464,14 +496,16 @@ const showWelcome = ref(route.query.welcome === '1')
 // Store completeness score
 const completenessItems = computed(() => {
   const s = seller.value
+  const settings = `/seller/${storeSlug.value}/settings`
   return [
-    { label: 'Store logo', done: !!s?.store_logo },
-    { label: 'Store banner', done: !!s?.store_banner },
-    { label: 'Description', done: !!s?.store_description },
-    { label: 'Location set', done: !!(s?.store_location || s?.locationLabel) },
-    { label: 'Phone number', done: !!s?.store_phone },
-    { label: 'First product', done: productCount.value > 0 },
-    { label: 'GPS location', done: !!(s?.latitude && s?.longitude) },
+    { label: 'Store logo', done: !!s?.store_logo, to: settings },
+    { label: 'Store banner', done: !!s?.store_banner, to: settings },
+    { label: 'Description', done: !!s?.store_description, to: settings },
+    { label: 'Location set', done: !!(s?.store_location || s?.locationLabel), to: settings },
+    { label: 'Phone number', done: !!s?.store_phone, to: settings },
+    { label: 'First product', done: productCount.value > 0, to: `/seller/${storeSlug.value}/products/create` },
+    { label: 'GPS location', done: !!(s?.latitude && s?.longitude), to: settings },
+    { label: 'Verified store', done: !!s?.is_verified, to: settings },
   ]
 })
 
@@ -479,6 +513,9 @@ const completeness = computed(() => {
   const done = completenessItems.value.filter((i) => i.done).length
   return Math.round((done / completenessItems.value.length) * 100)
 })
+
+// 0–5 stars for the gamified "Store Strength" display.
+const strengthStars = computed(() => Math.round(completeness.value / 20))
 
 const missingItems = computed(() =>
   completenessItems.value.filter((i) => !i.done),
@@ -493,6 +530,68 @@ const storeWallet = ref({
   pendingBalance: 0,
   totalEarned: 0,
   totalSpent: 0,
+})
+
+// ── TODAY: greeting + yesterday's numbers + a suggested next action ────────────
+const analytics = ref<any>(null)
+
+const greeting = computed(() => {
+  const h = new Date().getHours()
+  return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'
+})
+
+const firstName = computed(() => {
+  const me = profileStore.me as any
+  const n = (me?.firstName || me?.name || me?.username || '').toString().trim()
+  return n ? n.split(/\s+/)[0] : 'there'
+})
+
+// Yesterday = the second-to-last day in the trend (last entry is today).
+const yesterday = computed(() => {
+  const chart = analytics.value?.chart ?? []
+  if (!chart.length) return null
+  return chart.length >= 2 ? chart[chart.length - 2] : chart[chart.length - 1]
+})
+
+const trendingProduct = computed(() => analytics.value?.topProducts?.[0] ?? null)
+const weekSummary = computed(() => analytics.value?.summary ?? null)
+
+const suggestion = computed(() => {
+  const slug = storeSlug.value
+  if (pendingOrderCount.value > 0)
+    return {
+      icon: 'mdi:package-variant-closed',
+      text: `You have ${pendingOrderCount.value} order${pendingOrderCount.value > 1 ? 's' : ''} waiting to be fulfilled.`,
+      cta: 'View orders',
+      to: `/seller/${slug}/orders`,
+    }
+  if (productCount.value === 0)
+    return {
+      icon: 'mdi:plus-box-outline',
+      text: 'Add your first product to start selling.',
+      cta: 'Add product',
+      to: `/seller/${slug}/products/create`,
+    }
+  if ((yesterday.value?.views ?? 0) < 10)
+    return {
+      icon: 'mdi:movie-open-outline',
+      text: 'Post a reel today — video listings get seen far more than photos.',
+      cta: 'Add product',
+      to: `/seller/${slug}/products/create`,
+    }
+  if (trendingProduct.value)
+    return {
+      icon: 'mdi:trending-up',
+      text: `"${trendingProduct.value.title}" is getting attention this week — share it to keep the momentum.`,
+      cta: 'View store',
+      to: `/sellers/profile/${slug}`,
+    }
+  return {
+    icon: 'mdi:lightbulb-on-outline',
+    text: 'Share your store link on WhatsApp to bring in more buyers.',
+    cta: 'View store',
+    to: `/sellers/profile/${slug}`,
+  }
 })
 
 
@@ -510,9 +609,15 @@ const loadData = async (slug: string) => {
     fetchSellerProducts(slug, { limit: 4 }),
     walletApi.getStoreWallet(slug),
     orderApi.getSellerOrders(slug, { limit: 5 }),
+    sellerApi.getAnalytics(slug, 7),
   ])
 
-  const [productsRes, walletRes, ordersRes] = results
+  const [productsRes, walletRes, ordersRes, analyticsRes] = results
+
+  // Analytics (for the TODAY snapshot) — non-critical
+  if (analyticsRes.status === 'fulfilled') {
+    analytics.value = (analyticsRes.value as Record<string, unknown>)?.data ?? null
+  }
 
   // Products
   if (productsRes.status === 'fulfilled') {

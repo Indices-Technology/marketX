@@ -133,23 +133,30 @@ export const chatService = {
   },
 
   async getStoreConversations(sellerId: string, limit = 20, offset = 0) {
-    const conversations = await chatRepository.getConversationsBySellerId(
+    const rows = await chatRepository.getConversationsBySellerId(
       sellerId,
       limit,
       offset,
     )
     const total = await chatRepository.getConversationCountBySellerId(sellerId)
+    // Unread is relative to the store OWNER's user id (from the joined seller).
+    const ownerId = (rows[0] as any)?.seller?.profileId
+    const conversations = ownerId
+      ? await this._attachUnread(rows, ownerId)
+      : rows
     return { conversations, total, limit, offset }
   },
 
   async getConversations(userId: string, limit = 20, offset = 0) {
-    const conversations = await chatRepository.getConversationsByUserId(
+    const rows = await chatRepository.getConversationsByUserId(
       userId,
       limit,
       offset,
     )
     const total = await chatRepository.getConversationCountByUserId(userId)
-    return { conversations, total, limit, offset }
+    const conversations = await this._attachUnread(rows, userId)
+    const totalUnread = await chatRepository.totalUnreadForUser(userId)
+    return { conversations, total, totalUnread, limit, offset }
   },
 
   async getConversation(conversationId: string, userId: string) {
@@ -321,6 +328,10 @@ export const chatService = {
   ) {
     await this.getConversation(conversationId, userId) // Verify access
 
+    // Opening a conversation marks the other party's messages as read.
+    // Fire-and-forget so it never blocks message loading.
+    chatRepository.markConversationRead(conversationId, userId).catch(() => {})
+
     const messages = await chatRepository.getConversationMessages(
       conversationId,
       limit,
@@ -329,6 +340,22 @@ export const chatService = {
     const total =
       await chatRepository.getMessageCountByConversation(conversationId)
     return { messages, total, limit, offset }
+  },
+
+  // Attach a per-conversation `unreadCount` (messages the user hasn't read).
+  async _attachUnread(conversations: any[], userId: string) {
+    const rows = await chatRepository.unreadCountsByConversation(
+      userId,
+      conversations.map((c) => c.id),
+    )
+    const map = new Map<string, number>(
+      rows.map((r: any) => [r.conversationId, r._count._all]),
+    )
+    return conversations.map((c) => ({ ...c, unreadCount: map.get(c.id) ?? 0 }))
+  },
+
+  async getTotalUnread(userId: string) {
+    return chatRepository.totalUnreadForUser(userId)
   },
 
   async deleteMessage(

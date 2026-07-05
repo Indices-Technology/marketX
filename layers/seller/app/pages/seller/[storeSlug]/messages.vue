@@ -34,8 +34,8 @@
       <div
         v-for="conv in filtered"
         :key="conv.id"
-        @click="openConversation(conv.id)"
         class="flex cursor-pointer items-center gap-3 rounded-2xl border border-gray-200 bg-white p-4 transition-colors hover:bg-gray-50 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:bg-neutral-800"
+        @click="openConversation(conv.id)"
       >
         <!-- Buyer avatar -->
         <Avatar
@@ -47,12 +47,25 @@
         <!-- Content -->
         <div class="min-w-0 flex-1">
           <div class="flex items-center justify-between gap-2">
-            <p class="truncate text-sm font-semibold text-gray-900 dark:text-neutral-100">
-              {{ conv.participant1?.name || conv.participant1?.username || 'Buyer' }}
+            <p
+              class="truncate text-sm font-semibold text-gray-900 dark:text-neutral-100"
+            >
+              {{
+                conv.participant1?.name ||
+                conv.participant1?.username ||
+                'Buyer'
+              }}
             </p>
-            <span class="shrink-0 text-[11px] text-gray-400 dark:text-neutral-500">
-              {{ formatTime(conv.lastMessageAt || conv.created_at) }}
-            </span>
+            <div class="flex shrink-0 items-center gap-2">
+              <span class="text-[11px] text-gray-400 dark:text-neutral-500">
+                {{ formatTime(conv.lastMessageAt || conv.created_at) }}
+              </span>
+              <span
+                v-if="(conv.unreadCount ?? 0) > 0"
+                class="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-brand px-1.5 text-[10px] font-bold text-white"
+                >{{ conv.unreadCount > 99 ? '99+' : conv.unreadCount }}</span
+              >
+            </div>
           </div>
 
           <!-- Product context -->
@@ -64,7 +77,14 @@
           </p>
 
           <!-- Last message preview -->
-          <p class="truncate text-xs text-gray-500 dark:text-neutral-400">
+          <p
+            class="truncate text-xs"
+            :class="
+              (conv.unreadCount ?? 0) > 0
+                ? 'font-semibold text-gray-900 dark:text-neutral-100'
+                : 'text-gray-500 dark:text-neutral-400'
+            "
+          >
             {{ conv.messages?.[0]?.content || 'Start of conversation' }}
           </p>
         </div>
@@ -82,10 +102,18 @@
       v-else
       class="flex flex-col items-center justify-center py-24 text-center"
     >
-      <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 dark:bg-neutral-800">
-        <Icon name="mdi:message-outline" size="32" class="text-gray-400 dark:text-neutral-500" />
+      <div
+        class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 dark:bg-neutral-800"
+      >
+        <Icon
+          name="mdi:message-outline"
+          size="32"
+          class="text-gray-400 dark:text-neutral-500"
+        />
       </div>
-      <p class="font-medium text-gray-900 dark:text-neutral-100">No messages yet</p>
+      <p class="font-medium text-gray-900 dark:text-neutral-100">
+        No messages yet
+      </p>
       <p class="mt-1 text-sm text-gray-500 dark:text-neutral-400">
         Buyers who message your store will appear here
       </p>
@@ -94,9 +122,14 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { definePageMeta } from '#imports'
 import Avatar from '~~/layers/profile/app/components/Avatar.vue'
 import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { useSellerApi } from '~~/layers/seller/app/services/seller.services'
+import { useSellerManagement } from '~~/layers/seller/app/composables/useSellerManagement'
+import { useNotificationStore } from '~~/layers/profile/app/stores/notification.store'
 
 definePageMeta({ middleware: 'auth', layout: 'store-layout' })
 
@@ -112,10 +145,12 @@ const total = ref(0)
 const isLoading = ref(true)
 const searchQuery = ref('')
 
-// Find this store's sellerId from the seller store
-const sellerStore = useSellerStore()
+// Find this store's sellerId via useSellerManagement (same pattern as the
+// dashboard page). Avoid importing the seller store directly — that direct
+// import fails to resolve here and crashes setup.
+const { loadUserSellers, sellers } = useSellerManagement()
 const currentSeller = computed(() =>
-  sellerStore.sellers?.find((s: any) => s.storeSlug === storeSlug.value),
+  sellers.value?.find((s: any) => s.store_slug === storeSlug.value),
 )
 
 const filtered = computed(() => {
@@ -129,10 +164,13 @@ const filtered = computed(() => {
 })
 
 const loadMessages = async () => {
-  const sellerId = currentSeller.value?.id
-  if (!sellerId) return
   isLoading.value = true
   try {
+    // On a fresh page load the sellers list may be empty — load it so we can
+    // resolve this store's sellerId.
+    if (!currentSeller.value) await loadUserSellers().catch(() => {})
+    const sellerId = currentSeller.value?.id
+    if (!sellerId) return
     const res = await sellerApi.getSellerMessages(sellerId)
     conversations.value = res?.data?.conversations || []
     total.value = res?.data?.total || 0
@@ -165,6 +203,8 @@ onMounted(loadMessages)
 const notificationStore = useNotificationStore()
 watch(
   () => notificationStore.notifications[0],
-  (n) => { if (n?.type === 'MESSAGE') loadMessages() },
+  (n) => {
+    if (n?.type === 'MESSAGE') loadMessages()
+  },
 )
 </script>

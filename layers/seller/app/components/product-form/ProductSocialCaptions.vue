@@ -3,17 +3,27 @@
     v-if="hasAiCaptions"
     class="space-y-4 rounded-xl border border-gray-200 bg-white p-4 shadow-[0_0_15px_rgba(240,44,86,0.05)] sm:p-6 dark:border-neutral-700 dark:bg-neutral-800"
   >
-    <div class="mb-2 flex items-center gap-2">
-      <Icon name="mdi:share-all-outline" size="24" class="text-brand" />
-      <div>
+    <button
+      type="button"
+      class="flex w-full items-center gap-2 text-left"
+      @click="open = !open"
+    >
+      <Icon name="mdi:share-all-outline" size="24" class="shrink-0 text-brand" />
+      <div class="min-w-0 flex-1">
         <h2 class="font-semibold text-gray-900 dark:text-neutral-100">Social Media Posts</h2>
         <p class="text-xs text-gray-500 dark:text-neutral-400">
           These will automatically publish to your linked accounts when you create the product.
         </p>
       </div>
-    </div>
+      <Icon
+        name="mdi:chevron-down"
+        size="22"
+        class="shrink-0 text-gray-400 transition-transform"
+        :class="open ? 'rotate-180' : ''"
+      />
+    </button>
 
-    <div class="space-y-4">
+    <div v-show="open" class="space-y-4">
       <div class="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-neutral-700 dark:bg-neutral-900">
         <label class="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-neutral-300">
           <Icon name="mdi:instagram" class="text-pink-600" size="16" />
@@ -54,6 +64,8 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed } from 'vue'
+
 const props = defineProps<{
   captions: {
     instagram: string
@@ -61,6 +73,8 @@ const props = defineProps<{
     pinterest: string
   }
 }>()
+
+const open = ref(true)
 
 const hasAiCaptions = computed(
   () => !!(props.captions.instagram || props.captions.facebook || props.captions.pinterest),

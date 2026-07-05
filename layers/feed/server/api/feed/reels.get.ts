@@ -32,7 +32,14 @@ export default defineEventHandler(async (event) => {
           viewCount: true,
           affiliateCommission: true,
           seller: {
-            select: { id: true, store_name: true, store_slug: true, store_logo: true },
+            select: {
+              id: true,
+              store_name: true,
+              store_slug: true,
+              store_logo: true,
+              watermark_enabled: true,
+              watermark_text: true,
+            },
           },
           media: {
             where: { isBgMusic: false },

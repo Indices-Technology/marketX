@@ -58,8 +58,42 @@
             Upload up to 5 images. First image becomes the cover.
           </p>
 
+          <!-- Empty dropzone (before any image) -->
+          <label
+            v-if="mediaItems.length === 0"
+            class="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed py-10 text-center transition-colors"
+            :class="isDraggingMedia ? 'border-brand bg-brand/10' : 'border-gray-300 hover:border-brand hover:bg-brand/5 dark:border-neutral-600'"
+            @dragover.prevent="isDraggingMedia = true"
+            @dragleave.prevent="isDraggingMedia = false"
+            @drop.prevent="onMediaDrop"
+          >
+            <Icon name="mdi:camera-plus-outline" size="34" class="text-gray-400 dark:text-neutral-500" />
+            <div>
+              <p class="text-sm font-medium text-gray-700 dark:text-neutral-300">
+                Drop images here, or
+                <span class="text-brand">browse files</span>
+              </p>
+              <p class="mt-0.5 text-xs text-gray-400 dark:text-neutral-500">
+                PNG · JPG · WEBP · MP4 — up to 5, first is the cover
+              </p>
+            </div>
+            <input
+              type="file"
+              accept="image/*,video/*"
+              multiple
+              class="hidden"
+              @change="onImagesSelected"
+            />
+          </label>
+
           <!-- Image previews grid -->
-          <div class="grid grid-cols-3 gap-3 sm:grid-cols-5">
+          <div
+            v-else
+            class="grid grid-cols-3 gap-3 sm:grid-cols-5"
+            @dragover.prevent="isDraggingMedia = true"
+            @dragleave.prevent="isDraggingMedia = false"
+            @drop.prevent="onMediaDrop"
+          >
             <div
               v-for="(img, i) in mediaItems"
               :key="i"
@@ -273,18 +307,27 @@
             Cancel
           </NuxtLink>
           <button
-            type="submit"
+            type="button"
+            :disabled="isLoading || isAnyUploading || isGeneratingAI"
+            class="flex-1 rounded-xl border border-gray-200 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+            @click="submitAs('DRAFT')"
+          >
+            {{ isLoading && form.status === 'DRAFT' ? 'Saving…' : 'Save as draft' }}
+          </button>
+          <button
+            type="button"
             :disabled="isLoading || isAnyUploading || isGeneratingAI"
             class="flex-1 rounded-xl bg-brand py-3 font-semibold text-white transition-colors hover:bg-[#d81b36] disabled:opacity-50"
+            @click="submitAs('PUBLISHED')"
           >
             {{
               isAnyUploading
-                ? 'Uploading Media...'
+                ? 'Uploading Media…'
                 : isGeneratingAI
-                  ? 'AI Processing...'
-                  : isLoading
-                    ? 'Creating...'
-                    : 'Create Product'
+                  ? 'AI Processing…'
+                  : isLoading && form.status === 'PUBLISHED'
+                    ? 'Publishing…'
+                    : 'Publish'
             }}
           </button>
         </div>
@@ -296,6 +339,20 @@
     :is-open="showMusicPicker"
     @close="showMusicPicker = false"
     @select="onMusicSelected"
+  />
+
+  <!-- Post-publish "what's next" sheet -->
+  <PublishSuccessModal
+    :open="showPublishModal"
+    :product="createdProduct"
+    :store-slug="storeSlug"
+    :is-draft="form.status === 'DRAFT'"
+    :is-premium="isPremiumSeller"
+    :in-feed="form.showInFeed"
+    :has-affiliate="!!(form.affiliateCommission && form.affiliateCommission > 0)"
+    :has-video="hasVideo"
+    @close="showPublishModal = false"
+    @add-another="resetForm"
   />
 </template>
 
@@ -321,6 +378,7 @@ import ProductTagsSection from '~~/layers/seller/app/components/product-form/Pro
 import ProductDistributionSection from '~~/layers/seller/app/components/product-form/ProductDistributionSection.vue'
 import ProductFlagsSection from '~~/layers/seller/app/components/product-form/ProductFlagsSection.vue'
 import ProductSocialCaptions from '~~/layers/seller/app/components/product-form/ProductSocialCaptions.vue'
+import PublishSuccessModal from '~~/layers/seller/app/components/PublishSuccessModal.vue'
 
 
 definePageMeta({ middleware: 'auth', layout: 'store-layout' })
@@ -347,6 +405,12 @@ onMounted(async () => {
 
 const { createProduct, fetchCategories, isLoading, error } = useProduct()
 const saveSuccess = ref(false)
+
+// Post-publish "what's next" sheet
+const showPublishModal = ref(false)
+const createdProduct = ref<{ id: number; title: string; slug?: string } | null>(
+  null,
+)
 const { uploadMedia, videoSizeWarning } = useMediaUpload()
 const aiApi = useAiApi()
 
@@ -373,13 +437,25 @@ const isAnyUploading = computed(
   () => mediaItems.value.some((m) => m.uploading) || bgMusicUploading.value,
 )
 
+const isDraggingMedia = ref(false)
+
 const onImagesSelected = async (e: Event) => {
   const input = e.target as HTMLInputElement
-  const files = Array.from(input.files || []).slice(
-    0,
-    5 - mediaItems.value.length,
-  )
+  const files = Array.from(input.files || [])
   input.value = ''
+  await addFiles(files)
+}
+
+const onMediaDrop = async (e: DragEvent) => {
+  isDraggingMedia.value = false
+  const files = Array.from(e.dataTransfer?.files || []).filter(
+    (f) => f.type.startsWith('image/') || f.type.startsWith('video/'),
+  )
+  await addFiles(files)
+}
+
+const addFiles = async (fileList: File[]) => {
+  const files = fileList.slice(0, 5 - mediaItems.value.length)
 
   for (const file of files) {
     const item: MediaItem = {
@@ -590,6 +666,12 @@ onMounted(async () => {
   }
 })
 
+// Draft vs Publish are explicit buttons — set the status, then submit.
+const submitAs = (status: 'DRAFT' | 'PUBLISHED') => {
+  form.status = status
+  handleSubmit()
+}
+
 const handleSubmit = async () => {
   try {
     const payload: any = {
@@ -660,17 +742,61 @@ const handleSubmit = async () => {
       }
     }
 
-    await createProduct(payload)
+    const created = await createProduct(payload)
     saveSuccess.value = true
-    notify({ type: 'success', text: 'Product created successfully!' })
+
+    // Onboarding keeps its own guided flow → straight to the dashboard.
     if (isOnboarding.value) {
+      notify({ type: 'success', text: 'Product created successfully!' })
       await router.push(`/seller/${storeSlug.value}/dashboard?welcome=1`)
-    } else {
-      await router.push(`/seller/${storeSlug.value}/products`)
+      return
     }
+
+    // Everyone else gets the post-publish "now let's promote it" sheet.
+    createdProduct.value = created as any
+    showPublishModal.value = true
   } catch {
     // error is reactive from composable
     notify({ type: 'error', text: 'Failed to create product' })
   }
+}
+
+// "Add another" from the success sheet — clear everything and stay on the page.
+const resetForm = () => {
+  mediaItems.value.forEach((m) => m.preview && URL.revokeObjectURL(m.preview))
+  mediaItems.value = []
+  selectedMusic.value = null
+  bgMusicResult.value = null
+  Object.assign(form, {
+    title: '',
+    description: '',
+    price: null,
+    discount: 0,
+    affiliateCommission: null,
+    SKU: '',
+    status: 'DRAFT',
+    isFeatured: false,
+    isAccessory: false,
+    variants: [],
+    offers: [],
+    categoryIds: [],
+    tagNames: [],
+    socialCaptions: {
+      instagram: '',
+      facebook: '',
+      pinterest: '',
+      feedCaption: '',
+    },
+    showInFeed: false,
+    showInReels: false,
+    isThrift: false,
+    condition: '',
+    isDeal: false,
+    dealEndsAt: '',
+  })
+  saveSuccess.value = false
+  createdProduct.value = null
+  showPublishModal.value = false
+  if (import.meta.client) window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 </script>

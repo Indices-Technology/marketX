@@ -336,12 +336,15 @@
                 class="mb-1.5 block text-[12px] font-semibold text-gray-600 dark:text-neutral-400"
                 >State / Region</label
               >
-              <input
+              <select
                 v-model="form.state"
-                type="text"
-                placeholder="Lagos State"
-                class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-[13px] text-gray-900 placeholder-gray-400 transition focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
-              />
+                class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-[13px] text-gray-900 transition focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+              >
+                <option value="" disabled>Select state</option>
+                <option v-for="s in NIGERIA_STATES" :key="s" :value="s">
+                  {{ s }}
+                </option>
+              </select>
             </div>
           </div>
 
@@ -459,10 +462,21 @@
                 class="mb-1.5 block text-[12px] font-semibold text-gray-600 dark:text-neutral-400"
                 >State / Province</label
               >
+              <select
+                v-if="form.shipFromCountry === 'NG'"
+                v-model="form.shipFromState"
+                class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-[13px] text-gray-900 transition focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+              >
+                <option value="" disabled>Select state</option>
+                <option v-for="s in NIGERIA_STATES" :key="s" :value="s">
+                  {{ s }}
+                </option>
+              </select>
               <input
+                v-else
                 v-model="form.shipFromState"
                 type="text"
-                placeholder="Lagos State"
+                placeholder="State / Province"
                 class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-[13px] text-gray-900 placeholder-gray-400 transition focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
               />
             </div>
@@ -671,6 +685,79 @@
           </template>
         </div>
 
+        <!-- Video watermark -->
+        <div
+          class="space-y-4 rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 dark:border-neutral-800 dark:bg-neutral-900"
+        >
+          <div class="flex items-center justify-between gap-3">
+            <div class="flex items-start gap-2">
+              <Icon
+                name="mdi:movie-edit-outline"
+                size="20"
+                class="mt-0.5 shrink-0 text-brand"
+              />
+              <div>
+                <h2 class="text-[14px] font-semibold text-gray-900 dark:text-neutral-100">
+                  Video watermark
+                </h2>
+                <p class="text-[12px] text-gray-400 dark:text-neutral-500">
+                  Stamp your handle on Reels &amp; videos, so clips reshared off
+                  MarketX still point back to your store.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors"
+              :class="form.watermark_enabled ? 'bg-brand' : 'bg-gray-200 dark:bg-neutral-700'"
+              @click="form.watermark_enabled = !form.watermark_enabled"
+            >
+              <span
+                class="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform"
+                :class="form.watermark_enabled ? 'translate-x-6' : 'translate-x-1'"
+              />
+            </button>
+          </div>
+
+          <template v-if="form.watermark_enabled">
+            <div>
+              <label
+                class="mb-1 block text-[12px] font-medium text-gray-600 dark:text-neutral-400"
+              >
+                Watermark label
+              </label>
+              <input
+                v-model="form.watermark_text"
+                type="text"
+                maxlength="24"
+                :placeholder="form.store_name || 'Your store name'"
+                class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-[13px] text-gray-900 transition focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+              />
+              <p class="mt-1 text-[11px] text-gray-400 dark:text-neutral-500">
+                {{ (form.watermark_text || '').length }}/24 · Leave blank to use
+                your store name
+              </p>
+            </div>
+
+            <!-- Mini preview -->
+            <div
+              class="relative flex h-24 items-end justify-end overflow-hidden rounded-xl bg-gradient-to-br from-neutral-700 to-neutral-900 p-2"
+            >
+              <Icon
+                name="mdi:play-circle-outline"
+                size="28"
+                class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white/20"
+              />
+              <span
+                class="rounded bg-black/20 px-1.5 py-0.5 text-[11px] font-bold text-white/90"
+                style="text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6)"
+              >
+                {{ watermarkPreview }}
+              </span>
+            </div>
+          </template>
+        </div>
+
         <!-- Save -->
         <button
           type="submit"
@@ -696,6 +783,7 @@ import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { useMediaUpload } from '~~/layers/core/app/composables/useMediaUpload'
 import { useGeocode } from '~~/layers/core/app/composables/useGeocode'
 import { SUPPORTED_CURRENCIES } from '~~/shared/utils/currency'
+import { NIGERIA_STATES } from '~~/shared/utils/locations'
 
 const { reverseGeocode } = useGeocode()
 
@@ -780,7 +868,15 @@ const form = reactive({
   byos_pickup: false,
   byos_pickupNote: '',
   byos_eta: '',
+  // Media watermark
+  watermark_enabled: false,
+  watermark_text: '',
 })
+
+// Live preview label for the watermark (falls back to the store name).
+const watermarkPreview = computed(
+  () => form.watermark_text?.trim() || form.store_name?.trim() || 'Your store',
+)
 
 const gettingLocation = ref(false)
 
@@ -857,6 +953,9 @@ const prefillForm = (s: any) => {
   form.byos_pickup = !!sc.pickupEnabled
   form.byos_pickupNote = sc.pickupNote ?? ''
   form.byos_eta = sc.etaText ?? ''
+  // Media watermark
+  form.watermark_enabled = s.watermark_enabled ?? false
+  form.watermark_text = s.watermark_text ?? ''
 }
 
 const toggleZone = (state: string) => {
@@ -957,6 +1056,12 @@ const handleSubmit = async () => {
             etaText: form.byos_eta || undefined,
           }
         : { selfEnabled: false },
+      // Media watermark. When enabled but blank, send null so it resets to the
+      // store-name default instead of keeping a stale custom label.
+      watermark_enabled: form.watermark_enabled,
+      watermark_text: form.watermark_enabled
+        ? form.watermark_text.trim() || null
+        : undefined,
     } as any)
     saveSuccess.value = true
     setTimeout(() => {

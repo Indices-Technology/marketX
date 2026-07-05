@@ -425,7 +425,21 @@
                     class="mb-1 block text-[11px] font-semibold text-gray-500 dark:text-neutral-400"
                     >State / Region</label
                   >
-                  <BaseInput v-model="form.shipFromState" placeholder="Lagos State" />
+                  <select
+                    v-if="form.shipFromCountry === 'NG'"
+                    v-model="form.shipFromState"
+                    class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2 text-[13px] text-gray-900 transition focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+                  >
+                    <option value="" disabled>Select state</option>
+                    <option v-for="s in NIGERIA_STATES" :key="s" :value="s">
+                      {{ s }}
+                    </option>
+                  </select>
+                  <BaseInput
+                    v-else
+                    v-model="form.shipFromState"
+                    placeholder="State / Region"
+                  />
                 </div>
                 <div>
                   <label
@@ -588,34 +602,13 @@ import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { useSellerManagement } from '~~/layers/seller/app/composables/useSellerManagement'
 import { useMediaUpload } from '~~/layers/core/app/composables/useMediaUpload'
 import { SUPPORTED_CURRENCIES } from '~~/shared/utils/currency'
+import { NIGERIA_STATES, SHIP_COUNTRIES, countryName } from '~~/shared/utils/locations'
 import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 import BaseInput from '~~/layers/ui/app/components/BaseInput.vue'
 
 definePageMeta({ middleware: 'auth' })
 
 useSeo().setPrivatePage('Open Your Store')
-
-const SHIP_COUNTRIES = [
-  { code: 'NG', name: 'Nigeria' },
-  { code: 'GH', name: 'Ghana' },
-  { code: 'KE', name: 'Kenya' },
-  { code: 'ZA', name: 'South Africa' },
-  { code: 'EG', name: 'Egypt' },
-  { code: 'ET', name: 'Ethiopia' },
-  { code: 'TZ', name: 'Tanzania' },
-  { code: 'UG', name: 'Uganda' },
-  { code: 'CI', name: "Côte d'Ivoire" },
-  { code: 'SN', name: 'Senegal' },
-  { code: 'CM', name: 'Cameroon' },
-  { code: 'US', name: 'United States' },
-  { code: 'GB', name: 'United Kingdom' },
-  { code: 'CA', name: 'Canada' },
-  { code: 'DE', name: 'Germany' },
-  { code: 'FR', name: 'France' },
-  { code: 'AE', name: 'United Arab Emirates' },
-  { code: 'CN', name: 'China' },
-  { code: 'IN', name: 'India' },
-]
 
 const { createSeller, checkSlugAvailability, suggestSlugs, error } =
   useSellerManagement()
@@ -663,6 +656,27 @@ const fieldErrors = reactive<Record<string, string>>({})
 const clearFieldError = (field: string) => {
   fieldErrors[field] = ''
 }
+
+// Auto-compose the display Location from the shipping-origin fields, so the
+// seller doesn't type their location twice. Stops overriding once they edit
+// the Location field themselves (their value no longer matches our last auto-fill).
+let lastAutoLocation = ''
+watch(
+  () => [form.shipFromCity, form.shipFromState, form.shipFromCountry],
+  () => {
+    const cityState = [form.shipFromCity, form.shipFromState]
+      .map((p) => (p || '').trim())
+      .filter(Boolean)
+    if (!cityState.length) return // nothing meaningful entered yet
+    const composed = [...cityState, countryName(form.shipFromCountry)]
+      .filter(Boolean)
+      .join(', ')
+    if (!form.store_location || form.store_location === lastAutoLocation) {
+      form.store_location = composed
+      lastAutoLocation = composed
+    }
+  },
+)
 
 // ── Location detection ──────────────────────────────────────────────────────
 

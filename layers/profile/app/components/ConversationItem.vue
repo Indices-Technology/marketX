@@ -42,9 +42,18 @@
             Store
           </span>
         </div>
-        <p class="shrink-0 text-xs text-gray-400 dark:text-neutral-500">
-          {{ formatTime(conversation.lastMessageAt || conversation.updated_at) }}
-        </p>
+        <div class="flex shrink-0 flex-col items-end gap-1">
+          <p class="text-xs text-gray-400 dark:text-neutral-500">
+            {{
+              formatTime(conversation.lastMessageAt || conversation.updated_at)
+            }}
+          </p>
+          <span
+            v-if="unread > 0"
+            class="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-brand px-1.5 text-[10px] font-bold text-white"
+            >{{ unread > 99 ? '99+' : unread }}</span
+          >
+        </div>
       </div>
 
       <!-- Product context for store chats -->
@@ -56,7 +65,14 @@
       </p>
 
       <!-- Last message preview -->
-      <p class="truncate text-sm text-gray-500 dark:text-neutral-400">
+      <p
+        class="truncate text-sm"
+        :class="
+          unread > 0
+            ? 'font-semibold text-gray-900 dark:text-neutral-100'
+            : 'text-gray-500 dark:text-neutral-400'
+        "
+      >
         {{ lastMessagePreview }}
       </p>
     </div>
@@ -74,6 +90,7 @@ const props = defineProps<{
 }>()
 
 const isStore = computed(() => !!(props.conversation.otherUser as any)?.isStore)
+const unread = computed(() => (props.conversation as any).unreadCount ?? 0)
 
 const displayName = computed(() => {
   const u = props.conversation.otherUser as any

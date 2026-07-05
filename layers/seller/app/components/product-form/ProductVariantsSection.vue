@@ -6,8 +6,17 @@
       <div>
         <h2 class="font-semibold text-gray-900 dark:text-neutral-100">Variants</h2>
         <p class="mt-0.5 text-xs text-gray-500 dark:text-neutral-400">
-          Sizes, colours, or any option that changes price or stock.
+          Any option that changes price or stock. For example:
         </p>
+        <div class="mt-1.5 flex flex-wrap gap-1.5">
+          <span
+            v-for="ex in VARIANT_EXAMPLES"
+            :key="ex"
+            class="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-500 dark:bg-neutral-700 dark:text-neutral-400"
+          >
+            {{ ex }}
+          </span>
+        </div>
       </div>
       <button
         type="button"
@@ -90,6 +99,16 @@
 const props = defineProps<{
   variants: Array<{ size: string; price: number | null; stock: number }>
 }>()
+
+// Illustrative option types — helps sellers understand what a "variant" is.
+const VARIANT_EXAMPLES = [
+  'Size',
+  'Colour',
+  'Storage',
+  'RAM',
+  'Length',
+  'Pack size',
+]
 
 const addVariant = () => {
   props.variants.push({ size: '', price: null, stock: 0 })
