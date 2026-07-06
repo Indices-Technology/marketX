@@ -515,27 +515,164 @@ export const adminService = {
     if (!square)
       throw createError({ statusCode: 404, statusMessage: 'Square not found' })
 
+    const wasPending = square.status === 'PENDING'
     const updated = await adminRepository.setSquareStatus(id, status)
 
-    // Notify the square's officers of the decision.
-    const officers = await adminRepository.listSquareOfficerProfileIds(id)
-    const message =
-      status === 'ACTIVE'
-        ? `Your market square "${square.name}" is now live on MarketX.`
-        : `Your market square "${square.name}" has been suspended by an administrator.`
-    for (const o of officers) {
+    // Dedupe recipients so one person never gets two pings for the same event.
+    const seen = new Set<string>()
+    const ping = (userId: string | null | undefined, message: string) => {
+      if (!userId || seen.has(userId)) return
+      seen.add(userId)
       notificationQueue.enqueue({
-        userId: o.profileId,
+        userId,
         type: 'GENERAL',
         actorId: moderatorId,
         message,
       })
     }
 
+    // 1. Officers — always told of the decision.
+    const officers = await adminRepository.listSquareOfficerProfileIds(id)
+    const officerMsg =
+      status === 'ACTIVE'
+        ? `Your market square "${square.name}" is now live on MarketX.`
+        : `Your market square "${square.name}" has been suspended by an administrator.`
+    for (const o of officers) ping(o.profileId, officerMsg)
+
+    if (status === 'ACTIVE') {
+      // 2. Followers who opted in while it was pending.
+      const followers = await adminRepository.listSquareFollowerIds(id)
+      for (const f of followers)
+        ping(f.userId, `A market square you follow, "${square.name}", is now live.`)
+
+      // 3. First activation of a geographic square → invite nearby sellers.
+      if (wasPending && square.type === 'GEOGRAPHIC' && (square.city || square.state)) {
+        const where = square.city || square.state
+        const sellers = await adminRepository.listLocalSellerProfileIds(
+          square.city,
+          square.state,
+        )
+        for (const s of sellers)
+          ping(
+            s.profileId,
+            `A new market square, "${square.name}", is live in ${where} — join it to reach local buyers.`,
+          )
+      }
+    }
+
     // Public square directory is cached — refresh it, and the dashboard stat.
     bust('squares:list:*').catch(() => {})
     bust('admin:stats').catch(() => {})
     return updated
+  },
+
+  // ── Seller verification documents ────────────────────────────────────────────
+
+  getSellerDocuments: adminRepository.listSellerDocuments,
+
+  // ── Categories ─────────────────────────────────────────────────────────────
+
+  listCategories: adminRepository.listCategories,
+
+  async createCategory(data: { name: string; slug: string; thumbnailCatUrl?: string }) {
+    try {
+      const created = await adminRepository.createCategory(data)
+      bust('data:categories').catch(() => {})
+      return created
+    } catch (e: any) {
+      if (e?.code === 'P2002')
+        throw createError({ statusCode: 409, statusMessage: 'A category with that name or slug already exists' })
+      throw e
+    }
+  },
+
+  async updateCategory(
+    id: number,
+    data: { name?: string; slug?: string; thumbnailCatUrl?: string | null },
+  ) {
+    try {
+      const updated = await adminRepository.updateCategory(id, data)
+      bust('data:categories').catch(() => {})
+      return updated
+    } catch (e: any) {
+      if (e?.code === 'P2002')
+        throw createError({ statusCode: 409, statusMessage: 'A category with that name or slug already exists' })
+      if (e?.code === 'P2025')
+        throw createError({ statusCode: 404, statusMessage: 'Category not found' })
+      throw e
+    }
+  },
+
+  async deleteCategory(id: number) {
+    try {
+      await adminRepository.deleteCategory(id)
+      bust('data:categories').catch(() => {})
+      return { id }
+    } catch (e: any) {
+      if (e?.code === 'P2025')
+        throw createError({ statusCode: 404, statusMessage: 'Category not found' })
+      throw e
+    }
+  },
+
+  // ── Broadcast / announcements ───────────────────────────────────────────────
+
+  async broadcastAudience() {
+    const [all, sellers] = await prisma.$transaction([
+      prisma.profile.count({ where: { bannedAt: null } }),
+      prisma.profile.count({
+        where: { bannedAt: null, sellerProfile: { some: {} } },
+      }),
+    ])
+    return { all, sellers, buyers: all - sellers }
+  },
+
+  /**
+   * Send a platform-wide in-app notification to a target audience. Fans out with
+   * batched createMany (not one queue job per user) and runs the fan-out in the
+   * background so the request returns immediately with the audience size.
+   */
+  async broadcast(opts: {
+    message: string
+    target: 'all' | 'sellers' | 'buyers'
+    moderatorId: string
+  }) {
+    const where: any = { bannedAt: null }
+    if (opts.target === 'sellers') where.sellerProfile = { some: {} }
+    else if (opts.target === 'buyers') where.sellerProfile = { none: {} }
+
+    const targeted = await prisma.profile.count({ where })
+
+    // Background fan-out — paged so we never load every profile into memory.
+    ;(async () => {
+      const BATCH = 1000
+      let skip = 0
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        const rows = await prisma.profile.findMany({
+          where,
+          select: { id: true },
+          orderBy: { created_at: 'asc' },
+          take: BATCH,
+          skip,
+        })
+        if (!rows.length) break
+        await prisma.notification.createMany({
+          data: rows.map((r) => ({
+            userId: r.id,
+            message: opts.message,
+            type: 'GENERAL' as const,
+            actorId: opts.moderatorId,
+          })),
+        })
+        if (rows.length < BATCH) break
+        skip += BATCH
+      }
+    })().catch((e) =>
+      logger.logError('[admin broadcast fan-out]', e, { target: opts.target }),
+    )
+
+    return { targeted }
   },
 
   // ── Stats ─────────────────────────────────────────────────────────────────

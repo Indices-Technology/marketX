@@ -1,10 +1,15 @@
 <template>
   <div class="mx-auto max-w-5xl space-y-6 p-6">
-    <div>
-      <h1 class="text-xl font-bold text-gray-900 dark:text-neutral-100">Squares</h1>
-      <p class="mt-0.5 text-[13px] text-gray-400 dark:text-neutral-500">
-        Approve and moderate market squares
-      </p>
+    <div class="flex items-start justify-between gap-3">
+      <div>
+        <h1 class="text-xl font-bold text-gray-900 dark:text-neutral-100">Squares</h1>
+        <p class="mt-0.5 text-[13px] text-gray-400 dark:text-neutral-500">
+          Create, approve and moderate market squares
+        </p>
+      </div>
+      <BaseButton size="sm" variant="primary" @click="openCreate">
+        <Icon name="mdi:plus" size="15" /> New square
+      </BaseButton>
     </div>
 
     <div class="flex flex-wrap gap-2">
@@ -93,7 +98,7 @@
               </span>
             </td>
             <td class="px-4 py-3 text-right">
-              <div class="flex justify-end gap-2">
+              <div class="flex items-center justify-end gap-1.5">
                 <BaseButton
                   v-if="s.status !== 'ACTIVE'"
                   size="sm"
@@ -112,6 +117,20 @@
                 >
                   {{ s.status === 'PENDING' ? 'Reject' : 'Suspend' }}
                 </BaseButton>
+                <button
+                  class="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
+                  title="Edit"
+                  @click="openEdit(s)"
+                >
+                  <Icon name="mdi:pencil-outline" size="16" />
+                </button>
+                <button
+                  class="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
+                  title="Delete"
+                  @click="removeSquare(s)"
+                >
+                  <Icon name="mdi:trash-can-outline" size="16" />
+                </button>
               </div>
             </td>
           </tr>
@@ -127,13 +146,22 @@
         Next
       </BaseButton>
     </div>
+
+    <SquareFormModal
+      :open="formOpen"
+      :square="editing"
+      @close="formOpen = false"
+      @saved="onSaved"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { useAsyncData } from 'nuxt/app'
+import { notify } from '@kyvg/vue3-notification'
 import { useAdminApi } from '~~/layers/admin/app/services/admin.api'
 import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
+import SquareFormModal from '../../../components/SquareFormModal.vue'
 
 definePageMeta({ middleware: 'admin', layout: 'admin-layout' })
 
@@ -170,6 +198,45 @@ const hasMore = computed(() => (data.value as any)?.meta?.hasMore ?? false)
 watch([statusFilter, debouncedSearch], () => {
   offset.value = 0
 })
+
+// ── Create / edit / delete ──────────────────────────────────────────────────
+const formOpen = ref(false)
+const editing = ref<any>(null)
+
+function openCreate() {
+  editing.value = null
+  formOpen.value = true
+}
+function openEdit(square: any) {
+  editing.value = square
+  formOpen.value = true
+}
+function onSaved(saved: any) {
+  formOpen.value = false
+  const items = (data.value as any)?.items
+  if (items && saved) {
+    if (editing.value) {
+      const row = items.find((r: any) => r.id === saved.id || r.slug === saved.slug)
+      if (row) Object.assign(row, saved)
+    } else if (statusFilter.value === 'PENDING' || statusFilter.value === '') {
+      // New squares are PENDING — show them right away in the queue / All view.
+      items.unshift({ memberCount: 0, followerCount: 0, postCount: 0, ...saved })
+    }
+  }
+  editing.value = null
+}
+
+async function removeSquare(square: any) {
+  if (!window.confirm(`Delete "${square.name}"? This cannot be undone.`)) return
+  try {
+    await adminApi.deleteSquare(square.slug)
+    const items = (data.value as any)?.items
+    if (items) (data.value as any).items = items.filter((r: any) => r.id !== square.id)
+    notify({ type: 'success', text: 'Square deleted' })
+  } catch {
+    // BaseApiClient surfaces the guard error (e.g. has members)
+  }
+}
 
 const busyId = ref<string | null>(null)
 

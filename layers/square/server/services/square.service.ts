@@ -187,8 +187,10 @@ export const squareService = {
   // ── Admin: create / update ──────────────────────────────────────────────────
 
   async createSquare(data: CreateSquareInput) {
+    // ownerProfileId isn't a Square column — pull it out before the create.
+    const { ownerProfileId, ...squareData } = data
     const exists = await prisma.square.findFirst({
-      where: { OR: [{ slug: data.slug }, { name: data.name }] },
+      where: { OR: [{ slug: squareData.slug }, { name: squareData.name }] },
     })
     if (exists)
       throw createError({
@@ -198,14 +200,26 @@ export const squareService = {
 
     const square = await prisma.square.create({
       data: {
-        ...data,
+        ...squareData,
         status: 'PENDING',
         wallet: { create: {} }, // provision wallet immediately
+        // Optionally seat the assigned owner as CHAIRMAN.
+        ...(ownerProfileId
+          ? { officers: { create: { profileId: ownerProfileId, role: 'CHAIRMAN' } } }
+          : {}),
       },
       select: SQUARE_PUBLIC_SELECT,
     })
 
     entityEmbedder.embedSquare(square.id)
+
+    if (ownerProfileId) {
+      notificationQueue.enqueue({
+        userId: ownerProfileId,
+        type: 'GENERAL',
+        message: `You've been made Chairman of the "${square.name}" square. Set it up and start onboarding sellers.`,
+      })
+    }
 
     return square
   },
@@ -233,6 +247,36 @@ export const squareService = {
     await bust('squares:list:*')
 
     return updated
+  },
+
+  /**
+   * Delete a Square. Guarded: a Square with members or any financial history is
+   * never deleted (SquareTransaction has a restrict FK, and wiping wallets would
+   * lose money records) — suspend it instead. Safe for mistakenly-created empties.
+   */
+  async deleteSquare(slug: string) {
+    const square = await prisma.square.findUnique({
+      where: { slug },
+      select: {
+        id: true,
+        name: true,
+        memberCount: true,
+        _count: { select: { transactions: true } },
+      },
+    })
+    if (!square)
+      throw createError({ statusCode: 404, statusMessage: 'Square not found' })
+    if (square.memberCount > 0 || square._count.transactions > 0) {
+      throw createError({
+        statusCode: 400,
+        statusMessage:
+          'Cannot delete a square with members or financial history — suspend it instead.',
+      })
+    }
+
+    await prisma.square.delete({ where: { id: square.id } })
+    await bust('squares:list:*')
+    return { id: square.id, name: square.name }
   },
 
   // ── Seller membership ───────────────────────────────────────────────────────

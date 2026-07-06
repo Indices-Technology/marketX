@@ -35,7 +35,15 @@ const props = defineProps<{
 const route = useRoute()
 const profile = useProfileStore()
 
-const isAdmin = computed(() => profile.me?.role === 'admin')
+// Auth lives in localStorage (client-only), so the role is unknown during SSR
+// and initial hydration. Gate admin-only visibility on `mounted` so the server
+// and first client render agree (both hide it) — no hydration mismatch — then
+// reveal it after mount.
+const mounted = ref(false)
+onMounted(() => {
+  mounted.value = true
+})
+const isAdmin = computed(() => mounted.value && profile.me?.role === 'admin')
 const isActive = computed(() =>
   props.exact ? route.path === props.to : route.path.startsWith(props.to),
 )

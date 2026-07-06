@@ -409,7 +409,36 @@ export const adminRepository = {
   getSquare(id: string) {
     return prisma.square.findUnique({
       where: { id },
-      select: { id: true, name: true, slug: true, status: true },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        status: true,
+        type: true,
+        city: true,
+        state: true,
+      },
+    })
+  },
+
+  listSquareFollowerIds(squareId: string) {
+    return prisma.userSquareFollow.findMany({
+      where: { squareId },
+      select: { userId: true },
+    })
+  },
+
+  // Active sellers located in a square's city/state — candidates to invite when a
+  // GEOGRAPHIC square goes live. Capped to keep the fan-out bounded.
+  listLocalSellerProfileIds(city: string | null, state: string | null, limit = 500) {
+    if (!city && !state) return Promise.resolve([] as { profileId: string }[])
+    return prisma.sellerProfile.findMany({
+      where: {
+        is_active: true,
+        ...(city ? { city: { equals: city, mode: 'insensitive' } } : { state }),
+      },
+      select: { profileId: true },
+      take: limit,
     })
   },
 
@@ -425,6 +454,54 @@ export const adminRepository = {
     return prisma.squareOfficer.findMany({
       where: { squareId },
       select: { profileId: true },
+    })
+  },
+
+  // ── Categories ─────────────────────────────────────────────────────────────
+
+  listCategories() {
+    return prisma.category.findMany({
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        thumbnailCatUrl: true,
+        created_at: true,
+        _count: { select: { products: true } },
+      },
+      orderBy: { name: 'asc' },
+    })
+  },
+
+  createCategory(data: { name: string; slug: string; thumbnailCatUrl?: string }) {
+    return prisma.category.create({ data })
+  },
+
+  updateCategory(
+    id: number,
+    data: { name?: string; slug?: string; thumbnailCatUrl?: string | null },
+  ) {
+    return prisma.category.update({ where: { id }, data })
+  },
+
+  deleteCategory(id: number) {
+    // ProductCategories cascade → products keep, they just lose this tag.
+    return prisma.category.delete({ where: { id } })
+  },
+
+  // ── Seller verification documents ────────────────────────────────────────────
+
+  listSellerDocuments(sellerProfileId: string) {
+    return prisma.verificationDocument.findMany({
+      where: { sellerProfileId },
+      select: {
+        id: true,
+        type: true,
+        url: true,
+        status: true,
+        created_at: true,
+      },
+      orderBy: { created_at: 'desc' },
     })
   },
 

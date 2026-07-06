@@ -166,22 +166,27 @@
               </span>
             </td>
             <td class="px-4 py-3">
-              <div
-                v-if="seller.verification_status === 'PENDING'"
-                class="flex gap-1.5"
-              >
+              <div class="flex items-center gap-1.5">
                 <button
-                  class="rounded-lg bg-green-50 px-2.5 py-1 text-[11px] font-semibold text-green-600 transition-colors hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400"
-                  @click="verify(seller.id, 'VERIFIED')"
+                  class="flex items-center gap-1 rounded-lg border border-gray-200 px-2.5 py-1 text-[11px] font-semibold text-gray-600 transition-colors hover:bg-gray-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                  @click="openDocs(seller)"
                 >
-                  Approve
+                  <Icon name="mdi:file-document-outline" size="13" /> Docs
                 </button>
-                <button
-                  class="rounded-lg bg-red-50 px-2.5 py-1 text-[11px] font-semibold text-red-600 transition-colors hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400"
-                  @click="verify(seller.id, 'REJECTED')"
-                >
-                  Reject
-                </button>
+                <template v-if="seller.verification_status === 'PENDING'">
+                  <button
+                    class="rounded-lg bg-green-50 px-2.5 py-1 text-[11px] font-semibold text-green-600 transition-colors hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400"
+                    @click="verify(seller.id, 'VERIFIED')"
+                  >
+                    Approve
+                  </button>
+                  <button
+                    class="rounded-lg bg-red-50 px-2.5 py-1 text-[11px] font-semibold text-red-600 transition-colors hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400"
+                    @click="verify(seller.id, 'REJECTED')"
+                  >
+                    Reject
+                  </button>
+                </template>
               </div>
             </td>
           </tr>
@@ -205,12 +210,85 @@
         Next
       </button>
     </div>
+
+    <!-- Verification documents viewer -->
+    <BaseModal
+      :model-value="docsOpen"
+      :title="`Documents · ${docsSeller?.store_name || ''}`"
+      max-width="lg"
+      @update:model-value="(v) => !v && (docsOpen = false)"
+    >
+      <div v-if="docsLoading" class="flex justify-center py-10">
+        <div class="h-6 w-6 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+      </div>
+
+      <div
+        v-else-if="!docs.length"
+        class="flex flex-col items-center justify-center py-12 text-center text-gray-400 dark:text-neutral-500"
+      >
+        <Icon name="mdi:file-remove-outline" size="30" class="mb-2 opacity-40" />
+        <p class="text-[13px]">This seller hasn't uploaded any verification documents.</p>
+      </div>
+
+      <div v-else class="grid grid-cols-2 gap-3">
+        <div
+          v-for="d in docs"
+          :key="d.id"
+          class="overflow-hidden rounded-xl border border-gray-200 dark:border-neutral-700"
+        >
+          <a :href="d.url" target="_blank" rel="noopener noreferrer" class="block">
+            <img
+              v-if="isImage(d.url)"
+              :src="d.url"
+              class="h-40 w-full bg-gray-50 object-contain dark:bg-neutral-800"
+              alt=""
+            />
+            <div
+              v-else
+              class="flex h-40 w-full flex-col items-center justify-center gap-1 bg-gray-50 text-gray-400 dark:bg-neutral-800"
+            >
+              <Icon name="mdi:file-document-outline" size="30" />
+              <span class="text-[11px]">Open document</span>
+            </div>
+          </a>
+          <div class="flex items-center justify-between px-3 py-2">
+            <span class="text-[12px] font-medium capitalize text-gray-700 dark:text-neutral-300">
+              {{ (d.type || 'document').replace(/_/g, ' ').toLowerCase() }}
+            </span>
+            <span class="rounded-full px-2 py-0.5 text-[10px] font-semibold" :class="verificationClass(d.status)">
+              {{ d.status }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <template v-if="docsSeller?.verification_status === 'PENDING'" #footer>
+        <div class="flex gap-3">
+          <BaseButton
+            variant="danger"
+            class="flex-1"
+            @click="verifyFromDocs('REJECTED')"
+          >
+            Reject
+          </BaseButton>
+          <BaseButton
+            variant="primary"
+            class="flex-1"
+            @click="verifyFromDocs('VERIFIED')"
+          >
+            Approve seller
+          </BaseButton>
+        </div>
+      </template>
+    </BaseModal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useAsyncData } from 'nuxt/app'
 import { useAdminApi } from '~~/layers/admin/app/services/admin.api'
+import BaseModal from '~~/layers/ui/app/components/BaseModal.vue'
+import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 
 definePageMeta({ middleware: 'admin', layout: 'admin-layout' })
 
@@ -260,6 +338,37 @@ async function verify(id: string, status: 'VERIFIED' | 'REJECTED') {
         is_verified: status === 'VERIFIED',
       })
   } catch {}
+}
+
+// ── Verification documents viewer ────────────────────────────────────────────
+const docsOpen = ref(false)
+const docsSeller = ref<any>(null)
+const docs = ref<any[]>([])
+const docsLoading = ref(false)
+
+async function openDocs(seller: any) {
+  docsSeller.value = seller
+  docs.value = []
+  docsOpen.value = true
+  docsLoading.value = true
+  try {
+    const res: any = await adminApi.getSellerDocuments(seller.id)
+    docs.value = res?.items ?? []
+  } catch {
+    docs.value = []
+  } finally {
+    docsLoading.value = false
+  }
+}
+
+async function verifyFromDocs(status: 'VERIFIED' | 'REJECTED') {
+  if (!docsSeller.value) return
+  await verify(docsSeller.value.id, status)
+  docsOpen.value = false
+}
+
+function isImage(url: string) {
+  return /\.(png|jpe?g|webp|gif|avif)(\?|$)/i.test(url || '')
 }
 
 function useDebounce<T>(value: Ref<T>, delay: number) {
