@@ -652,7 +652,7 @@ export const adminService = {
         const rows = await prisma.profile.findMany({
           where,
           select: { id: true },
-          orderBy: { created_at: 'asc' },
+          orderBy: { id: 'asc' }, // unique key → stable offset pagination (no tie skips/dupes)
           take: BATCH,
           skip,
         })

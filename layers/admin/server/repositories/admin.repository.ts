@@ -435,7 +435,9 @@ export const adminRepository = {
     return prisma.sellerProfile.findMany({
       where: {
         is_active: true,
-        ...(city ? { city: { equals: city, mode: 'insensitive' } } : { state }),
+        ...(city
+          ? { city: { equals: city, mode: 'insensitive' as const } }
+          : { state: { equals: state, mode: 'insensitive' as const } }),
       },
       select: { profileId: true },
       take: limit,

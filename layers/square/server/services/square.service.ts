@@ -274,7 +274,20 @@ export const squareService = {
       })
     }
 
-    await prisma.square.delete({ where: { id: square.id } })
+    try {
+      await prisma.square.delete({ where: { id: square.id } })
+    } catch (e: any) {
+      // Backstop for any restrict FK we didn't pre-check (e.g. SquareOffer,
+      // SquareTransaction) — return the clean guidance rather than a raw 500.
+      if (e?.code === 'P2003') {
+        throw createError({
+          statusCode: 400,
+          statusMessage:
+            'Cannot delete a square with existing activity (offers or financial history) — suspend it instead.',
+        })
+      }
+      throw e
+    }
     await bust('squares:list:*')
     return { id: square.id, name: square.name }
   },
