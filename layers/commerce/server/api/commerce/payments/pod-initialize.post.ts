@@ -49,6 +49,15 @@ const schema = z.object({
 
 export default defineEventHandler(async (event) => {
   try {
+    // POD is paused behind a runtime flag — block new POD orders even via a
+    // direct API call, not just the (hidden) checkout option.
+    if (useRuntimeConfig(event).public.podEnabled !== true) {
+      throw createError({
+        statusCode: 403,
+        statusMessage: 'Pay on Delivery is temporarily unavailable',
+      })
+    }
+
     const user = await requireAuth(event)
     const body = schema.parse(await readBody(event))
     const ipAddress = getHeader(event, 'x-forwarded-for') || getClientIP(event) || 'unknown'
@@ -182,7 +191,7 @@ export default defineEventHandler(async (event) => {
       const tld = e.split('.').pop()?.toLowerCase() ?? ''
       return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e) && !FAKE_TLDS.has(tld)
     }
-    const email = isPaystackEmail(user.email) ? user.email : `user_${user.id}@checkout.marketx.app`
+    const email = isPaystackEmail(user.email) ? user.email : `user_${user.id}@checkout.marketx.africa`
     const ps = await paystack.initializeTransaction({
       email,
       amount: group.shippingTotal || body.shippingCost, // shipping fee only — kobo

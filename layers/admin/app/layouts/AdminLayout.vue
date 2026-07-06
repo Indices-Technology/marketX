@@ -40,6 +40,37 @@
           label="Sellers"
         />
         <AdminNavItem
+          to="/admin/squares"
+          icon="mdi:city-variant-outline"
+          label="Squares"
+          :badge="pendingSquaresCount"
+          :admin-only="true"
+        />
+        <AdminNavItem
+          to="/admin/categories"
+          icon="mdi:shape-outline"
+          label="Categories"
+        />
+        <AdminNavItem
+          to="/admin/payouts"
+          icon="mdi:cash-multiple"
+          label="Payouts"
+          :badge="pendingPayoutsCount"
+          :admin-only="true"
+        />
+        <AdminNavItem
+          to="/admin/finance"
+          icon="mdi:chart-box-outline"
+          label="Finance"
+          :admin-only="true"
+        />
+        <AdminNavItem
+          to="/admin/announcements"
+          icon="mdi:bullhorn-outline"
+          label="Announcements"
+          :admin-only="true"
+        />
+        <AdminNavItem
           to="/support/agent"
           icon="mdi:headset"
           label="Support"
@@ -53,18 +84,20 @@
         />
       </nav>
 
-      <div
-        class="border-t border-gray-200 px-4 py-4 text-[12px] text-gray-400 dark:border-neutral-800 dark:text-neutral-600"
-      >
-        Logged in as
-        <span class="font-semibold text-gray-600 dark:text-neutral-400">{{
-          profile.me?.username
-        }}</span>
-        <span
-          class="ml-1.5 rounded bg-gray-100 px-1.5 py-0.5 text-[11px] capitalize dark:bg-neutral-800"
-          >{{ profile.me?.role }}</span
+      <ClientOnly>
+        <div
+          class="border-t border-gray-200 px-4 py-4 text-[12px] text-gray-400 dark:border-neutral-800 dark:text-neutral-600"
         >
-      </div>
+          Logged in as
+          <span class="font-semibold text-gray-600 dark:text-neutral-400">{{
+            profile.me?.username
+          }}</span>
+          <span
+            class="ml-1.5 rounded bg-gray-100 px-1.5 py-0.5 text-[11px] capitalize dark:bg-neutral-800"
+            >{{ profile.me?.role }}</span
+          >
+        </div>
+      </ClientOnly>
     </aside>
 
     <!-- Mobile top bar -->
@@ -120,6 +153,42 @@
             @click="mobileOpen = false"
           />
           <AdminNavItem
+            to="/admin/squares"
+            icon="mdi:city-variant-outline"
+            label="Squares"
+            :badge="pendingSquaresCount"
+            :admin-only="true"
+            @click="mobileOpen = false"
+          />
+          <AdminNavItem
+            to="/admin/categories"
+            icon="mdi:shape-outline"
+            label="Categories"
+            @click="mobileOpen = false"
+          />
+          <AdminNavItem
+            to="/admin/payouts"
+            icon="mdi:cash-multiple"
+            label="Payouts"
+            :badge="pendingPayoutsCount"
+            :admin-only="true"
+            @click="mobileOpen = false"
+          />
+          <AdminNavItem
+            to="/admin/finance"
+            icon="mdi:chart-box-outline"
+            label="Finance"
+            :admin-only="true"
+            @click="mobileOpen = false"
+          />
+          <AdminNavItem
+            to="/admin/announcements"
+            icon="mdi:bullhorn-outline"
+            label="Announcements"
+            :admin-only="true"
+            @click="mobileOpen = false"
+          />
+          <AdminNavItem
             to="/support/agent"
             icon="mdi:headset"
             label="Support"
@@ -162,6 +231,12 @@ const { data: statsData } = await useAsyncData(
 )
 const pendingCount = computed(
   () => (statsData.value as any)?.data?.pendingReports ?? 0,
+)
+const pendingPayoutsCount = computed(
+  () => (statsData.value as any)?.data?.pendingPayouts ?? 0,
+)
+const pendingSquaresCount = computed(
+  () => (statsData.value as any)?.data?.pendingSquares ?? 0,
 )
 </script>
 

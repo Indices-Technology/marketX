@@ -9,8 +9,11 @@ export default defineEventHandler(async (event) => {
     const limit = Math.min(Number(q.limit) || 20, 100)
     const offset = Math.max(Number(q.offset) || 0, 0)
     const search = String(q.search || '').trim() || undefined
+    const statusRaw = String(q.status || '').trim()
+    const status =
+      statusRaw === 'banned' || statusRaw === 'suspended' ? statusRaw : undefined
 
-    const result = await adminService.listUsers({ search, limit, offset })
+    const result = await adminService.listUsers({ search, status, limit, offset })
     return { success: true, ...result }
   } catch (error) {
     if (error && typeof error === 'object' && 'statusCode' in error) throw error

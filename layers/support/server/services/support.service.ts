@@ -29,7 +29,7 @@ import {
   type DisputeOutcome,
 } from '../utils/types'
 
-const SUPPORT_REPLY_TO = process.env.SUPPORT_EMAIL || 'support@marketx.app'
+const SUPPORT_REPLY_TO = process.env.SUPPORT_EMAIL || 'support@marketx.africa'
 
 type TicketWithParties = Awaited<
   ReturnType<typeof supportRepository.getTicketById>

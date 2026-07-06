@@ -1,9 +1,68 @@
+import { getRequestHeader, type H3Event } from 'h3'
+
 type OAuthProvider = 'google' | 'facebook' | 'tiktok'
 
 interface OAuthUserProfile {
   email: string
   name?: string
   avatar?: string
+}
+
+/**
+ * Resolve the app origin (`scheme://host`) that OAuth redirect URIs are built
+ * from.
+ *
+ * OAuth stores `state` in a cookie scoped to the domain the flow STARTED on and
+ * re-reads it on the callback. If the callback lands on a *different* domain the
+ * cookie isn't sent → "Invalid OAuth state". So instead of pinning every flow to
+ * a single `NUXT_PUBLIC_BASE_URL`, we keep the flow on the domain the request
+ * actually arrived on — as long as that host is allow-listed.
+ *
+ * Allow-list = the configured baseURL host + any hosts in `OAUTH_ALLOWED_HOSTS`
+ * (comma-separated). An unknown / spoofed Host header falls back to the
+ * configured baseURL, so it can never redirect the flow somewhere unregistered.
+ */
+export const resolveOAuthAppUrl = (
+  event: H3Event,
+  fallbackBaseUrl: string,
+): string => {
+  const fallback = (fallbackBaseUrl || 'http://localhost:3000')
+    .trim()
+    .replace(/\/$/, '')
+
+  const rawHost = (
+    getRequestHeader(event, 'x-forwarded-host') ||
+    getRequestHeader(event, 'host') ||
+    ''
+  )
+    .split(',')[0]
+    .trim()
+    .toLowerCase()
+  if (!rawHost) return fallback
+
+  // Trust the proxy's forwarded proto; otherwise assume https for real domains
+  // (providers reject non-https redirect URIs) and http only for localhost.
+  const isLocal = rawHost.startsWith('localhost') || rawHost.startsWith('127.')
+  const proto =
+    (getRequestHeader(event, 'x-forwarded-proto') || '')
+      .split(',')[0]
+      .trim()
+      .toLowerCase() || (isLocal ? 'http' : 'https')
+
+  const allowed = new Set<string>()
+  try {
+    allowed.add(new URL(fallback).host.toLowerCase())
+  } catch {
+    // fallback isn't a full URL — ignore
+  }
+  for (const h of (process.env.OAUTH_ALLOWED_HOSTS || '')
+    .split(',')
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean)) {
+    allowed.add(h)
+  }
+
+  return allowed.has(rawHost) ? `${proto}://${rawHost}` : fallback
 }
 
 const parseJwtPayload = (token: string) => {

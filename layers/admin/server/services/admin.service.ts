@@ -52,6 +52,7 @@ export const adminService = {
 
     // Increment reportCount and auto-flag if threshold is met
     await autoFlagIfThreshold(data.contentType, data.contentId)
+    bust('admin:stats').catch(() => {})
 
     return report
   },
@@ -69,6 +70,7 @@ export const adminService = {
     }
 
     const resolved = await adminRepository.resolveReport(id, moderatorId, action, note)
+    bust('admin:stats').catch(() => {})
 
     // Apply content action
     if (action === 'HIDE' || action === 'REMOVE') {
@@ -143,11 +145,18 @@ export const adminService = {
         await adminRepository.moderateComment(id, status)
         break
     }
+    // Flagged/hidden counts feed the dashboard — refresh it.
+    bust('admin:stats').catch(() => {})
   },
 
   // ── Users ────────────────────────────────────────────────────────────────
 
-  async listUsers(opts: { search?: string; limit: number; offset: number }) {
+  async listUsers(opts: {
+    search?: string
+    status?: 'banned' | 'suspended'
+    limit: number
+    offset: number
+  }) {
     const rows = await adminRepository.listUsers(opts)
     const hasMore = rows.length > opts.limit
     return {
@@ -171,6 +180,7 @@ export const adminService = {
       reason,
       expiresAt,
     )
+    bust('admin:stats').catch(() => {})
 
     // Notify user — fire-and-forget
     const action = durationDays ? 'SUSPENDED' : 'BANNED'
@@ -196,6 +206,7 @@ export const adminService = {
 
   async liftSuspension(userId: string, liftedById: string) {
     const result = await adminRepository.liftSuspension(userId, liftedById)
+    bust('admin:stats').catch(() => {})
 
     notificationQueue.enqueue({
       userId,
@@ -337,6 +348,331 @@ export const adminService = {
     }
 
     return result
+  },
+
+  // ── Payouts ──────────────────────────────────────────────────────────────
+
+  async listPayouts(opts: { status?: string; limit: number; offset: number }) {
+    const rows = await adminRepository.listPayouts(opts)
+    const hasMore = rows.length > opts.limit
+    return {
+      items: hasMore ? rows.slice(0, opts.limit) : rows,
+      meta: { limit: opts.limit, offset: opts.offset, hasMore },
+    }
+  },
+
+  /**
+   * Process a seller withdrawal request. There is no automated transfer — the
+   * admin settles the payout via a manual bank transfer, then records it here.
+   *  - PAID:     mark completed + store the bank transfer ref. The wallet was
+   *              already debited when the withdrawal was requested, so no
+   *              balance change.
+   *  - REJECTED: mark rejected AND refund the amount to the seller's wallet
+   *              (with a reversing CREDIT transaction), since the request debited it.
+   * Idempotent: the status flip is a conditional updateMany on PENDING, so a
+   * double-submit (or a race) can never pay/refund twice.
+   */
+  async processPayout(
+    payoutId: string,
+    action: 'PAID' | 'REJECTED',
+    opts: { transactionRef?: string; moderatorId: string },
+  ) {
+    const payout = await adminRepository.getPayout(payoutId)
+    if (!payout)
+      throw createError({ statusCode: 404, statusMessage: 'Payout not found' })
+    if (payout.status !== 'PENDING')
+      throw createError({
+        statusCode: 400,
+        statusMessage: `Payout already ${payout.status.toLowerCase()}`,
+      })
+
+    const sellerProfileId = payout.wallet?.seller?.profileId
+    const amountNaira = (payout.amount / 100).toLocaleString('en-NG')
+
+    if (action === 'PAID') {
+      const { count } = await prisma.payout.updateMany({
+        where: { id: payoutId, status: 'PENDING' },
+        data: {
+          status: 'PAID',
+          completed_at: new Date(),
+          transaction_ref: opts.transactionRef ?? null,
+        },
+      })
+      if (count === 0)
+        throw createError({ statusCode: 409, statusMessage: 'Payout already processed' })
+
+      if (sellerProfileId) {
+        notificationQueue.enqueue({
+          userId: sellerProfileId,
+          type: 'GENERAL',
+          actorId: opts.moderatorId,
+          message: `Your withdrawal of ₦${amountNaira} has been paid out${
+            opts.transactionRef ? ` (ref: ${opts.transactionRef})` : ''
+          }.`,
+        })
+      }
+    } else {
+      // REJECTED — flip + refund the wallet atomically.
+      await prisma.$transaction(async (tx) => {
+        const { count } = await tx.payout.updateMany({
+          where: { id: payoutId, status: 'PENDING' },
+          data: { status: 'REJECTED', completed_at: new Date() },
+        })
+        if (count === 0)
+          throw createError({ statusCode: 409, statusMessage: 'Payout already processed' })
+
+        await tx.sellerWallet.update({
+          where: { id: payout.walletId },
+          data: { balance: { increment: payout.amount } },
+        })
+        await tx.transaction.create({
+          data: {
+            walletId: payout.walletId,
+            amount: payout.amount,
+            type: 'CREDIT',
+            description: `Withdrawal #${payoutId.slice(0, 8)} rejected — funds returned`,
+          },
+        })
+      })
+
+      if (sellerProfileId) {
+        notificationQueue.enqueue({
+          userId: sellerProfileId,
+          type: 'GENERAL',
+          actorId: opts.moderatorId,
+          message: `Your withdrawal of ₦${amountNaira} was declined and the funds returned to your wallet.`,
+        })
+      }
+    }
+
+    bust('admin:stats').catch(() => {})
+    return { id: payoutId, status: action }
+  },
+
+  // ── Finance / Orders ───────────────────────────────────────────────────────
+
+  async getFinanceOverview(days = 30) {
+    const since = new Date()
+    since.setUTCDate(since.getUTCDate() - days)
+    const [windowAgg, allTimeAgg, byStatus] =
+      await adminRepository.getFinanceOverview(since)
+
+    const gmv = windowAgg._sum.totalAmount ?? 0
+    const orders = windowAgg._count ?? 0
+
+    return {
+      days,
+      gmv, // kobo
+      orders,
+      aov: orders > 0 ? Math.round(gmv / orders) : 0,
+      shipping: windowAgg._sum.shippingCost ?? 0,
+      affiliatePaid: windowAgg._sum.affiliateCut ?? 0,
+      allTimeGmv: allTimeAgg._sum.totalAmount ?? 0,
+      allTimeOrders: allTimeAgg._count ?? 0,
+      byPaymentStatus: Object.fromEntries(
+        byStatus.map((r) => [r.paymentStatus, r._count]),
+      ),
+    }
+  },
+
+  async listOrders(opts: {
+    paymentStatus?: string
+    search?: string
+    limit: number
+    offset: number
+  }) {
+    const rows = await adminRepository.listOrders(opts)
+    const hasMore = rows.length > opts.limit
+    return {
+      items: hasMore ? rows.slice(0, opts.limit) : rows,
+      meta: { limit: opts.limit, offset: opts.offset, hasMore },
+    }
+  },
+
+  // ── Squares ────────────────────────────────────────────────────────────────
+
+  async listSquares(opts: {
+    status?: string
+    type?: string
+    search?: string
+    limit: number
+    offset: number
+  }) {
+    const rows = await adminRepository.listSquares(opts)
+    const hasMore = rows.length > opts.limit
+    return {
+      items: hasMore ? rows.slice(0, opts.limit) : rows,
+      meta: { limit: opts.limit, offset: opts.offset, hasMore },
+    }
+  },
+
+  async setSquareStatus(
+    id: string,
+    status: 'ACTIVE' | 'SUSPENDED',
+    moderatorId: string,
+  ) {
+    const square = await adminRepository.getSquare(id)
+    if (!square)
+      throw createError({ statusCode: 404, statusMessage: 'Square not found' })
+
+    const wasPending = square.status === 'PENDING'
+    const updated = await adminRepository.setSquareStatus(id, status)
+
+    // Dedupe recipients so one person never gets two pings for the same event.
+    const seen = new Set<string>()
+    const ping = (userId: string | null | undefined, message: string) => {
+      if (!userId || seen.has(userId)) return
+      seen.add(userId)
+      notificationQueue.enqueue({
+        userId,
+        type: 'GENERAL',
+        actorId: moderatorId,
+        message,
+      })
+    }
+
+    // 1. Officers — always told of the decision.
+    const officers = await adminRepository.listSquareOfficerProfileIds(id)
+    const officerMsg =
+      status === 'ACTIVE'
+        ? `Your market square "${square.name}" is now live on MarketX.`
+        : `Your market square "${square.name}" has been suspended by an administrator.`
+    for (const o of officers) ping(o.profileId, officerMsg)
+
+    if (status === 'ACTIVE') {
+      // 2. Followers who opted in while it was pending.
+      const followers = await adminRepository.listSquareFollowerIds(id)
+      for (const f of followers)
+        ping(f.userId, `A market square you follow, "${square.name}", is now live.`)
+
+      // 3. First activation of a geographic square → invite nearby sellers.
+      if (wasPending && square.type === 'GEOGRAPHIC' && (square.city || square.state)) {
+        const where = square.city || square.state
+        const sellers = await adminRepository.listLocalSellerProfileIds(
+          square.city,
+          square.state,
+        )
+        for (const s of sellers)
+          ping(
+            s.profileId,
+            `A new market square, "${square.name}", is live in ${where} — join it to reach local buyers.`,
+          )
+      }
+    }
+
+    // Public square directory is cached — refresh it, and the dashboard stat.
+    bust('squares:list:*').catch(() => {})
+    bust('admin:stats').catch(() => {})
+    return updated
+  },
+
+  // ── Seller verification documents ────────────────────────────────────────────
+
+  getSellerDocuments: adminRepository.listSellerDocuments,
+
+  // ── Categories ─────────────────────────────────────────────────────────────
+
+  listCategories: adminRepository.listCategories,
+
+  async createCategory(data: { name: string; slug: string; thumbnailCatUrl?: string }) {
+    try {
+      const created = await adminRepository.createCategory(data)
+      bust('data:categories').catch(() => {})
+      return created
+    } catch (e: any) {
+      if (e?.code === 'P2002')
+        throw createError({ statusCode: 409, statusMessage: 'A category with that name or slug already exists' })
+      throw e
+    }
+  },
+
+  async updateCategory(
+    id: number,
+    data: { name?: string; slug?: string; thumbnailCatUrl?: string | null },
+  ) {
+    try {
+      const updated = await adminRepository.updateCategory(id, data)
+      bust('data:categories').catch(() => {})
+      return updated
+    } catch (e: any) {
+      if (e?.code === 'P2002')
+        throw createError({ statusCode: 409, statusMessage: 'A category with that name or slug already exists' })
+      if (e?.code === 'P2025')
+        throw createError({ statusCode: 404, statusMessage: 'Category not found' })
+      throw e
+    }
+  },
+
+  async deleteCategory(id: number) {
+    try {
+      await adminRepository.deleteCategory(id)
+      bust('data:categories').catch(() => {})
+      return { id }
+    } catch (e: any) {
+      if (e?.code === 'P2025')
+        throw createError({ statusCode: 404, statusMessage: 'Category not found' })
+      throw e
+    }
+  },
+
+  // ── Broadcast / announcements ───────────────────────────────────────────────
+
+  async broadcastAudience() {
+    const [all, sellers] = await prisma.$transaction([
+      prisma.profile.count({ where: { bannedAt: null } }),
+      prisma.profile.count({
+        where: { bannedAt: null, sellerProfile: { some: {} } },
+      }),
+    ])
+    return { all, sellers, buyers: all - sellers }
+  },
+
+  /**
+   * Send a platform-wide in-app notification to a target audience. Fans out with
+   * batched createMany (not one queue job per user) and runs the fan-out in the
+   * background so the request returns immediately with the audience size.
+   */
+  async broadcast(opts: {
+    message: string
+    target: 'all' | 'sellers' | 'buyers'
+    moderatorId: string
+  }) {
+    const where: any = { bannedAt: null }
+    if (opts.target === 'sellers') where.sellerProfile = { some: {} }
+    else if (opts.target === 'buyers') where.sellerProfile = { none: {} }
+
+    const targeted = await prisma.profile.count({ where })
+
+    // Background fan-out — paged so we never load every profile into memory.
+    ;(async () => {
+      const BATCH = 1000
+      let skip = 0
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        const rows = await prisma.profile.findMany({
+          where,
+          select: { id: true },
+          orderBy: { id: 'asc' }, // unique key → stable offset pagination (no tie skips/dupes)
+          take: BATCH,
+          skip,
+        })
+        if (!rows.length) break
+        await prisma.notification.createMany({
+          data: rows.map((r) => ({
+            userId: r.id,
+            message: opts.message,
+            type: 'GENERAL' as const,
+            actorId: opts.moderatorId,
+          })),
+        })
+        if (rows.length < BATCH) break
+        skip += BATCH
+      }
+    })().catch((e) =>
+      logger.logError('[admin broadcast fan-out]', e, { target: opts.target }),
+    )
+
+    return { targeted }
   },
 
   // ── Stats ─────────────────────────────────────────────────────────────────

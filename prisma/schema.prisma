@@ -80,6 +80,9 @@ model Profile {
   supportTicketsRequested SupportTicket[]  @relation("SupportRequester")
   supportTicketsAssigned  SupportTicket[]  @relation("SupportAgent")
   supportMessages         SupportMessage[] @relation("SupportMessageAuthor")
+
+  @@index([created_at(sort: Desc)]) // admin user list ordering + pagination
+  @@index([bannedAt]) // admin banned/active counts + banned filter
 }
 
 model SellerProfile {
@@ -153,6 +156,7 @@ model SellerProfile {
   @@unique([profileId, store_slug])
   @@index([profileId])
   @@index([is_active, followers_count(sort: Desc)]) // featured: WHERE is_active=true ORDER BY followers_count DESC
+  @@index([created_at(sort: Desc)]) // admin seller list ordering + pagination
 }
 
 model Conversation {
@@ -274,6 +278,7 @@ model Products {
   analytics ProductAnalytics[]
 
   @@index([sellerId])
+  @@index([store_slug, status, created_at(sort: Desc)]) // seller storefront/management grid + countProducts: WHERE store_slug=? [AND status=?] ORDER BY created_at DESC
   @@index([status, created_at(sort: Desc)]) // feed/shop queries: WHERE status='PUBLISHED' ORDER BY created_at DESC
   @@index([status, isDeal, created_at(sort: Desc)]) // shop-today deal filter
   @@index([status, showInFeed, created_at(sort: Desc)]) // home feed product injection
@@ -379,6 +384,8 @@ model Orders {
   @@index([paymentRef])
   @@index([purchaseGroupId])
   @@index([userId, created_at(sort: Desc)]) // buyer order list: WHERE userId=X ORDER BY created_at DESC (getUserOrders)
+  @@index([paymentStatus, created_at(sort: Desc)]) // admin orders list + revenue aggregate
+  @@index([created_at(sort: Desc)]) // admin all-orders list ordering
 }
 
 /// Pay-on-Delivery lifecycle for a POD order (one per Orders row). Owns the POD

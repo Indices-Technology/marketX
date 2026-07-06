@@ -129,7 +129,9 @@ import BaseModal from '~~/layers/ui/app/components/BaseModal.vue'
 import BaseTextarea from '~~/layers/ui/app/components/BaseTextarea.vue'
 
 const props = defineProps<{ user: any }>()
-const emit = defineEmits<{ updated: [] }>()
+// Emit the confirmed field changes so the parent can patch the row in place —
+// no full list refetch (snappy actions).
+const emit = defineEmits<{ updated: [patch: Record<string, any>] }>()
 
 const open = ref(false)
 const showModal = ref(false)
@@ -192,7 +194,17 @@ async function confirmSuspend() {
       durationDays: permanentBan.value ? undefined : durationDays.value,
     })
     showModal.value = false
-    emit('updated')
+    emit(
+      'updated',
+      permanentBan.value
+        ? { bannedAt: new Date().toISOString(), suspendedUntil: null }
+        : {
+            suspendedUntil: new Date(
+              Date.now() + durationDays.value * 86_400_000,
+            ).toISOString(),
+            bannedAt: null,
+          },
+    )
   } catch {
   } finally {
     submitting.value = false
@@ -203,7 +215,7 @@ async function lift() {
   open.value = false
   try {
     await adminApi.unsuspendUser(props.user.id)
-    emit('updated')
+    emit('updated', { suspendedUntil: null, bannedAt: null })
   } catch {}
 }
 
@@ -211,7 +223,7 @@ async function toggleActive(isActive: boolean) {
   open.value = false
   try {
     await adminApi.toggleUserActive(props.user.id, isActive)
-    emit('updated')
+    emit('updated', { isActive })
   } catch {}
 }
 
@@ -219,7 +231,7 @@ async function changeRole(role: RoleValue) {
   open.value = false
   try {
     await adminApi.setUserRole(props.user.id, role)
-    emit('updated')
+    emit('updated', { role })
   } catch {}
 }
 </script>

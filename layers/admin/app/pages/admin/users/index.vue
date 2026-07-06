@@ -38,7 +38,7 @@
     <div
       class="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
     >
-      <table v-if="pending" class="w-full text-[13px]">
+      <table v-if="pending && !data" class="w-full text-[13px]">
         <thead class="bg-gray-50 dark:bg-neutral-800/50">
           <tr
             class="text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-neutral-500"
@@ -173,7 +173,10 @@
               {{ formatDate(user.created_at) }}
             </td>
             <td class="px-4 py-3">
-              <AdminUserActions :user="user" @updated="refresh()" />
+              <AdminUserActions
+                :user="user"
+                @updated="(patch) => Object.assign(user, patch)"
+              />
             </td>
           </tr>
         </tbody>
@@ -218,32 +221,29 @@ function roleBadgeClass(role: string) {
 }
 
 const LIMIT = 20
+const route = useRoute()
 const search = ref('')
-const filter = ref('')
+// Seed from the URL so the dashboard's "Banned users" link (?filter=banned) works.
+const filter = ref((route.query.filter as string) || '')
 const offset = ref(0)
 const debouncedSearch = useDebounce(search, 300)
 
 const adminApi = useAdminApi()
-const { data, pending, refresh } = useAsyncData(
+const { data, pending } = useAsyncData(
   'admin-users',
   () =>
     adminApi.getUsers({
       search: debouncedSearch.value || undefined,
+      status: filter.value || undefined,
       limit: LIMIT,
       offset: offset.value,
     }),
-  { lazy: true, watch: [debouncedSearch, offset] },
+  { lazy: true, watch: [debouncedSearch, filter, offset] },
 )
 
-const users = computed(() => {
-  const items: any[] = (data.value as any)?.items ?? []
-  if (filter.value === 'banned') return items.filter((u: any) => u.bannedAt)
-  if (filter.value === 'suspended')
-    return items.filter(
-      (u: any) => u.suspendedUntil && new Date(u.suspendedUntil) > new Date(),
-    )
-  return items
-})
+// Filtering is done server-side now (banned/suspended run in the DB, not on the
+// loaded page) so the dashboard's "Banned users" link and paging are correct.
+const users = computed(() => (data.value as any)?.items ?? [])
 const hasMore = computed(() => (data.value as any)?.meta?.hasMore ?? false)
 
 watch([debouncedSearch, filter], () => {

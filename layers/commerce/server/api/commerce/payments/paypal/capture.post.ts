@@ -4,6 +4,8 @@
 import { z, ZodError } from 'zod'
 import { walletService } from '~~/layers/commerce/server/services/wallet.service'
 import { orderRepository } from '~~/layers/commerce/server/repositories/order.repository'
+import { cartRepository } from '~~/layers/commerce/server/repositories/cart.repository'
+import { analyticsService } from '~~/layers/commerce/server/services/analytics.service'
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
 import { notificationQueue } from '~~/server/queues/notification.queue'
@@ -78,10 +80,16 @@ export default defineEventHandler(async (event) => {
           walletService.creditSellersOnPayment(order.id).catch((e) =>
             logger.error('PayPal: wallet credit failed', { orderId: order.id, error: e?.message ?? e }),
           )
+          analyticsService.trackOrderSale(order.id).catch((e) =>
+            logger.error('PayPal: sale tracking failed', { orderId: order.id, error: e?.message ?? e }),
+          )
         }
       }
+      // Payment captured → empty the buyer's cart (idempotent).
+      await cartRepository.clearCart(user.id).catch(() => {})
+
       // One buyer confirmation email for the purchase
-      if (user.email && !user.email.includes('@checkout.marketx.app')) {
+      if (user.email && !user.email.includes('@checkout.marketx.')) {
         const { subject, html, text } = buildOrderStatusEmail(orderIds[0]!, 'CONFIRMED')
         emailQueue.enqueue({ to: user.email, subject, html, text, type: 'ORDER_CONFIRMATION' })
       }

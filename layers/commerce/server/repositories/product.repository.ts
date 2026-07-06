@@ -26,6 +26,40 @@ const productFeedInclude = {
   _count: { select: { likes: true, comments: true, shares: true } },
 } as const
 
+/**
+ * Seller storefront / management grid include. Slimmer than productInclude
+ * (drops offers, category, square, and the full variant list) but keeps exactly
+ * what SellerProductCard renders: first image, tag chips, and — via _count —
+ * the true variant/engagement counts. Cuts the seller list payload ~10x.
+ */
+const productSellerInclude = {
+  seller: {
+    select: {
+      store_slug: true,
+      store_logo: true,
+      store_name: true,
+      default_currency: true,
+    },
+  },
+  media: {
+    where: { isBgMusic: false },
+    select: { id: true, url: true, type: true, isBgMusic: true },
+    take: 1,
+    orderBy: { created_at: 'asc' as const },
+  },
+  // First (cheapest) variant only — the card shows a single "from" price.
+  variants: {
+    select: { id: true, size: true, stock: true, price: true },
+    take: 1,
+    orderBy: { price: 'asc' as const },
+  },
+  tags: {
+    include: { tag: { select: { id: true, name: true } } },
+  },
+  // variants count drives the card badge without shipping every variant row.
+  _count: { select: { variants: true, likes: true, comments: true, shares: true } },
+} as const
+
 const productInclude = {
   seller: {
     select: {
@@ -353,7 +387,7 @@ export const productRepository = {
     }
     return prisma.products.findMany({
       where,
-      include: productInclude,
+      include: productSellerInclude,
       take: pagination.limit,
       skip: pagination.offset,
       orderBy: { created_at: 'desc' },

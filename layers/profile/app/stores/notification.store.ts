@@ -3,6 +3,8 @@ import type { INotification } from '../types/profile.types'
 
 // SSE EventSource singleton — one stream per logged-in user
 let eventSource: EventSource | null = null
+// Pending reconnect timer, so we never stack multiple reconnect attempts.
+let reconnectTimer: ReturnType<typeof setTimeout> | null = null
 
 // ─── Notification sound (Web Audio API) ─────────────────────────────────────
 function playNotificationChime() {
@@ -108,6 +110,12 @@ export const useNotificationStore = defineStore('notification', () => {
     if (!import.meta.client) return
     if (eventSource) return // already connected
 
+    // A fresh (re)connection supersedes any pending reconnect timer.
+    if (reconnectTimer) {
+      clearTimeout(reconnectTimer)
+      reconnectTimer = null
+    }
+
     const authStore = useAuthStore()
     const token = authStore.accessToken
     if (!token) return
@@ -131,8 +139,20 @@ export const useNotificationStore = defineStore('notification', () => {
     })
 
     eventSource.onerror = () => {
-      // EventSource auto-reconnects — we just log it
-      console.warn('[Notifications] SSE stream error, will reconnect...')
+      // The token is baked into the stream URL, so EventSource's built-in
+      // auto-reconnect would keep retrying with a *stale* token forever once it
+      // expires. Instead: tear this stream down and schedule a manual reconnect
+      // that re-reads the current (possibly refreshed) token from the auth store.
+      console.warn('[Notifications] SSE stream error, scheduling reconnect...')
+      eventSource?.close()
+      eventSource = null
+
+      if (reconnectTimer) return // reconnect already scheduled
+      reconnectTimer = setTimeout(() => {
+        reconnectTimer = null
+        // Only reconnect while still logged in; connectStream re-reads the token.
+        if (useAuthStore().accessToken) connectStream()
+      }, 3000)
     }
   }
 
@@ -140,6 +160,10 @@ export const useNotificationStore = defineStore('notification', () => {
    * Close the SSE stream — call this on logout.
    */
   const disconnectStream = () => {
+    if (reconnectTimer) {
+      clearTimeout(reconnectTimer)
+      reconnectTimer = null
+    }
     eventSource?.close()
     eventSource = null
   }

@@ -22,9 +22,14 @@ export const createSquareSchema = z.object({
   state: z.string().max(80).optional(),
   physicalAddress: z.string().max(255).optional(),
   associationCutPercent: z.number().min(0).max(5).default(0.5),
+  // Optional owner assigned as CHAIRMAN at creation (admin flow).
+  ownerProfileId: z.string().uuid().optional(),
 })
 
-export const updateSquareSchema = createSquareSchema.partial().omit({ slug: true })
+// Owner and slug are set at creation only — not editable via update.
+export const updateSquareSchema = createSquareSchema
+  .partial()
+  .omit({ slug: true, ownerProfileId: true })
 
 export const membershipActionSchema = z.object({
   action: z.enum(['APPROVE', 'REJECT', 'SUSPEND']),

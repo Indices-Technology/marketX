@@ -57,7 +57,10 @@ export default defineEventHandler(async (event) => {
   }
 
   const config = useRuntimeConfig()
-  const appUrl = ((config.public.baseURL as string) || 'http://localhost:3000').trim().replace(/\/$/, '')
+  // Keep the whole flow on the domain the request arrived on (host-aware), so
+  // the `oauth_state` cookie set here is present again on the callback. Falls
+  // back to NUXT_PUBLIC_BASE_URL for unknown hosts.
+  const appUrl = resolveOAuthAppUrl(event, config.public.baseURL as string)
   const callback = `${appUrl}/api/auth/oauth/${provider}/callback`
   const state = crypto.randomUUID()
   const authorizeUrl = getOAuthAuthorizeUrl(provider, state, callback)

@@ -296,10 +296,10 @@
           <p class="text-sm text-gray-600 dark:text-neutral-400">
             Contact us at
             <a
-              :href="`mailto:${config.public.supportEmail || 'legal@stylex.indicestech.com'}`"
+              :href="`mailto:${config.public.supportEmail || 'legal@marketx.africa'}`"
               class="font-medium text-brand hover:underline"
               >{{
-                config.public.supportEmail || 'legal@stylex.indicestech.com'
+                config.public.supportEmail || 'legal@marketx.africa'
               }}</a
             >.
           </p>

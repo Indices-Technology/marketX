@@ -446,7 +446,7 @@
               <span
                 class="absolute left-3.5 top-1/2 -translate-y-1/2 select-none text-[13px] text-gray-400 dark:text-neutral-500"
               >
-                {{ $config.public.brandDomain || 'marketx.app' }}/
+                {{ $config.public.brandDomain || 'marketx.africa' }}/
               </span>
               <input
                 v-model="storeForm.slug"
@@ -671,7 +671,7 @@
               Your store URL
             </p>
             <p class="mt-1 text-lg font-black text-white">
-              {{ $config.public.brandDomain || 'marketx.app' }}/<span
+              {{ $config.public.brandDomain || 'marketx.africa' }}/<span
                 class="text-brand"
                 >{{ createdStoreSlug }}</span
               >

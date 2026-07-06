@@ -77,7 +77,7 @@ async function _sendEmail(data: EmailJob): Promise<void> {
   }
 
   const resend = new Resend(apiKey)
-  const senderEmail = process.env.SENDER_EMAIL || 'noreply@marketx.app'
+  const senderEmail = process.env.SENDER_EMAIL || 'noreply@marketx.africa'
 
   await resend.emails.send({
     from: senderEmail,

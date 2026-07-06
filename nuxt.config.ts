@@ -368,17 +368,19 @@ export default defineNuxtConfig({
     public: {
       // Brand — all UI fallbacks read from here. Change .env, not component code.
       siteName: process.env.NUXT_PUBLIC_SITE_NAME || 'MarketX',
-      brandDomain: process.env.NUXT_PUBLIC_BRAND_DOMAIN || 'marketx.app',
+      brandDomain: process.env.NUXT_PUBLIC_BRAND_DOMAIN || 'marketx.africa',
       supportEmail:
-        process.env.NUXT_PUBLIC_SUPPORT_EMAIL || 'support@marketx.app',
+        process.env.NUXT_PUBLIC_SUPPORT_EMAIL || 'support@marketx.africa',
       privacyEmail:
-        process.env.NUXT_PUBLIC_PRIVACY_EMAIL || 'privacy@marketx.app',
-      legalEmail: process.env.NUXT_PUBLIC_LEGAL_EMAIL || 'legal@marketx.app',
+        process.env.NUXT_PUBLIC_PRIVACY_EMAIL || 'privacy@marketx.africa',
+      legalEmail: process.env.NUXT_PUBLIC_LEGAL_EMAIL || 'legal@marketx.africa',
       baseURL: process.env.NUXT_PUBLIC_BASE_URL || 'http://localhost:3000',
       dassaSocketUrl:
         process.env.NUXT_PUBLIC_DASSA_SOCKET_URL || 'http://localhost:4000',
       // Payments
       paystackPk: process.env.PAYSTACK_PUBLIC_KEY,
+      // Pay on Delivery — off by default (paused); set NUXT_PUBLIC_POD_ENABLED=true to re-enable.
+      podEnabled: process.env.NUXT_PUBLIC_POD_ENABLED === 'true',
       // Cloudinary
       CloudinaryApiKey: process.env.CLOUDINARY_API_KEY,
       cloudName: process.env.CLOUDINARY_CLOUD_NAME,

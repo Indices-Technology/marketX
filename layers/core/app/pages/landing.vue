@@ -820,9 +820,9 @@
             >MarketX by Indices Technology LTD</span
           >
           <a
-            href="mailto:support@marketx.app"
+            href="mailto:support@marketx.africa"
             class="text-[10px] font-bold text-gray-400 transition-colors hover:text-brand"
-            >support@marketx.app</a
+            >support@marketx.africa</a
           >
         </div>
       </div>
