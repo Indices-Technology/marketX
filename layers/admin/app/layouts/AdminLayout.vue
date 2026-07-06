@@ -40,6 +40,26 @@
           label="Sellers"
         />
         <AdminNavItem
+          to="/admin/squares"
+          icon="mdi:city-variant-outline"
+          label="Squares"
+          :badge="pendingSquaresCount"
+          :admin-only="true"
+        />
+        <AdminNavItem
+          to="/admin/payouts"
+          icon="mdi:cash-multiple"
+          label="Payouts"
+          :badge="pendingPayoutsCount"
+          :admin-only="true"
+        />
+        <AdminNavItem
+          to="/admin/finance"
+          icon="mdi:chart-box-outline"
+          label="Finance"
+          :admin-only="true"
+        />
+        <AdminNavItem
           to="/support/agent"
           icon="mdi:headset"
           label="Support"
@@ -120,6 +140,29 @@
             @click="mobileOpen = false"
           />
           <AdminNavItem
+            to="/admin/squares"
+            icon="mdi:city-variant-outline"
+            label="Squares"
+            :badge="pendingSquaresCount"
+            :admin-only="true"
+            @click="mobileOpen = false"
+          />
+          <AdminNavItem
+            to="/admin/payouts"
+            icon="mdi:cash-multiple"
+            label="Payouts"
+            :badge="pendingPayoutsCount"
+            :admin-only="true"
+            @click="mobileOpen = false"
+          />
+          <AdminNavItem
+            to="/admin/finance"
+            icon="mdi:chart-box-outline"
+            label="Finance"
+            :admin-only="true"
+            @click="mobileOpen = false"
+          />
+          <AdminNavItem
             to="/support/agent"
             icon="mdi:headset"
             label="Support"
@@ -162,6 +205,12 @@ const { data: statsData } = await useAsyncData(
 )
 const pendingCount = computed(
   () => (statsData.value as any)?.data?.pendingReports ?? 0,
+)
+const pendingPayoutsCount = computed(
+  () => (statsData.value as any)?.data?.pendingPayouts ?? 0,
+)
+const pendingSquaresCount = computed(
+  () => (statsData.value as any)?.data?.pendingSquares ?? 0,
 )
 </script>
 

@@ -154,15 +154,25 @@ export const adminRepository = {
 
   // ── User/Seller lists ────────────────────────────────────────────────────
 
-  listUsers(opts: { search?: string; limit: number; offset: number }) {
-    const where = opts.search
-      ? {
-          OR: [
-            { email: { contains: opts.search, mode: 'insensitive' as const } },
-            { username: { contains: opts.search, mode: 'insensitive' as const } },
-          ],
-        }
-      : {}
+  listUsers(opts: {
+    search?: string
+    status?: 'banned' | 'suspended'
+    limit: number
+    offset: number
+  }) {
+    const where: any = {}
+    if (opts.search) {
+      where.OR = [
+        { email: { contains: opts.search, mode: 'insensitive' as const } },
+        { username: { contains: opts.search, mode: 'insensitive' as const } },
+      ]
+    }
+    // Status filters run in the DB (not on the loaded page) so the dashboard's
+    // "Banned users" link and paging return correct results.
+    if (opts.status === 'banned') where.bannedAt = { not: null }
+    else if (opts.status === 'suspended')
+      where.suspendedUntil = { gt: new Date() }
+
     return prisma.profile.findMany({
       where,
       select: {
@@ -249,6 +259,175 @@ export const adminRepository = {
     })
   },
 
+  // ── Payouts ──────────────────────────────────────────────────────────────
+
+  listPayouts(opts: { status?: string; limit: number; offset: number }) {
+    const where = opts.status ? { status: opts.status } : {}
+    return prisma.payout.findMany({
+      where,
+      select: {
+        id: true,
+        amount: true,
+        status: true,
+        bank_account: true,
+        transaction_ref: true,
+        requested_at: true,
+        completed_at: true,
+        wallet: {
+          select: {
+            id: true,
+            balance: true,
+            seller: {
+              select: {
+                id: true,
+                store_name: true,
+                store_slug: true,
+                store_logo: true,
+                profileId: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { requested_at: 'desc' }, // most-recent first (queue is filtered to PENDING by default)
+      take: opts.limit + 1,
+      skip: opts.offset,
+    })
+  },
+
+  getPayout(id: string) {
+    return prisma.payout.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        walletId: true,
+        amount: true,
+        status: true,
+        wallet: {
+          select: { seller: { select: { profileId: true, store_name: true } } },
+        },
+      },
+    })
+  },
+
+  // ── Finance / Orders ───────────────────────────────────────────────────────
+
+  // "Revenue" orders = fully paid (card/PayPal) + POD shipping-confirmed.
+  getFinanceOverview(sinceDate: Date) {
+    const PAID = ['PAID', 'SHIPPING_PAID'] as const
+    return prisma.$transaction([
+      prisma.orders.aggregate({
+        where: { paymentStatus: { in: PAID as any }, created_at: { gte: sinceDate } },
+        _sum: { totalAmount: true, shippingCost: true, affiliateCut: true },
+        _count: true,
+      }),
+      prisma.orders.aggregate({
+        where: { paymentStatus: { in: PAID as any } },
+        _sum: { totalAmount: true },
+        _count: true,
+      }),
+      prisma.orders.groupBy({ by: ['paymentStatus'], _count: true }),
+    ])
+  },
+
+  listOrders(opts: {
+    paymentStatus?: string
+    search?: string
+    limit: number
+    offset: number
+  }) {
+    const where: any = {}
+    if (opts.paymentStatus) where.paymentStatus = opts.paymentStatus
+    if (opts.search) {
+      const asId = Number(opts.search)
+      where.OR = [
+        { name: { contains: opts.search, mode: 'insensitive' as const } },
+        ...(Number.isInteger(asId) && asId > 0 ? [{ id: asId }] : []),
+      ]
+    }
+    return prisma.orders.findMany({
+      where,
+      select: {
+        id: true,
+        totalAmount: true,
+        shippingCost: true,
+        paymentStatus: true,
+        status: true,
+        paymentMethod: true,
+        created_at: true,
+        name: true,
+        affiliateCut: true,
+        _count: { select: { orderItem: true } },
+      },
+      orderBy: { created_at: 'desc' },
+      take: opts.limit + 1,
+      skip: opts.offset,
+    })
+  },
+
+  // ── Squares ────────────────────────────────────────────────────────────────
+
+  listSquares(opts: {
+    status?: string
+    type?: string
+    search?: string
+    limit: number
+    offset: number
+  }) {
+    const where: any = {}
+    if (opts.status) where.status = opts.status
+    if (opts.type) where.type = opts.type
+    if (opts.search) {
+      where.OR = [
+        { name: { contains: opts.search, mode: 'insensitive' as const } },
+        { slug: { contains: opts.search, mode: 'insensitive' as const } },
+        { city: { contains: opts.search, mode: 'insensitive' as const } },
+      ]
+    }
+    return prisma.square.findMany({
+      where,
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        type: true,
+        status: true,
+        city: true,
+        state: true,
+        iconUrl: true,
+        memberCount: true,
+        followerCount: true,
+        postCount: true,
+        created_at: true,
+      },
+      orderBy: { created_at: 'desc' },
+      take: opts.limit + 1,
+      skip: opts.offset,
+    })
+  },
+
+  getSquare(id: string) {
+    return prisma.square.findUnique({
+      where: { id },
+      select: { id: true, name: true, slug: true, status: true },
+    })
+  },
+
+  setSquareStatus(id: string, status: 'ACTIVE' | 'SUSPENDED') {
+    return prisma.square.update({
+      where: { id },
+      data: { status },
+      select: { id: true, status: true, slug: true },
+    })
+  },
+
+  listSquareOfficerProfileIds(squareId: string) {
+    return prisma.squareOfficer.findMany({
+      where: { squareId },
+      select: { profileId: true },
+    })
+  },
+
   // ── Stats ────────────────────────────────────────────────────────────────
 
   async getDashboardStats() {
@@ -263,6 +442,9 @@ export const adminRepository = {
       bannedUsers,
       flaggedPosts,
       flaggedProducts,
+      pendingPayouts,
+      payoutLiabilityAgg,
+      pendingSquares,
     ] = await prisma.$transaction([
       prisma.report.count({ where: { status: 'PENDING' } }),
       prisma.report.count({
@@ -273,6 +455,12 @@ export const adminRepository = {
       prisma.profile.count({ where: { bannedAt: { not: null } } }),
       prisma.post.count({ where: { moderationStatus: { in: ['FLAGGED', 'UNDER_REVIEW'] } } }),
       prisma.products.count({ where: { moderationStatus: { in: ['FLAGGED', 'UNDER_REVIEW'] } } }),
+      prisma.payout.count({ where: { status: 'PENDING' } }),
+      prisma.payout.aggregate({
+        where: { status: 'PENDING' },
+        _sum: { amount: true },
+      }),
+      prisma.square.count({ where: { status: 'PENDING' } }),
     ])
 
     return {
@@ -282,6 +470,10 @@ export const adminRepository = {
       activeSellers,
       bannedUsers,
       flaggedContent: flaggedPosts + flaggedProducts,
+      pendingPayouts,
+      // Kobo owed out to sellers in still-pending withdrawal requests.
+      payoutLiability: payoutLiabilityAgg._sum.amount ?? 0,
+      pendingSquares,
     }
   },
 }

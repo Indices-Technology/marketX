@@ -118,9 +118,9 @@ function switchStyle(id: keyof typeof MAP_STYLES) {
   map.once('styledata', () => {
     upsertRadiusCircle()
     addClusterLayers()
-    // DOM markers survive style changes — no re-add needed.
-    // Re-sync the canvas container class so pin/cluster visibility is correct.
-    togglePinVisibility(map.getZoom())
+    upsertClusterData()
+    // DOM markers survive style changes — reconcile only re-syncs visibility.
+    reconcilePins()
   })
 }
 
@@ -155,15 +155,19 @@ onMounted(async () => {
     placeUserDot()
     upsertRadiusCircle()
     addClusterLayers()
-    renderPins()
-    renderSquarePins()
+    upsertClusterData()
+    reconcilePins()
   })
 
-  // Toggle cluster vs individual markers after zoom settles.
-  // Using 'zoomend' (not 'zoom') avoids calling setLayoutProperty on every
-  // animation frame, which corrupts the GL layer state during rapid zoom.
-  map.on('zoomend', () => {
-    togglePinVisibility(map.getZoom())
+  // While the camera is moving: pause pin animations (give the frame budget to
+  // the pan/zoom) and mark the container so CSS stops repainting the pulses.
+  // On settle: re-cull DOM markers to the new viewport. 'moveend' fires for both
+  // panning and zooming, so it also handles crossing the cluster-zoom threshold.
+  const canvasContainer = map.getCanvasContainer()
+  map.on('movestart', () => canvasContainer.classList.add('map-moving'))
+  map.on('moveend', () => {
+    canvasContainer.classList.remove('map-moving')
+    reconcilePins()
   })
 })
 
@@ -242,7 +246,7 @@ function addClusterLayers() {
 
   // Remove existing source/layers if present (style switch calls this again)
   if (map.getSource('sellers-cluster')) {
-    for (const id of ['cluster-count', 'clusters']) {
+    for (const id of ['cluster-count', 'clusters', 'unclustered-point']) {
       if (map.getLayer(id)) map.removeLayer(id)
     }
     map.removeSource('sellers-cluster')
@@ -287,6 +291,39 @@ function addClusterLayers() {
     paint: { 'text-color': '#ffffff' },
   })
 
+  // Unclustered single stores. Without this layer, an isolated store (one that
+  // doesn't cluster with a neighbour) renders NOTHING below CLUSTER_ZOOM, since
+  // the DOM pins only appear at zoom ≥ CLUSTER_ZOOM. This is what made stores
+  // vanish when zoomed out (e.g. the nearest-fallback fit across the country).
+  // maxzoom hands off to the rich DOM pins once you zoom past the threshold.
+  map.addLayer({
+    id: 'unclustered-point',
+    type: 'circle',
+    source: 'sellers-cluster',
+    maxzoom: CLUSTER_ZOOM,
+    filter: ['!', ['has', 'point_count']],
+    paint: {
+      'circle-color': '#F43F5E',
+      'circle-radius': 8,
+      'circle-stroke-width': 2.5,
+      'circle-stroke-color': '#fff',
+      'circle-opacity': 0.95,
+    },
+  })
+
+  // Click an isolated store dot → fly in until its DOM pin (with logo + tooltip)
+  // takes over. Matches the cluster click behaviour; no selection race with the
+  // map's deselect handler.
+  map.on('click', 'unclustered-point', (e: any) => {
+    e.originalEvent?.stopPropagation()
+    const f = e.features?.[0]
+    if (!f) return
+    const coords = (f.geometry as any).coordinates.slice()
+    map.flyTo({ center: coords, zoom: Math.max(map.getZoom() + 2, CLUSTER_ZOOM + 1), duration: 500 })
+  })
+  map.on('mouseenter', 'unclustered-point', () => { map.getCanvas().style.cursor = 'pointer' })
+  map.on('mouseleave', 'unclustered-point', () => { map.getCanvas().style.cursor = '' })
+
   // Click cluster → zoom in.
   // MapLibre v3 uses Promise; v2 used callback. We handle both.
   map.on('click', 'clusters', (e: any) => {
@@ -319,28 +356,32 @@ function upsertClusterData() {
   if (src) src.setData(sellersToGeoJSON())
 }
 
-function applyViewMode(zoom?: number) {
+// Cluster GL layers: force-hide only when squares-only (their maxzoom already
+// hides them above CLUSTER_ZOOM). Store/square DOM markers are governed by the
+// viewport reconciler below, not by CSS visibility toggles.
+function applyClusterVisibility() {
   if (!map) return
-  const z = zoom ?? map.getZoom()
-  const mode = props.viewMode ?? 'both'
-  const container = map.getCanvasContainer()
-
-  // Store DOM markers: hide when squares-only OR below cluster zoom
-  const showStorePins = mode !== 'squares' && z >= CLUSTER_ZOOM
-  container.classList.toggle('pins-hidden', !showStorePins)
-
-  // Square DOM markers: hide when stores-only
-  container.classList.toggle('hide-square-pins', mode === 'stores')
-
-  // Cluster GL layers: force-hide when squares-only (layer maxzoom handles the rest)
-  const hideClusters = mode === 'squares'
-  for (const id of ['clusters', 'cluster-count']) {
-    if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', hideClusters ? 'none' : 'visible')
+  const hide = (props.viewMode ?? 'both') === 'squares'
+  for (const id of ['clusters', 'cluster-count', 'unclustered-point']) {
+    if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', hide ? 'none' : 'visible')
   }
 }
 
-// Keep old name as alias so all existing call sites keep working
-const togglePinVisibility = (zoom: number) => applyViewMode(zoom)
+// Predicate: is this lng/lat within the current viewport, padded ~25% so pins
+// just off-screen are ready before they scroll in. This is what caps the number
+// of live DOM markers (the #1 cost) to roughly what's visible.
+function makeInView(): (lng: number, lat: number) => boolean {
+  const b = map.getBounds()
+  const sw = b.getSouthWest()
+  const ne = b.getNorthEast()
+  const padLng = (ne.lng - sw.lng) * 0.25
+  const padLat = (ne.lat - sw.lat) * 0.25
+  const west = sw.lng - padLng
+  const east = ne.lng + padLng
+  const south = sw.lat - padLat
+  const north = ne.lat + padLat
+  return (lng, lat) => lng >= west && lng <= east && lat >= south && lat <= north
+}
 
 // ── User dot ──────────────────────────────────────────────────────────────────
 function placeUserDot() {
@@ -364,30 +405,45 @@ watch(() => [props.userLat, props.userLng], ([lat, lng]) => {
 })
 
 // ── Seller pins ───────────────────────────────────────────────────────────────
-watch(() => props.sellers, renderPins, { deep: true })
+// A new seller set is assigned by reference (composable does `sellers.value = …`),
+// so a shallow watch suffices — no need to deep-walk 100 objects on every change.
+watch(() => props.sellers, onSellersChanged)
 
-function renderPins() {
+function onSellersChanged() {
+  if (!map?.loaded()) return
+  upsertClusterData()   // clusters aggregate the FULL set on the GPU — cheap
+  reconcileSellerPins() // DOM markers only for what's actually on-screen
+}
+
+// Add/remove store DOM markers so only the on-screen ones exist. Below cluster
+// zoom (or in squares-only mode) none are created — the GL cluster layer stands
+// in for them, so MapLibre never repositions a crowd of hidden DOM nodes.
+function reconcileSellerPins() {
   if (!map || !maplibregl) return
 
-  const newSlugs = new Set(props.sellers.map((s) => s.store_slug))
+  const mode = props.viewMode ?? 'both'
+  const show = mode !== 'squares' && map.getZoom() >= CLUSTER_ZOOM
+  const inView = show ? makeInView() : null
 
-  // Remove stale
+  const target = inView
+    ? props.sellers.filter((s) => inView(s.longitude, s.latitude))
+    : []
+  const wanted = new Set(target.map((s) => s.store_slug))
+
+  // Remove markers that scrolled out of view (or no longer exist)
   for (const [slug, { marker }] of markerMap.entries()) {
-    if (!newSlugs.has(slug)) {
+    if (!wanted.has(slug)) {
       marker.remove()
       markerMap.delete(slug)
     }
   }
 
-  // Add new
-  for (const seller of props.sellers) {
-    if (markerMap.has(seller.store_slug)) {
-      // Update existing pin's online state without full rebuild
-      const { el } = markerMap.get(seller.store_slug)!
-      const pin = el.querySelector('.seller-pin') as HTMLElement | null
-      if (pin) {
-        pin.classList.toggle('pin-offline', !seller.isOnline)
-      }
+  // Add markers newly in view; refresh online state on those already placed
+  for (const seller of target) {
+    const existing = markerMap.get(seller.store_slug)
+    if (existing) {
+      const pin = existing.el.querySelector('.seller-pin') as HTMLElement | null
+      pin?.classList.toggle('pin-offline', !seller.isOnline)
       continue
     }
 
@@ -403,12 +459,6 @@ function renderPins() {
 
     markerMap.set(seller.store_slug, { marker, el })
   }
-
-  // Update cluster source with new seller data
-  upsertClusterData()
-
-  // Apply zoom-based visibility immediately after render
-  if (map?.loaded()) togglePinVisibility(map.getZoom())
 
   updateSelectedStyle()
 }
@@ -438,8 +488,8 @@ watch(() => props.selectedSlug, (slug) => {
   }
 })
 
-// Re-apply pin visibility whenever view mode changes
-watch(() => props.viewMode, () => { if (map?.loaded()) applyViewMode() })
+// Re-apply cluster visibility + re-cull markers whenever view mode changes
+watch(() => props.viewMode, () => { if (map?.loaded()) reconcilePins() })
 
 // ── Nearest-fallback: fit the map to the results when they're beyond the radius ───
 // (otherwise the nearest stores render off-screen and the map looks empty).
@@ -455,23 +505,30 @@ watch(() => [props.outsideRadius, props.sellers.length], () => {
 })
 
 // ── Square pins ───────────────────────────────────────────────────────────
-watch(() => props.squares, renderSquarePins, { deep: true })
+watch(() => props.squares, () => { if (map?.loaded()) reconcileSquarePins() })
 
-function renderSquarePins() {
+// Same viewport-culling treatment as store pins, gated on view mode (hidden in
+// stores-only mode). Squares are usually few, but culling keeps their pulse
+// animations off-screen from repainting too.
+function reconcileSquarePins() {
   if (!map || !maplibregl) return
 
-  const newIds = new Set(props.squares.map((sq) => sq.id))
+  const show = (props.viewMode ?? 'both') !== 'stores'
+  const inView = show ? makeInView() : null
 
-  // Remove stale
+  const target = inView
+    ? props.squares.filter((sq) => inView(sq.longitude, sq.latitude))
+    : []
+  const wanted = new Set(target.map((sq) => sq.id))
+
   for (const [id, { marker }] of squareMarkerMap.entries()) {
-    if (!newIds.has(id)) {
+    if (!wanted.has(id)) {
       marker.remove()
       squareMarkerMap.delete(id)
     }
   }
 
-  // Add new
-  for (const square of props.squares) {
+  for (const square of target) {
     if (squareMarkerMap.has(square.id)) continue
 
     const el = buildSquarePinEl(square)
@@ -480,7 +537,6 @@ function renderSquarePins() {
       emit('select-square', square)
     })
 
-    // 'square-pin-marker' className keeps these visible even when pins-hidden is active
     const marker = new maplibregl.Marker({ element: el, anchor: 'bottom', className: 'square-pin-marker' })
       .setLngLat([square.longitude, square.latitude])
       .addTo(map)
@@ -489,15 +545,22 @@ function renderSquarePins() {
   }
 }
 
+// Unified reconcile: cluster visibility + both marker sets to the current view.
+function reconcilePins() {
+  applyClusterVisibility()
+  reconcileSellerPins()
+  reconcileSquarePins()
+}
+
 function buildSquarePinEl(square: IMapSquare): HTMLElement {
   const wrap = document.createElement('div')
   wrap.className = 'sq-pin-wrap'
 
   const accent = safeColor(square.accentColor)
   const name = esc(square.name.slice(0, 20))
-  const location = esc([square.city, square.state].filter(Boolean).join(', '))
   const initials = esc(square.name.slice(0, 2).toUpperCase())
 
+  // Core pin only — tooltip is built lazily on first hover.
   wrap.innerHTML = `
     <div class="sq-pulse" style="--sq-color:${accent}"></div>
     <div class="sq-pin" style="--sq-color:${accent}">
@@ -507,21 +570,34 @@ function buildSquarePinEl(square: IMapSquare): HTMLElement {
       }
       <div class="sq-label">${name}</div>
     </div>
-    <div class="sq-tip" role="tooltip">
-      <div class="sq-tip-name">${esc(square.name)}</div>
-      ${location ? `<div class="sq-tip-loc">📍 ${location}</div>` : ''}
-      <div class="sq-tip-stats">
-        <span>${fmt(square.memberCount)} sellers</span>
-        <span class="tt-dot">·</span>
-        <span>${fmt(square.followerCount)} followers</span>
-      </div>
-      <a href="/squares/${esc(square.slug)}" class="sq-tip-visit" onclick="event.stopPropagation()">
-        Explore Square →
-      </a>
-    </div>
   `
 
+  wrap.addEventListener('mouseenter', () => {
+    if (wrap.querySelector('.sq-tip')) return
+    const tip = document.createElement('div')
+    tip.className = 'sq-tip'
+    tip.setAttribute('role', 'tooltip')
+    tip.innerHTML = buildSquareTipHTML(square)
+    wrap.appendChild(tip)
+  }, { once: true })
+
   return wrap
+}
+
+function buildSquareTipHTML(square: IMapSquare): string {
+  const location = esc([square.city, square.state].filter(Boolean).join(', '))
+  return `
+    <div class="sq-tip-name">${esc(square.name)}</div>
+    ${location ? `<div class="sq-tip-loc">📍 ${location}</div>` : ''}
+    <div class="sq-tip-stats">
+      <span>${fmt(square.memberCount)} sellers</span>
+      <span class="tt-dot">·</span>
+      <span>${fmt(square.followerCount)} followers</span>
+    </div>
+    <a href="/squares/${esc(square.slug)}" class="sq-tip-visit" onclick="event.stopPropagation()">
+      Explore Square →
+    </a>
+  `
 }
 
 // ── Pin builder ───────────────────────────────────────────────────────────────
@@ -551,7 +627,6 @@ function buildPinEl(seller: IMapSeller): HTMLElement {
   const logoUrl = esc(seller.store_logo ?? '')
   const initials = esc((seller.store_name ?? seller.store_slug ?? '?').slice(0, 2).toUpperCase())
   const name = esc((seller.store_name ?? seller.store_slug ?? '').slice(0, 16))
-  const location = esc(seller.locationLabel || seller.city || '')
   const pulseClass = seller.hasActiveDeal
     ? 'pin-pulse-deal'
     : seller.isPremium
@@ -560,7 +635,39 @@ function buildPinEl(seller: IMapSeller): HTMLElement {
         ? 'pin-pulse-open'
         : ''
 
-  // Status line for tooltip
+  // Core pin only. The tooltip is heavy (badges, inline SVG, links) and only one
+  // is ever open at once, so it's built lazily on first hover — this removes the
+  // bulk of the up-front DOM for every pin. Touch devices never hover (they use
+  // the bottom sheet), so on mobile the tooltip is never built at all.
+  wrap.innerHTML = `
+    ${pulseClass ? `<div class="${pulseClass}"></div>` : ''}
+    <div class="seller-pin${seller.hasActiveDeal ? ' pin-deal' : ''}${seller.isPremium && !seller.hasActiveDeal ? ' pin-premium' : ''}${!seller.isOnline ? ' pin-offline' : ''}">
+      ${logoUrl
+        ? `<img src="${logoUrl}" class="pin-logo" alt="" loading="lazy" />`
+        : `<span class="pin-initials">${initials}</span>`
+      }
+      ${seller.hasActiveDeal ? '<div class="pin-deal-dot"></div>' : ''}
+      ${seller.isOpenNow && !seller.hasActiveDeal ? '<div class="pin-open-ring"></div>' : ''}
+    </div>
+    <div class="pin-status-dot ${seller.isOnline ? 'pin-status-dot--online' : 'pin-status-dot--offline'}"></div>
+    <div class="pin-name${!seller.isOnline ? ' pin-name--offline' : ''}">${name}</div>
+  `
+
+  wrap.addEventListener('mouseenter', () => {
+    if (wrap.querySelector('.pin-tooltip')) return
+    const tip = document.createElement('div')
+    tip.className = 'pin-tooltip'
+    tip.setAttribute('role', 'tooltip')
+    tip.innerHTML = buildPinTooltipHTML(seller)
+    wrap.appendChild(tip)
+  }, { once: true })
+
+  return wrap
+}
+
+function buildPinTooltipHTML(seller: IMapSeller): string {
+  const location = esc(seller.locationLabel || seller.city || '')
+
   let statusLine = ''
   if (seller.isOnline) {
     statusLine = seller.isOpenNow
@@ -586,43 +693,28 @@ function buildPinEl(seller: IMapSeller): HTMLElement {
       })()
     : ''
 
-  wrap.innerHTML = `
-    ${pulseClass ? `<div class="${pulseClass}"></div>` : ''}
-    <div class="seller-pin${seller.hasActiveDeal ? ' pin-deal' : ''}${seller.isPremium && !seller.hasActiveDeal ? ' pin-premium' : ''}${!seller.isOnline ? ' pin-offline' : ''}">
-      ${logoUrl
-        ? `<img src="${logoUrl}" class="pin-logo" alt="" loading="lazy" />`
-        : `<span class="pin-initials">${initials}</span>`
-      }
-      ${seller.hasActiveDeal ? '<div class="pin-deal-dot"></div>' : ''}
-      ${seller.isOpenNow && !seller.hasActiveDeal ? '<div class="pin-open-ring"></div>' : ''}
+  return `
+    <div class="tt-header">
+      <div class="tt-name">${esc(seller.store_name ?? seller.store_slug ?? '')}</div>
+      ${openBadge}
     </div>
-    <div class="pin-status-dot ${seller.isOnline ? 'pin-status-dot--online' : 'pin-status-dot--offline'}"></div>
-    <div class="pin-name${!seller.isOnline ? ' pin-name--offline' : ''}">${name}</div>
-    <div class="pin-tooltip" role="tooltip">
-      <div class="tt-header">
-        <div class="tt-name">${esc(seller.store_name ?? seller.store_slug ?? '')}</div>
-        ${openBadge}
-      </div>
-      ${location ? `<div class="tt-loc">📍 ${location} · ${seller.distanceKm.toFixed(1)}km</div>` : ''}
-      <div class="tt-stats">
-        <span>${fmt(seller.followerCount)} followers</span>
-        <span class="tt-dot">·</span>
-        <span>${seller.productCount} products</span>
-      </div>
-      ${squareBadge}
-      ${seller.hasActiveDeal ? '<div class="tt-deal">🏷️ Active deal</div>' : ''}
-      ${seller.isPremium ? '<div class="tt-premium">⭐ Premium store</div>' : ''}
-      <div class="tt-status">${statusLine}</div>
-      <a href="/sellers/profile/${esc(seller.store_slug)}" class="tt-visit" onclick="event.stopPropagation()">
-        View store →
-      </a>
-      <a href="https://www.google.com/maps/dir/?api=1&destination=${seller.latitude},${seller.longitude}" target="_blank" rel="noopener" class="tt-directions" onclick="event.stopPropagation()">
-        Get Directions ↗
-      </a>
+    ${location ? `<div class="tt-loc">📍 ${location} · ${seller.distanceKm.toFixed(1)}km</div>` : ''}
+    <div class="tt-stats">
+      <span>${fmt(seller.followerCount)} followers</span>
+      <span class="tt-dot">·</span>
+      <span>${seller.productCount} products</span>
     </div>
+    ${squareBadge}
+    ${seller.hasActiveDeal ? '<div class="tt-deal">🏷️ Active deal</div>' : ''}
+    ${seller.isPremium ? '<div class="tt-premium">⭐ Premium store</div>' : ''}
+    <div class="tt-status">${statusLine}</div>
+    <a href="/sellers/profile/${esc(seller.store_slug)}" class="tt-visit" onclick="event.stopPropagation()">
+      View store →
+    </a>
+    <a href="https://www.google.com/maps/dir/?api=1&destination=${seller.latitude},${seller.longitude}" target="_blank" rel="noopener" class="tt-directions" onclick="event.stopPropagation()">
+      Get Directions ↗
+    </a>
   `
-
-  return wrap
 }
 </script>
 
@@ -943,14 +1035,19 @@ function buildPinEl(seller: IMapSeller): HTMLElement {
 }
 .tt-directions:hover { background: rgba(255,255,255,0.13); color: #fff; }
 
-/* ── Pin visibility (cluster mode + view mode) ───────────────────────────────── */
-/* Store markers hidden below CLUSTER_ZOOM or when viewMode is squares-only */
-.maplibregl-canvas-container.pins-hidden .maplibregl-marker:not(.user-dot-marker):not(.square-pin-marker) {
-  display: none !important;
-}
-/* Square markers hidden when viewMode is stores-only */
-.maplibregl-canvas-container.hide-square-pins .square-pin-marker {
-  display: none !important;
+/* ── Pause pin animations while the map is moving ────────────────────────────── */
+/* Marker visibility is now handled by add/remove in the reconciler (not CSS), so
+   the only job left here is to freeze the infinite pulse animations during a
+   pan/zoom — otherwise they force continuous repaints that compete with the map
+   for the frame budget. The 'map-moving' class is added on movestart, removed on
+   moveend. */
+.maplibregl-canvas-container.map-moving .pin-pulse-deal,
+.maplibregl-canvas-container.map-moving .pin-pulse-premium,
+.maplibregl-canvas-container.map-moving .pin-pulse-open,
+.maplibregl-canvas-container.map-moving .pin-open-ring,
+.maplibregl-canvas-container.map-moving .sq-pulse,
+.maplibregl-canvas-container.map-moving .user-pulse {
+  animation-play-state: paused;
 }
 
 /* ── Square pin ──────────────────────────────────────────────────────────────── */

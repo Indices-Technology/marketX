@@ -139,8 +139,9 @@ const emit = defineEmits<{
   'update:modelValue': [value: 'paystack' | 'paypal' | 'pod']
 }>()
 
-// Pay-on-Delivery is disabled until GIG exposes a COD endpoint. Flip to re-enable.
-const POD_ENABLED = false
+// Pay-on-Delivery is gated by a runtime flag (paused). Set
+// NUXT_PUBLIC_POD_ENABLED=true to re-enable across the app.
+const POD_ENABLED = useRuntimeConfig().public.podEnabled === true
 
 const { formatProductNGN } = useCurrency()
 const fmtPNGN = (majorNGN: number) => formatProductNGN(majorNGN)

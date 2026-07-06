@@ -16,7 +16,7 @@ class AdminApiClient extends BaseApiClient {
   }
 
   // ── Users ────────────────────────────────────────────────────────────────────
-  getUsers(params: { search?: string; limit?: number; offset?: number }) {
+  getUsers(params: { search?: string; status?: string; limit?: number; offset?: number }) {
     return this.request<any>('/api/admin/users', { params: this.cleanParams(params) })
   }
 
@@ -43,6 +43,33 @@ class AdminApiClient extends BaseApiClient {
 
   verifySeller(id: string, status: 'VERIFIED' | 'REJECTED') {
     return this.request<any>(`/api/admin/sellers/${id}/verify`, { method: 'POST', body: { status } })
+  }
+
+  // ── Payouts ──────────────────────────────────────────────────────────────────
+  getPayouts(params: { status?: string; limit?: number; offset?: number }) {
+    return this.request<any>('/api/admin/payouts', { params: this.cleanParams(params) })
+  }
+
+  processPayout(id: string, body: { action: 'PAID' | 'REJECTED'; transactionRef?: string }) {
+    return this.request<any>(`/api/admin/payouts/${id}/process`, { method: 'POST', body })
+  }
+
+  // ── Squares ──────────────────────────────────────────────────────────────────
+  getSquares(params: { status?: string; type?: string; search?: string; limit?: number; offset?: number }) {
+    return this.request<any>('/api/admin/squares', { params: this.cleanParams(params) })
+  }
+
+  setSquareStatus(id: string, status: 'ACTIVE' | 'SUSPENDED') {
+    return this.request<any>(`/api/admin/squares/${id}/status`, { method: 'POST', body: { status } })
+  }
+
+  // ── Finance / Orders ─────────────────────────────────────────────────────────
+  getFinance(params: { days?: number } = {}) {
+    return this.request<any>('/api/admin/finance', { params: this.cleanParams(params) })
+  }
+
+  getOrders(params: { paymentStatus?: string; search?: string; limit?: number; offset?: number }) {
+    return this.request<any>('/api/admin/orders', { params: this.cleanParams(params) })
   }
 
   // ── Content moderation (inline, from any page) ───────────────────────────────

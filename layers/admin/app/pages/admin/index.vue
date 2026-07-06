@@ -61,6 +61,27 @@
         color="gray"
         to="/admin/users?filter=banned"
       />
+      <AdminStatCard
+        label="Pending Squares"
+        :value="stats?.pendingSquares ?? 0"
+        icon="mdi:city-variant-outline"
+        color="blue"
+        to="/admin/squares?status=PENDING"
+      />
+      <AdminStatCard
+        label="Pending Payouts"
+        :value="stats?.pendingPayouts ?? 0"
+        icon="mdi:cash-clock"
+        color="amber"
+        to="/admin/payouts"
+      />
+      <AdminStatCard
+        label="Owed to sellers (₦)"
+        :value="Math.round((stats?.payoutLiability ?? 0) / 100)"
+        icon="mdi:cash-multiple"
+        color="green"
+        to="/admin/payouts"
+      />
     </div>
 
     <!-- Quick links -->
@@ -136,7 +157,13 @@ const adminApi = useAdminApi()
 const { data, pending } = useAsyncData(
   'admin-stats',
   () => adminApi.getStats(),
-  { lazy: true },
+  {
+    lazy: true,
+    // Reuse the cached payload for an instant paint on reload/back-nav; the
+    // 60s server cache keeps the numbers fresh enough.
+    getCachedData: (key, nuxtApp) =>
+      nuxtApp.payload.data[key] ?? nuxtApp.static.data[key],
+  },
 )
 const stats = computed(() => (data.value as any)?.data)
 </script>

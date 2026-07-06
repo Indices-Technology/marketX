@@ -379,6 +379,8 @@ export default defineNuxtConfig({
         process.env.NUXT_PUBLIC_DASSA_SOCKET_URL || 'http://localhost:4000',
       // Payments
       paystackPk: process.env.PAYSTACK_PUBLIC_KEY,
+      // Pay on Delivery — off by default (paused); set NUXT_PUBLIC_POD_ENABLED=true to re-enable.
+      podEnabled: process.env.NUXT_PUBLIC_POD_ENABLED === 'true',
       // Cloudinary
       CloudinaryApiKey: process.env.CLOUDINARY_API_KEY,
       cloudName: process.env.CLOUDINARY_CLOUD_NAME,

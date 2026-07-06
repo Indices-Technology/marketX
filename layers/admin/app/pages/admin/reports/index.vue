@@ -37,7 +37,7 @@
     </div>
 
     <!-- Queue -->
-    <div v-if="pending" class="space-y-3">
+    <div v-if="pending && !data" class="space-y-3">
       <div
         v-for="i in 5"
         :key="i"
@@ -62,7 +62,7 @@
         v-for="report in reports"
         :key="report.id"
         :report="report"
-        @resolved="onResolved"
+        @resolved="onResolved(report.id)"
       />
     </div>
 
@@ -113,7 +113,7 @@ const contentTypeFilter = ref((route.query.contentType as string) || '')
 const offset = ref(0)
 
 const adminApi = useAdminApi()
-const { data, pending, refresh } = useAsyncData(
+const { data, pending } = useAsyncData(
   'admin-reports',
   () =>
     adminApi.getReports({
@@ -134,8 +134,11 @@ function setStatus(s: string) {
   router.replace({ query: { ...route.query, status: s } })
 }
 
-function onResolved() {
-  refresh()
+function onResolved(id: string) {
+  // Resolved reports leave the actionable queue — drop the row optimistically
+  // instead of refetching the whole list.
+  const d = data.value as any
+  if (d?.items) d.items = d.items.filter((r: any) => r.id !== id)
 }
 
 watch([contentTypeFilter], () => {

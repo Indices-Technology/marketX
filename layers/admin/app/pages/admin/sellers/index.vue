@@ -41,7 +41,7 @@
     <div
       class="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
     >
-      <table v-if="pending" class="w-full text-[13px]">
+      <table v-if="pending && !data" class="w-full text-[13px]">
         <thead class="bg-gray-50 dark:bg-neutral-800/50">
           <tr
             class="text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-neutral-500"
@@ -222,34 +222,56 @@ const FILTERS = [
 ]
 
 const search = ref('')
-const statusFilter = ref('')
+const route = useRoute()
+// Seed from the URL so the dashboard's "?status=pending" link works.
+const statusFilter = ref((route.query.status as string) || '')
 const offset = ref(0)
 
 const adminApi = useAdminApi()
-const { data, pending, refresh } = useAsyncData(
+// Debounce search so we don't fire a request on every keystroke.
+const debouncedSearch = useDebounce(search, 300)
+const { data, pending } = useAsyncData(
   'admin-sellers',
   () =>
     adminApi.getSellers({
-      search: search.value || undefined,
+      search: debouncedSearch.value || undefined,
       status: statusFilter.value || undefined,
       limit: LIMIT,
       offset: offset.value,
     }),
-  { lazy: true, watch: [search, statusFilter, offset] },
+  { lazy: true, watch: [debouncedSearch, statusFilter, offset] },
 )
 
 const sellers = computed(() => (data.value as any)?.items ?? [])
 const hasMore = computed(() => (data.value as any)?.meta?.hasMore ?? false)
 
-watch([search, statusFilter], () => {
+watch([debouncedSearch, statusFilter], () => {
   offset.value = 0
 })
 
 async function verify(id: string, status: 'VERIFIED' | 'REJECTED') {
   try {
     await adminApi.verifySeller(id, status)
-    refresh()
+    // Patch the row in place instead of refetching the whole list.
+    const row = (data.value as any)?.items?.find((s: any) => s.id === id)
+    if (row)
+      Object.assign(row, {
+        verification_status: status,
+        is_verified: status === 'VERIFIED',
+      })
   } catch {}
+}
+
+function useDebounce<T>(value: Ref<T>, delay: number) {
+  const debounced = ref(value.value) as Ref<T>
+  let timer: ReturnType<typeof setTimeout>
+  watch(value, (v) => {
+    clearTimeout(timer)
+    timer = setTimeout(() => {
+      debounced.value = v
+    }, delay)
+  })
+  return debounced
 }
 
 function verificationClass(status: string) {
