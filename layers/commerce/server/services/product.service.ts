@@ -7,6 +7,7 @@ import { buildReviewReceivedEmail } from '~~/server/utils/email/emailService'
 import { auditService } from '~~/server/layers/shared/audit/audit.service'
 import { productRepository } from '../repositories/product.repository'
 import { prisma } from '~~/server/utils/db'
+import { remember, bust } from '~~/server/utils/cache'
 import { entityEmbedder } from '~~/layers/ai/server/services/entity-embedder.service'
 import {
   createProductSchema,
@@ -34,6 +35,29 @@ export interface ReviewInput {
   rating: number
   title?: string
   body?: string
+}
+
+// Public product listings are cached for this long. Kept short so a new/edited
+// product surfaces quickly even if a bust is somehow missed; mutations bust
+// explicitly (see PRODUCT_LIST_CACHE_PATTERN) so the normal case is immediate.
+const PRODUCT_LIST_TTL = 60 // seconds
+const PRODUCT_LIST_CACHE_PATTERN = 'products:list:*'
+
+/**
+ * Deterministic cache key for a public listing page. Equivalent queries (same
+ * filters + pagination, regardless of key order or undefined fields) collapse to
+ * the same key so they share one cached result.
+ */
+function productListCacheKey(
+  filters: Record<string, unknown>,
+  pagination: { limit: number; offset: number },
+): string {
+  const parts = Object.entries(filters)
+    .filter(([, v]) => v !== undefined && v !== null && v !== '')
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([k, v]) => `${k}=${v}`)
+  parts.push(`limit=${pagination.limit}`, `offset=${pagination.offset}`)
+  return `products:list:${parts.join('&')}`
 }
 
 async function generateUniqueSlug(title: string): Promise<string> {
@@ -106,6 +130,10 @@ export const productService = {
 
     entityEmbedder.embedProduct(product.id)
 
+    // A new PUBLISHED product changes public listing pages — invalidate them.
+    // DRAFT creates don't appear in any cached (PUBLISHED-only) listing.
+    if (validated.status === 'PUBLISHED') await bust(PRODUCT_LIST_CACHE_PATTERN)
+
     return product
   },
 
@@ -134,12 +162,21 @@ export const productService = {
       sortBy: filters?.sortBy,
     }
 
-    const [products, total] = await Promise.all([
-      productRepository.getProducts(repoFilters, { limit, offset }),
-      productRepository.countProducts({ status, search, sellerId, isThrift, categorySlug }),
-    ])
+    const fetchPage = async () => {
+      const [products, total] = await Promise.all([
+        productRepository.getProducts(repoFilters, { limit, offset }),
+        productRepository.countProducts({ status, search, sellerId, isThrift, categorySlug }),
+      ])
+      return { products, total, limit, offset }
+    }
 
-    return { products, total, limit, offset }
+    // Only PUBLISHED listings are public and user-independent, so only those are
+    // cached. Seller-private DRAFT/ARCHIVED views change often, are low-traffic,
+    // and are scoped to one seller — skip the cache for them.
+    if (status !== 'PUBLISHED') return fetchPage()
+
+    const key = productListCacheKey(repoFilters, { limit, offset })
+    return remember(key, PRODUCT_LIST_TTL, fetchPage)
   },
 
   async getProductById(id: number) {
@@ -197,18 +234,21 @@ export const productService = {
     // Snapshot the current status/seller so we can detect a draft → published
     // transition and notify followers once (the create path only fires when a
     // product is created already-PUBLISHED).
-    const prev = await prisma.product.findUnique({
-      where: { id },
-      select: { status: true, sellerId: true, title: true },
-    })
-
-    // Snapshot current variant stocks before update (only when variants are changing)
-    const stocksBefore = validated.variants?.length
-      ? await prisma.productVariant.findMany({
-          where: { productId: id },
-          select: { size: true, stock: true },
-        })
-      : []
+    // Snapshot the current status/seller (draft→published detection) and the
+    // current variant stocks (back-in-stock/low-stock alerts) in parallel — the
+    // two reads are independent, so serializing them only added latency.
+    const [prev, stocksBefore] = await Promise.all([
+      prisma.products.findUnique({
+        where: { id },
+        select: { status: true, sellerId: true, title: true },
+      }),
+      validated.variants?.length
+        ? prisma.productVariant.findMany({
+            where: { productId: id },
+            select: { size: true, stock: true },
+          })
+        : Promise.resolve([]),
+    ])
 
     const updated = await productRepository.updateProduct(
       id,
@@ -256,53 +296,60 @@ export const productService = {
         .catch(() => {})
     }
 
-    // Back-in-stock and low-stock alerts
+    // Back-in-stock and low-stock alerts — fire-and-forget so the extra
+    // stocksAfter read never blocks the PATCH response.
     if (validated.variants?.length && stocksBefore.length) {
       const beforeBySize = new Map(stocksBefore.map((v) => [v.size, v.stock]))
-      const stocksAfter = await prisma.productVariant.findMany({
-        where: { productId: id },
-        select: { size: true, stock: true },
-      })
-
-      let backInStock = false
-      for (const v of stocksAfter) {
-        const oldStock = beforeBySize.get(v.size) ?? 0
-        if (oldStock === 0 && v.stock > 0) backInStock = true
-        // Low stock: only fire when stock drops into the danger zone from above
-        if (v.stock > 0 && v.stock <= 3 && oldStock > 3) {
-          notificationQueue.enqueue({
-            userId,
-            type: 'PRODUCT',
-            actorId: userId,
-            productId: id,
-            message: `Low stock alert: "${v.size}" has only ${v.stock} unit${v.stock !== 1 ? 's' : ''} left`,
-          })
-        }
-      }
-
-      if (backInStock) {
-        // Notify all users who liked this product — fire-and-forget
-        prisma.like
-          .findMany({
-            where: { productId: id },
-            select: { userId: true },
-          })
-          .then((likes) => {
-            for (const like of likes) {
+      prisma.productVariant
+        .findMany({
+          where: { productId: id },
+          select: { size: true, stock: true },
+        })
+        .then((stocksAfter) => {
+          let backInStock = false
+          for (const v of stocksAfter) {
+            const oldStock = beforeBySize.get(v.size) ?? 0
+            if (oldStock === 0 && v.stock > 0) backInStock = true
+            // Low stock: only fire when stock drops into the danger zone from above
+            if (v.stock > 0 && v.stock <= 3 && oldStock > 3) {
               notificationQueue.enqueue({
-                userId: like.userId,
+                userId,
                 type: 'PRODUCT',
                 actorId: userId,
                 productId: id,
-                message: 'A product you liked is back in stock!',
+                message: `Low stock alert: "${v.size}" has only ${v.stock} unit${v.stock !== 1 ? 's' : ''} left`,
               })
             }
-          })
-          .catch(() => {})
-      }
+          }
+
+          if (backInStock) {
+            // Notify all users who liked this product — fire-and-forget
+            prisma.like
+              .findMany({
+                where: { productId: id },
+                select: { userId: true },
+              })
+              .then((likes) => {
+                for (const like of likes) {
+                  notificationQueue.enqueue({
+                    userId: like.userId,
+                    type: 'PRODUCT',
+                    actorId: userId,
+                    productId: id,
+                    message: 'A product you liked is back in stock!',
+                  })
+                }
+              })
+              .catch(() => {})
+          }
+        })
+        .catch(() => {})
     }
 
     entityEmbedder.embedProduct(updated.id)
+
+    // Any edit can change price/status/stock/etc. shown in listings — bust them.
+    await bust(PRODUCT_LIST_CACHE_PATTERN)
 
     return updated
   },
@@ -486,6 +533,9 @@ export const productService = {
       ipAddress,
       userAgent,
     })
+
+    // Archiving removes the product from public listings — bust them.
+    await bust(PRODUCT_LIST_CACHE_PATTERN)
 
     return product
   },

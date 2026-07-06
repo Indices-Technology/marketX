@@ -6,6 +6,8 @@ import { podService } from '~~/layers/pod/server/services/pod.service'
 import { notificationQueue } from '~~/server/queues/notification.queue'
 import { emailQueue } from '~~/server/queues/email.queue'
 import { walletService } from '../../../services/wallet.service'
+import { cartRepository } from '../../../repositories/cart.repository'
+import { analyticsService } from '../../../services/analytics.service'
 import { squareService } from '~~/layers/square/server/services/square.service'
 import { buildOrderStatusEmail } from '~~/server/utils/email/emailService'
 
@@ -90,6 +92,7 @@ export default defineEventHandler(async (event) => {
       if (count > 0) {
         podConfirmedIds.push(order.id)
         notifySellers(order.id).catch((e) => logger.error('Webhook POD notify failed', { orderId: order.id, error: e?.message ?? e }))
+        analyticsService.trackOrderSale(order.id).catch((e) => logger.error('Webhook POD sale tracking failed', { orderId: order.id, error: e?.message ?? e }))
       }
     } else {
       const { count } = await prisma.orders.updateMany({
@@ -105,8 +108,18 @@ export default defineEventHandler(async (event) => {
         squareService
           .creditAssociationsForOrder(order.id)
           .catch((e) => logger.error('Webhook association credit failed', { orderId: order.id, error: e?.message ?? e }))
+        analyticsService
+          .trackOrderSale(order.id)
+          .catch((e) => logger.error('Webhook sale tracking failed', { orderId: order.id, error: e?.message ?? e }))
       }
     }
+  }
+
+  // Payment confirmed (card or POD shipping) → empty the buyer's cart. The
+  // webhook can arrive before the buyer returns to verify, so clearing here too
+  // is what actually guarantees the cart empties on abandoned-tab payments.
+  if (creditedAny || podConfirmedIds.length) {
+    await cartRepository.clearCart(orders[0]!.userId).catch(() => {})
   }
 
   // POD confirmed via webhook (buyer may never hit pod-verify): advance the POD
@@ -124,7 +137,7 @@ export default defineEventHandler(async (event) => {
     prisma.profile
       .findUnique({ where: { id: orders[0]!.userId }, select: { email: true } })
       .then((buyer) => {
-        if (!buyer?.email || buyer.email.includes('@checkout.marketx.app')) return
+        if (!buyer?.email || buyer.email.includes('@checkout.marketx.')) return
         const { subject, html, text } = buildOrderStatusEmail(orders[0]!.id, 'CONFIRMED')
         emailQueue.enqueue(
           { to: buyer.email, subject, html, text, type: 'ORDER_CONFIRMATION' },

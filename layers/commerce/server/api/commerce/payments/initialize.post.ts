@@ -92,7 +92,7 @@ export default defineEventHandler(async (event) => {
       ? body.email
       : isRealEmail(user.email)
         ? user.email
-        : `user_${user.id}@checkout.marketx.app`
+        : `user_${user.id}@checkout.marketx.africa`
     // Charge the whole purchase: items + shipping across all per-seller orders.
     const amount = group.itemsTotal + group.shippingTotal
     const ps = await paystack.initializeTransaction({

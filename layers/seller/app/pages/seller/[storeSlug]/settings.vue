@@ -194,7 +194,7 @@
               class="w-full select-none rounded-xl border border-gray-200 bg-gray-100 px-4 py-2.5 text-[14px] text-gray-500 dark:border-neutral-700 dark:bg-neutral-800/50 dark:text-neutral-400"
             >
               {{
-                $config.public.brandDomain || 'stylex.indicestech.com'
+                $config.public.brandDomain || 'marketx.africa'
               }}/sellers/profile/{{ storeSlug }}
             </div>
           </div>

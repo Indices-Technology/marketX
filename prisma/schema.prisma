@@ -274,6 +274,7 @@ model Products {
   analytics ProductAnalytics[]
 
   @@index([sellerId])
+  @@index([store_slug, status, created_at(sort: Desc)]) // seller storefront/management grid + countProducts: WHERE store_slug=? [AND status=?] ORDER BY created_at DESC
   @@index([status, created_at(sort: Desc)]) // feed/shop queries: WHERE status='PUBLISHED' ORDER BY created_at DESC
   @@index([status, isDeal, created_at(sort: Desc)]) // shop-today deal filter
   @@index([status, showInFeed, created_at(sort: Desc)]) // home feed product injection

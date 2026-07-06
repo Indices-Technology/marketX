@@ -341,7 +341,7 @@
             class="flex flex-col items-center justify-center gap-4 sm:flex-row"
           >
             <a
-              :href="`mailto:${config.public.supportEmail || 'support@stylex.indicestech.com'}`"
+              :href="`mailto:${config.public.supportEmail || 'support@marketx.africa'}`"
               class="flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-8 py-3.5 font-bold text-white transition-all hover:bg-[#d81b36] hover:shadow-lg hover:shadow-brand/20 active:scale-95 sm:w-auto"
             >
               <Icon name="mdi:email-fast-outline" size="20" />

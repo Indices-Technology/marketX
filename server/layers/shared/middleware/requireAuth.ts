@@ -22,6 +22,13 @@ import { IProfile } from '~~/layers/profile/app/types/profile.types'
  */
 export async function requireAuth(event: H3Event) {
   try {
+    // 0. Per-request memoization. requireAuth (and optionalAuth) can be called by
+    //    several layers within a single request; the token verify + DB loads only
+    //    need to happen once. Subsequent calls reuse the resolved user.
+    if (event.context.user) {
+      return event.context.user as IProfile
+    }
+
     // 1. Get auth header
     const authHeader = getHeader(event, 'authorization')
 
@@ -55,14 +62,32 @@ export async function requireAuth(event: H3Event) {
       })
     }
 
-    // 3b. Check session revocation when sessionId is present in the token.
+    // 3b + 4. Session-revocation check and profile load are independent reads, so
+    // run them in parallel instead of serially — this halves the auth round-trips
+    // that sit on the critical path of every authenticated request.
+    //
+    // Session revocation is only checked when sessionId is present in the token.
     // Tokens issued before this check was added won't have sessionId and are
     // allowed through until they expire naturally (max 24 h).
+    const [session, user] = await Promise.all([
+      payload.sessionId
+        ? prisma.session.findUnique({
+            where: { id: payload.sessionId },
+            select: { revokedAt: true, expiresAt: true },
+          })
+        : Promise.resolve(null),
+      prisma.profile.findUnique({
+        where: { id: payload.userId },
+        include: {
+          sellerProfile: {
+            where: { is_active: true },
+            take: 1,
+          },
+        },
+      }),
+    ])
+
     if (payload.sessionId) {
-      const session = await prisma.session.findUnique({
-        where: { id: payload.sessionId },
-        select: { revokedAt: true, expiresAt: true },
-      })
       if (!session || session.revokedAt || session.expiresAt < new Date()) {
         throw createError({
           statusCode: 401,
@@ -70,17 +95,6 @@ export async function requireAuth(event: H3Event) {
         })
       }
     }
-
-    // 4. Fetch full user profile from database
-    const user = await prisma.profile.findUnique({
-      where: { id: payload.userId },
-      include: {
-        sellerProfile: {
-          where: { is_active: true },
-          take: 1,
-        },
-      },
-    })
 
     if (!user) {
       throw createError({

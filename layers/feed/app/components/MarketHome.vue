@@ -281,15 +281,20 @@
       />
     </section>
 
-    <!-- ─── 5. FROM THE MARKET ────────────────────────────────────────────── -->
+    <!-- ─── 5. MARKET PULSE (community posts) ─────────────────────────────── -->
     <section ref="section5Ref">
       <div class="mb-4 flex items-end justify-between">
-        <h2 class="text-base font-bold text-gray-900 dark:text-white">
-          From the market
-        </h2>
+        <div>
+          <h2 class="text-base font-bold text-gray-900 dark:text-white">
+            Market Pulse
+          </h2>
+          <p class="mt-0.5 text-[12px] text-gray-500 dark:text-neutral-400">
+            Latest updates from merchants, creators and communities
+          </p>
+        </div>
         <NuxtLink
           to="/"
-          class="mb-0.5 text-xs font-semibold text-gray-400 hover:text-brand dark:text-neutral-500"
+          class="mb-0.5 shrink-0 text-xs font-semibold text-gray-400 hover:text-brand dark:text-neutral-500"
           @click.prevent="$emit('sign-in')"
         >
           Sign in for more →

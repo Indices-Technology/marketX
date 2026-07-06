@@ -57,6 +57,50 @@ export const analyticsService = {
     })
   },
 
+  /**
+   * Record a completed sale for every line of an order. Called once, at payment
+   * *confirmation* — never at checkout initiation, which would count abandoned or
+   * failed payments as revenue. Idempotency is provided by the caller's atomic
+   * `count > 0` guard (verify / webhook / paypal-capture / pod-verify).
+   */
+  async trackOrderSale(orderId: number) {
+    const items = await prisma.orderItem.findMany({
+      where: { orderId },
+      select: {
+        quantity: true,
+        price: true,
+        affiliateCut: true,
+        variant: {
+          select: {
+            product: {
+              select: {
+                id: true,
+                seller: { select: { store_slug: true, id: true } },
+              },
+            },
+          },
+        },
+      },
+    })
+
+    await Promise.all(
+      items.map((it) => {
+        const product = it.variant?.product
+        if (!product) return
+        const storeSlug =
+          product.seller?.store_slug ||
+          `seller-${product.seller?.id ?? 'unknown'}`
+        return this.trackSale(
+          product.id,
+          storeSlug,
+          it.quantity,
+          it.price,
+          it.affiliateCut ?? 0,
+        ).catch(() => {})
+      }),
+    )
+  },
+
   async getStoreAnalytics(storeSlug: string, days: number) {
     const from = new Date()
     from.setUTCDate(from.getUTCDate() - days + 1)

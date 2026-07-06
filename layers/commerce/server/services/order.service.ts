@@ -2,7 +2,6 @@ import {
   orderRepository,
   type CreateOrderData,
 } from '../repositories/order.repository'
-import { cartRepository } from '../repositories/cart.repository'
 import { affiliateRepository } from '../repositories/affiliate.repository'
 import { walletService } from './wallet.service'
 import { UserError } from '~~/layers/profile/server/types/user.types'
@@ -10,7 +9,6 @@ import { auditQueue } from '~~/server/queues/audit.queue'
 import { notificationQueue } from '~~/server/queues/notification.queue'
 import { emailQueue } from '~~/server/queues/email.queue'
 import { buildNewOrderSellerEmail } from '~~/server/utils/email/emailService'
-import { analyticsService } from './analytics.service'
 import { verifyShippingQuote } from '~~/layers/shipping/server/utils/quoteToken'
 
 export interface PlaceOrderInput {
@@ -311,16 +309,16 @@ export const orderService = {
       return out
     })
 
-    // Clear cart + fire-and-forget side effects (non-critical, outside tx)
-    await cartRepository.clearCart(userId)
+    // NOTE: the cart is intentionally NOT cleared here. placeOrder runs at
+    // payment *initialization* (before the buyer completes payment), so clearing
+    // now would empty the cart even when the payment is abandoned or fails. The
+    // cart is cleared only once the order is actually confirmed — at the payment
+    // confirmation points (payments verify / webhook / paypal capture / pod-verify).
 
-    Promise.all(
-      lines.map((l) =>
-        analyticsService
-          .trackSale(l.productId, l.storeSlug, l.quantity, l.price, l.affiliateCut)
-          .catch(() => {}),
-      ),
-    ).catch(() => {})
+    // NOTE: sale analytics are NOT tracked here. placeOrder runs at payment
+    // initialization, so tracking now would count abandoned/failed payments as
+    // revenue. Sales are recorded at the confirmation points (payments verify /
+    // webhook / paypal capture / pod-verify) via analyticsService.trackOrderSale.
 
     // Each created order belongs to exactly one seller (Map preserves insertion
     // order, so created[idx] ↔ the idx-th seller group). Notify + audit per order.

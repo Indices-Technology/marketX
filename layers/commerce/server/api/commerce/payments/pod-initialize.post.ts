@@ -182,7 +182,7 @@ export default defineEventHandler(async (event) => {
       const tld = e.split('.').pop()?.toLowerCase() ?? ''
       return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e) && !FAKE_TLDS.has(tld)
     }
-    const email = isPaystackEmail(user.email) ? user.email : `user_${user.id}@checkout.marketx.app`
+    const email = isPaystackEmail(user.email) ? user.email : `user_${user.id}@checkout.marketx.africa`
     const ps = await paystack.initializeTransaction({
       email,
       amount: group.shippingTotal || body.shippingCost, // shipping fee only — kobo

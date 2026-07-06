@@ -7,6 +7,8 @@ import { notificationQueue } from '~~/server/queues/notification.queue'
 import { emailQueue } from '~~/server/queues/email.queue'
 import { walletService } from '../../../services/wallet.service'
 import { orderRepository } from '../../../repositories/order.repository'
+import { cartRepository } from '../../../repositories/cart.repository'
+import { analyticsService } from '../../../services/analytics.service'
 import { paymentService } from '~~/layers/payments/server/services/payment.service'
 import { squareService } from '~~/layers/square/server/services/square.service'
 import { buildOrderStatusEmail } from '~~/server/utils/email/emailService'
@@ -90,10 +92,15 @@ export default defineEventHandler(async (event) => {
             .catch((e) => logger.error('Verify: wallet credit failed', { orderId: o.id, error: e?.message ?? e }))
           squareService.creditAssociationsForOrder(o.id)
             .catch((e) => logger.error('Verify: association credit failed', { orderId: o.id, error: e?.message ?? e }))
+          analyticsService.trackOrderSale(o.id)
+            .catch((e) => logger.error('Verify: sale tracking failed', { orderId: o.id, error: e?.message ?? e }))
         }
       }
+      // Payment confirmed → now it's safe to empty the cart (idempotent).
+      await cartRepository.clearCart(user.id).catch(() => {})
+
       // One buyer confirmation email for the purchase
-      if (user.email && !user.email.includes('@checkout.marketx.app')) {
+      if (user.email && !user.email.includes('@checkout.marketx.')) {
         const { subject, html, text } = buildOrderStatusEmail(orderIds[0]!, 'CONFIRMED')
         emailQueue.enqueue(
           { to: user.email, subject, html, text, type: 'ORDER_CONFIRMATION' },

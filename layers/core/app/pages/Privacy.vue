@@ -178,10 +178,10 @@
           <p class="mt-3">
             To exercise any right, contact us at
             <a
-              :href="`mailto:${config.public.supportEmail || 'privacy@stylex.indicestech.com'}`"
+              :href="`mailto:${config.public.supportEmail || 'privacy@marketx.africa'}`"
               class="font-medium text-brand hover:underline"
               >{{
-                config.public.supportEmail || 'privacy@stylex.indicestech.com'
+                config.public.supportEmail || 'privacy@marketx.africa'
               }}</a
             >.
           </p>
@@ -242,10 +242,10 @@
           <p class="text-sm text-gray-600 dark:text-neutral-400">
             Reach out to our privacy team at
             <a
-              :href="`mailto:${config.public.supportEmail || 'privacy@stylex.indicestech.com'}`"
+              :href="`mailto:${config.public.supportEmail || 'privacy@marketx.africa'}`"
               class="font-medium text-brand hover:underline"
               >{{
-                config.public.supportEmail || 'privacy@stylex.indicestech.com'
+                config.public.supportEmail || 'privacy@marketx.africa'
               }}</a
             >.
           </p>

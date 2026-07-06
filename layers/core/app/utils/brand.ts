@@ -17,12 +17,12 @@
 /** Static brand constants — use in server-side code or where composables can't run */
 export const BRAND = {
   name: 'MarketX',
-  domain: 'marketx.app',
+  domain: 'marketx.africa',
   storagePrefix: 'marketx',
   twitterHandle: '@marketxapp',
-  supportEmail: 'support@marketx.app',
-  privacyEmail: 'privacy@marketx.app',
-  legalEmail: 'legal@marketx.app',
+  supportEmail: 'support@marketx.africa',
+  privacyEmail: 'privacy@marketx.africa',
+  legalEmail: 'legal@marketx.africa',
   tagline: 'Your business, fully alive. Discover stores, buy local, sell globally.',
   shortTagline: 'The market for everyday business.',
   description:

@@ -49,9 +49,10 @@ export default defineEventHandler(async (event) => {
   const error = typeof query.error === 'string' ? query.error : ''
 
   const config = useRuntimeConfig()
-  const appUrl = ((config.public.baseURL as string) || 'http://localhost:3000')
-    .trim()
-    .replace(/\/$/, '')
+  // Must resolve to the SAME origin the flow started on (host-aware) — both so
+  // the redirect_uri sent to the token endpoint matches, and so we redirect the
+  // user back to the domain they logged in from.
+  const appUrl = resolveOAuthAppUrl(event, config.public.baseURL as string)
   const redirectPath = decodeURIComponent(
     getCookie(event, 'oauth_redirect') || '/',
   )

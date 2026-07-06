@@ -8,6 +8,8 @@ import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
 import { notificationQueue } from '~~/server/queues/notification.queue'
 import { emailQueue } from '~~/server/queues/email.queue'
 import { orderRepository } from '../../../repositories/order.repository'
+import { cartRepository } from '../../../repositories/cart.repository'
+import { analyticsService } from '../../../services/analytics.service'
 import { buildOrderStatusEmail } from '~~/server/utils/email/emailService'
 import { paymentService } from '~~/layers/payments/server/services/payment.service'
 import { podService } from '~~/layers/pod/server/services/pod.service'
@@ -133,6 +135,9 @@ export default defineEventHandler(async (event) => {
         notifyBuyerPODConfirmed(order).catch((e) =>
           logger.error('POD verify: notify buyer failed', { orderId: order.id, error: e?.message ?? e }),
         )
+        analyticsService.trackOrderSale(order.id).catch((e) =>
+          logger.error('POD verify: sale tracking failed', { orderId: order.id, error: e?.message ?? e }),
+        )
       }
     }
 
@@ -145,8 +150,11 @@ export default defineEventHandler(async (event) => {
     })
     await podService.debitSellerPodFees(orderIds)
 
+    // POD shipping confirmed → empty the buyer's cart (idempotent).
+    await cartRepository.clearCart(user.id).catch(() => {})
+
     // One buyer confirmation email for the purchase
-    if (user.email && !user.email.includes('@checkout.marketx.app')) {
+    if (user.email && !user.email.includes('@checkout.marketx.')) {
       const { subject, html, text } = buildOrderStatusEmail(orderIds[0]!, 'CONFIRMED')
       emailQueue.enqueue({ to: user.email, subject, html, text, type: 'ORDER_CONFIRMATION' })
     }
