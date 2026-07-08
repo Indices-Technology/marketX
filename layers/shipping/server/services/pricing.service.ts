@@ -47,6 +47,12 @@ export interface PricingInput {
   markup?: number
   /** Flat fee (minor) added to the derived list — carrier handling. */
   handlingFeeMinor?: number
+  /**
+   * Pass-through insurance premium (minor) baked into costMinor. Excluded from
+   * the markup — the platform doesn't profit on the carrier's insurance — and
+   * added back to the buyer price at cost.
+   */
+  insuranceMinor?: number
 }
 
 export interface PricingResult {
@@ -61,11 +67,15 @@ export function computePrice(input: PricingInput): PricingResult {
   const markup = input.markup ?? DEFAULT_MARKUP
 
   const fee = Math.max(0, Math.round(input.handlingFeeMinor ?? 0))
+  // Insurance is a pass-through premium inside cost: mark up only the carriage,
+  // then add insurance back at cost so the platform never profits on it.
+  const insurance = Math.min(cost, Math.max(0, Math.round(input.insuranceMinor ?? 0)))
+  const carriage = cost - insurance
   const list =
     input.listMinor != null
       ? Math.round(input.listMinor)
       : input.deriveList
-        ? Math.round(cost * (1 + markup)) + fee
+        ? Math.round(carriage * (1 + markup)) + fee + insurance
         : cost
 
   const discountPct = clamp01(input.discountPct ?? 0)

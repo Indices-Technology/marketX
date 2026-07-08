@@ -31,6 +31,9 @@ interface IRatesBody {
   parcel: IGetRatesPayload['parcel']
   /** Order subtotal in minor units (kobo) — drives BYOS free-over thresholds. */
   subtotalMinor?: number
+  /** Insure the shipment for its declared value (default true). When false, the
+   *  declared value sent to the carrier is 0 → no insurance premium, no coverage. */
+  insure?: boolean
 }
 
 export default defineEventHandler(async (event) => {
@@ -124,7 +127,8 @@ export default defineEventHandler(async (event) => {
           lng: dest.lng,
         },
         items: [{ qty: 1, unitWeightKg: body.parcel?.weightKg }],
-        declaredValueMinor: body.subtotalMinor ?? 0,
+        // Declared value drives carrier insurance (~1% at GIG). Opt-out sends 0.
+        declaredValueMinor: body.insure === false ? 0 : body.subtotalMinor ?? 0,
         subtotalMinor: body.subtotalMinor ?? 0,
         currency: 'NGN',
         sellerShipping,
@@ -143,6 +147,7 @@ export default defineEventHandler(async (event) => {
                 ? 'Express'
                 : 'Delivery',
           amountNGN: q.buyerPriceMinor / 100, // major NGN
+          insuranceNGN: q.insuranceMinor ? q.insuranceMinor / 100 : undefined,
           estimatedDays: q.etaText,
           provider: q.carrierId as IShipmentRate['provider'],
         })

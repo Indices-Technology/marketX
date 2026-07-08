@@ -76,46 +76,49 @@ export const walletService = {
    * Also credits the affiliate wallet if this order had a referral.
    */
   async releaseFundsOnDelivery(orderId: number) {
-    // Idempotency guard — skip if already released
-    const alreadyReleased = await prisma.transaction.findFirst({
-      where: { orderId, type: 'CREDIT_RELEASED' },
-    })
-    if (alreadyReleased) return
+    // Atomic claim-and-move so concurrent callers (buyer confirm-receipt, seller
+    // status → DELIVERED, and the 7-day auto-release cron) can't double-release.
+    // The whole claim + balance move runs in ONE transaction; the winning caller's
+    // conditional updateMany flips the pending rows, and any racing caller then
+    // matches zero rows and bails before touching a balance. This replaces the old
+    // read-then-write guard, which two callers could both pass and double-credit.
+    const byWallet = await prisma.$transaction(async (tx) => {
+      const pendingCredits = await tx.transaction.findMany({
+        where: { orderId, type: 'CREDIT_PENDING' },
+      })
+      if (!pendingCredits.length) return null
 
-    // Find the pending credits that were created at payment time
-    const pendingCredits = await prisma.transaction.findMany({
-      where: { orderId, type: 'CREDIT_PENDING' },
-    })
-
-    if (!pendingCredits.length) {
-      logger.warn(
-        `[wallet] No CREDIT_PENDING transactions found for order #${orderId} — skipping release`,
-      )
-      return
-    }
-
-    // Group by wallet
-    const byWallet = new Map<string, { total: number; ids: string[] }>()
-    for (const tx of pendingCredits) {
-      const entry = byWallet.get(tx.walletId) ?? { total: 0, ids: [] }
-      entry.total += tx.amount
-      entry.ids.push(tx.id)
-      byWallet.set(tx.walletId, entry)
-    }
-
-    for (const [walletId, { total, ids }] of byWallet) {
-      if (total <= 0) continue
-      // Move exact amount from pending → available
-      await walletRepository.releasePendingToBalance(walletId, total)
-      // Promote the transactions from CREDIT_PENDING → CREDIT_RELEASED
-      // so they show as earned in stats and history
-      await prisma.transaction.updateMany({
-        where: { id: { in: ids } },
+      // Claim: only the caller whose updateMany changes rows owns this release.
+      const { count } = await tx.transaction.updateMany({
+        where: { orderId, type: 'CREDIT_PENDING' },
         data: {
           type: 'CREDIT_RELEASED',
           description: `Order #${orderId} — delivered, funds released to balance`,
         },
       })
+      if (count === 0) return null
+
+      const totals = new Map<string, number>()
+      for (const c of pendingCredits) {
+        totals.set(c.walletId, (totals.get(c.walletId) ?? 0) + c.amount)
+      }
+      for (const [walletId, total] of totals) {
+        if (total <= 0) continue
+        // Move the exact held amount from pending → available.
+        await tx.sellerWallet.update({
+          where: { id: walletId },
+          data: {
+            pending_balance: { decrement: total },
+            balance: { increment: total },
+          },
+        })
+      }
+      return totals
+    })
+
+    // Lost the race (already released) or nothing to release.
+    if (!byWallet) {
+      return
     }
 
     // Notify each seller — resolve wallet IDs to seller profiles, then notify individually
@@ -134,7 +137,7 @@ export const walletService = {
       for (const row of walletRows) {
         const profileId = row.seller?.profileId
         if (!profileId) continue
-        const amount = byWallet.get(row.id)?.total ?? 0
+        const amount = byWallet.get(row.id) ?? 0
         notificationQueue.enqueue({
           userId: profileId,
           type: 'ORDER',
@@ -218,23 +221,35 @@ export const walletService = {
    * Does NOT issue a Paystack refund — that must be handled separately or manually.
    */
   async reverseOrderCredit(orderId: number) {
-    const pendingCredits = await prisma.transaction.findMany({
-      where: { orderId, type: 'CREDIT_PENDING' },
-    })
-    if (!pendingCredits.length) return
-
+    // Atomic claim-and-reverse — mirrors releaseFundsOnDelivery. Only the caller
+    // whose conditional updateMany flips the CREDIT_PENDING rows decrements the
+    // pending balance, so a cancel racing another cancel (or a delivery release)
+    // can't double-reverse. Whichever of release/reverse commits first wins; the
+    // other matches zero rows and no-ops.
     await prisma.$transaction(async (tx) => {
-      for (const credit of pendingCredits) {
+      const pendingCredits = await tx.transaction.findMany({
+        where: { orderId, type: 'CREDIT_PENDING' },
+      })
+      if (!pendingCredits.length) return
+
+      const { count } = await tx.transaction.updateMany({
+        where: { orderId, type: 'CREDIT_PENDING' },
+        data: {
+          type: 'CREDIT_CANCELLED',
+          description: `Order #${orderId} cancelled — pending credit reversed`,
+        },
+      })
+      if (count === 0) return
+
+      const totals = new Map<string, number>()
+      for (const c of pendingCredits) {
+        totals.set(c.walletId, (totals.get(c.walletId) ?? 0) + c.amount)
+      }
+      for (const [walletId, total] of totals) {
+        if (total <= 0) continue
         await tx.sellerWallet.update({
-          where: { id: credit.walletId },
-          data: { pending_balance: { decrement: credit.amount } },
-        })
-        await tx.transaction.update({
-          where: { id: credit.id },
-          data: {
-            type: 'CREDIT_CANCELLED',
-            description: `Order #${orderId} cancelled — pending credit reversed`,
-          },
+          where: { id: walletId },
+          data: { pending_balance: { decrement: total } },
         })
       }
     })

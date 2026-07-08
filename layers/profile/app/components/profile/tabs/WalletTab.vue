@@ -201,13 +201,12 @@
               Released to balance when orders are marked delivered
             </p>
           </div>
-          <div class="flex gap-3">
-            <button
-              @click="showWithdrawModal = true"
-              class="flex-1 rounded-lg bg-white/20 py-2 font-medium transition-colors hover:bg-white/30"
-            >
-              Withdraw
-            </button>
+          <div class="flex items-center gap-2 rounded-lg bg-white/10 px-4 py-2.5">
+            <Icon name="mdi:information-outline" size="16" class="shrink-0 text-white/70" />
+            <p class="text-[12px] text-white/80">
+              Withdrawals and payout accounts are managed per store — open a
+              store's <span class="font-semibold">Finance</span> page below.
+            </p>
           </div>
         </div>
 
@@ -257,10 +256,11 @@
             </h3>
           </div>
           <div class="divide-y divide-gray-100 dark:divide-neutral-800">
-            <div
+            <NuxtLink
               v-for="store in storeWallets"
               :key="store.storeId"
-              class="flex items-center justify-between p-4"
+              :to="`/seller/${store.storeSlug}/finance`"
+              class="flex items-center justify-between p-4 transition-colors hover:bg-gray-50 dark:hover:bg-neutral-800/60"
             >
               <div>
                 <p
@@ -272,172 +272,27 @@
                   @{{ store.storeSlug }}
                 </p>
               </div>
-              <div class="text-right">
-                <p
-                  class="text-sm font-bold text-gray-900 dark:text-neutral-100"
-                >
-                  {{ formatAmount(store.wallet?.balance ?? 0) }}
-                </p>
-                <p class="text-xs text-gray-400 dark:text-neutral-500">
-                  <span class="text-amber-500 dark:text-amber-400">
-                    {{ formatAmount(store.wallet?.pending_balance ?? 0) }}
-                  </span>
-                  pending
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Bank Accounts -->
-        <div
-          v-if="storeWallets.length"
-          class="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
-        >
-          <div
-            class="flex items-center justify-between border-b border-gray-200 p-4 dark:border-neutral-800"
-          >
-            <div class="flex items-center gap-2">
-              <Icon name="mdi:bank-outline" size="20" class="text-brand" />
-              <h3 class="font-semibold text-gray-900 dark:text-neutral-100">
-                Payout Accounts
-              </h3>
-            </div>
-            <button
-              @click="showAddBankAccount = !showAddBankAccount"
-              class="flex items-center gap-1 rounded-lg bg-brand/10 px-3 py-1.5 text-xs font-semibold text-brand hover:bg-brand/20"
-            >
-              <Icon name="mdi:plus" size="14" />
-              Add account
-            </button>
-          </div>
-
-          <!-- Account list -->
-          <div
-            v-if="bankAccounts.length"
-            class="divide-y divide-gray-100 dark:divide-neutral-800"
-          >
-            <div
-              v-for="account in bankAccounts"
-              :key="account.id"
-              class="flex items-center justify-between p-4"
-            >
-              <div class="flex items-center gap-3">
-                <div
-                  class="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 dark:bg-neutral-800"
-                >
-                  <Icon
-                    name="mdi:bank"
-                    size="16"
-                    class="text-gray-500 dark:text-neutral-400"
-                  />
-                </div>
-                <div>
+              <div class="flex items-center gap-2">
+                <div class="text-right">
                   <p
-                    class="text-sm font-medium text-gray-900 dark:text-neutral-100"
+                    class="text-sm font-bold text-gray-900 dark:text-neutral-100"
                   >
-                    {{ account.accountName }}
+                    {{ formatAmount(store.wallet?.balance ?? 0) }}
                   </p>
                   <p class="text-xs text-gray-400 dark:text-neutral-500">
-                    {{ account.bankName }} · ****{{
-                      account.accountNumber.slice(-4)
-                    }}
+                    <span class="text-amber-500 dark:text-amber-400">
+                      {{ formatAmount(store.wallet?.pending_balance ?? 0) }}
+                    </span>
+                    pending
                   </p>
                 </div>
+                <Icon
+                  name="mdi:chevron-right"
+                  size="18"
+                  class="text-gray-300 dark:text-neutral-600"
+                />
               </div>
-              <div class="flex items-center gap-2">
-                <span
-                  v-if="account.isDefault"
-                  class="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700 dark:bg-green-900/20 dark:text-green-400"
-                >
-                  Default
-                </span>
-                <button
-                  v-else
-                  @click="setDefaultAccount(account.id)"
-                  class="text-xs text-gray-400 hover:text-brand dark:text-neutral-500"
-                >
-                  Set default
-                </button>
-                <button
-                  @click="deleteAccount(account.id)"
-                  class="rounded p-1 text-gray-300 hover:text-red-500 dark:text-neutral-600"
-                >
-                  <Icon name="mdi:trash-can-outline" size="16" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div
-            v-else-if="!showAddBankAccount"
-            class="p-6 text-center text-gray-400 dark:text-neutral-500"
-          >
-            <Icon name="mdi:bank-plus" size="32" class="mx-auto mb-2" />
-            <p class="text-sm">No payout accounts yet</p>
-            <p class="mt-0.5 text-xs">
-              Add a bank account to enable withdrawals
-            </p>
-          </div>
-
-          <!-- Add account inline form -->
-          <div
-            v-if="showAddBankAccount"
-            class="border-t border-gray-200 p-4 dark:border-neutral-800"
-          >
-            <p
-              class="mb-3 text-sm font-semibold text-gray-900 dark:text-neutral-100"
-            >
-              Add Bank Account
-            </p>
-            <div class="space-y-3">
-              <select
-                v-model="newBank.bankCode"
-                class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
-              >
-                <option value="" disabled>Select bank</option>
-                <option
-                  v-for="bank in NIGERIAN_BANKS"
-                  :key="bank.code"
-                  :value="bank.code"
-                >
-                  {{ bank.name }}
-                </option>
-              </select>
-              <input
-                v-model="newBank.accountNumber"
-                type="text"
-                maxlength="10"
-                placeholder="Account number (10 digits)"
-                class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
-              />
-              <input
-                v-model="newBank.accountName"
-                type="text"
-                placeholder="Account name"
-                class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
-              />
-              <div class="flex gap-2">
-                <button
-                  @click="saveNewBankAccount"
-                  :disabled="
-                    savingBank ||
-                    !newBank.bankCode ||
-                    newBank.accountNumber.length !== 10 ||
-                    !newBank.accountName
-                  "
-                  class="flex-1 rounded-lg bg-brand py-2 text-sm font-semibold text-white disabled:opacity-50"
-                >
-                  {{ savingBank ? 'Saving…' : 'Save Account' }}
-                </button>
-                <button
-                  @click="showAddBankAccount = false"
-                  class="rounded-lg border border-gray-200 px-4 py-2 text-sm dark:border-neutral-700"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
+            </NuxtLink>
           </div>
         </div>
 
@@ -510,23 +365,11 @@
       ><!-- end seller wallet --> </template
     ><!-- end v-else (loaded) -->
   </div>
-
-  <!-- Withdraw Modal -->
-  <WithdrawModal
-    v-if="showWithdrawModal"
-    :balance="balance"
-    :pending-balance="pendingBalance"
-    @close="showWithdrawModal = false"
-    @success="handleWithdrawSuccess"
-  />
 </template>
 
 <script setup lang="ts">
-import WithdrawModal from '../modals/WithdrawModal.vue'
 import { useWallet } from '~~/layers/commerce/app/composables/useWallet'
 import { useBuyerWallet } from '~~/layers/commerce/app/composables/useBuyerWallet'
-import { BaseApiClient } from '~~/layers/core/app/services/base.api'
-import { useSellerStore } from '~~/layers/seller/app/store/seller.store'
 import { useCurrency } from '~~/layers/core/app/composables/useCurrency'
 
 const {
@@ -539,7 +382,6 @@ const {
   storeWallets,
   fetchWallet,
   fetchTransactions,
-  withdraw,
 } = useWallet()
 
 const {
@@ -553,91 +395,7 @@ const {
 
 const loadMoreBuyerTx = () => fetchBuyerTransactions(20, buyerTransactions.value.length)
 
-const showWithdrawModal = ref(false)
-const sellerStore = useSellerStore()
-const api = new BaseApiClient()
 const { formatKobo } = useCurrency()
-
-// ── Bank accounts ─────────────────────────────────────────────────────────────
-const bankAccounts = ref<any[]>([])
-const showAddBankAccount = ref(false)
-const savingBank = ref(false)
-const newBank = reactive({ bankCode: '', accountNumber: '', accountName: '' })
-
-const loadBankAccounts = async () => {
-  try {
-    const res: any = await api.request('/api/seller/bank-accounts', {
-      method: 'GET',
-    })
-    bankAccounts.value = res?.data ?? []
-  } catch {}
-}
-
-const saveNewBankAccount = async () => {
-  const bank = NIGERIAN_BANKS.find((b) => b.code === newBank.bankCode)
-  const sellerId = sellerStore.sellers?.[0]?.id
-  if (!bank || !sellerId) return
-  savingBank.value = true
-  try {
-    const res: any = await api.request('/api/seller/bank-accounts', {
-      method: 'POST',
-      body: {
-        sellerId,
-        bankName: bank.name,
-        bankCode: bank.code,
-        accountNumber: newBank.accountNumber,
-        accountName: newBank.accountName,
-        isDefault: bankAccounts.value.length === 0,
-      },
-    })
-    bankAccounts.value.push(res.data)
-    showAddBankAccount.value = false
-    newBank.bankCode = ''
-    newBank.accountNumber = ''
-    newBank.accountName = ''
-  } catch (e: any) {
-    alert(e?.data?.statusMessage || 'Failed to save account')
-  } finally {
-    savingBank.value = false
-  }
-}
-
-const setDefaultAccount = async (id: string) => {
-  try {
-    await api.request(`/api/seller/bank-accounts/${id}/set-default`, {
-      method: 'PATCH',
-    })
-    bankAccounts.value.forEach((a) => (a.isDefault = a.id === id))
-  } catch {}
-}
-
-const deleteAccount = async (id: string) => {
-  if (!confirm('Remove this bank account?')) return
-  try {
-    await api.request(`/api/seller/bank-accounts/${id}`, { method: 'DELETE' })
-    bankAccounts.value = bankAccounts.value.filter((a) => a.id !== id)
-  } catch {}
-}
-
-const NIGERIAN_BANKS = [
-  { name: 'Access Bank', code: '044' },
-  { name: 'Ecobank Nigeria', code: '050' },
-  { name: 'Fidelity Bank', code: '070' },
-  { name: 'First Bank of Nigeria', code: '011' },
-  { name: 'First City Monument Bank (FCMB)', code: '214' },
-  { name: 'Guaranty Trust Bank (GTB)', code: '058' },
-  { name: 'Kuda Bank', code: '090267' },
-  { name: 'Moniepoint MFB', code: '50515' },
-  { name: 'OPay', code: '100004' },
-  { name: 'PalmPay', code: '999991' },
-  { name: 'Polaris Bank', code: '076' },
-  { name: 'Stanbic IBTC Bank', code: '221' },
-  { name: 'Sterling Bank', code: '232' },
-  { name: 'Union Bank of Nigeria', code: '032' },
-  { name: 'United Bank for Africa (UBA)', code: '033' },
-  { name: 'Wema Bank', code: '035' },
-  { name: 'Zenith Bank', code: '057' },
-]
 
 onMounted(async () => {
   try {
@@ -646,7 +404,6 @@ onMounted(async () => {
       fetchTransactions(),
       fetchBuyerWallet(),
       fetchBuyerTransactions(),
-      loadBankAccounts(),
     ])
   } catch {
     // Wallet might not exist yet for non-sellers — handled gracefully
@@ -691,14 +448,5 @@ const formatDate = (dateString: string) => {
     hour: '2-digit',
     minute: '2-digit',
   })
-}
-
-const handleWithdrawSuccess = async (amount: number, bankAccount: any) => {
-  showWithdrawModal.value = false
-  try {
-    await withdraw(amount, bankAccount)
-  } catch {
-    // Error handled in composable
-  }
 }
 </script>

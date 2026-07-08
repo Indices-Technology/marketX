@@ -22,11 +22,27 @@ export default defineEventHandler(async (event) => {
     if (seller.profileId !== user.id)
       throw new UserError('FORBIDDEN', 'Access denied', 403)
 
+    // An order only becomes real once payment is secured: card orders flip to
+    // CONFIRMED/PAID at payment verify, POD orders at POD confirm. Orders sit at
+    // PENDING from checkout initialization (before the buyer pays) and end
+    // CANCELLED when abandoned or failed — neither should surface in the seller's
+    // incoming-orders view or inflate the count. Default to the active lifecycle
+    // states; an explicit ?status= still lets the seller inspect any bucket.
+    const ACTIVE_ORDER_STATUSES: import('@prisma/client').OrderStatus[] = [
+      'CONFIRMED',
+      'PAID',
+      'SHIPPED',
+      'DELIVERED',
+      'COMPLETED',
+      'RETURNED',
+    ]
     const where: import('@prisma/client').Prisma.OrdersWhereInput = {
       orderItem: {
         some: { variant: { product: { sellerId: seller.id } } },
       },
-      ...(status ? { status: status as import('@prisma/client').OrderStatus } : {}),
+      ...(status
+        ? { status: status as import('@prisma/client').OrderStatus }
+        : { status: { in: ACTIVE_ORDER_STATUSES } }),
     }
 
     const [orders, total] = await Promise.all([

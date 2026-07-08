@@ -23,6 +23,7 @@ export default defineEventHandler(async (event) => {
       { limit, offset },
       status,
       search,
+      isOwner, // only the owner's management grid gets stock counts
     )
     return { success: true, data: result }
   } catch (error: any) {

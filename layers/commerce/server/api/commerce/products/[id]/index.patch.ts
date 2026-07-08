@@ -38,7 +38,10 @@ export default defineEventHandler(async (event) => {
     return { success: true, data: result }
   } catch (error: unknown) {
     if (error instanceof UserError)
-      throw createError({ statusCode: error.status, statusMessage: error.message })
+      throw createError({
+        statusCode: error.status,
+        statusMessage: error.message,
+      })
     if (error instanceof ZodError) {
       const issue = error.errors[0]
       const field = issue?.path?.join('.')
@@ -50,7 +53,12 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 422, statusMessage: msg })
     }
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
-    logger.logError('[PATCH /api/commerce/products/:id]', error, { requestId: event.context?.requestId })
-    throw createError({ statusCode: 500, statusMessage: 'Internal server error' })
+    logger.logError('[PATCH /api/commerce/products/:id]', error, {
+      requestId: event.context?.requestId,
+    })
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Internal server error',
+    })
   }
 })

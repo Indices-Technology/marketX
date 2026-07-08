@@ -233,7 +233,14 @@ import BaseModal from '~~/layers/ui/app/components/BaseModal.vue'
 import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 import BaseInput from '~~/layers/ui/app/components/BaseInput.vue'
 
-const props = defineProps<{ balance: number; pendingBalance?: number }>()
+// storeSlug/sellerId scope the withdrawal and payout accounts to one store
+// (per-store Finance page). When omitted, falls back to the first store.
+const props = defineProps<{
+  balance: number
+  pendingBalance?: number
+  storeSlug?: string
+  sellerId?: string
+}>()
 const emit = defineEmits(['close', 'success'])
 
 const { withdraw } = useWallet()
@@ -297,7 +304,10 @@ const canSaveAccount = computed(
 
 const loadBankAccounts = async () => {
   try {
-    const res: any = await api.request('/api/seller/bank-accounts', {
+    const q = props.storeSlug
+      ? `?storeSlug=${encodeURIComponent(props.storeSlug)}`
+      : ''
+    const res: any = await api.request(`/api/seller/bank-accounts${q}`, {
       method: 'GET',
     })
     bankAccounts.value = res?.data ?? []
@@ -314,7 +324,8 @@ const saveNewAccount = async () => {
   if (!canSaveAccount.value) return
   const bank = NIGERIAN_BANKS.find((b) => b.code === newAccount.bankCode)
   if (!bank) return
-  const sellerId = sellerStore.sellers?.[0]?.id
+  // Scope the new payout account to this store when provided.
+  const sellerId = props.sellerId ?? sellerStore.sellers?.[0]?.id
   if (!sellerId) return
   savingAccount.value = true
   try {
@@ -365,13 +376,17 @@ const handleWithdraw = async () => {
     return
   isProcessing.value = true
   try {
-    await withdraw(amountKobo.value, {
-      accountId: account?.id,
-      bankName: account?.bankName,
-      bankCode: account?.bankCode,
-      accountNumber: account?.accountNumber,
-      accountName: account?.accountName,
-    })
+    await withdraw(
+      amountKobo.value,
+      {
+        accountId: account?.id,
+        bankName: account?.bankName,
+        bankCode: account?.bankCode,
+        accountNumber: account?.accountNumber,
+        accountName: account?.accountName,
+      },
+      props.storeSlug,
+    )
     emit('success', amountKobo.value)
   } catch (e: any) {
     alert(e?.data?.statusMessage || e?.message || 'Withdrawal failed')

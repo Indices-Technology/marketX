@@ -119,6 +119,9 @@ export interface Quote {
   zoneCode?: string
   /** What we pay the carrier. */
   costMinor: number
+  /** Declared-value insurance premium (minor) included in costMinor, if any.
+   *  Passed through to the buyer at cost (not marked up) and shown separately. */
+  insuranceMinor?: number
   /** Reference/retail price (GIG Basic; single-rate carriers: cost × markup). */
   listMinor: number
   /** What the buyer pays after the platform discount dial is applied. */

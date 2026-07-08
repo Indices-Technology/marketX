@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
   try {
     const user = await requireAuth(event)
     const body = await readBody(event)
-    const { amount, bankAccount } = body
+    const { amount, bankAccount, storeSlug } = body
 
     if (!amount || isNaN(Number(amount)))
       throw new UserError('INVALID_INPUT', 'amount is required', 400)
@@ -20,9 +20,23 @@ export default defineEventHandler(async (event) => {
         400,
       )
 
-    // Resolve which seller's wallet to withdraw from via the bank account record
+    // Resolve which seller's wallet to withdraw from.
     let sellerId: string | null = null
-    if (bankAccount.accountId) {
+
+    // Preferred: explicit store (the per-store finance page always sends this).
+    // Ownership is enforced by scoping the lookup to the requesting user.
+    if (storeSlug) {
+      const store = await prisma.sellerProfile.findFirst({
+        where: { store_slug: storeSlug, profileId: user.id },
+        select: { id: true },
+      })
+      if (!store)
+        throw new UserError('NOT_FOUND', 'Store not found or access denied', 404)
+      sellerId = store.id
+    }
+
+    // Legacy path: resolve via the bank account record.
+    if (!sellerId && bankAccount.accountId) {
       const saved = await prisma.bankAccount.findUnique({
         where: { id: bankAccount.accountId },
         include: { seller: { select: { id: true, profileId: true } } },
@@ -32,19 +46,27 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    // Fallback: use the first active seller profile
+    // Fallback: resolve from the user's active seller profiles. If they own more
+    // than one store, refuse to guess — an ambiguous fallback could debit the
+    // wrong store's wallet. The caller must name the store explicitly.
     if (!sellerId) {
-      const first = await prisma.sellerProfile.findFirst({
+      const stores = await prisma.sellerProfile.findMany({
         where: { profileId: user.id, is_active: true },
         select: { id: true },
       })
-      if (!first)
+      if (!stores.length)
         throw new UserError(
           'SELLER_REQUIRED',
           'No active seller profile found',
           403,
         )
-      sellerId = first.id
+      if (stores.length > 1)
+        throw new UserError(
+          'STORE_REQUIRED',
+          'You have multiple stores — specify which store to withdraw from',
+          400,
+        )
+      sellerId = stores[0]!.id
     }
 
     // Deduct platform + transfer fees from the requested gross amount

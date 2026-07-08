@@ -6,9 +6,6 @@ import { affiliateRepository } from '../repositories/affiliate.repository'
 import { walletService } from './wallet.service'
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { auditQueue } from '~~/server/queues/audit.queue'
-import { notificationQueue } from '~~/server/queues/notification.queue'
-import { emailQueue } from '~~/server/queues/email.queue'
-import { buildNewOrderSellerEmail } from '~~/server/utils/email/emailService'
 import { verifyShippingQuote } from '~~/layers/shipping/server/utils/quoteToken'
 
 export interface PlaceOrderInput {
@@ -320,16 +317,14 @@ export const orderService = {
     // revenue. Sales are recorded at the confirmation points (payments verify /
     // webhook / paypal capture / pod-verify) via analyticsService.trackOrderSale.
 
-    // Each created order belongs to exactly one seller (Map preserves insertion
-    // order, so created[idx] ↔ the idx-th seller group). Notify + audit per order.
-    const groupList = [...groups.values()]
-    created.forEach((ord, idx) => {
-      const groupLines = groupList[idx] ?? []
-      const sellerProfileId = groupLines[0]?.sellerProfileId
-      const storeName = groupLines[0]?.storeName ?? 'Your Store'
-      const itemCount = groupLines.reduce((s, l) => s + l.quantity, 0)
-      const subtotal = ord.totalAmount
-
+    // Audit each placed order. Seller-facing effects (new-order notification and
+    // email) intentionally do NOT fire here — placeOrder runs at payment
+    // *initialization*, before the buyer has paid. Alerting sellers now (and
+    // counting the order in their dashboard) would react to checkouts that are
+    // later abandoned or fail. The seller is notified once payment is confirmed,
+    // at the confirmation points (payments verify / webhook / paypal capture /
+    // pod-verify), each of which notifies the seller idempotently.
+    created.forEach((ord) => {
       auditQueue.enqueue({
         userId,
         action: 'ORDER_PLACED',
@@ -340,27 +335,6 @@ export const orderService = {
         ipAddress,
         userAgent,
       })
-
-      if (!sellerProfileId) return
-      notificationQueue.enqueue({
-        userId: sellerProfileId,
-        type: 'ORDER',
-        message: `New order #${ord.id} received — ${itemCount} item${itemCount !== 1 ? 's' : ''}, ₦${(subtotal / 100).toLocaleString('en-NG')}`,
-        orderId: ord.id,
-      })
-      prisma.profile
-        .findUnique({ where: { id: sellerProfileId }, select: { email: true } })
-        .then((profile) => {
-          if (!profile?.email) return
-          const { subject, html, text } = buildNewOrderSellerEmail(
-            ord.id,
-            itemCount,
-            subtotal,
-            storeName,
-          )
-          emailQueue.enqueue({ to: profile.email, subject, html, text, type: 'ORDER_CONFIRMATION' })
-        })
-        .catch(() => {})
     })
 
     return {
@@ -405,8 +379,40 @@ export const orderService = {
       )
     }
 
-    const updated = await orderRepository.updateOrderStatus(id, 'CANCELLED')
-    await orderRepository.restoreStock(order.orderItem)
+    // Atomic transition + stock restore in one transaction. The conditional
+    // updateMany means a concurrent expiry-cron cancel (or a double request) that
+    // already moved the order out of PENDING/CONFIRMED matches zero rows and this
+    // caller bails — so stock is never restored twice.
+    const didCancel = await prisma.$transaction(async (tx) => {
+      const { count } = await tx.orders.updateMany({
+        where: { id, status: { in: ['PENDING', 'CONFIRMED'] } },
+        data: { status: 'CANCELLED' },
+      })
+      if (count === 0) return false
+      const items = await tx.orderItem.findMany({
+        where: { orderId: id },
+        select: { variantId: true, quantity: true },
+      })
+      await Promise.all(
+        items
+          .filter((i) => i.variantId != null)
+          .map((i) =>
+            tx.productVariant.update({
+              where: { id: i.variantId! },
+              data: { stock: { increment: i.quantity } },
+            }),
+          ),
+      )
+      return true
+    })
+
+    if (!didCancel) {
+      throw new UserError(
+        'CANNOT_CANCEL',
+        'Order cannot be cancelled at this stage',
+        400,
+      )
+    }
 
     // If the order was already paid, reverse any pending seller credit so the
     // seller's pending_balance stays accurate. A Paystack refund to the buyer
@@ -427,6 +433,6 @@ export const orderService = {
       userAgent,
     })
 
-    return updated
+    return orderRepository.getOrderById(id)
   },
 }

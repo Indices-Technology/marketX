@@ -5,9 +5,16 @@ import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
 export default defineEventHandler(async (event) => {
   try {
     const user = await requireAuth(event)
+    const storeSlug = (getQuery(event).storeSlug as string) || undefined
 
+    // Scope to one store when storeSlug is given (per-store finance page),
+    // otherwise all of the user's stores.
     const sellers = await prisma.sellerProfile.findMany({
-      where: { profileId: user.id, is_active: true },
+      where: {
+        profileId: user.id,
+        is_active: true,
+        ...(storeSlug ? { store_slug: storeSlug } : {}),
+      },
       select: { id: true },
     })
     if (!sellers.length) return { success: true, data: [] }

@@ -150,6 +150,24 @@
               >
             </div>
           </div>
+
+          <!-- Insurance: subtle breakdown + opt-out (GIG carrier rates only) -->
+          <label
+            v-if="insurable"
+            class="flex cursor-pointer items-center justify-between gap-2 text-[12px] text-gray-400 dark:text-neutral-500"
+          >
+            <span class="flex items-center gap-1.5">
+              <input
+                v-model="insureShipment"
+                type="checkbox"
+                class="h-3.5 w-3.5 rounded border-gray-300 text-brand focus:ring-brand dark:border-neutral-600"
+              />
+              Insure shipment against loss or damage
+            </span>
+            <span v-if="insureShipment && insuranceCostMajor > 0">
+              incl. {{ fmtPNGN(insuranceCostMajor) }}
+            </span>
+          </label>
           <div
             class="flex justify-between border-t border-gray-200 pt-2 text-base font-bold text-gray-900 dark:border-neutral-800 dark:text-neutral-100"
           >
@@ -260,7 +278,7 @@ import { definePageMeta } from '#imports'
 definePageMeta({ ssr: false })
 
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useCart } from '~~/layers/commerce/app/composables/useCart'
 import { useShipping } from '~~/layers/commerce/app/composables/useShipping'
 import { useRuntimeConfig } from '#app'
@@ -363,6 +381,10 @@ interface SellerShip {
 }
 const shipBySeller = reactive<Record<string, SellerShip>>({})
 
+// Insure shipments for their value (carrier declared-value cover, ~1% at GIG).
+// On by default for buyer protection; toggling re-quotes without the premium.
+const insureShipment = ref(true)
+
 const fetchSellerRates = async () => {
   if (!form.address || !form.county || !form.country) return
   const to = {
@@ -393,6 +415,7 @@ const fetchSellerRates = async () => {
         to,
         parcel: DEFAULT_PARCEL,
         subtotalMinor: Math.round(g.subtotalMajor * 100),
+        insure: insureShipment.value,
       })
       s.rates = rates
       s.error = error
@@ -425,6 +448,25 @@ const groupShippingMajor = (slug: string): number => {
 const shippingCostMajor = computed((): number =>
   sellerGroups.value.reduce((sum, g) => sum + groupShippingMajor(g.slug), 0),
 )
+
+// Total pass-through insurance across the chosen rates (major NGN) — for the
+// subtle checkout breakdown.
+const insuranceCostMajor = computed((): number =>
+  sellerGroups.value.reduce(
+    (sum, g) => sum + (shipBySeller[g.slug]?.selected?.insuranceNGN ?? 0),
+    0,
+  ),
+)
+
+// Insurance only applies to carrier (GIG) rates — show the opt-out only then.
+const insurable = computed((): boolean =>
+  sellerGroups.value.some(
+    (g) => shipBySeller[g.slug]?.selected?.provider === 'gig',
+  ),
+)
+
+// Re-quote every seller when the buyer toggles insurance on/off.
+watch(insureShipment, () => fetchSellerRates())
 
 const grandTotalMajor = computed(
   () => cartTotal.value + shippingCostMajor.value,

@@ -43,7 +43,9 @@ defineRouteMeta({
     },
     responses: {
       200: { description: '{ success, accessToken, refreshToken? }' },
-      401: { description: 'Missing, invalid, expired, or revoked refresh token' },
+      401: {
+        description: 'Missing, invalid, expired, or revoked refresh token',
+      },
       429: { description: 'Too many refresh attempts' },
     },
   },
@@ -124,10 +126,18 @@ export default defineEventHandler(async (event) => {
     }
   } catch (error: unknown) {
     if (error instanceof AuthError) {
-      throw createError({ statusCode: error.statusCode, statusMessage: error.message })
+      throw createError({
+        statusCode: error.statusCode,
+        statusMessage: error.message,
+      })
     }
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
-    logger.logError('[POST /api/auth/refresh-token]', error, { requestId: event.context?.requestId })
-    throw createError({ statusCode: 500, statusMessage: 'Internal server error' })
+    logger.logError('[POST /api/auth/refresh-token]', error, {
+      requestId: event.context?.requestId,
+    })
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Internal server error',
+    })
   }
 })

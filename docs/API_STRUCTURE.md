@@ -393,6 +393,20 @@ All feed endpoints are read-only and return `{ items[], meta }` unless noted.
 | POST   | `/seller/[id]/reviews` | Review a seller (post-purchase) |
 | GET    | `/seller/[id]/reviews/eligibility` | Check if user can review seller |
 
+> **`/seller/[id]/products` — stock summary (owner grid only).** When the caller
+> is the **store owner**, each product is enriched with DB-level stock counts:
+> `outOfStockCount` (variants at 0) and `refillCount` (variants at ≤3 units,
+> which includes the out-of-stock ones). These come from grouped aggregate
+> queries (`getSellerStockSummary`), not from the variant rows — the response
+> ships only one "from"-priced variant per product to keep the grid payload small.
+> Public/storefront callers do **not** receive these fields.
+>
+> **Trade-off:** the grid shows *how many* sizes need a refill, not *which* ones.
+> The specific sizes live on the product edit page. This is deliberate — sending
+> counts instead of every variant row keeps the seller grid lightweight. If a
+> future need requires per-size stock in the grid, extend `getSellerStockSummary`
+> to return the sizes rather than reverting to shipping all variants.
+
 ### Bank accounts
 
 | Method | Path | Description |

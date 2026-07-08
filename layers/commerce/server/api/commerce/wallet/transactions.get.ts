@@ -10,10 +10,16 @@ export default defineEventHandler(async (event) => {
     const query = getQuery(event)
     const limit = Math.min(Number(query.limit) || 20, 100)
     const offset = Number(query.offset) || 0
+    const storeSlug = (query.storeSlug as string) || undefined
 
-    // Get all active seller profiles for this user
+    // Seller profiles for this user — scoped to one store when storeSlug is given
+    // (per-store finance page), otherwise all of the user's stores (profile view).
     const sellerProfiles = await prisma.sellerProfile.findMany({
-      where: { profileId: user.id, is_active: true },
+      where: {
+        profileId: user.id,
+        is_active: true,
+        ...(storeSlug ? { store_slug: storeSlug } : {}),
+      },
       select: { id: true },
     })
 

@@ -54,11 +54,16 @@ export default defineEventHandler(async (event) => {
       )
     }
 
-    // Mark fully paid + delivered
-    await prisma.orders.update({
-      where: { id },
+    // Atomic flip — mark fully paid + delivered only if not already paid. A second
+    // concurrent confirm-cash (double click / retry) matches zero rows and returns
+    // early, so the wallet credit + release below runs exactly once.
+    const { count } = await prisma.orders.updateMany({
+      where: { id, paymentStatus: { not: 'PAID' } },
       data: { paymentStatus: 'PAID', status: 'DELIVERED' },
     })
+    if (count === 0) {
+      return { success: true, data: { message: 'Cash already confirmed' } }
+    }
 
     // Credit seller wallet then immediately release (POD: payment and delivery are simultaneous)
     walletService

@@ -56,8 +56,11 @@ export async function getQuotes(
         deriveList: !passThrough,
         markup: shippingMarkupPct(),
         handlingFeeMinor: passThrough ? 0 : shippingHandlingFeeMinor(),
+        // Insurance is a carrier pass-through — marked up 0%, added back at cost.
+        insuranceMinor: passThrough ? 0 : q.insuranceMinor,
         discountPct: opts.discountPct ?? 0,
       })
+      // priced doesn't carry insuranceMinor — keep it from the raw quote (q).
       quotes.push({ ...q, ...priced })
     }
   }

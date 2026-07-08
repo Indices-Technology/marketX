@@ -67,11 +67,15 @@ export const useWallet = () => {
     }
   }
 
-  const withdraw = async (amount: number, bankAccount: BankAccount) => {
+  const withdraw = async (
+    amount: number,
+    bankAccount: BankAccount,
+    storeSlug?: string,
+  ) => {
     store.setLoading(true)
     store.setError(null)
     try {
-      const result = await api.withdraw(amount, bankAccount)
+      const result = await api.withdraw(amount, bankAccount, storeSlug)
       await fetchWallet()
       return result
     } catch (e: unknown) {

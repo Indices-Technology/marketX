@@ -87,6 +87,8 @@ export const useShipping = () => {
     parcel: Record<string, number>
     /** Order subtotal in minor units (kobo) — for BYOS free-over thresholds. */
     subtotalMinor?: number
+    /** Insure the shipment for its value (default true). False → no premium, no cover. */
+    insure?: boolean
   }
 
   /**

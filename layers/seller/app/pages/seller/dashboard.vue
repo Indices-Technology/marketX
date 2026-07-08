@@ -33,6 +33,71 @@
       {{ error }}
     </div>
 
+    <!-- Finance summary — combined across all stores -->
+    <div v-if="hasSellers" class="mb-6">
+      <p class="mb-2 text-xs font-bold uppercase tracking-widest text-brand">
+        Across all stores
+      </p>
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div
+          class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
+        >
+          <p
+            class="text-[11px] font-medium text-gray-400 dark:text-neutral-500"
+          >
+            Available balance
+          </p>
+          <p
+            class="mt-1 font-display text-2xl font-bold text-gray-900 dark:text-neutral-100"
+          >
+            {{ formatKobo(balance) }}
+          </p>
+        </div>
+        <div
+          class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
+        >
+          <p
+            class="text-[11px] font-medium text-gray-400 dark:text-neutral-500"
+          >
+            Pending
+          </p>
+          <p
+            class="mt-1 font-display text-2xl font-bold text-amber-600 dark:text-amber-400"
+          >
+            {{ formatKobo(pendingBalance) }}
+          </p>
+        </div>
+        <div
+          class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
+        >
+          <p
+            class="text-[11px] font-medium text-gray-400 dark:text-neutral-500"
+          >
+            Total earned
+          </p>
+          <p
+            class="mt-1 font-display text-2xl font-bold text-gray-900 dark:text-neutral-100"
+          >
+            {{ formatKobo(walletStats.totalEarned) }}
+          </p>
+        </div>
+        <div
+          class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
+        >
+          <p
+            class="text-[11px] font-medium text-gray-400 dark:text-neutral-500"
+          >
+            Stores
+          </p>
+          <p
+            class="mt-1 font-display text-2xl font-bold text-gray-900 dark:text-neutral-100"
+          >
+            {{ sellers.length }}
+          </p>
+        </div>
+      </div>
+    </div>
+
     <!-- Loading skeleton -->
     <div
       v-if="isLoading && !hasSellers"
@@ -206,6 +271,23 @@
             </div>
           </div>
 
+          <!-- Store balance -->
+          <div
+            class="mb-3 flex items-center justify-between rounded-xl bg-gray-50 px-3 py-2 dark:bg-neutral-800/60"
+          >
+            <span
+              class="flex items-center gap-1.5 text-[11px] font-medium text-gray-400 dark:text-neutral-500"
+            >
+              <Icon name="mdi:wallet-outline" size="13" />
+              Balance
+            </span>
+            <span
+              class="font-display text-[15px] font-bold text-gray-900 dark:text-neutral-100"
+            >
+              {{ formatKobo(walletBySlug[seller.store_slug]?.balance ?? 0) }}
+            </span>
+          </div>
+
           <!-- Actions -->
           <div class="flex flex-wrap gap-2" @click.stop>
             <NuxtLink
@@ -242,6 +324,8 @@
 <script setup lang="ts">
 import { useSellerManagement } from '~~/layers/seller/app/composables/useSellerManagement'
 import { useProduct } from '~~/layers/commerce/app/composables/useProduct'
+import { useWallet } from '~~/layers/commerce/app/composables/useWallet'
+import { useCurrency } from '~~/layers/core/app/composables/useCurrency'
 import { imgAvatar } from '~~/layers/core/app/utils/cloudinary'
 import { useSeo } from '~~/layers/core/app/composables/useSeo'
 
@@ -262,9 +346,36 @@ const {
 } = useSellerManagement()
 const { fetchSellerProducts } = useProduct()
 
+// Finance across all of the user's stores — aggregate + per-store breakdown.
+// `balance`/`pendingBalance`/`stats` are the user-level totals; `storeWallets`
+// is the per-store list (keyed by slug below for the store cards).
+const { formatKobo } = useCurrency()
+const {
+  balance,
+  pendingBalance,
+  stats: walletStats,
+  storeWallets,
+  fetchWallet,
+} = useWallet()
+
+const walletBySlug = computed(() => {
+  const map: Record<string, { balance: number; pending: number }> = {}
+  for (const sw of storeWallets.value as any[]) {
+    const slug = sw.storeSlug ?? sw.store_slug
+    if (slug)
+      map[slug] = {
+        balance: sw.wallet?.balance ?? 0,
+        pending: sw.wallet?.pending_balance ?? 0,
+      }
+  }
+  return map
+})
+
 const productCounts = ref<Record<string, number>>({})
 
 onMounted(async () => {
+  // Non-blocking — finance loads alongside the store list.
+  fetchWallet().catch(() => {})
   await loadUserSellers()
   for (const seller of sellers.value) {
     try {

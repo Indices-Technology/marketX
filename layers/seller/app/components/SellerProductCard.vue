@@ -25,6 +25,20 @@
         class="pointer-events-none absolute right-2 top-2 text-white drop-shadow-lg"
       />
 
+      <!-- Stock badge — instant refill cue -->
+      <span
+        v-if="stock.isOut"
+        class="absolute bottom-2 right-2 rounded-full bg-red-600 px-2 py-0.5 text-xs font-bold text-white shadow"
+      >
+        Out of stock
+      </span>
+      <span
+        v-else-if="stock.isLow"
+        class="absolute bottom-2 right-2 rounded-full bg-amber-500 px-2 py-0.5 text-xs font-bold text-white shadow"
+      >
+        Low stock
+      </span>
+
       <!-- Status badge -->
       <span
         :class="[
@@ -53,6 +67,26 @@
       <p class="mt-1 text-xs text-gray-500 dark:text-neutral-400">
         {{ product._count?.variants ?? product.variants?.length ?? 0 }}
         variant(s)
+      </p>
+
+      <!-- Stock summary — how many sizes need a refill -->
+      <p
+        v-if="stock.isOut || stock.isLow"
+        class="mt-1 flex items-center gap-1 text-xs font-semibold"
+        :class="
+          stock.isOut
+            ? 'text-red-600 dark:text-red-400'
+            : 'text-amber-600 dark:text-amber-400'
+        "
+      >
+        <Icon name="mdi:package-variant-closed" size="12" />
+        <span v-if="stock.isOut">All sizes out of stock</span>
+        <span v-else>
+          {{ stock.refill }} of {{ stock.totalVariants }} size{{
+            stock.totalVariants === 1 ? '' : 's'
+          }}
+          need refill
+        </span>
       </p>
 
       <!-- Analytics stats (seller-only) -->
@@ -122,6 +156,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { imgThumb, videoThumb } from '~~/layers/core/app/utils/cloudinary'
 const { formatPrice } = useCurrency()
 
@@ -131,7 +166,7 @@ function fmtCount(n: number) {
   return String(n)
 }
 
-defineProps<{
+const props = defineProps<{
   product: any
   storeSlug: string
 }>()
@@ -139,4 +174,21 @@ defineProps<{
 defineEmits<{
   archive: [product: any]
 }>()
+
+// Stock rollup from the DB-level counts the API attaches (no variant rows
+// shipped): outOfStockCount + refillCount (refill includes the out ones).
+const stock = computed(() => {
+  const totalVariants =
+    props.product._count?.variants ?? props.product.variants?.length ?? 0
+  const out = props.product.outOfStockCount ?? 0
+  const refill = props.product.refillCount ?? 0
+  const hasVariants = totalVariants > 0
+  return {
+    hasVariants,
+    totalVariants,
+    refill,
+    isOut: hasVariants && out === totalVariants, // every size at zero
+    isLow: hasVariants && refill > 0 && out < totalVariants,
+  }
+})
 </script>

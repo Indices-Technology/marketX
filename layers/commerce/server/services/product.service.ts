@@ -198,13 +198,31 @@ export const productService = {
     pagination: { limit: number; offset: number },
     status?: string,
     search?: string,
+    // Only the owner's management grid needs stock counts — skip the extra
+    // aggregate queries on public storefront views.
+    includeStock = false,
   ) {
     const [products, total] = await Promise.all([
       productRepository.getProductsBySellerSlug(storeSlug, pagination, status, search),
       productRepository.countProducts({ storeSlug, status, search }),
     ])
+
+    if (!includeStock) {
+      return { products, total, limit: pagination.limit, offset: pagination.offset }
+    }
+
+    // Attach DB-level stock counts (out / needs-refill per product) so the seller
+    // grid can flag low stock without shipping every variant row.
+    const stockByProduct = await productRepository.getSellerStockSummary(
+      products.map((p) => p.id),
+    )
+    const enriched = products.map((p) => {
+      const s = stockByProduct.get(p.id)
+      return { ...p, refillCount: s?.refill ?? 0, outOfStockCount: s?.out ?? 0 }
+    })
+
     return {
-      products,
+      products: enriched,
       total,
       limit: pagination.limit,
       offset: pagination.offset,

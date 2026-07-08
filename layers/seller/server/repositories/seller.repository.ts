@@ -12,6 +12,28 @@
  * User profile operations: user.repository.ts
  */
 
+/**
+ * Fields that must never appear in client-facing seller responses — the public
+ * store page and the update echo both feed the shared `currentSeller` store, so
+ * anything returned here is exposed to page viewers. These are the seller's
+ * private ship-from PII, BYOS shipping credentials, the owner's user FK, and
+ * internal moderation notes. The owner still receives ship-from to prefill their
+ * settings form via the authenticated owner-path of GET /api/seller/:slug, which
+ * intentionally does not use this omit.
+ */
+const SELLER_PRIVATE_OMIT = {
+  profileId: true,
+  verification_reason: true,
+  shipFromName: true,
+  shipFromAddress: true,
+  shipFromCity: true,
+  shipFromState: true,
+  shipFromZip: true,
+  shipFromCountry: true,
+  shipFromPhone: true,
+  shippingConfig: true,
+} as const
+
 export const sellerRepository = {
   // ============================================
   // CREATE & RETRIEVE
@@ -80,11 +102,13 @@ export const sellerRepository = {
   async getSellerBySlug(slug: string): Promise<any | null> {
     const seller = await prisma.sellerProfile.findUnique({
       where: { store_slug: slug },
+      omit: SELLER_PRIVATE_OMIT,
       include: {
         profile: {
+          // No `email` — this is a public endpoint; the owner's personal email
+          // must not be exposed to store visitors.
           select: {
             id: true,
-            email: true,
             username: true,
             avatar: true,
           },
@@ -108,7 +132,12 @@ export const sellerRepository = {
         .catch(() => {})
     }
 
-    return { ...seller, followers_count: realFollowerCount }
+    return {
+      ...seller,
+      followers_count: realFollowerCount,
+      // Ghost mode: never expose exact coordinates on the public read.
+      ...(seller.hideLocation ? { latitude: null, longitude: null } : {}),
+    }
   },
 
   /**
@@ -238,6 +267,10 @@ export const sellerRepository = {
 
     return prisma.sellerProfile.update({
       where: { id: sellerProfileId },
+      // The update echo feeds the shared client `currentSeller` store (also used
+      // by the public store page), so it must not carry private ship-from PII,
+      // shipping credentials, the owner FK, or moderation notes.
+      omit: SELLER_PRIVATE_OMIT,
       data: {
         ...(data.store_name && { store_name: data.store_name }),
         ...(data.store_description && {
