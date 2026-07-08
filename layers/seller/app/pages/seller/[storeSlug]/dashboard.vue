@@ -223,9 +223,10 @@
         </div>
       </div>
 
-      <!-- Wallet balance card -->
-      <div
-        class="mb-6 rounded-xl bg-gradient-to-br from-brand to-[#d81b36] p-5 text-white"
+      <!-- Wallet balance card — taps through to the store Finance page -->
+      <NuxtLink
+        :to="`/seller/${$route.params.storeSlug}/finance`"
+        class="mb-6 block rounded-xl bg-gradient-to-br from-brand to-[#d81b36] p-5 text-white transition-transform hover:brightness-[1.03] active:scale-[0.99]"
       >
         <div class="flex items-start justify-between">
           <div>
@@ -240,7 +241,12 @@
               pending (releases on delivery)
             </p>
           </div>
-          <Icon name="mdi:wallet" size="40" class="text-white/20" />
+          <div class="flex flex-col items-end gap-2">
+            <Icon name="mdi:wallet" size="40" class="text-white/20" />
+            <span class="flex items-center gap-0.5 text-[11px] font-semibold text-white/80">
+              Manage <Icon name="mdi:chevron-right" size="14" />
+            </span>
+          </div>
         </div>
         <div class="mt-4 grid grid-cols-2 gap-3 border-t border-white/20 pt-4">
           <div>
@@ -256,7 +262,7 @@
             </p>
           </div>
         </div>
-      </div>
+      </NuxtLink>
 
       <!-- Stats row -->
       <div class="mb-6 grid grid-cols-3 gap-4">

@@ -3,47 +3,12 @@
 import { z, ZodError } from 'zod'
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
-import { notificationQueue } from '~~/server/queues/notification.queue'
 import { emailQueue } from '~~/server/queues/email.queue'
-import { walletService } from '../../../services/wallet.service'
 import { orderRepository } from '../../../repositories/order.repository'
 import { cartRepository } from '../../../repositories/cart.repository'
-import { analyticsService } from '../../../services/analytics.service'
 import { paymentService } from '~~/layers/payments/server/services/payment.service'
-import { squareService } from '~~/layers/square/server/services/square.service'
+import { paymentConfirmationService } from '../../../services/paymentConfirmation.service'
 import { buildOrderStatusEmail } from '~~/server/utils/email/emailService'
-
-/** Notify every unique seller whose products are in this order */
-async function notifySellers(orderId: number, buyerName: string) {
-  const items = await prisma.orderItem.findMany({
-    where: { orderId },
-    include: {
-      variant: {
-        include: {
-          product: {
-            include: { seller: { select: { profileId: true } } },
-          },
-        },
-      },
-    },
-  })
-
-  const seen = new Set<string>()
-  for (const item of items) {
-    const sellerId = item.variant?.product?.seller?.profileId
-    if (!sellerId || seen.has(sellerId)) continue
-    seen.add(sellerId)
-    notificationQueue.enqueue(
-      {
-        userId: sellerId,
-        type: 'ORDER',
-        actorId: sellerId,
-        message: `New order #${orderId} received from ${buyerName}`,
-      },
-      { dedupeKey: `order-paid:${orderId}:seller:${sellerId}` },
-    )
-  }
-}
 
 const schema = z.object({ reference: z.string().min(1) })
 
@@ -78,23 +43,21 @@ export default defineEventHandler(async (event) => {
     })
 
     if (confirm.ok) {
-      // Per order: atomic flip — only the first caller (vs the webhook) gets
-      // count > 0, so side effects run once per order (no double-crediting).
-      for (const o of orders) {
-        const { count } = await prisma.orders.updateMany({
-          where: { id: o.id, paymentStatus: { notIn: ['PAID', 'FAILED'] } },
-          data: { paymentStatus: 'PAID', status: 'CONFIRMED' },
+      // Overpayment is tolerated by the money-gate but should never pass silently.
+      if (confirm.actualMinor > expectedMinor) {
+        logger.warn('[verify] buyer overpaid — collected exceeds owed', {
+          reference,
+          expectedMinor,
+          actualMinor: confirm.actualMinor,
         })
-        if (count > 0) {
-          notifySellers(o.id, user.username || user.email || 'a customer')
-            .catch((e) => logger.error('Verify: notify sellers failed', { orderId: o.id, error: e?.message ?? e }))
-          walletService.creditSellersOnPayment(o.id)
-            .catch((e) => logger.error('Verify: wallet credit failed', { orderId: o.id, error: e?.message ?? e }))
-          squareService.creditAssociationsForOrder(o.id)
-            .catch((e) => logger.error('Verify: association credit failed', { orderId: o.id, error: e?.message ?? e }))
-          analyticsService.trackOrderSale(o.id)
-            .catch((e) => logger.error('Verify: sale tracking failed', { orderId: o.id, error: e?.message ?? e }))
-        }
+      }
+      // Per order: the shared service does the atomic flip — only the first caller
+      // (vs the webhook or the reconciliation cron) runs the money side effects.
+      const buyerName = user.username || user.email || 'a customer'
+      for (const o of orders) {
+        await paymentConfirmationService.confirmPaidCardOrder(o.id, {
+          sellerMessage: `New order #${o.id} received from ${buyerName}`,
+        })
       }
       // Payment confirmed → now it's safe to empty the cart (idempotent).
       await cartRepository.clearCart(user.id).catch(() => {})

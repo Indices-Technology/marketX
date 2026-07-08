@@ -30,7 +30,7 @@ export class WalletApiClient extends BaseApiClient {
     return this.request('/api/commerce/wallet', { method: 'GET' })
   }
 
-  async getTransactions(params?: { limit?: number; offset?: number }): Promise<TransactionsResponse> {
+  async getTransactions(params?: { limit?: number; offset?: number; storeSlug?: string }): Promise<TransactionsResponse> {
     const query = params
       ? '?' +
         new URLSearchParams(
@@ -57,11 +57,43 @@ export class WalletApiClient extends BaseApiClient {
     })
   }
 
-  async withdraw(amount: number, bankAccount: BankAccount) {
+  // storeSlug scopes the withdrawal to a specific store's wallet (per-store
+  // finance page). Omitted on the legacy profile path.
+  async withdraw(amount: number, bankAccount: BankAccount, storeSlug?: string) {
     return this.request('/api/commerce/wallet/withdraw', {
       method: 'POST',
-      body: { amount, bankAccount },
+      body: { amount, bankAccount, ...(storeSlug ? { storeSlug } : {}) },
     })
+  }
+
+  // ── Payout (bank) accounts — per store ────────────────────────────────────
+  async getBankAccounts(storeSlug?: string) {
+    const q = storeSlug ? `?storeSlug=${encodeURIComponent(storeSlug)}` : ''
+    return this.request(`/api/seller/bank-accounts${q}`, { method: 'GET' })
+  }
+
+  async addBankAccount(payload: {
+    sellerId: string
+    bankName: string
+    bankCode: string
+    accountNumber: string
+    accountName: string
+    isDefault?: boolean
+  }) {
+    return this.request('/api/seller/bank-accounts', {
+      method: 'POST',
+      body: payload,
+    })
+  }
+
+  async setDefaultBankAccount(id: string) {
+    return this.request(`/api/seller/bank-accounts/${id}/set-default`, {
+      method: 'PATCH',
+    })
+  }
+
+  async deleteBankAccount(id: string) {
+    return this.request(`/api/seller/bank-accounts/${id}`, { method: 'DELETE' })
   }
 }
 

@@ -56,6 +56,14 @@
             <span>Orders</span>
           </NuxtLink>
           <NuxtLink
+            :to="`/seller/${storeSlug}/finance`"
+            class="seller-nav-link"
+            active-class="active"
+          >
+            <Icon name="mdi:wallet-outline" size="22" />
+            <span>Finance</span>
+          </NuxtLink>
+          <NuxtLink
             :to="`/seller/${storeSlug}/messages`"
             class="seller-nav-link"
             active-class="active"

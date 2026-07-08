@@ -5,12 +5,12 @@ import { paymentService } from '~~/layers/payments/server/services/payment.servi
 import { podService } from '~~/layers/pod/server/services/pod.service'
 import { notificationQueue } from '~~/server/queues/notification.queue'
 import { emailQueue } from '~~/server/queues/email.queue'
-import { walletService } from '../../../services/wallet.service'
 import { cartRepository } from '../../../repositories/cart.repository'
 import { analyticsService } from '../../../services/analytics.service'
-import { squareService } from '~~/layers/square/server/services/square.service'
+import { paymentConfirmationService } from '../../../services/paymentConfirmation.service'
 import { buildOrderStatusEmail } from '~~/server/utils/email/emailService'
 
+/** Notify every unique seller whose products are in this order (POD path). */
 async function notifySellers(orderId: number) {
   const items = await prisma.orderItem.findMany({
     where: { orderId },
@@ -79,6 +79,13 @@ export default defineEventHandler(async (event) => {
     )
     return { success: true } // ack Paystack, but never confirm a short payment
   }
+  if (webhook.amountMinor > expectedMinor) {
+    logger.warn('[webhook] buyer overpaid — collected exceeds owed', {
+      reference,
+      expectedMinor,
+      actualMinor: webhook.amountMinor,
+    })
+  }
 
   // 3. Confirm each per-seller order (atomic once-only vs the verify endpoint)
   let creditedAny = false
@@ -95,23 +102,12 @@ export default defineEventHandler(async (event) => {
         analyticsService.trackOrderSale(order.id).catch((e) => logger.error('Webhook POD sale tracking failed', { orderId: order.id, error: e?.message ?? e }))
       }
     } else {
-      const { count } = await prisma.orders.updateMany({
-        where: { id: order.id, paymentStatus: { notIn: ['PAID', 'FAILED'] } },
-        data: { paymentStatus: 'PAID', status: 'CONFIRMED' },
-      })
-      if (count > 0) {
-        creditedAny = true
-        notifySellers(order.id).catch((e) => logger.error('Webhook notify failed', { orderId: order.id, error: e?.message ?? e }))
-        walletService
-          .creditSellersOnPayment(order.id)
-          .catch((e) => logger.error('Webhook wallet credit failed', { orderId: order.id, error: e?.message ?? e }))
-        squareService
-          .creditAssociationsForOrder(order.id)
-          .catch((e) => logger.error('Webhook association credit failed', { orderId: order.id, error: e?.message ?? e }))
-        analyticsService
-          .trackOrderSale(order.id)
-          .catch((e) => logger.error('Webhook sale tracking failed', { orderId: order.id, error: e?.message ?? e }))
-      }
+      // Shared atomic confirm — runs the money side effects once, whether this
+      // webhook, the verify endpoint, or the reconciliation cron gets here first.
+      const confirmed = await paymentConfirmationService.confirmPaidCardOrder(
+        order.id,
+      )
+      if (confirmed) creditedAny = true
     }
   }
 

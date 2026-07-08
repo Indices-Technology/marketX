@@ -47,7 +47,9 @@ const productSellerInclude = {
     take: 1,
     orderBy: { created_at: 'asc' as const },
   },
-  // First (cheapest) variant only — the card shows a single "from" price.
+  // First (cheapest) variant only — the card shows a single "from" price. Stock
+  // levels are summarised separately via getSellerStockSummary (DB-level counts)
+  // rather than shipping every variant row.
   variants: {
     select: { id: true, size: true, stock: true, price: true },
     take: 1,
@@ -144,6 +146,16 @@ async function upsertProductTags(productId: number, tagNames: string[]) {
     skipDuplicates: true,
   })
 }
+
+// Internal Products columns that the public product page and the owner's edit
+// form both have no use for: moderation state, the abuse-report tally, and cart
+// analytics. `include` doesn't restrict scalar columns, so without this omit the
+// public product endpoint returns all three. Kept out of the detail reads.
+const productDetailOmit = {
+  moderationStatus: true,
+  reportCount: true,
+  cartCount: true,
+} as const
 
 export const productRepository = {
   async createProduct(
@@ -353,6 +365,7 @@ export const productRepository = {
   async getProductById(id: number) {
     return prisma.products.findUnique({
       where: { id },
+      omit: productDetailOmit,
       include: productInclude,
     })
   },
@@ -367,6 +380,7 @@ export const productRepository = {
   async getProductBySlugFull(slug: string) {
     return prisma.products.findUnique({
       where: { slug },
+      omit: productDetailOmit,
       include: productInclude,
     })
   },
@@ -392,6 +406,42 @@ export const productRepository = {
       skip: pagination.offset,
       orderBy: { created_at: 'desc' },
     })
+  },
+
+  /**
+   * DB-level stock rollup for a page of products. Returns, per product, how many
+   * variants are out of stock and how many need a refill (at/below the low
+   * threshold, which includes the out-of-stock ones). Two grouped counts instead
+   * of shipping every variant row — keeps the seller grid payload small.
+   *
+   * Trade-off (counts vs. per-size detail) is documented in
+   * docs/API_STRUCTURE.md → Seller → "/seller/[id]/products — stock summary".
+   */
+  async getSellerStockSummary(productIds: number[]) {
+    const LOW_STOCK_THRESHOLD = 3
+    const map = new Map<number, { refill: number; out: number }>()
+    if (!productIds.length) return map
+
+    const [refillRows, outRows] = await Promise.all([
+      prisma.productVariant.groupBy({
+        by: ['productId'],
+        where: { productId: { in: productIds }, stock: { lte: LOW_STOCK_THRESHOLD } },
+        _count: { _all: true },
+      }),
+      prisma.productVariant.groupBy({
+        by: ['productId'],
+        where: { productId: { in: productIds }, stock: { lte: 0 } },
+        _count: { _all: true },
+      }),
+    ])
+
+    for (const r of refillRows) map.set(r.productId, { refill: r._count._all, out: 0 })
+    for (const o of outRows) {
+      const entry = map.get(o.productId) ?? { refill: 0, out: 0 }
+      entry.out = o._count._all
+      map.set(o.productId, entry)
+    }
+    return map
   },
 
   async updateProduct(id: number, data: UpdateProductInput, authorId?: string) {

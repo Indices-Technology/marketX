@@ -25,7 +25,15 @@ export async function requireAuth(event: H3Event) {
     // 0. Per-request memoization. requireAuth (and optionalAuth) can be called by
     //    several layers within a single request; the token verify + DB loads only
     //    need to happen once. Subsequent calls reuse the resolved user.
-    if (event.context.user) {
+    //
+    //    Only reuse a FULLY-resolved profile (one this function loaded). The global
+    //    auth middleware (server/middleware/auth.global.ts) pre-populates
+    //    event.context.user with a lightweight { id, email, role } straight from
+    //    the JWT — that object has no sellerProfile, so trusting it here would make
+    //    every seller-only handler see sellerProfile === undefined and 403. The
+    //    `sellerProfile` key is always present (possibly null) once we've done the
+    //    full load below, so its presence marks a resolved user.
+    if (event.context.user && 'sellerProfile' in event.context.user) {
       return event.context.user as IProfile
     }
 

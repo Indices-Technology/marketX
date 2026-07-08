@@ -95,7 +95,10 @@ async function liveQuote(req: ShipmentRequest): Promise<Quote[] | null> {
   // GIG returns a single price for our ecommerce account (Discount: 0) — this IS
   // our cost. The buyer-facing markup is applied centrally by the orchestrator
   // (SHIPPING_MARKUP_PCT), so we no longer fabricate a "Basic" retail here.
+  // InsuranceValue (1% of declared value) is part of GrandTotal — surface it so
+  // pricing passes it through at cost and checkout can show it separately.
   const costMinor = NGN(grand)
+  const insuranceMinor = NGN(Number(result.InsuranceValue ?? 0))
 
   return [
     {
@@ -104,6 +107,7 @@ async function liveQuote(req: ShipmentRequest): Promise<Quote[] | null> {
       serviceLevel: 'standard',
       zoneCode: zone,
       costMinor,
+      insuranceMinor,
       listMinor: costMinor,
       buyerPriceMinor: costMinor, // orchestrator applies markup + discount dial
       currency: req.currency ?? 'NGN',

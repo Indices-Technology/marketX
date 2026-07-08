@@ -40,6 +40,9 @@ export interface IShipmentRate {
   service: string
   /** Cost in the seller's base currency (NGN) */
   amountNGN: number
+  /** Portion of amountNGN that is pass-through carrier insurance, if any (for the
+   *  checkout breakdown). Undefined when the shipment isn't insured. */
+  insuranceNGN?: number
   /** Estimated delivery time description, e.g. "3-5 business days" */
   estimatedDays: string
   /** Which provider returned this rate */
