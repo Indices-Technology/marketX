@@ -83,7 +83,10 @@ export default defineEventHandler(async (event) => {
         name: seller.shipFromName || seller.store_name || 'Seller',
         street1: seller.shipFromAddress,
         city: seller.shipFromCity,
-        state: seller.shipFromState || seller.shipFromCity,
+        // GIG resolves the pickup station from STATE — never fall back to the
+        // city (a city name won't match a station → no GIG quote). Prefer the
+        // ship-from state, then the store's map state.
+        state: seller.shipFromState || seller.state || seller.shipFromCity,
         zip: seller.shipFromZip || '100001',
         country: seller.shipFromCountry || 'NG',
         phone: seller.shipFromPhone || undefined,

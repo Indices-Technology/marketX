@@ -18,6 +18,7 @@ const ALLOWED = new Set([
   'show_near_me',
   'show_shop_today',
   'show_stories',
+  'reduce_motion',
 ])
 
 export default defineEventHandler(async (event) => {

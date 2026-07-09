@@ -69,7 +69,9 @@
         </div>
 
         <!-- Text size -->
-        <div class="flex items-center justify-between px-5 py-4">
+        <div
+          class="flex items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-neutral-800"
+        >
           <div class="flex items-center gap-3">
             <Icon
               name="mdi:format-size"
@@ -105,6 +107,14 @@
             </button>
           </div>
         </div>
+
+        <SettingToggle
+          icon="mdi:motion-outline"
+          label="Reduce Motion"
+          description="Minimize pulsing dots and animated effects"
+          :value="settings.reduceMotion"
+          @change="update('reduceMotion', $event)"
+        />
       </section>
 
       <!-- Playback -->

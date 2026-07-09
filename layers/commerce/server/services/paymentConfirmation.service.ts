@@ -80,7 +80,7 @@ export const paymentConfirmationService = {
   ): Promise<boolean> {
     const before = await prisma.orders.findUnique({
       where: { id: orderId },
-      select: { paymentStatus: true, status: true },
+      select: { paymentStatus: true, status: true, userId: true },
     })
 
     const { count } = await prisma.orders.updateMany({
@@ -88,6 +88,19 @@ export const paymentConfirmationService = {
       data: { paymentStatus: 'PAID', status: 'CONFIRMED' },
     })
     if (count === 0) return false
+
+    // Notify the buyer their order is confirmed (in-app, clickable to the order).
+    if (before?.userId) {
+      notificationQueue.enqueue(
+        {
+          userId: before.userId,
+          type: 'ORDER',
+          orderId,
+          message: `Your order #${orderId} is confirmed — the seller is preparing it.`,
+        },
+        { dedupeKey: `order-confirmed-buyer:${orderId}` },
+      )
+    }
 
     // If the expiry cron had already failed/cancelled this order, it restored the
     // stock — put it back now that we know the buyer really paid.
@@ -146,6 +159,11 @@ export const paymentConfirmationService = {
     orderId: number,
     opts: { sellerMessage?: string } = {},
   ): Promise<boolean> {
+    const buyer = await prisma.orders.findUnique({
+      where: { id: orderId },
+      select: { userId: true },
+    })
+
     const { count } = await prisma.orders.updateMany({
       where: {
         id: orderId,
@@ -154,6 +172,18 @@ export const paymentConfirmationService = {
       data: { paymentStatus: 'SHIPPING_PAID', status: 'CONFIRMED' },
     })
     if (count === 0) return false
+
+    if (buyer?.userId) {
+      notificationQueue.enqueue(
+        {
+          userId: buyer.userId,
+          type: 'ORDER',
+          orderId,
+          message: `Your order #${orderId} is confirmed — pay the balance on delivery.`,
+        },
+        { dedupeKey: `order-confirmed-buyer:${orderId}` },
+      )
+    }
 
     const msg =
       opts.sellerMessage ?? `POD order #${orderId} — shipping fee confirmed`
