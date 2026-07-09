@@ -20,18 +20,18 @@
       </form>
     </section>
 
-    <!-- ─── 1. DEALS ──────────────────────────────────────────────────────── -->
+    <!-- ─── 1. DEALS (flagship) ───────────────────────────────────────────── -->
     <!-- Today's deals — hidden entirely when there are no live (<48h) flash deals -->
     <section v-if="dealsLoading || deals.length">
       <div class="mb-4 flex items-end justify-between">
         <div>
           <p
-            class="text-[11px] font-semibold uppercase tracking-widest text-brand"
+            class="mb-1 text-xs font-bold uppercase tracking-widest text-brand"
           >
             On sale now
           </p>
           <h2
-            class="text-xl font-extrabold leading-tight text-gray-900 dark:text-white"
+            class="font-display text-2xl font-bold leading-tight text-gray-900 dark:text-white"
           >
             Today's deals
           </h2>
@@ -44,10 +44,12 @@
         </NuxtLink>
       </div>
 
-      <div
+      <BaseSkeleton
         v-if="dealsLoading && !deals.length"
-        class="h-52 animate-pulse rounded-2xl bg-gray-100 dark:bg-neutral-800"
-        style="contain: strict"
+        shape="block"
+        height="208px"
+        rounded="rounded-2xl"
+        class="[contain:strict]"
       />
       <FeedProductShelf
         v-else-if="deals.length"
@@ -64,12 +66,12 @@
       <div class="mb-4 flex items-end justify-between">
         <div>
           <p
-            class="text-[11px] font-semibold uppercase tracking-widest text-brand"
+            class="mb-1 text-xs font-bold uppercase tracking-widest text-brand"
           >
             Discover
           </p>
           <h2
-            class="text-lg font-extrabold leading-tight text-gray-900 dark:text-white"
+            class="font-display text-xl font-bold leading-tight text-gray-900 dark:text-white"
           >
             Explore Nigeria's Digital Markets
           </h2>
@@ -90,10 +92,14 @@
         class="scrollbar-hide flex gap-3 overflow-x-auto pb-1"
         style="height: 208px; contain: strict"
       >
-        <div
+        <BaseSkeleton
           v-for="i in 3"
           :key="i"
-          class="h-[200px] w-60 shrink-0 animate-pulse rounded-2xl bg-gray-100 dark:bg-neutral-800"
+          shape="block"
+          width="240px"
+          height="200px"
+          rounded="rounded-2xl"
+          class="shrink-0"
         />
       </div>
 
@@ -128,21 +134,33 @@
 
     <!-- ─── 3. SELLERS ONLINE ─────────────────────────────────────────────── -->
     <section ref="section3Ref">
-      <div class="mb-4 flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <h2 class="text-base font-bold text-gray-900 dark:text-white">
-            Traders selling live
-          </h2>
-          <span
-            class="flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-bold text-green-600 dark:bg-green-900/30 dark:text-green-400"
+      <div class="mb-4 flex items-end justify-between">
+        <div>
+          <p
+            class="mb-1 text-xs font-bold uppercase tracking-widest text-brand"
           >
-            <span class="block h-1.5 w-1.5 rounded-full bg-green-500" />
-            Live
-          </span>
+            Happening now
+          </p>
+          <div class="flex items-center gap-2">
+            <h2
+              class="font-display text-lg font-bold text-gray-900 dark:text-white"
+            >
+              Traders selling live
+            </h2>
+            <span
+              class="flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-bold text-green-600 dark:bg-green-900/30 dark:text-green-400"
+            >
+              <!-- animate-pulse is suppressed by Reduce Motion (settings) and OS prefers-reduced-motion -->
+              <span
+                class="block h-1.5 w-1.5 animate-pulse rounded-full bg-green-500"
+              />
+              Live
+            </span>
+          </div>
         </div>
         <NuxtLink
           to="/map"
-          class="text-xs font-semibold text-gray-400 hover:text-brand dark:text-neutral-500"
+          class="mb-0.5 text-xs font-semibold text-gray-400 hover:text-brand dark:text-neutral-500"
         >
           Map →
         </NuxtLink>
@@ -158,12 +176,8 @@
           :key="i"
           class="flex shrink-0 flex-col items-center gap-2"
         >
-          <div
-            class="h-[56px] w-[56px] animate-pulse rounded-full bg-gray-200 dark:bg-neutral-800"
-          />
-          <div
-            class="h-2 w-10 animate-pulse rounded bg-gray-200 dark:bg-neutral-800"
-          />
+          <BaseSkeleton shape="circle" width="56px" height="56px" />
+          <BaseSkeleton shape="line" width="40px" height="8px" />
         </div>
       </div>
 
@@ -252,10 +266,17 @@
     <section ref="section4Ref">
       <div class="mb-4 flex items-end justify-between">
         <div>
-          <h2 class="text-base font-bold text-gray-900 dark:text-white">
+          <p
+            class="mb-1 text-xs font-bold uppercase tracking-widest text-brand"
+          >
+            New this week
+          </p>
+          <h2
+            class="font-display text-xl font-bold text-gray-900 dark:text-white"
+          >
             Fresh from the market
           </h2>
-          <p class="text-[11px] text-gray-500 dark:text-neutral-400">
+          <p class="mt-0.5 text-[12px] text-gray-500 dark:text-neutral-400">
             New goods from traders this week
           </p>
         </div>
@@ -267,10 +288,12 @@
         </NuxtLink>
       </div>
 
-      <div
+      <BaseSkeleton
         v-if="freshLoading && !freshItems.length"
-        class="h-52 animate-pulse rounded-2xl bg-gray-100 dark:bg-neutral-800"
-        style="contain: strict"
+        shape="block"
+        height="208px"
+        rounded="rounded-2xl"
+        class="[contain:strict]"
       />
       <FeedProductShelf
         v-else-if="freshItems.length"
@@ -285,7 +308,14 @@
     <section ref="section5Ref">
       <div class="mb-4 flex items-end justify-between">
         <div>
-          <h2 class="text-base font-bold text-gray-900 dark:text-white">
+          <p
+            class="mb-1 text-xs font-bold uppercase tracking-widest text-brand"
+          >
+            From the community
+          </p>
+          <h2
+            class="font-display text-lg font-bold text-gray-900 dark:text-white"
+          >
             Market Pulse
           </h2>
           <p class="mt-0.5 text-[12px] text-gray-500 dark:text-neutral-400">
@@ -302,11 +332,13 @@
       </div>
 
       <div v-if="postsLoading && !marketPosts.length" class="space-y-4">
-        <div
+        <BaseSkeleton
           v-for="i in 2"
           :key="i"
-          class="h-44 animate-pulse rounded-2xl bg-gray-100 dark:bg-neutral-800"
-          style="contain: strict"
+          shape="block"
+          height="176px"
+          rounded="rounded-2xl"
+          class="[contain:strict]"
         />
       </div>
 
@@ -322,31 +354,24 @@
       </div>
 
       <!-- Empty — encourage exploration instead of a dangling header -->
-      <div
+      <BaseEmptyState
         v-else
-        class="rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-4 py-8 text-center dark:border-neutral-700 dark:bg-neutral-800/40"
+        icon="mdi:storefront-outline"
+        title="The market is quiet right now"
+        description="Follow traders and markets to see their latest here."
+        compact
       >
-        <Icon
-          name="mdi:storefront-outline"
-          size="28"
-          class="mx-auto text-gray-300 dark:text-neutral-600"
-        />
-        <p
-          class="mt-2 text-sm font-semibold text-gray-600 dark:text-neutral-300"
-        >
-          The market is quiet right now
-        </p>
-        <p class="mt-0.5 text-[12px] text-gray-500 dark:text-neutral-400">
-          Follow traders and markets to see their latest here.
-        </p>
-        <NuxtLink
-          to="/squares"
-          class="mt-3 inline-flex items-center gap-1 rounded-full bg-brand px-4 py-1.5 text-[12px] font-bold text-white transition hover:bg-brand/90"
-        >
-          Explore markets
-          <Icon name="mdi:arrow-right" size="13" />
-        </NuxtLink>
-      </div>
+        <template #actions>
+          <BaseButton
+            variant="primary"
+            size="sm"
+            @click="navigateTo('/squares')"
+          >
+            Explore markets
+            <Icon name="mdi:arrow-right" size="13" />
+          </BaseButton>
+        </template>
+      </BaseEmptyState>
     </section>
 
     <!-- ─── 6. MAP CTA ────────────────────────────────────────────────────── -->
@@ -361,7 +386,9 @@
           class="shrink-0 text-white/60"
         />
         <div class="min-w-0 flex-1">
-          <p class="font-bold text-white">Explore the market map</p>
+          <p class="font-display font-bold text-white">
+            Explore the market map
+          </p>
           <p class="text-[12px] text-white/50">
             Stores, pop-ups and deals near you
           </p>
@@ -400,6 +427,9 @@
 import FeedProductShelf from '~~/layers/feed/app/components/FeedProductShelf.vue'
 import PostCard from '~~/layers/social/app/components/PostCard.vue'
 import SquareCard from '~~/layers/square/app/components/SquareCard.vue'
+import BaseSkeleton from '~~/layers/ui/app/components/BaseSkeleton.vue'
+import BaseEmptyState from '~~/layers/ui/app/components/BaseEmptyState.vue'
+import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 import ProductDetailModal from '~~/layers/commerce/app/components/modals/ProductDetailModal.vue'
 import PostDetailModal from '~~/layers/social/app/components/modals/PostDetailModal.vue'
 import ProductCommentModal from '~~/layers/commerce/app/components/modals/ProductCommentModal.vue'

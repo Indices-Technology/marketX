@@ -25,6 +25,11 @@ const cartInclude = {
             orderBy: { minQuantity: 'desc' as const },
             select: {
               id: true,
+              // isActive is required by the client's effectiveUnitPrice filter
+              // (`o.isActive && qty >= minQuantity`). Omitting it left it
+              // undefined → no volume discount applied client-side, so the
+              // checkout total showed MORE than Paystack was charged.
+              isActive: true,
               minQuantity: true,
               discount: true,
               label: true,

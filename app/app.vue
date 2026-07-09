@@ -31,7 +31,7 @@ colorMode.preference = colorMode.preference || 'light'
 const { defaults } = useSeo()
 defaults()
 
-// Re-apply text size on app load
+// Re-apply text size + motion preference on app load
 if (import.meta.client) {
   const { settings } = useSettings()
   watch(
@@ -43,6 +43,13 @@ if (import.meta.client) {
       )
       if (size !== 'medium')
         document.documentElement.classList.add(`text-size-${size}`)
+    },
+    { immediate: true },
+  )
+  watch(
+    () => settings.value.reduceMotion,
+    (reduce) => {
+      document.documentElement.classList.toggle('reduce-motion', reduce)
     },
     { immediate: true },
   )
@@ -99,6 +106,24 @@ html.text-size-small {
 }
 html.text-size-large {
   font-size: 18px;
+}
+
+/* Reduced motion — two independent triggers, same effect:
+   1. html.reduce-motion  → the in-app "Reduce Motion" setting (profile settings)
+   2. prefers-reduced-motion → the OS-level accessibility preference (always honored)
+   Suppresses decorative animation only (pulsing dots, skeleton shimmer, bounces).
+   Spinners on in-flight actions are kept — they communicate progress, not decoration. */
+html.reduce-motion .animate-pulse,
+html.reduce-motion .animate-bounce,
+html.reduce-motion .animate-ping {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse,
+  .animate-bounce,
+  .animate-ping {
+    animation: none;
+  }
 }
 
 /* Subtle grain texture on dark surfaces */

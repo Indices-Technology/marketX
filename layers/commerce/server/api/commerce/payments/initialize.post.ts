@@ -1,6 +1,7 @@
 // POST /api/commerce/payments/initialize
 // Creates an order in PENDING state, then initializes a Paystack transaction.
 // The client redirects the user to the Paystack payment page.
+import { createHash } from 'crypto'
 import { z, ZodError } from 'zod'
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
@@ -8,6 +9,7 @@ import { getClientIP } from '~~/server/layers/shared/utils/security'
 import { orderService } from '../../../services/order.service'
 import { orderRepository } from '../../../repositories/order.repository'
 import { resolveAffiliateCode } from '~~/server/utils/affiliate-ref'
+import { once } from '~~/server/utils/cache'
 
 const schema = z.object({
   items: z
@@ -54,16 +56,32 @@ export default defineEventHandler(async (event) => {
       getHeader(event, 'x-forwarded-for') || getClientIP(event) || 'unknown'
     const userAgent = getHeader(event, 'user-agent') || 'unknown'
 
-    // 1. Create the orders (one per seller, PENDING/UNPAID, shared group)
-    const group = await orderService.placeOrder(
-      user.id,
-      {
-        ...body,
-        paymentMethod: 'card',
-        affiliateCode: await resolveAffiliateCode(event, body.affiliateCode),
-      },
-      ipAddress,
-      userAgent,
+    // 1. Create the orders (one per seller, PENDING/UNPAID, shared group).
+    // Idempotent: a double-click / retry within the window reuses the same order
+    // group instead of creating a second set of orders (parity with /api/orders).
+    const affiliateCode = await resolveAffiliateCode(event, body.affiliateCode)
+    const payloadKey =
+      getHeader(event, 'idempotency-key') ||
+      createHash('sha256')
+        .update(
+          JSON.stringify({
+            items: body.items,
+            address: body.address,
+            paymentMethod: 'card',
+          }),
+        )
+        .digest('hex')
+        .slice(0, 32)
+    const group = await once(
+      `order:idem:${user.id}:${payloadKey}`,
+      60,
+      () =>
+        orderService.placeOrder(
+          user.id,
+          { ...body, paymentMethod: 'card', affiliateCode },
+          ipAddress,
+          userAgent,
+        ),
     )
 
     // 2. One Paystack reference for the whole purchase, set on every order

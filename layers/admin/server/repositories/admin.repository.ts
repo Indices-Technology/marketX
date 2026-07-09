@@ -367,7 +367,7 @@ export const adminRepository = {
 
   // ── Squares ────────────────────────────────────────────────────────────────
 
-  listSquares(opts: {
+  async listSquares(opts: {
     status?: string
     type?: string
     search?: string
@@ -384,7 +384,7 @@ export const adminRepository = {
         { city: { contains: opts.search, mode: 'insensitive' as const } },
       ]
     }
-    return prisma.square.findMany({
+    const rows = await prisma.square.findMany({
       where,
       select: {
         id: true,
@@ -396,14 +396,20 @@ export const adminRepository = {
         state: true,
         iconUrl: true,
         memberCount: true,
-        followerCount: true,
         postCount: true,
         created_at: true,
+        // Real follower count from the actual UserSquareFollow rows — the
+        // denormalized followerCount field was polluted by demo seeding.
+        _count: { select: { followers: true } },
       },
       orderBy: { created_at: 'desc' },
       take: opts.limit + 1,
       skip: opts.offset,
     })
+    return rows.map(({ _count, ...s }) => ({
+      ...s,
+      followerCount: _count.followers,
+    }))
   },
 
   getSquare(id: string) {

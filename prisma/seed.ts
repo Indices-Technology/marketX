@@ -1626,7 +1626,9 @@ async function main() {
           associationCutPercent: sq.associationCutPercent,
           accentColor: sq.accentColor,
           memberCount: sq.sellerSlugs.length,
-          followerCount: Math.floor(Math.random() * 800) + 50,
+          // Start at 0 — real followers accrue from actual UserSquareFollow rows.
+          // (Never fabricate social proof.)
+          followerCount: 0,
         },
       })
     }

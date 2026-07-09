@@ -13,6 +13,7 @@ export interface AppSettings {
   showNearMe: boolean
   showShopToday: boolean
   showStories: boolean
+  reduceMotion: boolean
   currency: string
   theme: string
   language: string
@@ -27,6 +28,7 @@ const defaults: AppSettings = {
   showNearMe: true,
   showShopToday: true,
   showStories: true,
+  reduceMotion: false,
   currency: 'NGN',
   theme: 'system',
   language: 'en',
@@ -45,6 +47,7 @@ const DB_KEY_MAP: Record<keyof AppSettings, string> = {
   showNearMe: 'show_near_me',
   showShopToday: 'show_shop_today',
   showStories: 'show_stories',
+  reduceMotion: 'reduce_motion',
   currency: 'currency',
   theme: 'theme',
   language: 'language',
@@ -59,6 +62,7 @@ interface DbSettings {
   show_near_me: boolean
   show_shop_today: boolean
   show_stories: boolean
+  reduce_motion: boolean
   currency: string
   theme: string
   language: string
@@ -74,6 +78,7 @@ const fromDb = (db: Partial<DbSettings>): Partial<AppSettings> => ({
   showNearMe: db.show_near_me ?? defaults.showNearMe,
   showShopToday: db.show_shop_today ?? defaults.showShopToday,
   showStories: db.show_stories ?? defaults.showStories,
+  reduceMotion: db.reduce_motion ?? defaults.reduceMotion,
   currency: db.currency ?? defaults.currency,
   theme: db.theme ?? defaults.theme,
   language: db.language ?? defaults.language,
@@ -102,6 +107,15 @@ const applyTextSize = (size: AppSettings['textSize']) => {
   )
   if (size !== 'medium')
     document.documentElement.classList.add(`text-size-${size}`)
+}
+
+// Root class consumed by global CSS (main.css) to suppress decorative
+// animation (live-dot pulse, skeleton shimmer, ticker scroll). The OS-level
+// `prefers-reduced-motion` media query is honored in the same CSS regardless
+// of this setting — the toggle only ever ADDS reduction, never removes it.
+const applyMotion = (reduce: boolean) => {
+  if (!import.meta.client) return
+  document.documentElement.classList.toggle('reduce-motion', reduce)
 }
 
 // Debounced server sync — batches rapid changes into one request
@@ -137,6 +151,7 @@ export const useSettings = () => {
     initialized = true
     load()
     applyTextSize(settings.value.textSize)
+    applyMotion(settings.value.reduceMotion)
   }
 
   const update = <K extends keyof AppSettings>(
@@ -146,6 +161,7 @@ export const useSettings = () => {
     settings.value[key] = value
     save()
     if (key === 'textSize') applyTextSize(value as AppSettings['textSize'])
+    if (key === 'reduceMotion') applyMotion(value as boolean)
     scheduleSync(DB_KEY_MAP[key], value)
   }
 
@@ -153,6 +169,7 @@ export const useSettings = () => {
     Object.assign(settings.value, defaults)
     save()
     applyTextSize(defaults.textSize)
+    applyMotion(defaults.reduceMotion)
     // Sync all defaults to server
     for (const [k, v] of Object.entries(defaults)) {
       pendingPatch[DB_KEY_MAP[k as keyof AppSettings] as keyof DbSettings] = v
@@ -170,6 +187,7 @@ export const useSettings = () => {
     Object.assign(settings.value, mapped)
     save()
     applyTextSize(settings.value.textSize)
+    applyMotion(settings.value.reduceMotion)
   }
 
   return { settings: readonly(settings), update, reset, hydrateFromServer }
