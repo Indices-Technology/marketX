@@ -18,7 +18,7 @@
             :alt="products[0].title"
             class="h-full w-full object-cover"
           />
-          <Icon v-else name="mdi:shopping" size="16" class="text-gray-500 dark:text-neutral-400" />
+          <Icon v-else name="solar:bag-4-bold" size="16" class="text-gray-500 dark:text-neutral-400" />
         </div>
         <div class="min-w-0 flex-1">
           <p class="truncate text-xs font-semibold text-gray-800 dark:text-neutral-200">{{ products[0].title }}</p>
@@ -31,7 +31,7 @@
         :aria-label="`Add ${products[0].title} to cart`"
         @click.stop="handleAddToCart(products[0])"
       >
-        <Icon :name="addedIds.has(products[0].id) ? 'mdi:check' : 'mdi:cart-plus'" size="16" />
+        <Icon :name="addedIds.has(products[0].id) ? 'solar:check-circle-linear' : 'solar:cart-plus-linear'" size="16" />
         <span class="hidden text-xs font-semibold sm:inline">
           {{ addedIds.has(products[0].id) ? 'Added' : 'Add' }}
         </span>
@@ -41,7 +41,7 @@
     <!-- Multiple products: horizontal scroll -->
     <div v-else>
       <p class="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-neutral-400">
-        <Icon name="mdi:shopping-outline" size="11" class="-mt-0.5 inline" />
+        <Icon name="solar:bag-4-linear" size="11" class="-mt-0.5 inline" />
         {{ contentType === 'INSPIRATION' ? 'Shop this look' : contentType === 'EDUCATIONAL' ? 'Products used' : 'Tagged products' }}
       </p>
       <div class="scrollbar-hide flex gap-2 overflow-x-auto pb-1">
@@ -70,7 +70,7 @@
             :aria-label="`Add ${product.title} to cart`"
             @click.stop="handleAddToCart(product)"
           >
-            <Icon :name="addedIds.has(product.id) ? 'mdi:check' : 'mdi:cart-plus'" size="13" />
+            <Icon :name="addedIds.has(product.id) ? 'solar:check-circle-linear' : 'solar:cart-plus-linear'" size="13" />
             <span class="text-[10px] font-semibold">{{ addedIds.has(product.id) ? 'Added' : 'Add' }}</span>
           </button>
         </div>

@@ -11,7 +11,7 @@
     />
     <Icon
       v-else-if="variant === 'store'"
-      name="mdi:store"
+      name="solar:shop-2-bold"
       :size="sz.icon"
       class="text-white/90"
     />

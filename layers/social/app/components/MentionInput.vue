@@ -22,7 +22,7 @@
         class="mention-dropdown"
       >
         <div v-if="searching" class="mention-searching">
-          <Icon name="mdi:loading" size="14" class="animate-spin text-gray-400" />
+          <Icon name="solar:refresh-linear" size="14" class="animate-spin text-gray-400" />
           <span>Searching…</span>
         </div>
         <template v-else-if="suggestions.length">

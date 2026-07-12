@@ -16,7 +16,7 @@
             class="text-gray-500 hover:text-gray-700 dark:text-neutral-400"
             @click="$emit('close')"
           >
-            <Icon name="mdi:close" class="h-6 w-6" />
+            <Icon name="solar:close-circle-linear" class="h-6 w-6" />
           </button>
         </div>
 
@@ -36,7 +36,7 @@
             class="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white"
             @click="clearMedia"
           >
-            <Icon name="mdi:close" size="16" />
+            <Icon name="solar:close-circle-linear" size="16" />
           </button>
         </div>
 
@@ -47,7 +47,7 @@
           @click="fileInput?.click()"
         >
           <Icon
-            name="mdi:image-plus"
+            name="solar:gallery-add-linear"
             size="48"
             class="mx-auto mb-3 text-gray-400"
           />

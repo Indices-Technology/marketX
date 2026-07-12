@@ -21,7 +21,7 @@
             class="chip"
             @mousedown.prevent="$emit('search', term)"
           >
-            <Icon name="mdi:history" size="12" class="text-gray-400" />
+            <Icon name="solar:history-linear" size="12" class="text-gray-400" />
             {{ term }}
           </button>
         </div>
@@ -37,7 +37,7 @@
             class="chip"
             @mousedown.prevent="$emit('search', tag.name)"
           >
-            <Icon name="mdi:trending-up" size="12" class="text-brand" />
+            <Icon name="solar:graph-up-linear" size="12" class="text-brand" />
             {{ tag.name }}
           </button>
         </div>
@@ -74,11 +74,11 @@
             class="chip"
             @mousedown="$emit('close')"
           >
-            <Icon name="mdi:storefront-outline" size="12" />
+            <Icon name="solar:shop-linear" size="12" />
             {{ s.store_name }}
             <Icon
               v-if="s.is_verified"
-              name="mdi:check-decagram"
+              name="solar:verified-check-bold"
               size="11"
               class="text-blue-500"
             />

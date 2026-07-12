@@ -10,7 +10,7 @@
       v-else-if="error"
       class="flex flex-col items-center gap-4 px-6 text-center"
     >
-      <Icon name="mdi:alert-circle-outline" size="48" class="text-red-400" />
+      <Icon name="solar:danger-circle-linear" size="48" class="text-red-400" />
       <p class="font-medium text-white">{{ error }}</p>
       <NuxtLink to="/" class="text-sm text-white/70 underline hover:text-white"
         >Go home</NuxtLink
@@ -55,7 +55,7 @@
           @click="goBack"
           class="rounded-full p-2 text-white transition-colors hover:bg-white/10"
         >
-          <Icon name="mdi:close" size="22" />
+          <Icon name="solar:close-circle-linear" size="22" />
         </button>
       </div>
 
@@ -114,7 +114,7 @@
           v-if="story.viewCount"
           class="flex items-center gap-1 text-[11px] text-white/60"
         >
-          <Icon name="mdi:eye-outline" size="13" />
+          <Icon name="solar:eye-linear" size="13" />
           {{ story.viewCount.toLocaleString() }}
         </span>
         <span v-else />

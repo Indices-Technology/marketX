@@ -19,7 +19,7 @@
               class="rounded-full p-2 transition-colors hover:bg-gray-100 dark:hover:bg-neutral-800"
             >
               <Icon
-                name="mdi:arrow-left"
+                name="solar:arrow-left-linear"
                 size="22"
                 class="text-gray-900 dark:text-neutral-100"
               />
@@ -65,9 +65,9 @@
                   @click="showContentTypeSelector = true"
                   class="mt-0.5 flex items-center gap-1 rounded-full border border-gray-200 px-2 py-0.5 text-[11px] font-medium text-gray-500 transition-colors hover:border-brand hover:text-brand dark:border-neutral-700 dark:text-neutral-400"
                 >
-                  <Icon name="mdi:label-outline" size="12" />
+                  <Icon name="solar:tag-linear" size="12" />
                   {{ contentTypeLabel }}
-                  <Icon name="mdi:chevron-down" size="12" />
+                  <Icon name="solar:alt-arrow-down-linear" size="12" />
                 </button>
               </div>
             </div>
@@ -122,7 +122,7 @@
                     v-if="item.type === 'video'"
                     class="absolute left-1 top-1 rounded-full bg-black/50 p-1"
                   >
-                    <Icon name="mdi:play-circle" size="14" class="text-white" />
+                    <Icon name="solar:play-circle-bold" size="14" class="text-white" />
                   </div>
                   <!-- Remove -->
                   <button
@@ -130,7 +130,7 @@
                     :aria-label="`Remove media ${idx + 1}`"
                     class="absolute right-1.5 top-1.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
                   >
-                    <Icon name="mdi:close" size="14" class="text-white" />
+                    <Icon name="solar:close-circle-linear" size="14" class="text-white" />
                   </button>
                   <!-- Upload progress -->
                   <div
@@ -154,7 +154,7 @@
                     v-else-if="item.uploadError"
                     class="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/60"
                   >
-                    <Icon name="mdi:alert-circle" size="22" class="text-red-400" />
+                    <Icon name="solar:danger-circle-bold" size="22" class="text-red-400" />
                     <button
                       @click.stop="retryUpload(item)"
                       class="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-semibold text-white hover:bg-white/30"
@@ -168,7 +168,7 @@
                       v-if="item.uploaded && !item.uploading"
                       class="upload-done absolute bottom-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-green-500/90"
                     >
-                      <Icon name="mdi:check" size="12" class="text-white" />
+                      <Icon name="solar:check-circle-linear" size="12" class="text-white" />
                     </div>
                   </Transition>
                   <!-- Order number -->
@@ -186,7 +186,7 @@
                   class="flex aspect-square flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 transition-colors hover:border-brand hover:bg-gray-50 dark:border-neutral-700 dark:hover:bg-neutral-800"
                 >
                   <Icon
-                    name="mdi:plus"
+                    name="solar:add-circle-linear"
                     size="22"
                     class="text-gray-400 dark:text-neutral-500"
                   />
@@ -205,7 +205,7 @@
                 <div
                   class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-pink-400 to-purple-500"
                 >
-                  <Icon name="mdi:music-note" size="16" class="text-white" />
+                  <Icon name="solar:music-note-2-bold" size="16" class="text-white" />
                 </div>
                 <div class="min-w-0 flex-1">
                   <p
@@ -223,7 +223,7 @@
                   class="rounded-full p-1 transition-colors hover:bg-pink-100 dark:hover:bg-pink-900/30"
                 >
                   <Icon
-                    name="mdi:close"
+                    name="solar:close-circle-linear"
                     size="16"
                     class="text-gray-500 dark:text-neutral-400"
                   />
@@ -239,14 +239,14 @@
                   :key="product.id"
                   class="flex items-center gap-1.5 rounded-full bg-brand/10 px-2.5 py-1 text-[12px]"
                 >
-                  <Icon name="mdi:tag-outline" size="12" class="text-brand" />
+                  <Icon name="solar:tag-linear" size="12" class="text-brand" />
                   <span class="font-medium text-brand">{{ product.name }}</span>
                   <button
                     @click="removeProduct(product.id)"
                     :aria-label="`Remove ${product.name}`"
                   >
                     <Icon
-                      name="mdi:close-circle"
+                      name="solar:close-circle-bold"
                       size="14"
                       class="text-brand/60"
                     />
@@ -312,7 +312,7 @@
                 class="toolbar-action group flex items-center gap-1.5 rounded-xl px-3 py-2 transition-colors hover:bg-gray-100 dark:hover:bg-neutral-800"
                 :title="$t('upload.addPhotosVideos')"
               >
-                <Icon name="mdi:image-outline" size="22" class="text-green-500" />
+                <Icon name="solar:gallery-linear" size="22" class="text-green-500" />
                 <span class="text-[13px] font-medium text-gray-600 dark:text-neutral-400">Photo</span>
               </button>
 
@@ -324,7 +324,7 @@
                 :title="$t('upload.addMusic')"
               >
                 <Icon
-                  name="mdi:music-note-outline"
+                  name="solar:music-note-2-linear"
                   size="22"
                   :class="selectedMusic ? 'text-pink-500' : 'text-gray-500 dark:text-neutral-400'"
                 />
@@ -338,7 +338,7 @@
                 :title="$t('upload.tagProducts')"
               >
                 <Icon
-                  name="mdi:tag-outline"
+                  name="solar:tag-linear"
                   size="22"
                   :class="taggedProducts.length > 0 ? 'text-brand' : 'text-gray-500 dark:text-neutral-400'"
                 />
@@ -351,7 +351,7 @@
                 :title="$t('upload.advancedOptions')"
               >
                 <Icon
-                  name="mdi:dots-horizontal"
+                  name="solar:menu-dots-bold"
                   size="22"
                   :class="showAdvancedOptions ? 'text-brand' : 'text-gray-500 dark:text-neutral-400'"
                 />

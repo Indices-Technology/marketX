@@ -44,7 +44,7 @@
               v-if="post.author.role === 'seller'"
               class="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-blue-500 ring-2 ring-white dark:ring-neutral-900"
             >
-              <Icon name="mdi:check" size="10" class="text-white" />
+              <Icon name="solar:check-circle-linear" size="10" class="text-white" />
             </span>
           </div>
           <div class="min-w-0 flex-1">
@@ -60,7 +60,7 @@
           :to="`/profile/${post.author.username}`"
           class="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white py-2 text-xs font-semibold text-gray-600 shadow-sm transition-all hover:border-brand/30 hover:text-brand dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:text-brand"
         >
-          View profile <Icon name="mdi:arrow-right" size="13" />
+          View profile <Icon name="solar:arrow-right-linear" size="13" />
         </NuxtLink>
       </div>
 
@@ -106,14 +106,14 @@
               v-else
               class="flex h-full w-full items-center justify-center bg-gray-100 dark:bg-neutral-800"
             >
-              <Icon name="mdi:text-box-outline" size="20" class="text-gray-400" />
+              <Icon name="solar:document-text-linear" size="20" class="text-gray-400" />
             </div>
             <!-- Video indicator -->
             <div
               v-if="firstMedia(p)?.type === 'VIDEO'"
               class="absolute right-1.5 top-1.5 rounded-full bg-black/60 p-0.5"
             >
-              <Icon name="mdi:play" size="10" class="text-white" />
+              <Icon name="solar:play-bold" size="10" class="text-white" />
             </div>
           </NuxtLink>
         </div>
@@ -151,7 +151,7 @@
                 v-else
                 class="flex h-full w-full items-center justify-center"
               >
-                <Icon name="mdi:package-variant-closed" size="18" class="text-gray-400" />
+                <Icon name="solar:box-linear" size="18" class="text-gray-400" />
               </div>
             </div>
             <div class="min-w-0 flex-1">
@@ -162,7 +162,7 @@
                 {{ formatPrice(prod.price) }}
               </p>
             </div>
-            <Icon name="mdi:chevron-right" size="16" class="shrink-0 text-gray-300 group-hover:text-brand dark:text-neutral-600" />
+            <Icon name="solar:alt-arrow-right-linear" size="16" class="shrink-0 text-gray-300 group-hover:text-brand dark:text-neutral-600" />
           </NuxtLink>
         </div>
       </div>

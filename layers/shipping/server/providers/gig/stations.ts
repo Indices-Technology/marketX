@@ -17,6 +17,10 @@ function norm(s: string): string {
 const STATE_ALIAS: Record<string, string> = {
   abuja: 'fct',
   'federal capital territory': 'fct',
+  // Checkout's NIGERIA_STATES dropdown labels the capital "FCT - Abuja"; GIG's
+  // station StateName is plain "FCT" (norm() drops case but keeps the suffix).
+  'fct - abuja': 'fct',
+  'fct-abuja': 'fct',
 }
 
 /** Best-effort station for a state: first public, non-deleted station matching StateName. */

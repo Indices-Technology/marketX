@@ -14,7 +14,7 @@
         class="flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400"
         @click="addOffer"
       >
-        <Icon name="mdi:plus" size="15" /> Add Offer
+        <Icon name="solar:add-circle-linear" size="15" /> Add Offer
       </button>
     </div>
 
@@ -74,7 +74,7 @@
             class="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
             @click="removeOffer(i)"
           >
-            <Icon name="mdi:trash-can-outline" size="16" />
+            <Icon name="solar:trash-bin-trash-linear" size="16" />
           </button>
         </div>
       </div>
@@ -86,7 +86,7 @@
       class="flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed border-gray-200 py-6 transition-colors hover:border-emerald-400 hover:bg-emerald-50/50 dark:border-neutral-700"
       @click="addOffer"
     >
-      <Icon name="mdi:percent-outline" size="26" class="text-gray-400 dark:text-neutral-500" />
+      <Icon name="solar:sale-linear" size="26" class="text-gray-400 dark:text-neutral-500" />
       <span class="text-sm font-medium text-gray-500 dark:text-neutral-400">
         No offers yet — add a volume deal
       </span>

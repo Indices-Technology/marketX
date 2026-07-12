@@ -13,7 +13,7 @@
       <BaseInput
         v-model="search"
         placeholder="Search your products…"
-        icon-left="mdi:magnify"
+        icon-left="solar:magnifer-linear"
       />
 
       <!-- Loading -->
@@ -24,7 +24,7 @@
       <!-- Empty -->
       <BaseEmptyState
         v-else-if="!filtered.length"
-        icon="mdi:package-variant"
+        icon="solar:box-bold"
         title="No products to offer"
         :description="search ? 'No products match your search.' : 'Add a product to respond to this buyer.'"
         compact
@@ -48,7 +48,7 @@
             loading="lazy"
           />
           <div v-else class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-gray-100 dark:bg-neutral-800">
-            <Icon name="mdi:shopping-outline" size="18" class="text-gray-400" />
+            <Icon name="solar:bag-4-linear" size="18" class="text-gray-400" />
           </div>
           <div class="min-w-0 flex-1">
             <p class="line-clamp-1 text-[13px] font-semibold text-gray-900 dark:text-neutral-100">
@@ -62,7 +62,7 @@
             size="18"
             class="shrink-0 text-brand"
           />
-          <Icon v-else name="mdi:chevron-right" size="18" class="shrink-0 text-gray-300" />
+          <Icon v-else name="solar:alt-arrow-right-linear" size="18" class="shrink-0 text-gray-300" />
         </button>
       </div>
     </div>
@@ -70,7 +70,7 @@
     <template #footer>
       <BaseButton variant="secondary" @click="emit('close')">Cancel</BaseButton>
       <BaseButton variant="ghost" @click="emit('quick-add')">
-        <Icon name="mdi:plus" size="16" /> Quick add new
+        <Icon name="solar:add-circle-linear" size="16" /> Quick add new
       </BaseButton>
     </template>
   </BaseModal>

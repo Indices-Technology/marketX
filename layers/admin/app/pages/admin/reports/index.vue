@@ -50,7 +50,7 @@
       class="py-16 text-center text-gray-400 dark:text-neutral-600"
     >
       <Icon
-        name="mdi:flag-check-outline"
+        name="solar:flag-2-linear"
         size="40"
         class="mx-auto mb-3 opacity-40"
       />

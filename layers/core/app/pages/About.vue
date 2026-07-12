@@ -39,7 +39,7 @@
           <div
             class="relative z-10 mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 dark:bg-blue-900/20"
           >
-            <Icon name="mdi:robot-outline" size="28" />
+            <Icon name="solar:programming-linear" size="28" />
           </div>
           <h3
             class="relative z-10 mb-3 text-xl font-bold text-gray-900 dark:text-white"
@@ -66,7 +66,7 @@
           <div
             class="relative z-10 mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand/10 text-brand"
           >
-            <Icon name="mdi:share-all-outline" size="28" />
+            <Icon name="solar:share-linear" size="28" />
           </div>
           <h3
             class="relative z-10 mb-3 text-xl font-bold text-gray-900 dark:text-white"
@@ -93,7 +93,7 @@
           <div
             class="relative z-10 mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20"
           >
-            <Icon name="mdi:earth" size="28" />
+            <Icon name="solar:global-linear" size="28" />
           </div>
           <h3
             class="relative z-10 mb-3 text-xl font-bold text-gray-900 dark:text-white"
@@ -120,7 +120,7 @@
           <div
             class="relative z-10 mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand/10 text-brand dark:bg-brand/20"
           >
-            <Icon name="mdi:shopping-search" size="28" />
+            <Icon name="solar:bag-smile-linear" size="28" />
           </div>
           <h3
             class="relative z-10 mb-3 text-xl font-bold text-gray-900 dark:text-white"
@@ -164,14 +164,14 @@
               to="/sellers/create"
               class="flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-8 py-3.5 font-bold text-white shadow-lg shadow-brand/20 transition-colors hover:bg-[#d81b36] sm:w-auto"
             >
-              <Icon name="mdi:store-plus" size="20" />
+              <Icon name="solar:shop-2-bold" size="20" />
               Open Your Store
             </NuxtLink>
             <NuxtLink
               to="/discover"
               class="flex w-full items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/10 px-8 py-3.5 font-bold text-white transition-colors hover:bg-white/20 sm:w-auto"
             >
-              <Icon name="mdi:compass-outline" size="20" />
+              <Icon name="solar:compass-linear" size="20" />
               Start Shopping
             </NuxtLink>
           </div>

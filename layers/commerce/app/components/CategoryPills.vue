@@ -87,9 +87,9 @@
       :class="hasHiddenSelection ? 'border-brand/40 text-brand' : 'text-gray-600'"
       @click="open = true"
     >
-      <Icon name="mdi:view-grid-outline" size="14" />
+      <Icon name="solar:widget-2-linear" size="14" />
       {{ hasHiddenSelection ? selectedName : `${hiddenCount} more` }}
-      <Icon name="mdi:chevron-down" size="14" />
+      <Icon name="solar:alt-arrow-down-linear" size="14" />
     </button>
   </div>
 
@@ -106,7 +106,7 @@
     >
       <div class="relative">
         <Icon
-          name="mdi:magnify"
+          name="solar:magnifer-linear"
           size="16"
           class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-neutral-500"
         />
@@ -134,7 +134,7 @@
           class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-100 dark:bg-neutral-700"
         >
           <Icon
-            name="mdi:tag-multiple-outline"
+            name="solar:tag-horizontal-linear"
             size="20"
             class="text-gray-500 dark:text-neutral-400"
           />
@@ -142,7 +142,7 @@
         <span class="flex-1">All categories</span>
         <Icon
           v-if="modelValue === null"
-          name="mdi:check"
+          name="solar:check-circle-linear"
           size="16"
           class="text-brand"
         />
@@ -199,7 +199,7 @@
           </div>
           <Icon
             v-if="modelValue === cat.slug"
-            name="mdi:check"
+            name="solar:check-circle-linear"
             size="15"
             class="shrink-0 text-brand"
           />

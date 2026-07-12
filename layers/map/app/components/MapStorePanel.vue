@@ -13,7 +13,7 @@
             title="Back"
             @click="router.back()"
           >
-            <Icon name="mdi:arrow-left" size="16" />
+            <Icon name="solar:arrow-left-linear" size="16" />
           </button>
           <div>
             <h2 class="text-base font-black text-white">Near Me</h2>
@@ -27,13 +27,13 @@
           title="Recenter map"
           @click="$emit('recenter')"
         >
-          <Icon name="mdi:crosshairs-gps" size="18" />
+          <Icon name="solar:gps-linear" size="18" />
         </button>
       </div>
 
       <!-- Location search (geocoding — fly to any address) -->
       <div class="relative mb-2">
-        <Icon name="mdi:map-marker-outline" size="14" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-brand/70" />
+        <Icon name="solar:map-point-linear" size="14" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-brand/70" />
         <input
           v-model="locationSearch"
           type="text"
@@ -46,11 +46,11 @@
           class="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60"
           @click="locationSearch = ''; locationResults = []"
         >
-          <Icon name="mdi:close-circle" size="14" />
+          <Icon name="solar:close-circle-bold" size="14" />
         </button>
         <Icon
           v-if="locationSearchLoading"
-          name="mdi:loading"
+          name="solar:refresh-linear"
           size="14"
           class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 animate-spin text-white/30"
         />
@@ -66,7 +66,7 @@
             class="flex w-full items-start gap-2 px-3 py-2.5 text-left transition hover:bg-white/8"
             @click="selectLocation(r)"
           >
-            <Icon name="mdi:map-marker" size="12" class="mt-0.5 shrink-0 text-brand" />
+            <Icon name="solar:map-point-bold" size="12" class="mt-0.5 shrink-0 text-brand" />
             <span class="line-clamp-2 text-[11px] leading-snug text-white/70">{{ r.label }}</span>
           </button>
         </div>
@@ -74,7 +74,7 @@
 
       <!-- Store search -->
       <div class="relative mb-3">
-        <Icon name="mdi:magnify" size="15" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
+        <Icon name="solar:magnifer-linear" size="15" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
         <input
           v-model="searchInput"
           type="search"
@@ -87,7 +87,7 @@
           class="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60"
           @click="clearSearch"
         >
-          <Icon name="mdi:close-circle" size="14" />
+          <Icon name="solar:close-circle-bold" size="14" />
         </button>
       </div>
 
@@ -146,7 +146,7 @@
           <span class="text-[11px] font-bold text-white/60">{{ formatRadius(localRadius) }}</span>
         </div>
         <div class="flex items-center gap-2">
-          <Icon name="mdi:map-marker-radius-outline" size="13" class="shrink-0 text-white/25" />
+          <Icon name="solar:map-point-wave-linear" size="13" class="shrink-0 text-white/25" />
           <input
             type="range"
             :value="localRadius"
@@ -157,7 +157,7 @@
             @input="onSliderInput"
             @change="onSliderCommit"
           />
-          <Icon name="mdi:earth" size="13" class="shrink-0 text-white/25" />
+          <Icon name="solar:global-linear" size="13" class="shrink-0 text-white/25" />
         </div>
         <div class="mt-1 flex justify-between text-[9px] font-medium text-white/20">
           <span>5 km</span><span>500 km</span>
@@ -182,7 +182,7 @@
       <!-- Empty state -->
       <div v-else-if="!loading && !sellers.length" class="flex flex-col items-center justify-center px-6 py-16 text-center">
         <div class="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-white/5">
-          <Icon name="mdi:store-search-outline" size="28" class="text-white/30" />
+          <Icon name="solar:shop-linear" size="28" class="text-white/30" />
         </div>
         <p class="text-sm font-semibold text-white/50">No stores found</p>
         <p class="mt-1 text-xs text-white/25">
@@ -230,7 +230,7 @@
                 <p class="truncate text-[13px] font-bold text-white">
                   {{ seller.store_name || seller.store_slug }}
                 </p>
-                <Icon v-if="seller.is_verified" name="mdi:shield-check" size="13" class="shrink-0 text-blue-400" />
+                <Icon v-if="seller.is_verified" name="solar:shield-check-bold" size="13" class="shrink-0 text-blue-400" />
               </div>
               <p class="mt-0.5 flex items-center gap-1 text-[11px] text-white/45">
                 <span>{{ seller.locationLabel || seller.city || 'Nearby' }} · {{ seller.distanceKm.toFixed(1) }}km</span>
@@ -247,7 +247,7 @@
                   : 'background:rgba(245,158,11,0.15);color:#f59e0b'"
                 @click.stop
               >
-                <Icon name="mdi:storefront-outline" size="9" />
+                <Icon name="solar:shop-linear" size="9" />
                 {{ seller.square.name }}
               </NuxtLink>
             </div>
@@ -264,7 +264,7 @@
             <div v-if="seller.store_slug === selectedSeller?.store_slug" class="mt-3 border-t border-white/8 pt-3">
 
               <div v-if="previewLoading" class="flex items-center justify-center py-4">
-                <Icon name="mdi:loading" size="20" class="animate-spin text-white/30" />
+                <Icon name="solar:refresh-linear" size="20" class="animate-spin text-white/30" />
               </div>
 
               <template v-else-if="preview">
@@ -299,9 +299,9 @@
                     :disabled="followLoading.has(seller.id)"
                     @click.stop="toggleFollow(seller)"
                   >
-                    <Icon v-if="followLoading.has(seller.id)" name="mdi:loading" size="13" class="animate-spin" />
-                    <Icon v-else-if="isFollowing(seller)" name="mdi:check" size="13" />
-                    <Icon v-else name="mdi:plus" size="13" />
+                    <Icon v-if="followLoading.has(seller.id)" name="solar:refresh-linear" size="13" class="animate-spin" />
+                    <Icon v-else-if="isFollowing(seller)" name="solar:check-circle-linear" size="13" />
+                    <Icon v-else name="solar:add-circle-linear" size="13" />
                     {{ followLoading.has(seller.id) ? 'Updating…' : isFollowing(seller) ? 'Following' : 'Follow Store' }}
                   </button>
                 </ClientOnly>
@@ -321,7 +321,7 @@
                     : 'background:rgba(245,158,11,0.15);color:#f59e0b'"
                   @click.stop
                 >
-                  <Icon name="mdi:storefront-outline" size="11" />
+                  <Icon name="solar:shop-linear" size="11" />
                   {{ (preview as any).square.name }}
                 </NuxtLink>
 
@@ -367,7 +367,7 @@
                           loading="lazy"
                         />
                         <div v-else class="flex h-full items-center justify-center">
-                          <Icon name="mdi:image-outline" size="16" class="text-white/20" />
+                          <Icon name="solar:gallery-linear" size="16" class="text-white/20" />
                         </div>
                       </div>
                       <div class="p-1">
@@ -388,7 +388,7 @@
                     :to="`/sellers/profile/${seller.store_slug}`"
                     class="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-brand py-2.5 text-[12px] font-bold text-white shadow-lg shadow-brand/25 transition hover:bg-brand/90"
                   >
-                    <Icon name="mdi:store-outline" size="14" />
+                    <Icon name="solar:shop-2-linear" size="14" />
                     Visit Store
                   </NuxtLink>
                   <button
@@ -397,14 +397,14 @@
                     title="Get directions"
                     @click.stop="preview && openDirections(preview.latitude, preview.longitude)"
                   >
-                    <Icon name="mdi:navigation" size="16" />
+                    <Icon name="solar:compass-linear" size="16" />
                   </button>
                   <NuxtLink
                     :to="`/messages?seller=${seller.store_slug}`"
                     class="flex h-10 w-10 items-center justify-center rounded-xl bg-white/8 text-white/70 transition hover:bg-white/15 hover:text-white"
                     aria-label="Message"
                   >
-                    <Icon name="mdi:message-outline" size="16" />
+                    <Icon name="solar:chat-round-line-linear" size="16" />
                   </NuxtLink>
                 </div>
               </template>
@@ -618,10 +618,10 @@ watch(() => props.selectedSeller?.store_slug, async (slug) => {
 
 // ── Filter pills ──────────────────────────────────────────────────────────────
 const filterPills = computed(() => [
-  { value: 'all' as MapFilter,      icon: 'mdi:map-marker-multiple-outline', label: 'All',      count: props.sellers.length || undefined },
-  { value: 'deals' as MapFilter,    icon: 'mdi:tag-outline',                 label: 'Deals',    count: props.sellers.filter(s => s.hasActiveDeal).length || undefined },
-  { value: 'premium' as MapFilter,  icon: 'mdi:crown-outline',               label: 'Premium',  count: props.sellers.filter(s => s.isPremium).length || undefined },
-  { value: 'verified' as MapFilter, icon: 'mdi:shield-check-outline',        label: 'Verified', count: props.sellers.filter(s => s.is_verified).length || undefined },
+  { value: 'all' as MapFilter,      icon: 'solar:map-point-linear', label: 'All',      count: props.sellers.length || undefined },
+  { value: 'deals' as MapFilter,    icon: 'solar:tag-linear',                 label: 'Deals',    count: props.sellers.filter(s => s.hasActiveDeal).length || undefined },
+  { value: 'premium' as MapFilter,  icon: 'solar:crown-linear',               label: 'Premium',  count: props.sellers.filter(s => s.isPremium).length || undefined },
+  { value: 'verified' as MapFilter, icon: 'solar:shield-check-linear',        label: 'Verified', count: props.sellers.filter(s => s.is_verified).length || undefined },
 ])
 
 // ── Opening hours helpers ─────────────────────────────────────────────────────

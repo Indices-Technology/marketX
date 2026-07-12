@@ -19,66 +19,66 @@
       <nav class="flex-1 space-y-0.5 px-3 py-4">
         <AdminNavItem
           to="/admin"
-          icon="mdi:view-dashboard-outline"
+          icon="solar:widget-5-linear"
           label="Dashboard"
           exact
         />
         <AdminNavItem
           to="/admin/reports"
-          icon="mdi:flag-outline"
+          icon="solar:flag-linear"
           label="Reports"
           :badge="pendingCount"
         />
         <AdminNavItem
           to="/admin/users"
-          icon="mdi:account-multiple-outline"
+          icon="solar:users-group-two-rounded-linear"
           label="Users"
         />
         <AdminNavItem
           to="/admin/sellers"
-          icon="mdi:store-outline"
+          icon="solar:shop-2-linear"
           label="Sellers"
         />
         <AdminNavItem
           to="/admin/squares"
-          icon="mdi:city-variant-outline"
+          icon="solar:city-linear"
           label="Squares"
           :badge="pendingSquaresCount"
           :admin-only="true"
         />
         <AdminNavItem
           to="/admin/categories"
-          icon="mdi:shape-outline"
+          icon="solar:widget-linear"
           label="Categories"
         />
         <AdminNavItem
           to="/admin/payouts"
-          icon="mdi:cash-multiple"
+          icon="solar:money-bag-linear"
           label="Payouts"
           :badge="pendingPayoutsCount"
           :admin-only="true"
         />
         <AdminNavItem
           to="/admin/finance"
-          icon="mdi:chart-box-outline"
+          icon="solar:chart-square-linear"
           label="Finance"
           :admin-only="true"
         />
         <AdminNavItem
           to="/admin/announcements"
-          icon="mdi:bullhorn-outline"
+          icon="solar:speaker-linear"
           label="Announcements"
           :admin-only="true"
         />
         <AdminNavItem
           to="/support/agent"
-          icon="mdi:headset"
+          icon="solar:headphones-round-linear"
           label="Support"
           :admin-only="true"
         />
         <AdminNavItem
           to="/admin/audit-logs"
-          icon="mdi:text-search"
+          icon="solar:magnifer-linear"
           label="Audit Logs"
           :admin-only="true"
         />
@@ -115,7 +115,7 @@
         class="rounded-lg p-1 text-gray-500 hover:bg-gray-100 dark:hover:bg-neutral-800"
         @click="mobileOpen = !mobileOpen"
       >
-        <Icon :name="mobileOpen ? 'mdi:close' : 'mdi:menu'" size="22" />
+        <Icon :name="mobileOpen ? 'solar:close-circle-linear' : 'solar:hamburger-menu-linear'" size="22" />
       </button>
     </div>
 
@@ -128,33 +128,33 @@
         >
           <AdminNavItem
             to="/admin"
-            icon="mdi:view-dashboard-outline"
+            icon="solar:widget-5-linear"
             label="Dashboard"
             exact
             @click="mobileOpen = false"
           />
           <AdminNavItem
             to="/admin/reports"
-            icon="mdi:flag-outline"
+            icon="solar:flag-linear"
             label="Reports"
             :badge="pendingCount"
             @click="mobileOpen = false"
           />
           <AdminNavItem
             to="/admin/users"
-            icon="mdi:account-multiple-outline"
+            icon="solar:users-group-two-rounded-linear"
             label="Users"
             @click="mobileOpen = false"
           />
           <AdminNavItem
             to="/admin/sellers"
-            icon="mdi:store-outline"
+            icon="solar:shop-2-linear"
             label="Sellers"
             @click="mobileOpen = false"
           />
           <AdminNavItem
             to="/admin/squares"
-            icon="mdi:city-variant-outline"
+            icon="solar:city-linear"
             label="Squares"
             :badge="pendingSquaresCount"
             :admin-only="true"
@@ -162,13 +162,13 @@
           />
           <AdminNavItem
             to="/admin/categories"
-            icon="mdi:shape-outline"
+            icon="solar:widget-linear"
             label="Categories"
             @click="mobileOpen = false"
           />
           <AdminNavItem
             to="/admin/payouts"
-            icon="mdi:cash-multiple"
+            icon="solar:money-bag-linear"
             label="Payouts"
             :badge="pendingPayoutsCount"
             :admin-only="true"
@@ -176,28 +176,28 @@
           />
           <AdminNavItem
             to="/admin/finance"
-            icon="mdi:chart-box-outline"
+            icon="solar:chart-square-linear"
             label="Finance"
             :admin-only="true"
             @click="mobileOpen = false"
           />
           <AdminNavItem
             to="/admin/announcements"
-            icon="mdi:bullhorn-outline"
+            icon="solar:speaker-linear"
             label="Announcements"
             :admin-only="true"
             @click="mobileOpen = false"
           />
           <AdminNavItem
             to="/support/agent"
-            icon="mdi:headset"
+            icon="solar:headphones-round-linear"
             label="Support"
             :admin-only="true"
             @click="mobileOpen = false"
           />
           <AdminNavItem
             to="/admin/audit-logs"
-            icon="mdi:text-search"
+            icon="solar:magnifer-linear"
             label="Audit Logs"
             :admin-only="true"
             @click="mobileOpen = false"

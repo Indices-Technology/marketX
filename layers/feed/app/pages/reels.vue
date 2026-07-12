@@ -11,7 +11,7 @@
       aria-label="Go back"
       @click="$router.back()"
     >
-      <Icon name="mdi:arrow-left" size="20" />
+      <Icon name="solar:arrow-left-linear" size="20" />
     </button>
 
     <!-- ─── FULL-SCREEN IMMERSIVE CONTAINER ──────────────────────────── -->
@@ -46,7 +46,7 @@
         <div
           class="flex h-20 w-20 items-center justify-center rounded-full bg-white/5"
         >
-          <Icon name="mdi:wifi-off" size="40" class="text-white/50" />
+          <Icon name="solar:wi-fi-router-minimalistic-linear" size="40" class="text-white/50" />
         </div>
         <div>
           <h3 class="mb-1 text-lg font-bold text-white">Connection Error</h3>
@@ -70,7 +70,7 @@
         <div
           class="flex h-20 w-20 items-center justify-center rounded-full bg-white/5"
         >
-          <Icon name="mdi:video-off-outline" size="40" class="text-white/30" />
+          <Icon name="solar:videocamera-linear" size="40" class="text-white/30" />
         </div>
         <h3 class="text-lg font-bold text-white">No Reels Yet</h3>
         <p class="text-sm text-white/50">Check back later for new content!</p>

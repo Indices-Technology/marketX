@@ -83,9 +83,18 @@ export const paymentConfirmationService = {
       select: { paymentStatus: true, status: true, userId: true },
     })
 
+    // Advance status forward only. Normally PENDING → CONFIRMED on payment, but an
+    // order can be marked SHIPPED/DELIVERED BEFORE its payment webhook lands (fast
+    // local delivery + a delayed/late webhook). In that case we must NOT downgrade
+    // it back to CONFIRMED — keep the further-along status, and release funds below.
+    const alreadyFulfilled = before
+      ? ['SHIPPED', 'DELIVERED'].includes(before.status)
+      : false
     const { count } = await prisma.orders.updateMany({
       where: { id: orderId, paymentStatus: { not: 'PAID' } },
-      data: { paymentStatus: 'PAID', status: 'CONFIRMED' },
+      data: alreadyFulfilled
+        ? { paymentStatus: 'PAID' }
+        : { paymentStatus: 'PAID', status: 'CONFIRMED' },
     })
     if (count === 0) return false
 
@@ -129,12 +138,28 @@ export const paymentConfirmationService = {
         error: e?.message ?? e,
       }),
     )
-    walletService.creditSellersOnPayment(orderId).catch((e) =>
-      logger.error('confirm: wallet credit failed', {
-        orderId,
-        error: e?.message ?? e,
-      }),
-    )
+    // Credit the seller's pending balance. If the order was ALREADY delivered when
+    // payment landed (delivered-before-paid), the delivery transition that normally
+    // triggers the release has already passed — so release immediately once the
+    // pending credit exists, otherwise the funds sit pending forever.
+    const credit = walletService.creditSellersOnPayment(orderId)
+    if (before?.status === 'DELIVERED') {
+      credit
+        .then(() => walletService.releaseFundsOnDelivery(orderId))
+        .catch((e) =>
+          logger.error('confirm: delivered-before-paid release failed', {
+            orderId,
+            error: e?.message ?? e,
+          }),
+        )
+    } else {
+      credit.catch((e) =>
+        logger.error('confirm: wallet credit failed', {
+          orderId,
+          error: e?.message ?? e,
+        }),
+      )
+    }
     squareService.creditAssociationsForOrder(orderId).catch((e) =>
       logger.error('confirm: association credit failed', {
         orderId,

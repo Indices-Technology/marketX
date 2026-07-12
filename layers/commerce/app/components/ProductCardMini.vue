@@ -21,7 +21,7 @@
       />
       <div v-else class="absolute inset-0 flex items-center justify-center">
         <Icon
-          name="mdi:image-outline"
+          name="solar:gallery-linear"
           size="32"
           class="text-gray-300 dark:text-neutral-700"
         />
@@ -58,7 +58,7 @@
         @click.stop="handleLike"
       >
         <Icon
-          :name="localLiked ? 'mdi:heart' : 'mdi:heart-outline'"
+          :name="localLiked ? 'solar:heart-bold' : 'solar:heart-linear'"
           size="16"
           :class="localLiked ? 'text-brand' : 'text-gray-600 dark:text-gray-300'"
         />
@@ -100,11 +100,11 @@
           class="flex min-w-0 items-center gap-1 truncate text-[11px] text-gray-500 transition-colors hover:text-brand dark:text-neutral-400"
           @click.stop
         >
-          <Icon name="mdi:storefront-outline" size="11" class="shrink-0" />
+          <Icon name="solar:shop-linear" size="11" class="shrink-0" />
           <span class="truncate">{{ product.seller.store_name }}</span>
           <Icon
             v-if="product.seller?.is_verified"
-            name="mdi:check-decagram"
+            name="solar:verified-check-bold"
             size="11"
             class="shrink-0 text-blue-500"
           />
@@ -122,7 +122,7 @@
             v-if="localLikeCount > 0"
             class="flex items-center gap-0.5 text-[10px] text-gray-400 dark:text-neutral-500"
           >
-            <Icon name="mdi:heart-outline" size="10" />
+            <Icon name="solar:heart-linear" size="10" />
             {{ localLikeCount }}
           </span>
         </div>
@@ -135,7 +135,7 @@
         class="flex w-fit max-w-full items-center gap-1 truncate rounded-full bg-brand/5 px-1.5 py-0.5 text-[10px] font-medium text-brand/80 transition hover:bg-brand/10"
         @click.stop
       >
-        <Icon name="mdi:store-marker-outline" size="10" class="shrink-0" />
+        <Icon name="solar:shop-2-linear" size="10" class="shrink-0" />
         <span class="truncate">{{ product.square.name }}</span>
       </NuxtLink>
 
@@ -148,7 +148,7 @@
           v-if="product.averageRating"
           class="flex shrink-0 items-center gap-0.5 font-semibold text-amber-500"
         >
-          <Icon name="mdi:star" size="11" />
+          <Icon name="solar:star-bold" size="11" />
           {{ product.averageRating.toFixed(1) }}
           <span class="font-normal text-gray-400 dark:text-neutral-500"
             >({{ product.totalReviews ?? 0 }})</span
@@ -163,7 +163,7 @@
           v-if="product.seller?.locationLabel"
           class="flex min-w-0 items-center gap-0.5 truncate"
         >
-          <Icon name="mdi:map-marker-outline" size="10" class="shrink-0" />
+          <Icon name="solar:map-point-linear" size="10" class="shrink-0" />
           <span class="truncate">{{ product.seller.locationLabel }}</span>
         </span>
       </div>
@@ -205,8 +205,8 @@
             size="13"
             class="animate-spin"
           />
-          <Icon v-else-if="cartAdded" name="mdi:check" size="13" />
-          <Icon v-else name="mdi:cart-plus" size="13" />
+          <Icon v-else-if="cartAdded" name="solar:check-circle-linear" size="13" />
+          <Icon v-else name="solar:cart-plus-linear" size="13" />
         </button>
       </div>
     </div>

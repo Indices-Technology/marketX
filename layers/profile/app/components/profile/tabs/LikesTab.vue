@@ -38,7 +38,7 @@
         class="flex flex-col items-center justify-center gap-3 py-12"
       >
         <Icon
-          name="mdi:heart-outline"
+          name="solar:heart-linear"
           size="48"
           class="text-gray-300 dark:text-neutral-700"
         />
@@ -88,13 +88,13 @@
               class="absolute inset-0 flex items-center justify-center gap-4 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100"
             >
               <div class="flex items-center gap-1 text-white drop-shadow">
-                <Icon name="mdi:heart" size="18" />
+                <Icon name="solar:heart-bold" size="18" />
                 <span class="text-[12px] font-semibold">{{
                   formatNum(post._count?.likes || 0)
                 }}</span>
               </div>
               <div class="flex items-center gap-1 text-white drop-shadow">
-                <Icon name="mdi:comment" size="18" />
+                <Icon name="solar:chat-round-bold" size="18" />
                 <span class="text-[12px] font-semibold">{{
                   formatNum(post._count?.comments || 0)
                 }}</span>
@@ -107,19 +107,19 @@
             >
               <Icon
                 v-if="firstMedia(post)?.type === 'VIDEO'"
-                name="mdi:play-circle"
+                name="solar:play-circle-bold"
                 size="16"
                 class="text-white drop-shadow-lg"
               />
               <Icon
                 v-if="(post.mediaItems?.length || 0) > 1"
-                name="mdi:layers"
+                name="solar:layers-bold"
                 size="16"
                 class="text-white drop-shadow-lg"
               />
               <!-- Heart badge -->
               <Icon
-                name="mdi:heart"
+                name="solar:heart-bold"
                 size="14"
                 class="text-red-400 drop-shadow-lg"
               />
@@ -165,7 +165,7 @@
         class="flex flex-col items-center justify-center gap-3 py-12"
       >
         <Icon
-          name="mdi:heart-box-outline"
+          name="solar:heart-linear"
           size="48"
           class="text-gray-300 dark:text-neutral-700"
         />
@@ -203,7 +203,7 @@
                 class="flex h-full w-full items-center justify-center"
               >
                 <Icon
-                  name="mdi:package-variant"
+                  name="solar:box-bold"
                   size="32"
                   class="text-gray-300 dark:text-neutral-600"
                 />
@@ -212,7 +212,7 @@
               <div
                 class="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur-sm dark:bg-neutral-900/90"
               >
-                <Icon name="mdi:heart" size="14" class="text-red-500" />
+                <Icon name="solar:heart-bold" size="14" class="text-red-500" />
               </div>
               <!-- Affiliate pill -->
               <div
@@ -287,8 +287,8 @@ const { formatKobo } = useCurrency()
 
 const activeView = ref<'posts' | 'products'>('posts')
 const views = [
-  { key: 'posts', label: 'Posts', icon: 'mdi:grid' },
-  { key: 'products', label: 'Products', icon: 'mdi:shopping-outline' },
+  { key: 'posts', label: 'Posts', icon: 'solar:widget-2-linear' },
+  { key: 'products', label: 'Products', icon: 'solar:bag-4-linear' },
 ]
 
 // ── Posts ──────────────────────────────────────────────────────────────────

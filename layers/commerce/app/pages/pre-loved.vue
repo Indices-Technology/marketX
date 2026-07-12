@@ -4,7 +4,7 @@
       <!-- Header -->
       <div class="mb-4">
         <h1 class="text-xl font-bold text-gray-900 dark:text-white">
-          <Icon name="mdi:heart-circle-outline" size="22" class="-mt-0.5 inline text-pink-500" />
+          <Icon name="solar:heart-linear" size="22" class="-mt-0.5 inline text-pink-500" />
           {{ $t('nav.thrift') }}
         </h1>
         <p class="text-sm text-gray-500 dark:text-neutral-400">Pre-owned items from sellers near you — new arrivals every day</p>
@@ -33,7 +33,7 @@
       <!-- Empty -->
       <div v-else-if="!pending && products.length === 0" class="flex min-h-[50vh] flex-col items-center justify-center gap-6 text-center">
         <div class="flex h-20 w-20 items-center justify-center rounded-3xl bg-pink-50 dark:bg-pink-950/30">
-          <Icon name="mdi:heart-circle-outline" size="40" class="text-pink-500" />
+          <Icon name="solar:heart-linear" size="40" class="text-pink-500" />
         </div>
         <div>
           <h2 class="text-xl font-bold text-gray-900 dark:text-white">Nothing here yet</h2>
@@ -69,7 +69,7 @@
               class="h-full w-full transition-transform duration-300 group-hover:scale-105"
             />
             <div v-else class="flex h-full w-full items-center justify-center">
-              <Icon name="mdi:image-outline" size="32" class="text-gray-300" />
+              <Icon name="solar:gallery-linear" size="32" class="text-gray-300" />
             </div>
             <!-- Condition badge -->
             <span

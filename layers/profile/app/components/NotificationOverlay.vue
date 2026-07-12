@@ -22,7 +22,7 @@
                 class="-ml-1.5 rounded-full p-1.5 transition-colors hover:bg-gray-100 dark:hover:bg-neutral-800"
                 @click="$emit('close')"
               >
-                <Icon name="mdi:arrow-left" size="22" />
+                <Icon name="solar:arrow-left-linear" size="22" />
               </button>
               <h2
                 class="text-base font-semibold text-gray-900 dark:text-neutral-100"
@@ -96,7 +96,7 @@
                 class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 dark:bg-neutral-800"
               >
                 <Icon
-                  name="mdi:bell-outline"
+                  name="solar:bell-linear"
                   size="32"
                   class="text-gray-400 dark:text-neutral-500"
                 />

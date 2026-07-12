@@ -78,7 +78,7 @@ const emit = defineEmits<{
 const iconName = computed(
   () =>
     props.icon ||
-    (props.danger ? 'mdi:alert-outline' : 'mdi:help-circle-outline'),
+    (props.danger ? 'solar:danger-triangle-linear' : 'solar:question-circle-linear'),
 )
 
 const iconClasses = computed(() => [

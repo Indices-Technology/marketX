@@ -214,6 +214,7 @@ export const updateSellerProfileSchema = z
     shippingConfig: z
       .object({
         selfEnabled: z.boolean().optional(),
+        gigEnabled: z.boolean().optional(),
         flatRateMinor: z.number().int().min(0).max(100_000_00).optional(),
         freeOverMinor: z.number().int().min(0).optional(),
         pickupEnabled: z.boolean().optional(),

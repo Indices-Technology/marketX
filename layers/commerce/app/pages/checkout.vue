@@ -7,7 +7,7 @@
           to="/"
           class="rounded-full p-2 transition-colors hover:bg-gray-100 dark:hover:bg-neutral-800"
         >
-          <Icon name="mdi:arrow-left" size="22" />
+          <Icon name="solar:arrow-left-linear" size="22" />
         </NuxtLink>
         <h1 class="text-xl font-bold text-gray-900 dark:text-neutral-100">
           Checkout
@@ -49,7 +49,7 @@
         <template v-else-if="!items.length">
           <div class="py-16 text-center">
             <Icon
-              name="mdi:cart-outline"
+              name="solar:cart-large-2-linear"
               size="48"
               class="mb-3 text-gray-300 dark:text-neutral-600"
             />
@@ -70,7 +70,7 @@
             v-if="activeCurrency !== 'NGN'"
             class="flex items-center gap-2 rounded-xl border border-blue-100 bg-blue-50 px-4 py-2.5 text-xs text-blue-700 dark:border-blue-900/40 dark:bg-blue-900/20 dark:text-blue-300"
           >
-            <Icon name="mdi:swap-horizontal" size="15" />
+            <Icon name="solar:transfer-horizontal-linear" size="15" />
             <template v-if="paymentMethod === 'paypal'">
               Prices shown in <strong>{{ activeCurrency }}</strong
               >. Payment is charged in <strong>USD</strong> via PayPal.
@@ -386,12 +386,14 @@ const shipBySeller = reactive<Record<string, SellerShip>>({})
 const insureShipment = ref(true)
 
 const fetchSellerRates = async () => {
-  if (!form.address || !form.county || !form.country) return
+  // State drives carrier station resolution — for NG we must have it before quoting.
+  const needsState = (form.country || 'NG') === 'NG'
+  if (!form.address || !form.country || (needsState && !form.state)) return
   const to = {
     name: form.name || 'Customer',
     street1: form.address,
     city: form.county,
-    state: form.state || form.county,
+    state: form.state,
     zip: form.zipcode || '000000',
     country: form.country,
   }
@@ -523,6 +525,8 @@ const isFormValid = computed(
     !!form.name.trim() &&
     !!form.address.trim() &&
     !!form.country &&
+    // NG destinations must pick a state — the carrier can't ship without it.
+    (form.country !== 'NG' || !!form.state) &&
     shippingReady.value,
 )
 
@@ -549,6 +553,8 @@ const handleCheckout = async () => {
     email: form.email || undefined,
     address: form.address,
     county: form.county,
+    shipState: form.state || undefined,
+    shipPhone: form.phone || undefined,
     zipcode: form.zipcode,
     country: form.country,
     shippingCost,

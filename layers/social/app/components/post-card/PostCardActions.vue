@@ -9,7 +9,7 @@
           :aria-label="localIsLiked ? 'Unlike' : 'Like'"
         >
           <Icon
-            :name="localIsLiked ? 'mdi:heart' : 'mdi:heart-outline'"
+            :name="localIsLiked ? 'solar:heart-bold' : 'solar:heart-linear'"
             size="25"
             class="transition-all duration-150 group-active:scale-75"
             :class="
@@ -26,7 +26,7 @@
           aria-label="Comment"
         >
           <Icon
-            name="mdi:comment-outline"
+            name="solar:chat-round-linear"
             size="23"
             class="text-gray-900 transition-transform group-active:scale-75 dark:text-neutral-100"
           />
@@ -38,7 +38,7 @@
           aria-label="Share"
         >
           <Icon
-            name="mdi:send-outline"
+            name="solar:plain-2-linear"
             size="22"
             class="-rotate-12 text-gray-900 transition-transform group-active:scale-75 dark:text-neutral-100"
           />
@@ -51,7 +51,7 @@
         :aria-label="isBookmarked ? 'Remove bookmark' : 'Save'"
       >
         <Icon
-          :name="isBookmarked ? 'mdi:bookmark' : 'mdi:bookmark-outline'"
+          :name="isBookmarked ? 'solar:bookmark-bold' : 'solar:bookmark-linear'"
           size="25"
           class="text-gray-900 transition-all group-active:scale-75 dark:text-neutral-100"
         />
@@ -73,7 +73,7 @@
         v-if="post.viewCount"
         class="flex items-center gap-1 text-[11px] text-gray-400 dark:text-neutral-500"
       >
-        <Icon name="mdi:eye-outline" size="14" />
+        <Icon name="solar:eye-linear" size="14" />
         {{ post.viewCount.toLocaleString() }}
       </span>
     </div>
@@ -127,7 +127,7 @@
     <div v-if="hasTaggedProducts" class="mt-2 px-1">
       <div class="mb-1 flex items-center gap-1">
         <Icon
-          name="mdi:shopping-outline"
+          name="solar:bag-4-linear"
           size="13"
           class="text-emerald-500"
         />

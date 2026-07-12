@@ -52,7 +52,7 @@
         @click.stop="modOpen = !modOpen"
         class="rounded-full p-1 text-rose-400 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-900/20 disabled:opacity-60 disabled:cursor-not-allowed"
       >
-        <Icon v-if="!moderating" name="mdi:shield-half-full" size="18" />
+        <Icon v-if="!moderating" name="solar:shield-linear" size="18" />
         <svg v-else class="animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" />
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
@@ -72,7 +72,7 @@
             :disabled="!!moderating"
             class="flex w-full items-center gap-2 px-3 py-2.5 text-[13px] text-amber-600 transition-colors hover:bg-amber-50 dark:hover:bg-amber-900/20 disabled:opacity-50"
           >
-            <Icon v-if="moderating !== 'HIDDEN'" name="mdi:eye-off-outline" size="15" />
+            <Icon v-if="moderating !== 'HIDDEN'" name="solar:eye-closed-linear" size="15" />
             <svg v-else class="animate-spin shrink-0" width="15" height="15" viewBox="0 0 24 24" fill="none">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" />
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
@@ -84,7 +84,7 @@
             :disabled="!!moderating"
             class="flex w-full items-center gap-2 px-3 py-2.5 text-[13px] text-red-600 transition-colors hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50"
           >
-            <Icon v-if="moderating !== 'REMOVED'" name="mdi:delete-outline" size="15" />
+            <Icon v-if="moderating !== 'REMOVED'" name="solar:trash-bin-trash-linear" size="15" />
             <svg v-else class="animate-spin shrink-0" width="15" height="15" viewBox="0 0 24 24" fill="none">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" />
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
@@ -96,7 +96,7 @@
             :disabled="!!moderating"
             class="flex w-full items-center gap-2 px-3 py-2.5 text-[13px] text-green-600 transition-colors hover:bg-green-50 dark:hover:bg-green-900/20 disabled:opacity-50"
           >
-            <Icon v-if="moderating !== 'ACTIVE'" name="mdi:restore" size="15" />
+            <Icon v-if="moderating !== 'ACTIVE'" name="solar:restart-linear" size="15" />
             <svg v-else class="animate-spin shrink-0" width="15" height="15" viewBox="0 0 24 24" fill="none">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" />
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
@@ -115,7 +115,7 @@
         @click.stop="menuOpen = !menuOpen"
         class="rounded-full p-1 text-gray-400 transition-colors hover:text-gray-700 dark:text-neutral-500 dark:hover:text-neutral-200"
       >
-        <Icon name="mdi:dots-horizontal" size="20" />
+        <Icon name="solar:menu-dots-bold" size="20" />
       </button>
       <div
         v-if="menuOpen"
@@ -126,14 +126,14 @@
           @click="onEdit"
           class="flex w-full items-center gap-2 px-4 py-2.5 text-[13px] text-gray-700 transition-colors hover:bg-gray-50 dark:text-neutral-200 dark:hover:bg-neutral-700"
         >
-          <Icon name="mdi:pencil-outline" size="16" />
+          <Icon name="solar:pen-linear" size="16" />
           {{ $t('post.editPost') }}
         </button>
         <button
           @click="onDelete"
           class="flex w-full items-center gap-2 px-4 py-2.5 text-[13px] text-red-500 transition-colors hover:bg-red-50 dark:hover:bg-red-950/30"
         >
-          <Icon name="mdi:delete-outline" size="16" />
+          <Icon name="solar:trash-bin-trash-linear" size="16" />
           {{ $t('post.deletePost') }}
         </button>
       </div>
@@ -143,7 +143,7 @@
       aria-label="More options"
       class="ml-1 shrink-0 rounded-full p-1 text-gray-400 transition-colors hover:text-gray-700 dark:text-neutral-500 dark:hover:text-neutral-200"
     >
-      <Icon name="mdi:dots-horizontal" size="20" />
+      <Icon name="solar:menu-dots-bold" size="20" />
     </button>
   </div>
 </template>
@@ -210,27 +210,27 @@ const { t } = useI18n()
 
 const CONTENT_TYPE_MAP: Record<string, { icon: string; accent: string; badge: string }> = {
   EXPERIENCE: {
-    icon: 'mdi:star-outline',
+    icon: 'solar:star-linear',
     accent: 'bg-blue-500',
     badge: 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300',
   },
   INSPIRATION: {
-    icon: 'mdi:lightbulb-outline',
+    icon: 'solar:lightbulb-linear',
     accent: 'bg-amber-400',
     badge: 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300',
   },
   COMMERCE: {
-    icon: 'mdi:shopping-outline',
+    icon: 'solar:bag-4-linear',
     accent: 'bg-emerald-500',
     badge: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300',
   },
   EDUCATIONAL: {
-    icon: 'mdi:school-outline',
+    icon: 'solar:square-academic-cap-2-linear',
     accent: 'bg-orange-500',
     badge: 'bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300',
   },
   ENTERTAINMENT: {
-    icon: 'mdi:music-note',
+    icon: 'solar:music-note-2-bold',
     accent: 'bg-pink-500',
     badge: 'bg-pink-100 text-pink-700 dark:bg-pink-950 dark:text-pink-300',
   },
@@ -239,7 +239,7 @@ const CONTENT_TYPE_MAP: Record<string, { icon: string; accent: string; badge: st
 const contentTypeDef = computed(
   () =>
     CONTENT_TYPE_MAP[props.post.contentType] ?? {
-      icon: 'mdi:tag-outline',
+      icon: 'solar:tag-linear',
       accent: 'bg-gray-300 dark:bg-neutral-700',
       badge: 'bg-gray-100 text-gray-600 dark:bg-neutral-800 dark:text-neutral-400',
     },

@@ -25,7 +25,7 @@
         <div class="mb-3 flex items-center gap-2">
           <div class="relative flex-1">
             <Icon
-              name="mdi:magnify"
+              name="solar:magnifer-linear"
               size="18"
               class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-neutral-500"
             />
@@ -55,7 +55,7 @@
               class="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-gray-400 hover:text-gray-700 dark:hover:text-neutral-200"
               @click="searchInput = ''"
             >
-              <Icon name="mdi:close" size="13" />
+              <Icon name="solar:close-circle-linear" size="13" />
             </button>
           </div>
           <!-- Mobile filter button — sidebar is hidden on small screens -->
@@ -67,7 +67,7 @@
             aria-label="Open filters"
             @click="filterSheetOpen = true"
           >
-            <Icon name="mdi:tune-variant" size="16" />
+            <Icon name="solar:tuning-2-linear" size="16" />
             <span
               v-if="hasActiveFilters"
               class="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-brand"
@@ -84,7 +84,7 @@
             @click="chip.clear()"
           >
             {{ chip.label }}
-            <Icon name="mdi:close" size="10" class="opacity-70" />
+            <Icon name="solar:close-circle-linear" size="10" class="opacity-70" />
           </button>
           <button
             v-if="activeFilterChips.length > 1"
@@ -239,15 +239,15 @@ const categories = computed<Category[]>(
 const selectedCategory = ref<string | null>(null)
 
 const TABS = [
-  { key: 'browse',   label: 'Browse',      icon: 'mdi:compass-outline' },
-  { key: 'products', label: 'Products',    icon: 'mdi:shopping-outline' },
-  { key: 'fresh',    label: 'Fresh Drops', icon: 'mdi:lightning-bolt' },
-  { key: 'deals',    label: 'Deals',       icon: 'mdi:tag-heart-outline' },
-  { key: 'preloved', label: 'Pre-loved',   icon: 'mdi:recycle' },
-  { key: 'sellers',  label: 'Traders',     icon: 'mdi:storefront-outline' },
-  { key: 'squares',  label: 'Squares',     icon: 'mdi:store-marker-outline' },
-  { key: 'people',   label: 'People',      icon: 'mdi:account-group-outline' },
-  { key: 'tags',     label: 'Tags',        icon: 'mdi:tag-outline' },
+  { key: 'browse',   label: 'Browse',      icon: 'solar:compass-linear' },
+  { key: 'products', label: 'Products',    icon: 'solar:bag-4-linear' },
+  { key: 'fresh',    label: 'Fresh Drops', icon: 'solar:bolt-bold' },
+  { key: 'deals',    label: 'Deals',       icon: 'solar:tag-linear' },
+  { key: 'preloved', label: 'Pre-loved',   icon: 'solar:recive-square-linear' },
+  { key: 'sellers',  label: 'Traders',     icon: 'solar:shop-linear' },
+  { key: 'squares',  label: 'Squares',     icon: 'solar:shop-2-linear' },
+  { key: 'people',   label: 'People',      icon: 'solar:users-group-rounded-linear' },
+  { key: 'tags',     label: 'Tags',        icon: 'solar:tag-linear' },
 ] as const
 
 const { activeTab, selectedCategoryId, filters, hasActiveFilters, resetFilters } = useDiscoverFilters()

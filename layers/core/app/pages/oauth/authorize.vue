@@ -232,9 +232,9 @@ const clientName = computed(
 const permissions = [
   {
     label: 'Read your public profile (name and username)',
-    icon: 'mdi:account-outline',
+    icon: 'solar:user-linear',
   },
-  { label: 'Read your email address', icon: 'mdi:email-outline' },
+  { label: 'Read your email address', icon: 'solar:letter-linear' },
 ]
 
 // ─── Validate params on mount ─────────────────────────────────────────────────

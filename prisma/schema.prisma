@@ -352,6 +352,11 @@ model Orders {
   zipcode           String
   county            String
   country           String
+  /// Destination state (province) — distinct from county (LGA). Carrier station
+  /// resolution needs the STATE; captured at checkout, required for GIG booking.
+  shipState         String?
+  /// Destination contact phone — required by the carrier for delivery.
+  shipPhone         String?
   /// Shipping cost in cents
   shippingCost      Int             @default(0)
   shippingZone      String?
@@ -370,6 +375,16 @@ model Orders {
   payoutAmount      Int?
   /// Timestamp when seller marked the order as shipped
   shippedAt         DateTime?
+  /// Carrier tracking id / GIG Waybill (set at booking, before handover)
+  waybill           String?
+  /// How the parcel reaches the carrier: 'PICKUP' (carrier collects) | 'DROPOFF'
+  bookingMode       String?
+  /// Last normalized carrier tracking status (TrackingStatus), from scan polling
+  carrierStatus     String?
+  /// When carrierStatus was last refreshed from the carrier
+  carrierStatusAt   DateTime?
+  /// Set when a carrier scan confirms delivery — gates seller payout release
+  deliveredAt       DateTime?
   /// Affiliate who referred this order (if any)
   affiliateUserId   String?         @db.Uuid
   /// Total affiliate cut for this order in cents
@@ -386,6 +401,7 @@ model Orders {
   @@index([userId, created_at(sort: Desc)]) // buyer order list: WHERE userId=X ORDER BY created_at DESC (getUserOrders)
   @@index([paymentStatus, created_at(sort: Desc)]) // admin orders list + revenue aggregate
   @@index([created_at(sort: Desc)]) // admin all-orders list ordering
+  @@index([waybill]) // tracking poller: batch-fetch in-flight shipments by waybill
 }
 
 /// Pay-on-Delivery lifecycle for a POD order (one per Orders row). Owns the POD

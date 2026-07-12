@@ -4,7 +4,7 @@
       <!-- Header -->
       <div class="mb-6">
         <h1 class="text-xl font-bold text-gray-900 dark:text-white">
-          <Icon name="mdi:lightning-bolt-outline" size="22" class="-mt-0.5 inline text-brand" />
+          <Icon name="solar:bolt-linear" size="22" class="-mt-0.5 inline text-brand" />
           {{ $t('nav.freshDrops') }}
         </h1>
         <p class="text-sm text-gray-500 dark:text-neutral-400">New listings from the last 7 days — tomatoes from a farm, a new sneaker drop, today's bakes</p>
@@ -18,7 +18,7 @@
       <!-- Empty -->
       <div v-else-if="!pending && products.length === 0" class="flex min-h-[50vh] flex-col items-center justify-center gap-6 text-center">
         <div class="flex h-20 w-20 items-center justify-center rounded-3xl bg-rose-50 dark:bg-rose-950/30">
-          <Icon name="mdi:lightning-bolt-outline" size="40" class="text-brand" />
+          <Icon name="solar:bolt-linear" size="40" class="text-brand" />
         </div>
         <div>
           <h2 class="text-xl font-bold text-gray-900 dark:text-white">No new drops yet</h2>
@@ -48,7 +48,7 @@
               class="h-full w-full transition-transform duration-300 group-hover:scale-105"
             />
             <div v-else class="flex h-full w-full items-center justify-center">
-              <Icon name="mdi:image-outline" size="32" class="text-gray-300" />
+              <Icon name="solar:gallery-linear" size="32" class="text-gray-300" />
             </div>
             <!-- NEW badge -->
             <span class="absolute right-2 top-2 rounded-full bg-brand px-2 py-0.5 text-[10px] font-bold text-white">

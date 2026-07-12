@@ -27,7 +27,7 @@
             class="absolute right-4 top-4 z-50 flex h-9 w-9 items-center justify-center rounded-full bg-black/40 shadow-sm backdrop-blur-md md:hidden"
             @click="$emit('close')"
           >
-            <Icon name="mdi:close" size="20" class="text-white" />
+            <Icon name="solar:close-circle-linear" size="20" class="text-white" />
           </button>
 
           <!-- ── LAYOUT WRAPPER ── -->
@@ -65,7 +65,7 @@
                     v-if="currentItem?.type !== 'VIDEO'"
                     class="absolute bottom-3 right-3 flex items-center gap-1 rounded-full bg-black/40 px-2.5 py-1 text-[11px] font-semibold text-white opacity-0 backdrop-blur-md transition-opacity group-hover:opacity-100"
                   >
-                    <Icon name="mdi:magnify-plus-outline" size="13" />
+                    <Icon name="solar:magnifer-zoom-in-linear" size="13" />
                     Zoom
                   </div>
                 </div>
@@ -77,7 +77,7 @@
                   @click.stop="currentIndex--"
                 >
                   <Icon
-                    name="mdi:chevron-left"
+                    name="solar:alt-arrow-left-linear"
                     size="24"
                     class="pr-0.5 text-white"
                   />
@@ -91,7 +91,7 @@
                   @click.stop="currentIndex++"
                 >
                   <Icon
-                    name="mdi:chevron-right"
+                    name="solar:alt-arrow-right-linear"
                     size="24"
                     class="pl-0.5 text-white"
                   />
@@ -142,7 +142,7 @@
                       class="absolute inset-0 flex items-center justify-center bg-black/20"
                     >
                       <Icon
-                        name="mdi:play-circle"
+                        name="solar:play-circle-bold"
                         size="20"
                         class="text-white drop-shadow"
                       />
@@ -156,7 +156,7 @@
                 class="flex h-full w-full items-center justify-center"
               >
                 <Icon
-                  name="mdi:image-outline"
+                  name="solar:gallery-linear"
                   size="64"
                   class="text-gray-300 dark:text-neutral-600"
                 />
@@ -198,7 +198,7 @@
                       class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900"
                     >
                       <Icon
-                        name="mdi:store"
+                        name="solar:shop-2-bold"
                         size="11"
                         class="text-emerald-600 dark:text-emerald-400"
                       />
@@ -240,7 +240,7 @@
                   @click="$emit('close')"
                 >
                   <Icon
-                    name="mdi:close"
+                    name="solar:close-circle-linear"
                     size="18"
                     class="text-gray-600 dark:text-neutral-300"
                   />
@@ -318,7 +318,7 @@
                     {{ descExpanded ? 'Show less' : 'Read more' }}
                     <Icon
                       :name="
-                        descExpanded ? 'mdi:chevron-up' : 'mdi:chevron-down'
+                        descExpanded ? 'solar:alt-arrow-up-linear' : 'solar:alt-arrow-down-linear'
                       "
                       size="14"
                     />
@@ -344,7 +344,7 @@
                       "
                       class="flex items-center gap-1 text-[11px] font-bold text-amber-500"
                     >
-                      <Icon name="mdi:fire" size="12" />
+                      <Icon name="solar:fire-bold" size="12" />
                       Only {{ selectedVariant.stock }} left!
                     </p>
                   </div>
@@ -375,7 +375,7 @@
                     v-if="!selectedVariant"
                     class="mt-2 flex items-center gap-1 text-[12px] font-medium text-brand"
                   >
-                    <Icon name="mdi:alert-circle-outline" size="14" /> Please
+                    <Icon name="solar:danger-circle-linear" size="14" /> Please
                     select an option to continue
                   </p>
                 </div>
@@ -403,7 +403,7 @@
                     >
                       <div class="flex items-center gap-2">
                         <Icon
-                          name="mdi:tag-multiple-outline"
+                          name="solar:tag-horizontal-linear"
                           size="15"
                           :class="
                             activeOffer?.id === offer.id
@@ -433,7 +433,7 @@
                     v-if="activeOffer"
                     class="mt-2 flex items-center gap-1 text-[12px] font-semibold text-brand"
                   >
-                    <Icon name="mdi:check-circle" size="14" /> Deal applied at
+                    <Icon name="solar:check-circle-bold" size="14" /> Deal applied at
                     qty {{ qty }}!
                   </p>
                   <p
@@ -461,7 +461,7 @@
                     @click="toggleBgMusic"
                   >
                     <Icon
-                      :name="bgMusicPlaying ? 'mdi:pause' : 'mdi:play'"
+                      :name="bgMusicPlaying ? 'solar:pause-bold' : 'solar:play-bold'"
                       size="20"
                     />
                   </button>
@@ -473,7 +473,7 @@
                     </p>
                     <div class="mt-0.5 flex items-center gap-1">
                       <Icon
-                        name="mdi:music-note"
+                        name="solar:music-note-2-bold"
                         size="12"
                         class="text-pink-400"
                       />
@@ -513,7 +513,7 @@
                   class="flex h-full w-10 items-center justify-center text-gray-600 transition-colors hover:bg-gray-50 md:w-11 dark:text-neutral-400 dark:hover:bg-neutral-800"
                   @click="qty = Math.max(1, qty - 1)"
                 >
-                  <Icon name="mdi:minus" size="16" />
+                  <Icon name="solar:minus-circle-linear" size="16" />
                 </button>
                 <span
                   class="w-8 text-center text-[14px] font-extrabold text-gray-900 dark:text-neutral-100"
@@ -523,7 +523,7 @@
                   class="flex h-full w-10 items-center justify-center text-gray-600 transition-colors hover:bg-gray-50 md:w-11 dark:text-neutral-400 dark:hover:bg-neutral-800"
                   @click="qty = Math.min(maxQty, qty + 1)"
                 >
-                  <Icon name="mdi:plus" size="16" />
+                  <Icon name="solar:add-circle-linear" size="16" />
                 </button>
               </div>
 
@@ -536,14 +536,14 @@
                 @click="handleAddToCart"
               >
                 <template v-if="cartAdded">
-                  <Icon name="mdi:check-circle" size="20" class="mr-1" /> Added!
+                  <Icon name="solar:check-circle-bold" size="20" class="mr-1" /> Added!
                 </template>
                 <template v-else-if="!product.variants?.length">
                   Not available
                 </template>
                 <template v-else-if="isSoldOut">Sold out</template>
                 <template v-else>
-                  <Icon name="mdi:cart-plus" size="20" class="mr-1" /> Add to Cart
+                  <Icon name="solar:cart-plus-linear" size="20" class="mr-1" /> Add to Cart
                 </template>
               </BaseButton>
             </div>
@@ -555,11 +555,11 @@
                 class="flex gap-2 pt-2 md:gap-3"
               >
                 <BaseButton variant="secondary" size="sm" class="flex-1" @click="showPostModal = true">
-                  <Icon name="mdi:camera-plus-outline" size="18" class="mr-1" />
+                  <Icon name="solar:camera-add-linear" size="18" class="mr-1" />
                   Create Post
                 </BaseButton>
                 <BaseButton variant="secondary" size="sm" class="flex-1" @click="showStoryModal = true">
-                  <Icon name="mdi:image-plus-outline" size="18" class="mr-1" />
+                  <Icon name="solar:gallery-add-linear" size="18" class="mr-1" />
                   Add to Story
                 </BaseButton>
               </div>
@@ -575,11 +575,11 @@
                 class="flex items-center gap-1.5 transition-colors hover:text-brand"
                 @click="showProductLikes = true"
               >
-                <Icon name="mdi:heart" size="14" class="text-brand/70" />
+                <Icon name="solar:heart-bold" size="14" class="text-brand/70" />
                 {{ product._count.likes }}
               </button>
               <span v-else class="flex items-center gap-1.5">
-                <Icon name="mdi:heart" size="14" class="text-brand/70" />
+                <Icon name="solar:heart-bold" size="14" class="text-brand/70" />
                 {{ product._count.likes }}
               </span>
               <button
@@ -587,7 +587,7 @@
                 @click="$emit('open-comments', product)"
               >
                 <Icon
-                  name="mdi:comment-processing"
+                  name="solar:chat-round-dots-bold"
                   size="14"
                   class="text-blue-400/70"
                 />
@@ -595,7 +595,7 @@
               </button>
               <span class="flex items-center gap-1.5"
                 ><Icon
-                  name="mdi:share-variant"
+                  name="solar:share-bold"
                   size="14"
                   class="text-green-400/70"
                 />
@@ -608,7 +608,7 @@
                 class="ml-auto flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-[11px] font-semibold text-gray-500 transition-colors hover:border-brand hover:text-brand dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400"
                 @click.stop
               >
-                <Icon name="mdi:open-in-new" size="12" />
+                <Icon name="solar:square-top-down-linear" size="12" />
                 View page
               </NuxtLink>
             </div>
@@ -649,7 +649,7 @@
           class="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
           @click="isZoomed = false"
         >
-          <Icon name="mdi:close" size="22" />
+          <Icon name="solar:close-circle-linear" size="22" />
         </button>
 
         <!-- Counter -->
@@ -681,7 +681,7 @@
           class="absolute left-4 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/25"
           @click="currentIndex--"
         >
-          <Icon name="mdi:chevron-left" size="28" />
+          <Icon name="solar:alt-arrow-left-linear" size="28" />
         </button>
 
         <!-- Next -->
@@ -690,7 +690,7 @@
           class="absolute right-4 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/25"
           @click="currentIndex++"
         >
-          <Icon name="mdi:chevron-right" size="28" />
+          <Icon name="solar:alt-arrow-right-linear" size="28" />
         </button>
 
         <!-- Thumbnail strip -->
@@ -717,7 +717,7 @@
               v-if="m.type === 'VIDEO'"
               class="absolute inset-0 flex items-center justify-center bg-black/20"
             >
-              <Icon name="mdi:play-circle" size="18" class="text-white" />
+              <Icon name="solar:play-circle-bold" size="18" class="text-white" />
             </div>
           </button>
         </div>

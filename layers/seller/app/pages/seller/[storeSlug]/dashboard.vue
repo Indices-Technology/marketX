@@ -33,14 +33,14 @@
               :to="`/sellers/profile/${storeSlug}`"
               class="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-brand hover:text-brand/80"
             >
-              View your store <Icon name="mdi:arrow-right" size="14" />
+              View your store <Icon name="solar:arrow-right-linear" size="14" />
             </NuxtLink>
           </div>
           <button
             class="shrink-0 text-gray-400 hover:text-gray-600 dark:text-neutral-500"
             @click="showWelcome = false"
           >
-            <Icon name="mdi:close" size="18" />
+            <Icon name="solar:close-circle-linear" size="18" />
           </button>
         </div>
       </Transition>
@@ -125,7 +125,7 @@
             v-if="seller?.is_verified"
             class="flex items-center gap-0.5 rounded-full bg-blue-500 px-2 py-0.5 text-[11px] font-bold text-white"
           >
-            <Icon name="mdi:check-circle" size="11" /> Verified
+            <Icon name="solar:check-circle-bold" size="11" /> Verified
           </span>
           <span
             class="rounded-full px-2 py-0.5 text-[11px] font-bold"
@@ -148,14 +148,14 @@
             target="_blank"
             class="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
           >
-            <Icon name="mdi:open-in-new" size="16" />
+            <Icon name="solar:square-top-down-linear" size="16" />
             <span class="hidden sm:inline">View Profile</span>
           </NuxtLink>
           <NuxtLink
             :to="`/seller/${storeSlug}/products/create`"
             class="flex items-center gap-1.5 rounded-lg bg-brand px-3 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
           >
-            <Icon name="mdi:plus" size="16" />
+            <Icon name="solar:add-circle-linear" size="16" />
             <span class="hidden sm:inline">Add Product</span>
           </NuxtLink>
         </div>
@@ -169,7 +169,7 @@
       >
         <div class="mb-3 flex items-center justify-between">
           <div class="flex items-center gap-2.5">
-            <Icon name="mdi:shield-star-outline" size="22" class="text-brand" />
+            <Icon name="solar:shield-star-linear" size="22" class="text-brand" />
             <div>
               <p class="text-sm font-semibold text-gray-900 dark:text-white">
                 Store Strength
@@ -178,7 +178,7 @@
                 <Icon
                   v-for="n in 5"
                   :key="n"
-                  :name="n <= strengthStars ? 'mdi:star' : 'mdi:star-outline'"
+                  :name="n <= strengthStars ? 'solar:star-bold' : 'solar:star-linear'"
                   size="14"
                   class="text-amber-400"
                 />
@@ -208,7 +208,7 @@
               v-if="item.done"
               class="flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
             >
-              <Icon name="mdi:check-circle" size="12" />
+              <Icon name="solar:check-circle-bold" size="12" />
               {{ item.label }}
             </span>
             <NuxtLink
@@ -216,7 +216,7 @@
               :to="item.to"
               class="flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-medium text-gray-500 transition-colors hover:bg-brand/10 hover:text-brand dark:bg-neutral-700 dark:text-neutral-400 dark:hover:bg-brand/20"
             >
-              <Icon name="mdi:plus-circle-outline" size="12" />
+              <Icon name="solar:add-circle-linear" size="12" />
               {{ item.label }}
             </NuxtLink>
           </template>
@@ -242,9 +242,9 @@
             </p>
           </div>
           <div class="flex flex-col items-end gap-2">
-            <Icon name="mdi:wallet" size="40" class="text-white/20" />
+            <Icon name="solar:wallet-bold" size="40" class="text-white/20" />
             <span class="flex items-center gap-0.5 text-[11px] font-semibold text-white/80">
-              Manage <Icon name="mdi:chevron-right" size="14" />
+              Manage <Icon name="solar:alt-arrow-right-linear" size="14" />
             </span>
           </div>
         </div>
@@ -378,7 +378,7 @@
         <!-- Empty -->
         <div v-else-if="!recentProducts.length" class="py-10 text-center">
           <Icon
-            name="mdi:package-variant-closed-remove"
+            name="solar:box-minimalistic-linear"
             size="40"
             class="mb-2 text-gray-300 dark:text-neutral-600"
           />
@@ -389,7 +389,7 @@
             :to="`/seller/${storeSlug}/products/create`"
             class="mt-3 inline-flex items-center gap-1.5 text-[13px] font-semibold text-brand hover:underline"
           >
-            <Icon name="mdi:plus" size="14" /> Add your first product
+            <Icon name="solar:add-circle-linear" size="14" /> Add your first product
           </NuxtLink>
         </div>
 
@@ -419,14 +419,14 @@
                 class="flex h-full w-full items-center justify-center"
               >
                 <Icon
-                  name="mdi:image-off-outline"
+                  name="solar:gallery-remove-linear"
                   size="28"
                   class="text-gray-300 dark:text-neutral-600"
                 />
               </div>
               <Icon
                 v-if="product.media?.[0]?.type === 'VIDEO'"
-                name="mdi:play-circle"
+                name="solar:play-circle-bold"
                 size="18"
                 class="pointer-events-none absolute right-1.5 top-1.5 text-white drop-shadow-lg"
               />
@@ -566,34 +566,34 @@ const suggestion = computed(() => {
   const slug = storeSlug.value
   if (pendingOrderCount.value > 0)
     return {
-      icon: 'mdi:package-variant-closed',
+      icon: 'solar:box-linear',
       text: `You have ${pendingOrderCount.value} order${pendingOrderCount.value > 1 ? 's' : ''} waiting to be fulfilled.`,
       cta: 'View orders',
       to: `/seller/${slug}/orders`,
     }
   if (productCount.value === 0)
     return {
-      icon: 'mdi:plus-box-outline',
+      icon: 'solar:add-square-linear',
       text: 'Add your first product to start selling.',
       cta: 'Add product',
       to: `/seller/${slug}/products/create`,
     }
   if ((yesterday.value?.views ?? 0) < 10)
     return {
-      icon: 'mdi:movie-open-outline',
+      icon: 'solar:clapperboard-linear',
       text: 'Post a reel today — video listings get seen far more than photos.',
       cta: 'Add product',
       to: `/seller/${slug}/products/create`,
     }
   if (trendingProduct.value)
     return {
-      icon: 'mdi:trending-up',
+      icon: 'solar:graph-up-linear',
       text: `"${trendingProduct.value.title}" is getting attention this week — share it to keep the momentum.`,
       cta: 'View store',
       to: `/sellers/profile/${slug}`,
     }
   return {
-    icon: 'mdi:lightbulb-on-outline',
+    icon: 'solar:lightbulb-bolt-linear',
     text: 'Share your store link on WhatsApp to bring in more buyers.',
     cta: 'View store',
     to: `/sellers/profile/${slug}`,

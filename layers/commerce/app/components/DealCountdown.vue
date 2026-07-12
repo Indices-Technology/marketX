@@ -1,6 +1,6 @@
 <template>
   <div v-if="!expired" class="flex items-center gap-1 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
-    <Icon name="mdi:clock-outline" size="11" class="shrink-0" />
+    <Icon name="solar:clock-circle-linear" size="11" class="shrink-0" />
     <span>{{ display }}</span>
   </div>
   <div v-else class="text-[10px] font-semibold text-gray-400">Deal ended</div>

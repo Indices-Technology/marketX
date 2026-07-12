@@ -10,7 +10,7 @@
           class="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-white"
           @click="router.back()"
         >
-          <Icon name="mdi:arrow-left" size="18" />
+          <Icon name="solar:arrow-left-linear" size="18" />
           Back
         </button>
       </div>
@@ -61,7 +61,7 @@
                 aria-label="Previous media"
                 @click="currentIndex--"
               >
-                <Icon name="mdi:chevron-left" size="24" />
+                <Icon name="solar:alt-arrow-left-linear" size="24" />
               </button>
               <button
                 class="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/55 text-white transition hover:bg-black/75 disabled:opacity-30"
@@ -69,7 +69,7 @@
                 aria-label="Next media"
                 @click="currentIndex++"
               >
-                <Icon name="mdi:chevron-right" size="24" />
+                <Icon name="solar:alt-arrow-right-linear" size="24" />
               </button>
               <div
                 class="absolute bottom-4 left-0 right-0 flex justify-center gap-1.5"

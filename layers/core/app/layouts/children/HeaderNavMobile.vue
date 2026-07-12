@@ -22,7 +22,7 @@
           class="header-button"
           @click="$emit('open-search')"
         >
-          <Icon name="mdi:magnify" size="24" />
+          <Icon name="solar:magnifer-linear" size="24" />
         </button>
         <button
           aria-label="Cart"
@@ -30,7 +30,7 @@
           @click="$emit('open-cart')"
         >
           <div class="relative">
-            <Icon name="mdi:shopping-outline" size="24" />
+            <Icon name="solar:bag-4-linear" size="24" />
             <span
               v-if="cartCount > 0"
               class="absolute -right-1 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-brand px-0.5 text-[9px] font-bold text-white"
@@ -46,7 +46,7 @@
             class="header-button relative"
             @click="$emit('open-notifications')"
           >
-            <Icon name="mdi:bell-outline" size="24" />
+            <Icon name="solar:bell-linear" size="24" />
             <span
               v-if="unreadCount > 0"
               class="absolute right-0 top-0 block h-2 w-2 rounded-full bg-brand"

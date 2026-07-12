@@ -24,7 +24,7 @@
           <!-- Success -->
           <template v-else-if="state === 'success'">
             <div class="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40">
-              <Icon name="mdi:check-circle" size="28" class="text-emerald-600 dark:text-emerald-400" />
+              <Icon name="solar:check-circle-bold" size="28" class="text-emerald-600 dark:text-emerald-400" />
             </div>
             <p class="text-sm font-semibold text-gray-700 dark:text-neutral-300">
               {{ successText }}
@@ -34,7 +34,7 @@
           <!-- Error -->
           <template v-else-if="state === 'error'">
             <div class="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/40">
-              <Icon name="mdi:alert-circle" size="28" class="text-red-500 dark:text-red-400" />
+              <Icon name="solar:danger-circle-bold" size="28" class="text-red-500 dark:text-red-400" />
             </div>
             <p class="max-w-[220px] text-center text-sm font-semibold text-gray-700 dark:text-neutral-300">
               {{ errorText || 'Something went wrong' }}

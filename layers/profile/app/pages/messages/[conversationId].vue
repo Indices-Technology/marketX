@@ -11,7 +11,7 @@
           to="/messages"
           class="mr-1 text-gray-500 hover:text-gray-700 dark:text-neutral-400 dark:hover:text-neutral-200"
         >
-          <Icon name="mdi:arrow-left" size="22" />
+          <Icon name="solar:arrow-left-linear" size="22" />
         </NuxtLink>
 
         <!-- Store conversation header -->
@@ -67,7 +67,7 @@
           <div
             class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200 dark:bg-neutral-700"
           >
-            <Icon name="mdi:account-outline" size="20" class="text-gray-400" />
+            <Icon name="solar:user-linear" size="20" class="text-gray-400" />
           </div>
           <p class="text-sm font-medium text-gray-500 dark:text-neutral-400">
             Conversation
@@ -102,7 +102,7 @@
           </p>
         </div>
         <Icon
-          name="mdi:chevron-right"
+          name="solar:alt-arrow-right-linear"
           size="20"
           class="shrink-0 text-gray-400"
         />
@@ -123,7 +123,7 @@
           v-else-if="messages.length === 0"
           class="flex h-full flex-col items-center justify-center text-gray-500 dark:text-neutral-400"
         >
-          <Icon name="mdi:message-outline" size="48" class="mb-3" />
+          <Icon name="solar:chat-round-line-linear" size="48" class="mb-3" />
           <p>No messages yet. Say hi! 👋</p>
         </div>
         <div v-else>

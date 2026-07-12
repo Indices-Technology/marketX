@@ -81,7 +81,7 @@
             class="flex items-center gap-1 text-xs font-medium text-brand hover:underline"
             @click="showAddAccount = !showAddAccount"
           >
-            <Icon name="mdi:plus" size="14" />
+            <Icon name="solar:add-circle-linear" size="14" />
             Add account
           </button>
         </div>
@@ -102,7 +102,7 @@
             <div
               class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 dark:bg-neutral-800"
             >
-              <Icon name="mdi:bank" size="18" class="text-gray-500 dark:text-neutral-400" />
+              <Icon name="solar:banknote-2-bold" size="18" class="text-gray-500 dark:text-neutral-400" />
             </div>
             <div class="min-w-0 flex-1">
               <p class="text-sm font-semibold text-gray-900 dark:text-neutral-100">
@@ -122,7 +122,7 @@
               v-if="selectedAccountId === account.id"
               class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand"
             >
-              <Icon name="mdi:check" size="14" class="text-white" />
+              <Icon name="solar:check-circle-linear" size="14" class="text-white" />
             </div>
           </button>
         </div>
@@ -132,7 +132,7 @@
           class="rounded-xl border border-dashed border-gray-200 p-4 text-center dark:border-neutral-700"
         >
           <Icon
-            name="mdi:bank-plus"
+            name="solar:banknote-2-linear"
             size="28"
             class="mx-auto mb-2 text-gray-300 dark:text-neutral-600"
           />

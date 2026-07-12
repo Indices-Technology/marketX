@@ -43,7 +43,7 @@
         >
           <div class="flex gap-3">
             <Icon
-              name="mdi:alert-circle"
+              name="solar:danger-circle-bold"
               class="mt-0.5 h-6 w-6 flex-shrink-0 text-red-600 dark:text-red-400"
             />
             <div>
@@ -126,7 +126,7 @@
           >
             <div class="flex gap-3">
               <Icon
-                name="mdi:check-circle"
+                name="solar:check-circle-bold"
                 class="mt-0.5 h-6 w-6 flex-shrink-0 text-green-600 dark:text-green-400"
               />
               <div>

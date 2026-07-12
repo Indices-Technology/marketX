@@ -16,7 +16,7 @@
       class="py-24 text-center"
     >
       <Icon
-        name="mdi:store-marker-outline"
+        name="solar:shop-2-linear"
         size="48"
         class="mx-auto mb-3 text-gray-300 dark:text-neutral-600"
       />

@@ -23,62 +23,62 @@
       <AdminStatCard
         label="Pending Reports"
         :value="stats?.pendingReports ?? 0"
-        icon="mdi:flag-outline"
+        icon="solar:flag-linear"
         color="rose"
         to="/admin/reports"
       />
       <AdminStatCard
         label="Resolved Today"
         :value="stats?.resolvedToday ?? 0"
-        icon="mdi:check-circle-outline"
+        icon="solar:check-circle-linear"
         color="green"
       />
       <AdminStatCard
         label="Flagged Content"
         :value="stats?.flaggedContent ?? 0"
-        icon="mdi:alert-outline"
+        icon="solar:danger-triangle-linear"
         color="amber"
         to="/admin/reports?status=FLAGGED"
       />
       <AdminStatCard
         label="Active Users"
         :value="stats?.activeUsers ?? 0"
-        icon="mdi:account-outline"
+        icon="solar:user-linear"
         color="blue"
         to="/admin/users"
       />
       <AdminStatCard
         label="Active Sellers"
         :value="stats?.activeSellers ?? 0"
-        icon="mdi:store-outline"
+        icon="solar:shop-2-linear"
         color="purple"
         to="/admin/sellers"
       />
       <AdminStatCard
         label="Banned Users"
         :value="stats?.bannedUsers ?? 0"
-        icon="mdi:account-cancel-outline"
+        icon="solar:user-cross-linear"
         color="gray"
         to="/admin/users?filter=banned"
       />
       <AdminStatCard
         label="Pending Squares"
         :value="stats?.pendingSquares ?? 0"
-        icon="mdi:city-variant-outline"
+        icon="solar:city-linear"
         color="blue"
         to="/admin/squares?status=PENDING"
       />
       <AdminStatCard
         label="Pending Payouts"
         :value="stats?.pendingPayouts ?? 0"
-        icon="mdi:cash-clock"
+        icon="solar:money-bag-linear"
         color="amber"
         to="/admin/payouts"
       />
       <AdminStatCard
         label="Owed to sellers (₦)"
         :value="Math.round((stats?.payoutLiability ?? 0) / 100)"
-        icon="mdi:cash-multiple"
+        icon="solar:money-bag-linear"
         color="green"
         to="/admin/payouts"
       />
@@ -93,7 +93,7 @@
         <div
           class="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 transition-colors group-hover:bg-rose-100 dark:bg-rose-900/20 dark:group-hover:bg-rose-900/40"
         >
-          <Icon name="mdi:flag-outline" size="20" class="text-rose-500" />
+          <Icon name="solar:flag-linear" size="20" class="text-rose-500" />
         </div>
         <div>
           <p
@@ -106,7 +106,7 @@
           </p>
         </div>
         <Icon
-          name="mdi:chevron-right"
+          name="solar:alt-arrow-right-linear"
           size="18"
           class="ml-auto text-gray-300 transition-colors group-hover:text-rose-400 dark:text-neutral-700"
         />
@@ -120,7 +120,7 @@
           class="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-50 transition-colors group-hover:bg-purple-100 dark:bg-purple-900/20 dark:group-hover:bg-purple-900/40"
         >
           <Icon
-            name="mdi:store-check-outline"
+            name="solar:shop-2-linear"
             size="20"
             class="text-purple-500"
           />
@@ -136,7 +136,7 @@
           </p>
         </div>
         <Icon
-          name="mdi:chevron-right"
+          name="solar:alt-arrow-right-linear"
           size="18"
           class="ml-auto text-gray-300 transition-colors group-hover:text-purple-400 dark:text-neutral-700"
         />

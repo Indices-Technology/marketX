@@ -9,7 +9,7 @@
       <!-- ─── NOT ENROLLED: CTA + preview of available products ────────── -->
       <template v-if="!isEnrolled">
         <div class="rounded-xl bg-gradient-to-br from-brand to-[#c41230] p-8 text-center text-white">
-          <Icon name="mdi:cash-multiple" size="64" class="mx-auto mb-4" />
+          <Icon name="solar:money-bag-linear" size="64" class="mx-auto mb-4" />
           <h2 class="mb-2 text-2xl font-bold">{{ $t('affiliate.joinTitle') }}</h2>
           <p class="mb-6 text-white/90">{{ $t('affiliate.joinSubtitle') }}</p>
           <button
@@ -29,7 +29,7 @@
         >
           <div class="flex items-center justify-between border-b border-gray-200 p-4 dark:border-neutral-800">
             <div class="flex items-center gap-3">
-              <Icon name="mdi:tag-heart-outline" size="22" class="text-brand" />
+              <Icon name="solar:tag-linear" size="22" class="text-brand" />
               <div>
                 <h3 class="font-semibold text-gray-900 dark:text-neutral-100">
                   {{ $t('affiliate.availableTitle') }}
@@ -59,7 +59,7 @@
                 </p>
                 <p class="text-xs text-gray-400 dark:text-neutral-500">{{ product.seller?.store_name }}</p>
                 <span class="mt-0.5 inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-[11px] font-bold text-green-700 dark:bg-green-900/20 dark:text-green-400">
-                  <Icon name="mdi:cash" size="11" />
+                  <Icon name="solar:money-bag-linear" size="11" />
                   {{ $t('affiliate.makePerSale', { amount: formatPrice(product.affiliateCommission ?? 0) }) }}
                 </span>
                 <p class="mt-0.5 text-[10px] text-gray-400 dark:text-neutral-500">rate set by seller · may change</p>
@@ -81,21 +81,21 @@
         <!-- Overview stats -->
         <div class="grid grid-cols-3 gap-4">
           <div class="rounded-xl border border-gray-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
-            <Icon name="mdi:cash-check" size="24" class="mb-2 text-green-500" />
+            <Icon name="solar:wad-of-money-linear" size="24" class="mb-2 text-green-500" />
             <p class="text-2xl font-bold text-gray-900 dark:text-neutral-100">
               {{ formatPrice(stats.totalEarnings ?? 0) }}
             </p>
             <p class="text-xs text-gray-500 dark:text-neutral-400">{{ $t('affiliate.totalEarned') }}</p>
           </div>
           <div class="rounded-xl border border-gray-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
-            <Icon name="mdi:clock-outline" size="24" class="mb-2 text-amber-500" />
+            <Icon name="solar:clock-circle-linear" size="24" class="mb-2 text-amber-500" />
             <p class="text-2xl font-bold text-gray-900 dark:text-neutral-100">
               {{ formatPrice(stats.pendingEarnings ?? 0) }}
             </p>
             <p class="text-xs text-gray-500 dark:text-neutral-400">{{ $t('affiliate.pending') }}</p>
           </div>
           <div class="rounded-xl border border-gray-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
-            <Icon name="mdi:cart-check" size="24" class="mb-2 text-brand" />
+            <Icon name="solar:cart-check-linear" size="24" class="mb-2 text-brand" />
             <p class="text-2xl font-bold text-gray-900 dark:text-neutral-100">
               {{ stats.totalConversions ?? 0 }}
             </p>
@@ -119,7 +119,7 @@
               @click="copyLink"
               class="rounded-lg bg-brand px-4 py-2 font-medium text-white transition-colors hover:bg-[#d81b36]"
             >
-              <Icon name="mdi:content-copy" size="20" />
+              <Icon name="solar:copy-linear" size="20" />
             </button>
           </div>
         </div>
@@ -128,7 +128,7 @@
         <div class="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
           <div class="flex items-center justify-between border-b border-gray-200 p-4 dark:border-neutral-800">
             <div class="flex items-center gap-3">
-              <Icon name="mdi:chart-line" size="22" class="text-brand" />
+              <Icon name="solar:chart-2-linear" size="22" class="text-brand" />
               <div>
                 <h3 class="font-semibold text-gray-900 dark:text-neutral-100">Your Conversions</h3>
                 <p class="text-xs text-gray-400 dark:text-neutral-500">Orders placed via your links</p>
@@ -150,7 +150,7 @@
             v-else-if="!referralsList.length"
             class="p-8 text-center text-gray-400 dark:text-neutral-500"
           >
-            <Icon name="mdi:link-variant-off" size="40" class="mx-auto mb-2" />
+            <Icon name="solar:link-broken-linear" size="40" class="mx-auto mb-2" />
             <p class="text-sm">No conversions yet</p>
             <p class="mt-1 text-xs">Share your product links and you'll see sales here</p>
           </div>
@@ -201,7 +201,7 @@
         >
           <div class="flex items-center justify-between border-b border-gray-200 p-4 dark:border-neutral-800">
             <div class="flex items-center gap-3">
-              <Icon name="mdi:store-check" size="22" class="text-brand" />
+              <Icon name="solar:shop-2-bold" size="22" class="text-brand" />
               <div>
                 <h3 class="font-semibold text-gray-900 dark:text-neutral-100">{{ $t('affiliate.myProducts') }}</h3>
                 <p class="text-xs text-gray-400 dark:text-neutral-500">{{ $t('affiliate.myProductsHint') }}</p>
@@ -223,7 +223,7 @@
             v-else-if="!sellerProductStats.products.length"
             class="p-8 text-center text-gray-400 dark:text-neutral-500"
           >
-            <Icon name="mdi:tag-off-outline" size="40" class="mx-auto mb-2" />
+            <Icon name="solar:tag-linear" size="40" class="mx-auto mb-2" />
             <p class="text-sm">{{ $t('affiliate.noProducts') }}</p>
             <p class="mt-1 text-xs">{{ $t('affiliate.noProductsHint') }}</p>
           </div>
@@ -277,7 +277,7 @@
           class="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
         >
           <div class="flex items-center gap-3 border-b border-gray-200 p-4 dark:border-neutral-800">
-            <Icon name="mdi:account-group-outline" size="22" class="text-brand" />
+            <Icon name="solar:users-group-rounded-linear" size="22" class="text-brand" />
             <div>
               <h3 class="font-semibold text-gray-900 dark:text-neutral-100">{{ $t('affiliate.promoters') }}</h3>
               <p class="text-xs text-gray-400 dark:text-neutral-500">{{ $t('affiliate.promotersHint') }}</p>
@@ -292,7 +292,7 @@
             v-else-if="!promoters.length"
             class="p-8 text-center text-gray-400 dark:text-neutral-500"
           >
-            <Icon name="mdi:account-group-outline" size="40" class="mx-auto mb-2" />
+            <Icon name="solar:users-group-rounded-linear" size="40" class="mx-auto mb-2" />
             <p class="text-sm">{{ $t('affiliate.noPromoters') }}</p>
             <p class="mt-1 text-xs">{{ $t('affiliate.noPromotersHint') }}</p>
           </div>
@@ -327,7 +327,7 @@
         <div class="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
           <div class="flex items-center justify-between border-b border-gray-200 p-4 dark:border-neutral-800">
             <div class="flex items-center gap-3">
-              <Icon name="mdi:tag-heart-outline" size="22" class="text-brand" />
+              <Icon name="solar:tag-linear" size="22" class="text-brand" />
               <div>
                 <h3 class="font-semibold text-gray-900 dark:text-neutral-100">{{ $t('affiliate.availableTitle') }}</h3>
                 <p class="text-xs text-gray-400 dark:text-neutral-500">{{ $t('affiliate.availableHint') }}</p>
@@ -349,7 +349,7 @@
             v-else-if="!availableProducts.length"
             class="p-8 text-center text-gray-400 dark:text-neutral-500"
           >
-            <Icon name="mdi:tag-multiple-outline" size="40" class="mx-auto mb-2" />
+            <Icon name="solar:tag-horizontal-linear" size="40" class="mx-auto mb-2" />
             <p class="text-sm">{{ $t('affiliate.noAvailable') }}</p>
             <p class="mt-1 text-xs">{{ $t('affiliate.noAvailableHint') }}</p>
           </div>
@@ -371,7 +371,7 @@
                   </p>
                   <p class="text-xs text-gray-400 dark:text-neutral-500">{{ product.seller?.store_name }}</p>
                   <span class="mt-0.5 inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-[11px] font-bold text-green-700 dark:bg-green-900/20 dark:text-green-400">
-                    <Icon name="mdi:cash" size="11" />
+                    <Icon name="solar:money-bag-linear" size="11" />
                     {{ $t('affiliate.makePerSale', { amount: formatPrice(product.affiliateCommission ?? 0) }) }}
                   </span>
                   <p class="mt-0.5 text-[10px] text-gray-400 dark:text-neutral-500">rate set by seller · may change</p>

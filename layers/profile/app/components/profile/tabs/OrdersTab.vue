@@ -10,7 +10,7 @@
         >
           <div class="flex items-center gap-2">
             <Icon
-              name="mdi:store-clock"
+              name="solar:shop-2-linear"
               size="20"
               class="text-amber-600 dark:text-amber-400"
             />
@@ -94,7 +94,7 @@
     <!-- My Purchases header -->
     <div class="flex items-center gap-2">
       <Icon
-        name="mdi:shopping-outline"
+        name="solar:bag-4-linear"
         size="18"
         class="text-gray-400 dark:text-neutral-500"
       />
@@ -135,7 +135,7 @@
     <!-- Empty State -->
     <div v-else-if="filteredOrders.length === 0" class="py-12 text-center">
       <Icon
-        name="mdi:package-variant-closed"
+        name="solar:box-linear"
         size="64"
         class="mx-auto mb-4 text-gray-300 dark:text-neutral-700"
       />

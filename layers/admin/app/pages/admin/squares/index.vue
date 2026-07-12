@@ -8,7 +8,7 @@
         </p>
       </div>
       <BaseButton size="sm" variant="primary" @click="openCreate">
-        <Icon name="mdi:plus" size="15" /> New square
+        <Icon name="solar:add-circle-linear" size="15" /> New square
       </BaseButton>
     </div>
 
@@ -27,7 +27,7 @@
         {{ f.label }}
       </button>
       <div class="relative ml-auto">
-        <Icon name="mdi:magnify" size="15" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        <Icon name="solar:magnifer-linear" size="15" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
         <input
           v-model="search"
           placeholder="Search square…"
@@ -51,7 +51,7 @@
 
       <!-- Empty -->
       <div v-else-if="!squares.length" class="flex flex-col items-center justify-center py-16 text-center text-gray-400 dark:text-neutral-500">
-        <Icon name="mdi:city-variant-outline" size="30" class="mb-2 opacity-40" />
+        <Icon name="solar:city-linear" size="30" class="mb-2 opacity-40" />
         <p class="text-[13px]">No {{ (statusFilter || 'matching').toLowerCase() }} squares</p>
       </div>
 
@@ -73,7 +73,7 @@
               <div class="flex items-center gap-2.5">
                 <div class="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gray-100 dark:bg-neutral-800">
                   <img v-if="s.iconUrl" :src="s.iconUrl" class="h-full w-full object-cover" alt="" />
-                  <Icon v-else name="mdi:city-variant-outline" size="15" class="text-gray-400" />
+                  <Icon v-else name="solar:city-linear" size="15" class="text-gray-400" />
                 </div>
                 <div class="min-w-0">
                   <p class="truncate font-medium text-gray-900 dark:text-neutral-100">{{ s.name }}</p>
@@ -122,14 +122,14 @@
                   title="Edit"
                   @click="openEdit(s)"
                 >
-                  <Icon name="mdi:pencil-outline" size="16" />
+                  <Icon name="solar:pen-linear" size="16" />
                 </button>
                 <button
                   class="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
                   title="Delete"
                   @click="removeSquare(s)"
                 >
-                  <Icon name="mdi:trash-can-outline" size="16" />
+                  <Icon name="solar:trash-bin-trash-linear" size="16" />
                 </button>
               </div>
             </td>

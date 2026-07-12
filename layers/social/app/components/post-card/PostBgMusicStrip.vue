@@ -18,7 +18,7 @@
         <p
           class="mb-[3px] text-[9px] font-medium uppercase leading-none tracking-widest text-white/50"
         >
-          <Icon name="mdi:music-note" size="9" class="-mt-0.5 inline" />
+          <Icon name="solar:music-note-2-bold" size="9" class="-mt-0.5 inline" />
           {{ $t('music.backgroundMusic') }}
         </p>
         <div class="overflow-hidden">

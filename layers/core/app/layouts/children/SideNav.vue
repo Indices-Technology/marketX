@@ -15,32 +15,29 @@
     <div class="nav-scroll min-h-0 flex-1 overflow-y-auto">
       <!-- Primary Navigation -->
       <p class="nav-group-label">Shop</p>
-      <nav class="flex flex-col space-y-1">
+      <nav class="flex flex-col space-y-4">
         <NuxtLink to="/" class="nav-button group" :class="{ active: isHome }">
-          <Icon :name="isHome ? 'mdi:home' : 'mdi:home-outline'" size="24" />
+          <AppIcon name="home" :active="isHome" size="24" />
           <span class="nav-text">Home</span>
         </NuxtLink>
 
         <NuxtLink to="/discover" class="nav-button group" active-class="active">
-          <Icon name="mdi:store-search-outline" size="24" />
+          <AppIcon name="discover" :active="isDiscover" size="24" />
           <span class="nav-text">Discover</span>
         </NuxtLink>
 
         <NuxtLink to="/reels" class="nav-button group" active-class="active">
-          <Icon name="mdi:play-box-multiple-outline" size="24" />
+          <AppIcon name="reels" :active="isReels" size="24" />
           <span class="nav-text">Reels</span>
         </NuxtLink>
 
         <NuxtLink to="/map" class="nav-button group" active-class="active">
-          <Icon name="mdi:map-marker-radius-outline" size="24" />
+          <AppIcon name="nearby" :active="isNearby" size="24" />
           <span class="nav-text">Near Me</span>
         </NuxtLink>
 
         <NuxtLink to="/squares" class="nav-button group" active-class="active">
-          <Icon
-            :name="isSquares ? 'mdi:storefront' : 'mdi:storefront-outline'"
-            size="24"
-          />
+          <AppIcon name="squares" :active="isSquares" size="24" />
           <span class="nav-text">Squares</span>
         </NuxtLink>
       </nav>
@@ -57,7 +54,7 @@
           to="/sellers/create"
           class="mt-2 flex items-center gap-4 rounded-xl border border-dashed border-brand/30 px-3 py-2.5 text-brand/80 transition-all hover:border-brand/60 hover:bg-brand/5 hover:text-brand"
         >
-          <Icon name="mdi:store-plus-outline" size="24" />
+          <Icon name="solar:shop-2-linear" size="24" />
           <span class="nav-text font-semibold">Start Selling</span>
         </NuxtLink>
       </ClientOnly>
@@ -84,7 +81,7 @@
                 :alt="sellerStore.sellers[0].store_name || 'Store'"
                 class="h-6 w-6 rounded-md object-cover"
               />
-              <Icon v-else name="mdi:store-outline" size="24" />
+              <Icon v-else name="solar:shop-2-linear" size="24" />
               <span
                 v-if="isSellerRoute"
                 class="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-500 dark:border-neutral-900"
@@ -108,7 +105,7 @@
             <div
               class="relative flex h-6 w-6 shrink-0 items-center justify-center"
             >
-              <Icon name="mdi:store-outline" size="24" />
+              <Icon name="solar:shop-2-linear" size="24" />
               <span
                 v-if="isSellerRoute"
                 class="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-500 dark:border-neutral-900"
@@ -154,7 +151,7 @@
                     class="flex h-full w-full items-center justify-center"
                   >
                     <Icon
-                      name="mdi:store"
+                      name="solar:shop-2-bold"
                       size="18"
                       class="text-gray-400 dark:text-neutral-500"
                     />
@@ -186,7 +183,7 @@
                   class="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-brand transition-colors hover:bg-brand/5"
                   @click="storePickerOpen = false"
                 >
-                  <Icon name="mdi:plus" size="16" />
+                  <Icon name="solar:add-circle-linear" size="16" />
                   <span class="nav-text">Add new store</span>
                 </NuxtLink>
               </div>
@@ -207,11 +204,11 @@
             class="sell-button group"
             @click="$emit('create')"
           >
-            <Icon name="mdi:plus-circle-outline" size="24" />
+            <AppIcon name="create" size="24" />
             <span class="nav-text">Create</span>
           </button>
           <NuxtLink v-else to="/user-register" class="sell-button group">
-            <Icon name="mdi:plus-circle-outline" size="24" />
+            <AppIcon name="create" size="24" />
             <span class="nav-text">Create</span>
           </NuxtLink>
         </ClientOnly>
@@ -224,7 +221,7 @@
             @click="$emit('open-notifications')"
           >
             <div class="relative">
-              <Icon name="mdi:bell-outline" size="24" />
+              <AppIcon name="notifications" size="24" />
               <span
                 v-if="unreadCount > 0"
                 class="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-brand px-1 text-[9px] font-bold text-white"
@@ -244,7 +241,7 @@
             active-class="active"
           >
             <div class="relative">
-              <Icon name="mdi:message-outline" size="24" />
+              <AppIcon name="inbox" :active="isInbox" size="24" />
               <span
                 v-if="messageCount > 0"
                 class="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-brand px-1 text-[9px] font-bold text-white"
@@ -258,7 +255,7 @@
         <!-- Cart -->
         <button class="nav-button group relative" @click="$emit('open-cart')">
           <div class="relative">
-            <Icon name="mdi:cart-outline" size="24" />
+            <AppIcon name="cart" size="24" />
             <span
               v-if="cartCount > 0"
               class="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-brand px-1 text-[9px] font-bold text-white"
@@ -294,7 +291,7 @@
             </span>
           </div>
           <Icon
-            name="mdi:chevron-up"
+            name="solar:alt-arrow-up-linear"
             size="20"
             class="hidden text-gray-500 transition-transform xl:block"
             :class="{ 'rotate-180': menuOpen }"
@@ -302,7 +299,7 @@
         </button>
 
         <NuxtLink v-else to="/user-login" class="nav-button group">
-          <Icon name="mdi:login" size="24" />
+          <AppIcon name="signin" size="24" />
           <span class="nav-text">{{ $t('nav.signIn') }}</span>
         </NuxtLink>
       </ClientOnly>
@@ -318,7 +315,7 @@
             class="menu-item group"
             @click="menuOpen = false"
           >
-            <Icon name="mdi:account-circle-outline" size="20" />
+            <Icon name="solar:user-circle-linear" size="20" />
             <span>View Profile</span>
           </NuxtLink>
 
@@ -327,7 +324,7 @@
             class="menu-item group"
             @click="menuOpen = false"
           >
-            <Icon name="mdi:package-variant-closed" size="20" />
+            <Icon name="solar:box-linear" size="20" />
             <span>My Orders</span>
           </NuxtLink>
 
@@ -338,7 +335,7 @@
             class="menu-item group text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/30"
             @click="menuOpen = false"
           >
-            <Icon name="mdi:store-outline" size="20" />
+            <Icon name="solar:shop-2-linear" size="20" />
             <span>Switch to Seller Mode</span>
           </NuxtLink>
           <NuxtLink
@@ -347,7 +344,7 @@
             class="menu-item group"
             @click="menuOpen = false"
           >
-            <Icon name="mdi:shopping-outline" size="20" />
+            <Icon name="solar:bag-4-linear" size="20" />
             <span>Switch to Buyer Mode</span>
           </NuxtLink>
 
@@ -358,7 +355,7 @@
             class="menu-item group"
             @click="menuOpen = false"
           >
-            <Icon name="mdi:cog-outline" size="20" />
+            <Icon name="solar:settings-linear" size="20" />
             <span>Settings</span>
           </NuxtLink>
 
@@ -371,7 +368,7 @@
             class="menu-item group text-rose-600 hover:bg-rose-50/80 dark:text-rose-400 dark:hover:bg-rose-950/30"
             @click="menuOpen = false"
           >
-            <Icon name="mdi:shield-crown-outline" size="20" />
+            <Icon name="solar:shield-star-linear" size="20" />
             <span>Admin Panel</span>
           </NuxtLink>
 
@@ -381,7 +378,7 @@
             class="menu-item group w-full text-left text-red-600 hover:bg-red-50/80 dark:text-red-400 dark:hover:bg-red-950/30"
             @click="logout"
           >
-            <Icon name="mdi:logout-variant" size="20" />
+            <Icon name="solar:logout-3-linear" size="20" />
             <span>Log Out</span>
           </button>
         </div>
@@ -399,6 +396,7 @@ import { useSellerStore } from '~~/layers/seller/app/store/seller.store'
 import { useChatStore } from '~~/layers/profile/app/stores/chat.store'
 import { useChat } from '~~/layers/profile/app/composables/useChat'
 import Avatar from '~~/layers/profile/app/components/Avatar.vue'
+import AppIcon from '~~/layers/ui/app/components/AppIcon.vue'
 
 const emit = defineEmits(['create', 'open-notifications', 'open-cart'])
 
@@ -412,6 +410,9 @@ const { cartCount } = useCart()
 
 const isHome = computed(() => route.path === '/')
 const isDiscover = computed(() => route.path === '/discover')
+const isReels = computed(() => route.path.startsWith('/reels'))
+const isNearby = computed(() => route.path.startsWith('/map'))
+const isInbox = computed(() => route.path.startsWith('/messages'))
 const isSquares = computed(() => route.path.startsWith('/squares'))
 const isSellerRoute = computed(() => route.path.startsWith('/seller'))
 const unreadCount = computed(() => notificationStore.unreadCount)

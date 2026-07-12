@@ -81,7 +81,7 @@
                 <div
                   class="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm transition-all group-hover:scale-110 group-hover:bg-white/30"
                 >
-                  <Icon name="mdi:palette" class="h-5 w-5 text-white" />
+                  <Icon name="solar:palette-bold" class="h-5 w-5 text-white" />
                 </div>
                 <p class="mt-1 text-xs text-white/80">Curated</p>
               </div>
@@ -89,7 +89,7 @@
                 <div
                   class="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm transition-all group-hover:scale-110 group-hover:bg-white/30"
                 >
-                  <Icon name="mdi:account-group" class="h-5 w-5 text-white" />
+                  <Icon name="solar:users-group-rounded-bold" class="h-5 w-5 text-white" />
                 </div>
                 <p class="mt-1 text-xs text-white/80">Community</p>
               </div>
@@ -97,7 +97,7 @@
                 <div
                   class="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm transition-all group-hover:scale-110 group-hover:bg-white/30"
                 >
-                  <Icon name="mdi:cart" class="h-5 w-5 text-white" />
+                  <Icon name="solar:cart-large-2-bold" class="h-5 w-5 text-white" />
                 </div>
                 <p class="mt-1 text-xs text-white/80">Seamless</p>
               </div>

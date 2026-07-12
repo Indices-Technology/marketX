@@ -15,7 +15,7 @@
       <!-- Error -->
       <div v-else-if="error" class="py-24 text-center">
         <Icon
-          name="mdi:store-off-outline"
+          name="solar:shop-2-linear"
           size="52"
           class="mx-auto mb-3 text-gray-300 dark:text-neutral-600"
         />
@@ -43,7 +43,7 @@
             aria-label="Go back"
             @click="router.back()"
           >
-            <Icon name="mdi:arrow-left" size="18" />
+            <Icon name="solar:arrow-left-linear" size="18" />
           </button>
           <span
             class="absolute right-3 top-3 rounded-full bg-black/50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-white backdrop-blur-sm"
@@ -58,7 +58,7 @@
               title="Change banner"
             >
               <Icon v-if="uploadingBanner" name="eos-icons:loading" size="16" />
-              <Icon v-else name="mdi:camera" size="16" />
+              <Icon v-else name="solar:camera-bold" size="16" />
               <input
                 type="file"
                 accept="image/*"
@@ -94,7 +94,7 @@
                     size="16"
                     class="text-white"
                   />
-                  <Icon v-else name="mdi:camera" size="16" class="text-white" />
+                  <Icon v-else name="solar:camera-bold" size="16" class="text-white" />
                   <input
                     type="file"
                     accept="image/*"
@@ -138,7 +138,7 @@
                   :to="`/squares/${square.slug}/admin`"
                   class="flex items-center gap-1.5 rounded-full border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-neutral-600 dark:text-neutral-300 dark:hover:bg-neutral-800"
                 >
-                  <Icon name="mdi:cog-outline" size="15" />
+                  <Icon name="solar:settings-linear" size="15" />
                   Manage
                 </NuxtLink>
               </ClientOnly>
@@ -219,7 +219,7 @@
                 />
                 <Icon
                   v-else
-                  name="mdi:account"
+                  name="solar:user-linear"
                   size="14"
                   class="text-gray-400"
                 />
@@ -274,7 +274,7 @@
                 variant="primary"
                 @click="composerOpen = true"
               >
-                <Icon name="mdi:plus" size="16" /> Post a request
+                <Icon name="solar:add-circle-linear" size="16" /> Post a request
               </BaseButton>
               <BaseButton
                 v-else
@@ -293,7 +293,7 @@
 
             <BaseEmptyState
               v-else-if="!requests.length"
-              icon="mdi:tag-search-outline"
+              icon="solar:tag-linear"
               title="No requests yet"
               description="Be the first to tell sellers what you're looking for."
             />
@@ -381,7 +381,7 @@
             </div>
             <div v-else-if="!announcements.length" class="py-16 text-center">
               <Icon
-                name="mdi:bullhorn-outline"
+                name="solar:speaker-linear"
                 size="44"
                 class="mx-auto mb-3 text-gray-300 dark:text-neutral-600"
               />
@@ -405,7 +405,7 @@
                   v-if="a.isPinned"
                   class="mb-2 flex items-center gap-1 text-[11px] font-bold text-amber-600 dark:text-amber-400"
                 >
-                  <Icon name="mdi:pin" size="12" />
+                  <Icon name="solar:pin-linear" size="12" />
                   Pinned
                 </div>
                 <p class="font-bold text-gray-900 dark:text-neutral-100">
@@ -424,7 +424,7 @@
                   />
                   <Icon
                     v-else
-                    name="mdi:account"
+                    name="solar:user-linear"
                     size="16"
                     class="text-gray-400"
                   />
@@ -453,7 +453,7 @@
             </div>
             <div v-else-if="!sellers.length" class="py-16 text-center">
               <Icon
-                name="mdi:store-outline"
+                name="solar:shop-2-linear"
                 size="44"
                 class="mx-auto mb-3 text-gray-300 dark:text-neutral-600"
               />
@@ -483,7 +483,7 @@
                     class="flex h-full w-full items-center justify-center"
                   >
                     <Icon
-                      name="mdi:storefront-outline"
+                      name="solar:shop-linear"
                       size="32"
                       class="text-gray-300 dark:text-neutral-600"
                     />
@@ -582,7 +582,7 @@
               class="py-20 text-center"
             >
               <Icon
-                name="mdi:storefront-outline"
+                name="solar:shop-linear"
                 size="44"
                 class="mx-auto mb-3 text-gray-300 dark:text-neutral-600"
               />

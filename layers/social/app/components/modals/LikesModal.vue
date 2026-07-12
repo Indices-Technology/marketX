@@ -19,7 +19,7 @@
               @click="$emit('close')"
               class="text-gray-400 transition-colors hover:text-gray-700 dark:hover:text-neutral-200"
             >
-              <Icon name="mdi:close" size="16" />
+              <Icon name="solar:close-circle-linear" size="16" />
             </button>
           </div>
 
@@ -35,7 +35,7 @@
 
             <!-- Empty -->
             <div v-else-if="!loading && likers.length === 0" class="flex flex-col items-center gap-1.5 py-8 text-gray-400">
-              <Icon name="mdi:heart-outline" size="28" />
+              <Icon name="solar:heart-linear" size="28" />
               <p class="text-[12px]">{{ $t('post.noLikesYet') }}</p>
             </div>
 
@@ -58,7 +58,7 @@
                   v-else
                   class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-400 dark:bg-neutral-700"
                 >
-                  <Icon name="mdi:account" size="16" />
+                  <Icon name="solar:user-linear" size="16" />
                 </div>
                 <span class="truncate text-[13px] font-medium text-gray-900 dark:text-neutral-100">
                   {{ liker.username }}
@@ -66,7 +66,7 @@
               </NuxtLink>
 
               <div v-if="loadingMore" class="flex justify-center py-2">
-                <Icon name="mdi:loading" size="16" class="animate-spin text-gray-400" />
+                <Icon name="solar:refresh-linear" size="16" class="animate-spin text-gray-400" />
               </div>
             </div>
           </div>

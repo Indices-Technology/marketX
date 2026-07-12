@@ -1,13 +1,12 @@
 <template>
   <div
     ref="cardRef"
-    class="group flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:shadow-lg hover:shadow-gray-200/50 dark:border-neutral-800 dark:bg-neutral-900 dark:shadow-none dark:hover:shadow-black/50"
-    :class="cardStateClass"
+    class="group flex cursor-pointer flex-col"
     @click="$emit('open-detail', product)"
   >
     <!-- ─── MEDIA BLOCK (Single Relative Container) ───────────────────── -->
     <div
-      class="relative aspect-[4/5] w-full overflow-hidden bg-gray-50 dark:bg-neutral-800"
+      class="relative aspect-[4/5] w-full overflow-hidden rounded-2xl bg-gray-100 dark:bg-neutral-800"
     >
       <!-- VIDEO (takes priority over image collage) -->
       <template v-if="videoItem">
@@ -38,7 +37,7 @@
           class="absolute inset-0 flex items-center justify-center"
         >
           <Icon
-            name="mdi:image-outline"
+            name="solar:gallery-linear"
             size="48"
             class="text-gray-300 dark:text-neutral-700"
           />
@@ -132,6 +131,14 @@
         </div>
       </div>
 
+      <!-- Discount badge (top-right) -->
+      <div
+        v-if="discountPercent > 0"
+        class="absolute right-2 top-2 z-10 rounded-lg bg-brand px-1.5 py-0.5 text-[11px] font-bold text-white shadow-sm"
+      >
+        −{{ discountPercent }}%
+      </div>
+
       <!-- Bottom Left: Stock Indicator -->
       <div
         v-if="lowestStock === 0"
@@ -167,7 +174,7 @@
             <p
               class="mb-[2px] text-[8px] font-medium uppercase leading-none tracking-widest text-white/50"
             >
-              <Icon name="mdi:music-note" size="8" class="-mt-0.5 inline" />
+              <Icon name="solar:music-note-2-bold" size="8" class="-mt-0.5 inline" />
               Music
             </p>
             <span
@@ -206,10 +213,10 @@
     </div>
 
     <!-- ─── INFO BLOCK ────────────────────────────────────────────────── -->
-    <div class="flex flex-1 flex-col justify-between px-3.5 pb-2 pt-3">
+    <div class="flex flex-1 flex-col justify-between px-1 pb-1 pt-2.5">
       <div>
         <h3
-          class="line-clamp-2 text-[13px] font-semibold leading-snug text-gray-900 transition-colors group-hover:text-brand dark:text-neutral-100"
+          class="line-clamp-2 text-[13px] font-medium leading-snug text-gray-900 transition-colors group-hover:text-brand dark:text-neutral-100"
         >
           {{ product.title }}
         </h3>
@@ -218,20 +225,15 @@
           :to="`/sellers/profile/${product.seller.store_slug}`"
           class="mt-1 flex items-center gap-1 truncate text-[11px] text-gray-500 dark:text-neutral-400"
         >
-          <Icon name="mdi:storefront-outline" size="12" />
+          <Icon name="solar:shop-linear" size="12" />
           {{ product.seller.store_name }}
         </NuxtLink>
       </div>
 
       <div class="mt-2 flex flex-wrap items-baseline gap-1.5">
         <span
-          class="text-[17px] font-bold text-gray-900 dark:text-neutral-100"
+          class="font-display text-[17px] font-bold text-gray-900 dark:text-neutral-100"
           >{{ formatPrice(discountedPrice) }}</span
-        >
-        <span
-          v-if="discountPercent > 0"
-          class="rounded-md bg-brand/10 px-1.5 py-0.5 text-[10px] font-bold text-brand"
-          >−{{ discountPercent }}%</span
         >
         <span
           v-if="discountPercent > 0"
@@ -243,7 +245,7 @@
 
     <!-- ─── ACTION BAR ────────────────────────────────────────────────── -->
     <div
-      class="flex items-center justify-between px-2.5 pb-2.5 pt-1"
+      class="flex items-center justify-between px-1 pb-1 pt-1"
       @click.stop
     >
       <div class="flex items-center gap-1">
@@ -262,7 +264,7 @@
             @click="handleLike"
           >
             <Icon
-              :name="localLiked ? 'mdi:heart' : 'mdi:heart-outline'"
+              :name="localLiked ? 'solar:heart-bold' : 'solar:heart-linear'"
               size="16"
               :class="localLiked ? 'scale-110' : ''"
               class="transition-transform"
@@ -285,7 +287,7 @@
           class="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-gray-500 transition-colors hover:bg-blue-50 hover:text-blue-500 dark:text-neutral-400 dark:hover:bg-blue-500/10"
           @click="$emit('open-comments', product)"
         >
-          <Icon name="mdi:comment-outline" size="16" />
+          <Icon name="solar:chat-round-linear" size="16" />
           <span>{{ product._count?.comments ?? 0 }}</span>
         </button>
 
@@ -294,7 +296,7 @@
           v-if="product.viewCount"
           class="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-gray-400 dark:text-neutral-500"
         >
-          <Icon name="mdi:eye-outline" size="15" />
+          <Icon name="solar:eye-linear" size="15" />
           {{ product.viewCount.toLocaleString() }}
         </span>
 
@@ -303,7 +305,7 @@
           class="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-gray-500 transition-colors hover:bg-green-50 hover:text-green-500 dark:text-neutral-400 dark:hover:bg-green-500/10"
           @click="handleShare"
         >
-          <Icon name="mdi:share-outline" size="16" />
+          <Icon name="solar:share-linear" size="16" />
         </button>
       </div>
 
@@ -315,7 +317,7 @@
           class="flex items-center justify-center rounded-lg bg-brand/10 p-1.5 text-brand transition-colors hover:bg-brand/20 dark:bg-brand/10 dark:hover:bg-brand/20"
           @click="$emit('market', product)"
         >
-          <Icon name="mdi:bullhorn-outline" size="16" />
+          <Icon name="solar:speaker-linear" size="16" />
         </button>
 
         <!-- Add to Cart -->
@@ -331,7 +333,7 @@
           class="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-semibold transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-50"
           @click="handleAddToCart"
         >
-          <Icon :name="cartAdded ? 'mdi:check' : 'mdi:cart-plus'" size="14" />
+          <Icon :name="cartAdded ? 'solar:check-circle-linear' : 'solar:cart-plus-linear'" size="14" />
           <span class="xs:inline hidden">{{
             !product.variants?.length
               ? 'N/A'
@@ -505,13 +507,6 @@ const discountedPrice = computed(() =>
     ? Math.round(props.product.price * (1 - discountPercent.value / 100))
     : props.product.price,
 )
-
-// Thin top border signals product state without coloring the whole card
-const cardStateClass = computed(() => {
-  if (props.product.isThrift) return 'border-t-2 border-t-amber-400 dark:border-t-amber-500'
-  if (discountPercent.value > 0) return 'border-t-2 border-t-brand'
-  return ''
-})
 
 // ── Stock / Variant ──────────────────────────────────────────────────────────
 const lowestStock = computed(() => {

@@ -14,7 +14,7 @@
         :to="`/seller/${storeSlug}/products/create`"
         class="flex items-center gap-2 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#d81b36]"
       >
-        <Icon name="mdi:plus" size="18" />
+        <Icon name="solar:add-circle-linear" size="18" />
         Add Product
       </NuxtLink>
     </div>
@@ -41,7 +41,7 @@
         </div>
         <div class="relative min-w-0 flex-1">
           <Icon
-            name="mdi:magnify"
+            name="solar:magnifer-linear"
             size="18"
             class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
           />
@@ -78,7 +78,7 @@
       <!-- Empty -->
       <div v-else-if="!products.length" class="py-20 text-center">
         <Icon
-          name="mdi:package-variant-closed"
+          name="solar:box-linear"
           size="64"
           class="mb-4 text-gray-300 dark:text-neutral-600"
         />
@@ -94,7 +94,7 @@
           :to="`/seller/${storeSlug}/products/create`"
           class="inline-flex items-center gap-2 rounded-lg bg-brand px-5 py-2.5 font-semibold text-white transition-colors hover:bg-[#d81b36]"
         >
-          <Icon name="mdi:plus" size="18" />
+          <Icon name="solar:add-circle-linear" size="18" />
           Add First Product
         </NuxtLink>
       </div>

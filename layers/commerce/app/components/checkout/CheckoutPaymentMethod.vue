@@ -18,7 +18,7 @@
         class="flex items-center justify-center gap-2 rounded-xl border-2 px-4 py-3 text-sm font-semibold transition-all"
         @click="emit('update:modelValue', 'paystack')"
       >
-        <Icon name="mdi:credit-card-outline" size="18" />
+        <Icon name="solar:card-linear" size="18" />
         Card
       </button>
       <button
@@ -47,7 +47,7 @@
         @click="emit('update:modelValue', 'pod')"
       >
         <div class="flex items-center gap-2">
-          <Icon name="mdi:cash-multiple" size="18" />
+          <Icon name="solar:money-bag-linear" size="18" />
           Pay on Delivery
         </div>
         <span class="text-[11px] font-normal opacity-70"
@@ -118,7 +118,7 @@
       <p
         class="flex items-start gap-1.5 border-t border-emerald-100 pt-2 text-[11px] text-emerald-700/80 dark:border-emerald-900/30 dark:text-emerald-400/80"
       >
-        <Icon name="mdi:information-outline" size="13" class="mt-0.5 shrink-0" />
+        <Icon name="solar:info-circle-linear" size="13" class="mt-0.5 shrink-0" />
         The shipping fee isn't refunded if you refuse the delivery.
       </p>
     </div>

@@ -63,7 +63,7 @@ unless noted.
 | 4 | Currency was an unrestricted client string | Locked `z.enum(['NGN'])` at init + currency check in the gate |
 | 5 | Stock decremented pre-payment; a `FAILED` order leaked it forever (expiry cron only reclaims `UNPAID`) | `orderRepository.failAndRestore` — atomic cancel + stock restore on genuine failure (verify + pod-verify). Abandoned/pending left for `releaseExpiredOrders` |
 | 6 | `quantity` allowed fractions | `z.number().int().positive()` |
-| 7 | Placeholder-email domain mismatch (`.africa` vs `.app`) | Standardized to `@checkout.marketx.app` |
+| 7 | Placeholder-email domain mismatch (`.africa` vs `.app`) | Standardized to `@checkout.marketx.africa` |
 | 8 | Webhook verified signature but not amount | Amount gate added; routes through `confirmPayment`/`amountCovers` |
 
 **Still open:** an **init idempotency key** (double-submit → duplicate PENDING

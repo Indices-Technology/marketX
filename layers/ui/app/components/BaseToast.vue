@@ -24,7 +24,7 @@
       aria-label="Dismiss notification"
       @click="$emit('dismiss')"
     >
-      <Icon name="mdi:close" size="16" />
+      <Icon name="solar:close-circle-linear" size="16" />
     </button>
   </div>
 </template>
@@ -52,11 +52,11 @@ defineEmits<{
 const iconName = computed(
   () =>
     ({
-      success: 'mdi:check-circle-outline',
-      error: 'mdi:alert-circle-outline',
-      warning: 'mdi:alert-outline',
-      warn: 'mdi:alert-outline',
-      info: 'mdi:information-outline',
+      success: 'solar:check-circle-linear',
+      error: 'solar:danger-circle-linear',
+      warning: 'solar:danger-triangle-linear',
+      warn: 'solar:danger-triangle-linear',
+      info: 'solar:info-circle-linear',
     })[props.type],
 )
 

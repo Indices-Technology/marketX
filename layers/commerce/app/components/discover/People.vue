@@ -2,7 +2,7 @@
   <div class="mt-5">
     <div v-if="!props.searchInput" class="py-16 text-center">
       <Icon
-        name="mdi:account-search-outline"
+        name="solar:magnifer-linear"
         size="56"
         class="mx-auto mb-3 text-gray-300 dark:text-neutral-600"
       />
@@ -61,7 +61,7 @@
           />
           <Icon
             v-else
-            name="mdi:account"
+            name="solar:user-linear"
             size="22"
             class="text-gray-400 dark:text-neutral-500"
           />
@@ -77,7 +77,7 @@
           </p>
         </div>
         <Icon
-          name="mdi:chevron-right"
+          name="solar:alt-arrow-right-linear"
           size="18"
           class="shrink-0 text-gray-300 dark:text-neutral-600"
         />

@@ -14,6 +14,10 @@ export interface PlaceOrderInput {
   address: string
   zipcode: string
   county?: string
+  /** Destination state (province) — distinct from county (LGA); carrier booking needs it. */
+  shipState?: string
+  /** Destination contact phone — carrier delivery contact. */
+  shipPhone?: string
   country: string
   paymentMethod?: string
   affiliateCode?: string
@@ -52,6 +56,8 @@ export const orderService = {
       address,
       zipcode,
       county,
+      shipState,
+      shipPhone,
       country,
       paymentMethod,
       affiliateCode,
@@ -280,6 +286,8 @@ export const orderService = {
             address,
             zipcode,
             county: county || '',
+            ...(shipState ? { shipState } : {}),
+            ...(shipPhone ? { shipPhone } : {}),
             country,
             totalAmount: groupTotal,
             shippingCost: groupShipping,

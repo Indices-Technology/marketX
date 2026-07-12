@@ -49,7 +49,7 @@
           class="absolute left-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition-colors hover:bg-black/60"
           @click="activeImageIndex--"
         >
-          <Icon name="mdi:chevron-left" size="22" />
+          <Icon name="solar:alt-arrow-left-linear" size="22" />
         </button>
         <button
           v-if="
@@ -58,7 +58,7 @@
           class="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition-colors hover:bg-black/60"
           @click="activeImageIndex++"
         >
-          <Icon name="mdi:chevron-right" size="22" />
+          <Icon name="solar:alt-arrow-right-linear" size="22" />
         </button>
 
         <div
@@ -95,7 +95,7 @@
               class="absolute inset-0 flex items-center justify-center bg-black/25"
             >
               <Icon
-                name="mdi:play-circle-outline"
+                name="solar:play-circle-linear"
                 size="18"
                 class="text-white"
               />
@@ -106,7 +106,7 @@
 
       <div v-else class="flex h-full w-full items-center justify-center">
         <Icon
-          name="mdi:package-variant-closed"
+          name="solar:box-linear"
           size="64"
           class="text-gray-300 dark:text-neutral-600"
         />
@@ -170,7 +170,7 @@
             />
             <Icon
               v-else
-              name="mdi:store-outline"
+              name="solar:shop-2-linear"
               size="20"
               class="ml-2 mt-2 text-gray-400"
             />
@@ -186,7 +186,7 @@
             </p>
           </div>
           <Icon
-            name="mdi:chevron-right"
+            name="solar:alt-arrow-right-linear"
             size="18"
             class="shrink-0 text-gray-400"
           />
@@ -251,20 +251,20 @@
           <div
             class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-neutral-400"
           >
-            <Icon name="mdi:heart-outline" size="18" />
+            <Icon name="solar:heart-linear" size="18" />
             <span>{{ product._count?.likes ?? 0 }}</span>
           </div>
           <div
             class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-neutral-400"
           >
-            <Icon name="mdi:chat-outline" size="18" />
+            <Icon name="solar:chat-round-linear" size="18" />
             <span>{{ product._count?.comments ?? 0 }}</span>
           </div>
           <button
             class="flex items-center gap-1.5 text-sm text-gray-500 transition-colors hover:text-brand dark:text-neutral-400"
             @click="shareProduct"
           >
-            <Icon name="mdi:share-variant-outline" size="18" />
+            <Icon name="solar:share-linear" size="18" />
             <span>Share</span>
           </button>
         </div>
@@ -278,7 +278,7 @@
         v-if="addedToCart"
         class="flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 py-3 text-sm font-semibold text-white"
       >
-        <Icon name="mdi:check-circle" size="20" />
+        <Icon name="solar:check-circle-bold" size="20" />
         Added to Cart
       </div>
       <button
@@ -292,7 +292,7 @@
         @click="handleAddToCart"
       >
         <Icon v-if="isAddingToCart" name="eos-icons:loading" size="18" />
-        <Icon v-else name="mdi:cart-plus" size="18" />
+        <Icon v-else name="solar:cart-plus-linear" size="18" />
         {{ isAddingToCart ? 'Adding...' : 'Add to Cart' }}
       </button>
       <p

@@ -34,7 +34,7 @@
                     }}</span>
                   </div>
                   <Icon
-                    name="mdi:chevron-down"
+                    name="solar:alt-arrow-down-linear"
                     size="18"
                     class="shrink-0 text-gray-400 transition-transform"
                     :class="storeDropdownOpen ? 'rotate-180' : ''"
@@ -68,7 +68,7 @@
                       v-else
                       class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand"
                     >
-                      <Icon name="mdi:store" size="14" class="text-white" />
+                      <Icon name="solar:shop-2-bold" size="14" class="text-white" />
                     </div>
                     <div class="min-w-0 flex-1">
                       <p
@@ -84,7 +84,7 @@
                     </div>
                     <Icon
                       v-if="selectedSeller?.id === seller.id"
-                      name="mdi:check"
+                      name="solar:check-circle-linear"
                       size="16"
                       class="shrink-0 text-brand"
                     />
@@ -118,7 +118,7 @@
                 />
                 <template v-else>
                   <Icon
-                    name="mdi:image-plus-outline"
+                    name="solar:gallery-add-linear"
                     size="32"
                     class="text-gray-300 dark:text-neutral-600"
                   />
@@ -137,14 +137,14 @@
                   v-if="coverResult?.type === 'VIDEO'"
                   class="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 text-[11px] font-semibold text-white backdrop-blur-sm"
                 >
-                  <Icon name="mdi:play-circle" size="14" />
+                  <Icon name="solar:play-circle-bold" size="14" />
                   Video
                 </div>
                 <button
                   @click="removeCover"
                   class="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 transition-colors hover:bg-black/80"
                 >
-                  <Icon name="mdi:close" size="16" class="text-white" />
+                  <Icon name="solar:close-circle-linear" size="16" class="text-white" />
                 </button>
                 <div
                   v-if="uploadingCover"
@@ -176,7 +176,7 @@
                 @click="showMusicPicker = true"
                 class="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-gray-200 bg-white px-3 py-2.5 transition-colors hover:border-brand dark:border-neutral-700 dark:bg-neutral-800"
               >
-                <Icon name="mdi:music-note-plus" size="18" class="text-gray-400" />
+                <Icon name="solar:music-note-2-linear" size="18" class="text-gray-400" />
                 <span class="text-sm text-gray-400 dark:text-neutral-500">Add a song...</span>
               </div>
               <div
@@ -184,7 +184,7 @@
                 class="flex items-center gap-3 rounded-lg border border-pink-100 bg-gradient-to-r from-pink-50 to-purple-50 px-3 py-2.5 dark:border-pink-900/30 dark:from-pink-950/20 dark:to-purple-950/20"
               >
                 <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-pink-400 to-purple-500">
-                  <Icon name="mdi:music-note" size="16" class="text-white" />
+                  <Icon name="solar:music-note-2-bold" size="16" class="text-white" />
                 </div>
                 <div class="min-w-0 flex-1">
                   <p class="truncate text-[12px] font-semibold text-gray-900 dark:text-neutral-100">
@@ -196,7 +196,7 @@
                 </div>
                 <div v-if="uploadingMusic" class="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-brand border-t-transparent" />
                 <button v-else @click="removeBgMusic" class="shrink-0 rounded-full p-1 transition-colors hover:bg-pink-100 dark:hover:bg-pink-900/30">
-                  <Icon name="mdi:close" size="16" class="text-gray-500" />
+                  <Icon name="solar:close-circle-linear" size="16" class="text-gray-500" />
                 </button>
               </div>
             </div>
@@ -211,7 +211,7 @@
                   class="flex items-center gap-1 text-xs font-bold text-gray-900 dark:text-white"
                 >
                   <Icon
-                    name="mdi:magic-staff"
+                    name="solar:magic-stick-3-linear"
                     class="shrink-0 text-brand"
                     size="14"
                   />
@@ -230,7 +230,7 @@
                 class="flex shrink-0 items-center gap-1.5 rounded-lg bg-gray-900 px-3 py-1.5 text-xs font-bold text-white transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 dark:bg-white dark:text-gray-900"
               >
                 <Icon
-                  :name="isGeneratingAI ? 'eos-icons:loading' : 'mdi:creation'"
+                  :name="isGeneratingAI ? 'eos-icons:loading' : 'solar:magic-stick-3-linear'"
                   :class="{ 'animate-spin': isGeneratingAI }"
                   size="14"
                 />
@@ -342,7 +342,7 @@
                 v-if="categoriesLoading"
                 class="flex items-center gap-2 text-xs text-gray-400 dark:text-neutral-500"
               >
-                <Icon name="mdi:loading" size="14" class="animate-spin" />
+                <Icon name="solar:refresh-linear" size="14" class="animate-spin" />
                 Loadingâ€¦
               </div>
               <template v-else>
@@ -396,7 +396,7 @@
                 "
               >
                 <Icon
-                  :name="r.done ? 'mdi:check-circle' : 'mdi:circle-outline'"
+                  :name="r.done ? 'solar:check-circle-bold' : 'solar:record-circle-linear'"
                   size="13"
                 />
                 {{ r.label }}

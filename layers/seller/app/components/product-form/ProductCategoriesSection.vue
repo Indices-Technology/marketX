@@ -8,7 +8,7 @@
       v-if="categoriesLoading"
       class="flex items-center gap-2 text-sm text-gray-400 dark:text-neutral-500"
     >
-      <Icon name="mdi:loading" size="16" class="animate-spin" /> Loading categories…
+      <Icon name="solar:refresh-linear" size="16" class="animate-spin" /> Loading categories…
     </div>
     <div
       v-else-if="categories.length === 0"

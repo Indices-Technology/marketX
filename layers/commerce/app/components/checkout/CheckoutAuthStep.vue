@@ -6,7 +6,7 @@
       <div
         class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand/10"
       >
-        <Icon name="mdi:account-circle-outline" size="20" class="text-brand" />
+        <Icon name="solar:user-circle-linear" size="20" class="text-brand" />
       </div>
       <div>
         <p class="font-semibold text-gray-900 dark:text-neutral-100">

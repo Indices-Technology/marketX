@@ -47,7 +47,7 @@
         v-else-if="!payouts.length"
         class="flex flex-col items-center justify-center py-16 text-center text-gray-400 dark:text-neutral-500"
       >
-        <Icon name="mdi:cash-check" size="30" class="mb-2 opacity-40" />
+        <Icon name="solar:wad-of-money-linear" size="30" class="mb-2 opacity-40" />
         <p class="text-[13px]">No {{ (statusFilter || 'matching').toLowerCase() }} payouts</p>
       </div>
 

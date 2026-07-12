@@ -25,7 +25,7 @@
         @mousedown.prevent="exec('insertUnorderedList')"
         class="flex h-7 w-7 items-center justify-center rounded text-gray-600 transition-colors hover:bg-gray-200 dark:text-neutral-400 dark:hover:bg-neutral-700"
       >
-        <Icon name="mdi:format-list-bulleted" size="15" />
+        <Icon name="solar:list-linear" size="15" />
       </button>
       <button
         type="button"
@@ -33,7 +33,7 @@
         @mousedown.prevent="exec('insertOrderedList')"
         class="flex h-7 w-7 items-center justify-center rounded text-gray-600 transition-colors hover:bg-gray-200 dark:text-neutral-400 dark:hover:bg-neutral-700"
       >
-        <Icon name="mdi:format-list-numbered" size="15" />
+        <Icon name="solar:list-arrow-down-linear" size="15" />
       </button>
 
       <div class="mx-1 h-5 w-px bg-gray-200 dark:bg-neutral-700" />
@@ -44,7 +44,7 @@
         @mousedown.prevent="insertLink"
         class="flex h-7 w-7 items-center justify-center rounded text-gray-600 transition-colors hover:bg-gray-200 dark:text-neutral-400 dark:hover:bg-neutral-700"
       >
-        <Icon name="mdi:link-variant" size="15" />
+        <Icon name="solar:link-round-linear" size="15" />
       </button>
       <button
         type="button"
@@ -52,7 +52,7 @@
         @mousedown.prevent="exec('removeFormat')"
         class="flex h-7 w-7 items-center justify-center rounded text-gray-600 transition-colors hover:bg-gray-200 dark:text-neutral-400 dark:hover:bg-neutral-700"
       >
-        <Icon name="mdi:format-clear" size="15" />
+        <Icon name="solar:eraser-linear" size="15" />
       </button>
     </div>
 
@@ -87,7 +87,7 @@
         "
       >
         <Icon
-          :name="enhancing ? 'mdi:loading' : 'mdi:magic-staff'"
+          :name="enhancing ? 'solar:refresh-linear' : 'solar:magic-stick-3-linear'"
           size="13"
           :class="enhancing ? 'animate-spin' : ''"
         />
@@ -132,10 +132,10 @@ onUnmounted(() => { isMounted.value = false })
 const aiApi = useAiApi()
 
 const toolbarButtons = [
-  { cmd: 'bold', icon: 'mdi:format-bold', title: 'Bold' },
-  { cmd: 'italic', icon: 'mdi:format-italic', title: 'Italic' },
-  { cmd: 'underline', icon: 'mdi:format-underline', title: 'Underline' },
-  { cmd: 'strikeThrough', icon: 'mdi:format-strikethrough', title: 'Strikethrough' },
+  { cmd: 'bold', icon: 'solar:text-bold-linear', title: 'Bold' },
+  { cmd: 'italic', icon: 'solar:text-italic-linear', title: 'Italic' },
+  { cmd: 'underline', icon: 'solar:text-underline-linear', title: 'Underline' },
+  { cmd: 'strikeThrough', icon: 'solar:text-cross-linear', title: 'Strikethrough' },
 ]
 
 const hasContent = computed(() => {

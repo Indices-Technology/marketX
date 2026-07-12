@@ -12,7 +12,7 @@
         class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30"
       >
         <Icon
-          name="mdi:check-circle"
+          name="solar:check-circle-bold"
           size="34"
           class="text-emerald-500"
         />
@@ -48,7 +48,7 @@
         <span
           class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand/10"
         >
-          <Icon name="mdi:image-multiple-outline" size="18" class="text-brand" />
+          <Icon name="solar:gallery-wide-linear" size="18" class="text-brand" />
         </span>
         <span class="min-w-0 flex-1">
           <span class="block text-sm font-semibold text-gray-900 dark:text-neutral-100">
@@ -72,7 +72,7 @@
         />
         <Icon
           v-else-if="feedDone || inFeed"
-          name="mdi:check-circle"
+          name="solar:check-circle-bold"
           size="18"
           class="shrink-0 text-emerald-500"
         />
@@ -81,7 +81,7 @@
           class="shrink-0 rounded-full bg-violet px-2 py-0.5 text-[10px] font-bold text-white"
           >PREMIUM</span
         >
-        <Icon v-else name="mdi:chevron-right" size="18" class="shrink-0 text-gray-300" />
+        <Icon v-else name="solar:alt-arrow-right-linear" size="18" class="shrink-0 text-gray-300" />
       </button>
 
       <!-- Create a Reel -->
@@ -91,7 +91,7 @@
         @click="emit('close')"
       >
         <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand/10">
-          <Icon name="mdi:play-box-multiple-outline" size="18" class="text-brand" />
+          <Icon name="solar:clapperboard-play-linear" size="18" class="text-brand" />
         </span>
         <span class="min-w-0 flex-1">
           <span class="block text-sm font-semibold text-gray-900 dark:text-neutral-100">
@@ -101,7 +101,7 @@
             {{ hasVideo ? 'Turn your video into a shoppable Reel' : 'Add a video to feature it' }}
           </span>
         </span>
-        <Icon name="mdi:chevron-right" size="18" class="shrink-0 text-gray-300" />
+        <Icon name="solar:alt-arrow-right-linear" size="18" class="shrink-0 text-gray-300" />
       </NuxtLink>
 
       <!-- Enable affiliate -->
@@ -112,7 +112,7 @@
         @click="emit('close')"
       >
         <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand/10">
-          <Icon name="mdi:cash-multiple" size="18" class="text-brand" />
+          <Icon name="solar:money-bag-linear" size="18" class="text-brand" />
         </span>
         <span class="min-w-0 flex-1">
           <span class="block text-sm font-semibold text-gray-900 dark:text-neutral-100">
@@ -122,14 +122,14 @@
             Let creators earn by promoting it
           </span>
         </span>
-        <Icon name="mdi:chevron-right" size="18" class="shrink-0 text-gray-300" />
+        <Icon name="solar:alt-arrow-right-linear" size="18" class="shrink-0 text-gray-300" />
       </NuxtLink>
       <div
         v-else
         class="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-800/40 dark:bg-emerald-900/20"
       >
         <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/40">
-          <Icon name="mdi:cash-multiple" size="18" class="text-emerald-500" />
+          <Icon name="solar:money-bag-linear" size="18" class="text-emerald-500" />
         </span>
         <span class="min-w-0 flex-1">
           <span class="block text-sm font-semibold text-gray-900 dark:text-neutral-100">
@@ -139,7 +139,7 @@
             Creators can now earn from this product
           </span>
         </span>
-        <Icon name="mdi:check-circle" size="18" class="shrink-0 text-emerald-500" />
+        <Icon name="solar:check-circle-bold" size="18" class="shrink-0 text-emerald-500" />
       </div>
 
       <!-- Followers notified — happens automatically on publish -->
@@ -147,7 +147,7 @@
         class="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-800/40 dark:bg-emerald-900/20"
       >
         <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/40">
-          <Icon name="mdi:bullhorn-outline" size="18" class="text-emerald-500" />
+          <Icon name="solar:speaker-linear" size="18" class="text-emerald-500" />
         </span>
         <span class="min-w-0 flex-1">
           <span class="block text-sm font-semibold text-gray-900 dark:text-neutral-100">
@@ -157,7 +157,7 @@
             Everyone following your store just got an alert
           </span>
         </span>
-        <Icon name="mdi:check-circle" size="18" class="shrink-0 text-emerald-500" />
+        <Icon name="solar:check-circle-bold" size="18" class="shrink-0 text-emerald-500" />
       </div>
     </div>
 

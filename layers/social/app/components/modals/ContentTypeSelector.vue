@@ -36,7 +36,7 @@
           </div>
           <Icon
             v-if="current === type.value"
-            name="mdi:check-circle"
+            name="solar:check-circle-bold"
             size="24"
             class="text-brand"
           />
@@ -58,28 +58,28 @@ const contentTypes = [
     value: 'EXPERIENCE',
     label: 'Experience/Review',
     description: 'Share your product experience or review',
-    icon: 'mdi:star',
+    icon: 'solar:star-bold',
     color: 'bg-gradient-to-br from-yellow-500 to-orange-500',
   },
   {
     value: 'INSPIRATION',
     label: 'Style Inspiration',
     description: 'Show off your style and outfit ideas',
-    icon: 'mdi:palette',
+    icon: 'solar:palette-bold',
     color: 'bg-gradient-to-br from-brand to-rose-400',
   },
   {
     value: 'EDUCATIONAL',
     label: 'Tutorial/Guide',
     description: 'Teach something useful or share tips',
-    icon: 'mdi:school',
+    icon: 'solar:square-academic-cap-2-bold',
     color: 'bg-gradient-to-br from-blue-500 to-cyan-500',
   },
   {
     value: 'ENTERTAINMENT',
     label: 'Fun/Entertainment',
     description: 'Share memes, jokes, or entertaining content',
-    icon: 'mdi:emoticon-happy',
+    icon: 'solar:emoji-funny-circle-bold',
     color: 'bg-gradient-to-br from-green-500 to-teal-500',
   },
 ]

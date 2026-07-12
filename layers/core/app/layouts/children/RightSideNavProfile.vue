@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex h-full flex-col border-l border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
+    class="flex h-full flex-col bg-white dark:bg-neutral-900"
   >
     <!-- ─── SCROLLABLE CONTENT ─────────────────────────────────────────────── -->
     <div class="custom-scrollbar flex-1 space-y-5 overflow-y-auto p-4">
@@ -47,7 +47,7 @@
             class="rounded-2xl border border-dashed border-brand/30 bg-brand/5 p-5 text-center dark:bg-brand/10"
           >
             <Icon
-              name="mdi:store-plus-outline"
+              name="solar:shop-2-linear"
               size="28"
               class="mx-auto mb-2 text-brand"
             />
@@ -91,7 +91,7 @@
               :to="`/sellers/profile/${viewedProfileStore.store_slug}`"
               class="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl bg-gray-900 py-2.5 text-[12px] font-bold text-white transition-all hover:scale-[1.02] dark:bg-white dark:text-gray-900"
             >
-              <Icon name="mdi:storefront-outline" size="15" />
+              <Icon name="solar:shop-linear" size="15" />
               Shop Now
             </NuxtLink>
           </div>
@@ -105,7 +105,7 @@
       >
         <div class="mb-3 flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <Icon name="mdi:store-check-outline" size="18" class="text-brand" />
+            <Icon name="solar:shop-2-linear" size="18" class="text-brand" />
             <h3 class="text-sm font-bold text-gray-900 dark:text-white">
               Top Shops
             </h3>
@@ -141,7 +141,7 @@
               </p>
             </div>
             <Icon
-              name="mdi:chevron-right"
+              name="solar:alt-arrow-right-linear"
               size="16"
               class="shrink-0 text-gray-400 transition-colors group-hover:text-brand"
             />
@@ -154,7 +154,7 @@
         class="rounded-2xl border border-gray-200 bg-gray-50 p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-800/40"
       >
         <div class="mb-3 flex items-center gap-2">
-          <Icon name="mdi:compass-outline" size="18" class="text-brand" />
+          <Icon name="solar:compass-linear" size="18" class="text-brand" />
           <h3 class="text-sm font-bold text-gray-900 dark:text-white">
             Explore
           </h3>
@@ -164,7 +164,7 @@
             <div
               class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white transition-colors group-hover:border-brand/30 group-hover:text-brand dark:border-neutral-700 dark:bg-neutral-900"
             >
-              <Icon name="mdi:home-outline" size="16" />
+              <Icon name="solar:home-2-linear" size="16" />
             </div>
             <span
               class="text-sm font-medium text-gray-700 transition-colors group-hover:text-brand dark:text-neutral-300"
@@ -175,7 +175,7 @@
             <div
               class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white transition-colors group-hover:border-brand/30 group-hover:text-brand dark:border-neutral-700 dark:bg-neutral-900"
             >
-              <Icon name="mdi:compass-outline" size="16" />
+              <Icon name="solar:compass-linear" size="16" />
             </div>
             <span
               class="text-sm font-medium text-gray-700 transition-colors group-hover:text-brand dark:text-neutral-300"
@@ -186,7 +186,7 @@
             <div
               class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white transition-colors group-hover:border-brand/30 group-hover:text-brand dark:border-neutral-700 dark:bg-neutral-900"
             >
-              <Icon name="mdi:shopping-outline" size="16" />
+              <Icon name="solar:bag-4-linear" size="16" />
             </div>
             <span
               class="text-sm font-medium text-gray-700 transition-colors group-hover:text-brand dark:text-neutral-300"

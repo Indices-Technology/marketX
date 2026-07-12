@@ -7,7 +7,7 @@
           class="rounded-full p-2 transition-colors hover:bg-gray-100 dark:hover:bg-neutral-800"
           @click="$router.back()"
         >
-          <Icon name="mdi:arrow-left" size="22" />
+          <Icon name="solar:arrow-left-linear" size="22" />
         </button>
         <h1 class="text-xl font-bold text-gray-900 dark:text-neutral-100">
           Settings
@@ -34,7 +34,7 @@
         >
           <div class="flex items-center gap-3">
             <Icon
-              name="mdi:weather-night"
+              name="solar:moon-linear"
               size="20"
               class="text-gray-500 dark:text-neutral-400"
             />
@@ -74,7 +74,7 @@
         >
           <div class="flex items-center gap-3">
             <Icon
-              name="mdi:format-size"
+              name="solar:text-field-linear"
               size="20"
               class="text-gray-500 dark:text-neutral-400"
             />
@@ -109,7 +109,7 @@
         </div>
 
         <SettingToggle
-          icon="mdi:motion-outline"
+          icon="solar:running-2-linear"
           label="Reduce Motion"
           description="Minimize pulsing dots and animated effects"
           :value="settings.reduceMotion"
@@ -132,7 +132,7 @@
         </div>
 
         <SettingToggle
-          icon="mdi:volume-off"
+          icon="solar:muted-linear"
           label="Auto-mute Videos"
           description="Videos play silently by default"
           :value="settings.autoMute"
@@ -155,7 +155,7 @@
         </div>
 
         <SettingToggle
-          icon="mdi:view-agenda-outline"
+          icon="solar:posts-carousel-vertical-linear"
           label="Compact Feed"
           description="Show smaller post cards"
           :value="settings.compactFeed"
@@ -163,7 +163,7 @@
           @change="update('compactFeed', $event)"
         />
         <SettingToggle
-          icon="mdi:closed-caption-outline"
+          icon="solar:subtitles-linear"
           label="Show Captions"
           description="Display post captions on cards"
           :value="settings.showCaptions"
@@ -171,7 +171,7 @@
           @change="update('showCaptions', $event)"
         />
         <SettingToggle
-          icon="mdi:heart-outline"
+          icon="solar:heart-linear"
           label="Show Like Counts"
           description="Display like numbers on posts"
           :value="settings.showLikeCounts"
@@ -179,7 +179,7 @@
           @change="update('showLikeCounts', $event)"
         />
         <SettingToggle
-          icon="mdi:map-marker-radius-outline"
+          icon="solar:map-point-wave-linear"
           label="Show Near Me"
           description="Show nearby stores on the home feed"
           :value="settings.showNearMe"
@@ -187,14 +187,14 @@
           @change="update('showNearMe', $event)"
         />
         <SettingToggle
-          icon="mdi:storefront-outline"
+          icon="solar:shop-linear"
           label="Show Shop Today"
           description="Show featured products shelf on the home feed"
           :value="settings.showShopToday"
           @change="update('showShopToday', $event)"
         />
         <SettingToggle
-          icon="mdi:play-circle-outline"
+          icon="solar:play-circle-linear"
           label="Stories"
           description="Show the stories bar at the top of your home feed (off by default)"
           :value="settings.showStories"
@@ -218,7 +218,7 @@
         <div class="flex items-center justify-between px-5 py-4">
           <div class="flex items-center gap-3">
             <Icon
-              name="mdi:translate"
+              name="solar:translation-linear"
               size="20"
               class="text-gray-500 dark:text-neutral-400"
             />
@@ -260,7 +260,7 @@
         <div class="flex items-center justify-between px-5 py-4">
           <div class="flex items-center gap-3">
             <Icon
-              name="mdi:currency-usd"
+              name="solar:dollar-linear"
               size="20"
               class="text-gray-500 dark:text-neutral-400"
             />
@@ -310,13 +310,13 @@
             class="setting-link border-b border-gray-200 dark:border-neutral-800"
           >
             <Icon
-              name="mdi:package-variant-closed-outline"
+              name="solar:box-linear"
               size="20"
               class="text-gray-500 dark:text-neutral-400"
             />
             <span>My Orders</span>
             <Icon
-              name="mdi:chevron-right"
+              name="solar:alt-arrow-right-linear"
               size="18"
               class="ml-auto text-gray-400"
             />
@@ -331,13 +331,13 @@
             class="setting-link border-b border-gray-200 dark:border-neutral-800"
           >
             <Icon
-              name="mdi:account-outline"
+              name="solar:user-linear"
               size="20"
               class="text-gray-500 dark:text-neutral-400"
             />
             <span>Edit Profile</span>
             <Icon
-              name="mdi:chevron-right"
+              name="solar:alt-arrow-right-linear"
               size="18"
               class="ml-auto text-gray-400"
             />
@@ -347,7 +347,7 @@
             class="setting-link w-full text-red-500"
             @click="handleLogout"
           >
-            <Icon name="mdi:logout" size="20" />
+            <Icon name="solar:logout-3-linear" size="20" />
             <span>Log Out</span>
           </button>
         </section>

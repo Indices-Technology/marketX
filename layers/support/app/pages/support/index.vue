@@ -19,7 +19,7 @@
           </div>
         </div>
         <BaseButton size="sm" @click="showNew = true">
-          <Icon name="mdi:plus" size="18" /> New ticket
+          <Icon name="solar:add-circle-linear" size="18" /> New ticket
         </BaseButton>
       </div>
 
@@ -38,7 +38,7 @@
         class="rounded-2xl border border-dashed border-gray-200 bg-white py-16 text-center dark:border-neutral-800 dark:bg-neutral-900"
       >
         <Icon
-          name="mdi:message-text-outline"
+          name="solar:chat-line-linear"
           size="40"
           class="mb-3 text-gray-300 dark:text-neutral-600"
         />

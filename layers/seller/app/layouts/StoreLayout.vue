@@ -36,7 +36,7 @@
             class="seller-nav-link"
             active-class="active"
           >
-            <Icon name="mdi:view-dashboard-outline" size="22" />
+            <Icon name="solar:widget-5-linear" size="22" />
             <span>Overview</span>
           </NuxtLink>
           <NuxtLink
@@ -44,7 +44,7 @@
             class="seller-nav-link"
             active-class="active"
           >
-            <Icon name="mdi:package-variant-closed" size="22" />
+            <Icon name="solar:box-linear" size="22" />
             <span>Products</span>
           </NuxtLink>
           <NuxtLink
@@ -52,7 +52,7 @@
             class="seller-nav-link"
             active-class="active"
           >
-            <Icon name="mdi:truck-outline" size="22" />
+            <Icon name="solar:delivery-linear" size="22" />
             <span>Orders</span>
           </NuxtLink>
           <NuxtLink
@@ -60,7 +60,7 @@
             class="seller-nav-link"
             active-class="active"
           >
-            <Icon name="mdi:wallet-outline" size="22" />
+            <Icon name="solar:wallet-linear" size="22" />
             <span>Finance</span>
           </NuxtLink>
           <NuxtLink
@@ -68,7 +68,7 @@
             class="seller-nav-link"
             active-class="active"
           >
-            <Icon name="mdi:message-outline" size="22" />
+            <Icon name="solar:chat-round-line-linear" size="22" />
             <span>Messages</span>
             <span
               v-if="chatStore.totalUnread > 0"
@@ -81,7 +81,7 @@
             class="seller-nav-link"
             active-class="active"
           >
-            <Icon name="mdi:chart-line" size="22" />
+            <Icon name="solar:chart-2-linear" size="22" />
             <span>Analytics</span>
           </NuxtLink>
           <NuxtLink
@@ -89,7 +89,7 @@
             class="seller-nav-link"
             active-class="active"
           >
-            <Icon name="mdi:cog-outline" size="22" />
+            <Icon name="solar:settings-linear" size="22" />
             <span>Settings</span>
           </NuxtLink>
           <div class="px-2 pb-1 pt-3">
@@ -105,11 +105,11 @@
           class="seller-nav-link"
           exact-active-class="active"
         >
-          <Icon name="mdi:store-outline" size="22" />
+          <Icon name="solar:shop-2-linear" size="22" />
           <span>My Stores</span>
         </NuxtLink>
         <NuxtLink to="/sellers/create" class="seller-nav-link">
-          <Icon name="mdi:plus-circle-outline" size="22" />
+          <Icon name="solar:add-circle-linear" size="22" />
           <span>New Store</span>
         </NuxtLink>
       </nav>
@@ -125,7 +125,7 @@
           to="/"
           class="flex shrink-0 items-center gap-1.5 text-gray-500 hover:text-gray-700 dark:text-neutral-400"
         >
-          <Icon name="mdi:arrow-left" size="20" />
+          <Icon name="solar:arrow-left-linear" size="20" />
           <div
             class="flex h-7 w-7 items-center justify-center rounded-lg bg-brand"
           >
@@ -166,7 +166,7 @@
           class="mobile-tab"
           active-class="mobile-tab-active"
         >
-          <Icon name="mdi:view-dashboard-outline" size="24" />
+          <Icon name="solar:widget-5-linear" size="24" />
           <span>Overview</span>
         </NuxtLink>
         <NuxtLink
@@ -174,7 +174,7 @@
           class="mobile-tab"
           active-class="mobile-tab-active"
         >
-          <Icon name="mdi:package-variant-closed" size="24" />
+          <Icon name="solar:box-linear" size="24" />
           <span>Products</span>
         </NuxtLink>
         <NuxtLink
@@ -182,7 +182,7 @@
           class="mobile-tab"
           active-class="mobile-tab-active"
         >
-          <Icon name="mdi:truck-outline" size="24" />
+          <Icon name="solar:delivery-linear" size="24" />
           <span>Orders</span>
         </NuxtLink>
         <NuxtLink
@@ -191,7 +191,7 @@
           active-class="mobile-tab-active"
         >
           <div class="relative">
-            <Icon name="mdi:message-outline" size="24" />
+            <Icon name="solar:chat-round-line-linear" size="24" />
             <span
               v-if="chatStore.totalUnread > 0"
               class="absolute -right-1.5 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-brand px-1 text-[9px] font-bold text-white"
@@ -205,7 +205,7 @@
           class="mobile-tab"
           active-class="mobile-tab-active"
         >
-          <Icon name="mdi:chart-line" size="24" />
+          <Icon name="solar:chart-2-linear" size="24" />
           <span>Analytics</span>
         </NuxtLink>
         <NuxtLink
@@ -213,7 +213,7 @@
           class="mobile-tab"
           active-class="mobile-tab-active"
         >
-          <Icon name="mdi:cog-outline" size="24" />
+          <Icon name="solar:settings-linear" size="24" />
           <span>Settings</span>
         </NuxtLink>
       </nav>
@@ -232,11 +232,11 @@
           class="mobile-tab"
           active-class="mobile-tab-active"
         >
-          <Icon name="mdi:store-outline" size="24" />
+          <Icon name="solar:shop-2-linear" size="24" />
           <span>My Stores</span>
         </NuxtLink>
         <NuxtLink to="/sellers/create" class="mobile-tab">
-          <Icon name="mdi:plus-circle-outline" size="24" />
+          <Icon name="solar:add-circle-linear" size="24" />
           <span>New Store</span>
         </NuxtLink>
       </nav>

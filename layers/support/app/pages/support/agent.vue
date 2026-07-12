@@ -3,7 +3,7 @@
     <div class="mx-auto max-w-6xl px-4 py-6 sm:px-6">
       <!-- Not an agent -->
       <div v-if="!isAgent" class="rounded-2xl border border-gray-200 bg-white py-20 text-center dark:border-neutral-800 dark:bg-neutral-900">
-        <Icon name="mdi:lock-outline" size="40" class="mb-3 text-gray-300" />
+        <Icon name="solar:lock-keyhole-linear" size="40" class="mb-3 text-gray-300" />
         <h2 class="text-lg font-bold text-gray-900 dark:text-neutral-100">Agents only</h2>
         <p class="mt-1 text-sm text-gray-500">This queue is for support agents.</p>
       </div>

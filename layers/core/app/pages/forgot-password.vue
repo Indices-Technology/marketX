@@ -53,7 +53,7 @@
               autocomplete="email"
               placeholder="Your email address"
               :disabled="isLoading"
-              icon-left="mdi:email-outline"
+              icon-left="solar:letter-linear"
               size="lg"
               :error="errors.email"
             />
@@ -76,7 +76,7 @@
           >
             <div class="flex gap-3">
               <Icon
-                name="mdi:information"
+                name="solar:info-circle-bold"
                 class="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-400"
               />
               <p>
@@ -94,7 +94,7 @@
           >
             <div class="flex gap-3">
               <Icon
-                name="mdi:check-circle"
+                name="solar:check-circle-bold"
                 class="mt-0.5 h-6 w-6 flex-shrink-0 text-green-600 dark:text-green-400"
               />
               <div>

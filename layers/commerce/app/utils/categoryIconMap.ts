@@ -8,19 +8,19 @@ export interface CategoryVisual {
 const RULES: Array<{ terms: string[] } & CategoryVisual> = [
   {
     terms: ['electronic', 'phone', 'gadget', 'tech', 'computer', 'mobile', 'device', 'laptop'],
-    icon: 'mdi:cellphone',
+    icon: 'solar:smartphone-linear',
     color: '#3b82f6',
     gradient: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
   },
   {
     terms: ['fashion', 'cloth', 'wear', 'apparel', 'dress', 'style', 'outfit'],
-    icon: 'mdi:hanger',
+    icon: 'solar:hanger-2-linear',
     color: '#ec4899',
     gradient: 'linear-gradient(135deg, #ec4899, #be185d)',
   },
   {
     terms: ['men', 'masculine', 'suit'],
-    icon: 'mdi:tie',
+    icon: 'solar:t-shirt-linear',
     color: '#6366f1',
     gradient: 'linear-gradient(135deg, #6366f1, #4338ca)',
   },
@@ -32,7 +32,7 @@ const RULES: Array<{ terms: string[] } & CategoryVisual> = [
   },
   {
     terms: ['bag', 'luggage', 'purse', 'handbag', 'backpack', 'wallet'],
-    icon: 'mdi:bag-personal-outline',
+    icon: 'solar:bag-linear',
     color: '#8b5cf6',
     gradient: 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
   },
@@ -44,74 +44,74 @@ const RULES: Array<{ terms: string[] } & CategoryVisual> = [
   },
   {
     terms: ['beauty', 'cosmetic', 'makeup', 'skin', 'hair', 'fragrance', 'personal care'],
-    icon: 'mdi:face-woman-shimmer-outline',
+    icon: 'solar:user-rounded-linear',
     color: '#a855f7',
     gradient: 'linear-gradient(135deg, #a855f7, #7c3aed)',
   },
   {
     terms: ['care', 'health', 'wellness', 'hygiene', 'grooming'],
-    icon: 'mdi:heart-pulse',
+    icon: 'solar:heart-pulse-linear',
     color: '#ec4899',
     gradient: 'linear-gradient(135deg, #ec4899, #9d174d)',
   },
   {
     terms: ['food', 'drink', 'grocery', 'snack', 'beverage', 'restaurant', 'eat'],
-    icon: 'mdi:food-fork-drink',
+    icon: 'solar:chef-hat-linear',
     color: '#22c55e',
     gradient: 'linear-gradient(135deg, #22c55e, #15803d)',
   },
   {
     terms: ['sport', 'fitness', 'gym', 'exercise', 'outdoor', 'athletic'],
-    icon: 'mdi:dumbbell',
+    icon: 'solar:dumbbells-2-linear',
     color: '#06b6d4',
     gradient: 'linear-gradient(135deg, #06b6d4, #0e7490)',
   },
   {
     terms: ['home', 'furniture', 'interior', 'kitchen', 'living', 'decor', 'house'],
-    icon: 'mdi:home-variant-outline',
+    icon: 'solar:home-linear',
     color: '#f97316',
     gradient: 'linear-gradient(135deg, #f97316, #c2410c)',
   },
   {
     terms: ['kid', 'baby', 'child', 'infant', 'toy'],
-    icon: 'mdi:baby-face-outline',
+    icon: 'solar:smile-circle-linear',
     color: '#34d399',
     gradient: 'linear-gradient(135deg, #34d399, #059669)',
   },
   {
     terms: ['book', 'education', 'stationery', 'school', 'study', 'learning'],
-    icon: 'mdi:book-open-variant',
+    icon: 'solar:book-2-bold',
     color: '#64748b',
     gradient: 'linear-gradient(135deg, #64748b, #334155)',
   },
   {
     terms: ['game', 'gaming', 'console', 'play'],
-    icon: 'mdi:gamepad-variant-outline',
+    icon: 'solar:gamepad-linear',
     color: '#7c3aed',
     gradient: 'linear-gradient(135deg, #7c3aed, #4c1d95)',
   },
   {
     terms: ['ankara', 'african', 'traditional', 'native', 'ethnic', 'cultural'],
-    icon: 'mdi:palette-outline',
+    icon: 'solar:palette-linear',
     color: '#f59e0b',
     gradient: 'linear-gradient(135deg, #f59e0b, #92400e)',
   },
   {
     terms: ['service', 'repair', 'install', 'consult', 'professional', 'hire'],
-    icon: 'mdi:tools',
+    icon: 'solar:settings-minimalistic-linear',
     color: '#6366f1',
     gradient: 'linear-gradient(135deg, #6366f1, #4338ca)',
   },
   {
     terms: ['preloved', 'thrift', 'second', 'used', 'vintage', 'pre-own'],
-    icon: 'mdi:recycle',
+    icon: 'solar:recive-square-linear',
     color: '#f59e0b',
     gradient: 'linear-gradient(135deg, #f59e0b, #b45309)',
   },
 ]
 
 const FALLBACK: CategoryVisual = {
-  icon: 'mdi:tag-outline',
+  icon: 'solar:tag-linear',
   color: '#6b7280',
   gradient: 'linear-gradient(135deg, #6b7280, #374151)',
 }

@@ -15,7 +15,7 @@
         v-else
         class="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 dark:from-neutral-800 dark:to-neutral-700"
       >
-        <Icon name="mdi:shopping-outline" size="32" class="text-gray-300 dark:text-neutral-600" />
+        <Icon name="solar:bag-4-linear" size="32" class="text-gray-300 dark:text-neutral-600" />
       </div>
 
       <!-- Discount badge -->

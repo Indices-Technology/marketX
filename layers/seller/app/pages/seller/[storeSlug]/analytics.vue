@@ -119,7 +119,7 @@
                 class="flex h-full w-full items-center justify-center"
               >
                 <Icon
-                  name="mdi:image-outline"
+                  name="solar:gallery-linear"
                   size="20"
                   class="text-gray-300 dark:text-neutral-600"
                 />
@@ -172,7 +172,7 @@
             Daily Breakdown
           </p>
           <Icon
-            :name="showDaily ? 'mdi:chevron-up' : 'mdi:chevron-down'"
+            :name="showDaily ? 'solar:alt-arrow-up-linear' : 'solar:alt-arrow-down-linear'"
             size="20"
             class="text-gray-400 dark:text-neutral-500"
           />
@@ -246,7 +246,7 @@
     <!-- Error state -->
     <div v-else-if="error" class="py-20 text-center">
       <Icon
-        name="mdi:alert-circle-outline"
+        name="solar:danger-circle-linear"
         size="40"
         class="mx-auto mb-3 text-gray-300 dark:text-neutral-600"
       />

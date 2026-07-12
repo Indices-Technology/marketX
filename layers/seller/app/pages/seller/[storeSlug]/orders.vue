@@ -99,9 +99,22 @@
               <option value="CANCELLED">Cancel</option>
             </select>
 
-            <!-- Regular orders: status update dropdown -->
+            <!-- GIG orders: book the carrier pickup ("ready to ship").
+                 The order is NOT marked shipped here — it flips to SHIPPED only
+                 when GIG scans the parcel into their network. -->
+            <BaseButton
+              v-if="isGigOrder(order) && order.status === 'CONFIRMED' && !order.waybill"
+              variant="primary"
+              size="sm"
+              :loading="bookingId === order.id"
+              @click="bookGig(order)"
+            >
+              Book GIG pickup
+            </BaseButton>
+
+            <!-- Regular (non-GIG) orders: manual status update -->
             <select
-              v-if="order.paymentMethod !== 'pay_on_delivery' && order.status === 'CONFIRMED'"
+              v-if="!isGigOrder(order) && order.paymentMethod !== 'pay_on_delivery' && order.status === 'CONFIRMED'"
               @change="(e) => updateStatus(order.id, (e.target as HTMLSelectElement).value)"
               class="rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs text-gray-700 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
             >
@@ -186,14 +199,23 @@
           class="flex items-center justify-between bg-gray-50 px-5 py-3 dark:bg-neutral-800/50"
         >
           <div
-            v-if="order.trackingNumber"
-            class="flex items-center gap-1.5 text-xs text-gray-500 dark:text-neutral-400"
+            v-if="order.waybill || order.trackingNumber"
+            class="flex flex-col gap-0.5 text-xs text-gray-500 dark:text-neutral-400"
           >
-            <Icon name="mdi:truck-outline" size="14" />
-            {{ order.shipper }} · {{ order.trackingNumber }}
+            <span class="flex items-center gap-1.5">
+              <Icon name="solar:sale-linear" size="14" />
+              {{ order.shipper || 'Carrier' }} · {{ order.waybill || order.trackingNumber }}
+            </span>
+            <span
+              v-if="isGigOrder(order) && order.status === 'CONFIRMED'"
+              class="flex items-center gap-1 text-[11px] font-medium text-amber-600 dark:text-amber-400"
+            >
+              <Icon name="solar:clock-circle-linear" size="12" />
+              Booked — hand the parcel to GIG. Marked shipped once they scan it.
+            </span>
           </div>
           <button
-            v-else-if="order.status === 'SHIPPED'"
+            v-else-if="!isGigOrder(order) && order.status === 'SHIPPED'"
             @click="addTracking(order)"
             class="text-xs font-medium text-brand hover:underline"
           >
@@ -216,7 +238,7 @@
         class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 dark:bg-neutral-800"
       >
         <Icon
-          name="mdi:package-variant-closed-outline"
+          name="solar:box-linear"
           size="32"
           class="text-gray-400 dark:text-neutral-500"
         />
@@ -285,6 +307,37 @@ const isLoading = ref(true)
 const activeStatus = ref('')
 const trackingModal = ref<any>(null)
 const trackingForm = reactive({ shipper: '', trackingNumber: '' })
+const bookingId = ref<number | null>(null)
+
+/** GIG-fulfilled order → booked via the carrier API, not manual "mark shipped". */
+const isGigOrder = (order: any): boolean =>
+  order.shippingProvider === 'gig' ||
+  /gig/i.test(`${order.shippingZone ?? ''} ${order.shipper ?? ''}`)
+
+const bookGig = async (order: any) => {
+  bookingId.value = order.id
+  try {
+    const res = await orderApi.bookShipment(order.id)
+    const wb = res?.data?.waybill
+    const o = orders.value.find((x) => x.id === order.id)
+    if (o) {
+      o.waybill = wb
+      o.trackingNumber = wb
+      o.shipper = 'GIG Logistics'
+      o.shippingProvider = 'gig'
+    }
+    notify({
+      type: 'success',
+      text: res?.data?.alreadyBooked
+        ? `Order #${order.id} was already booked · ${wb}`
+        : `Booked with GIG · Waybill ${wb}. Hand the parcel over for pickup.`,
+    })
+  } catch {
+    // BaseApiClient surfaces the error toast
+  } finally {
+    bookingId.value = null
+  }
+}
 
 const STATUS_TABS = [
   { value: '', label: 'All' },

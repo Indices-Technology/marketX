@@ -5,7 +5,7 @@
         :to="`/seller/${storeSlug}/products`"
         class="text-gray-500 hover:text-gray-700 dark:text-neutral-400 dark:hover:text-neutral-200"
       >
-        <Icon name="mdi:arrow-left" size="20" />
+        <Icon name="solar:arrow-left-linear" size="20" />
       </NuxtLink>
       <h1 class="text-2xl font-bold text-gray-900 dark:text-neutral-100">
         New Product
@@ -67,7 +67,7 @@
             @dragleave.prevent="isDraggingMedia = false"
             @drop.prevent="onMediaDrop"
           >
-            <Icon name="mdi:camera-plus-outline" size="34" class="text-gray-400 dark:text-neutral-500" />
+            <Icon name="solar:camera-add-linear" size="34" class="text-gray-400 dark:text-neutral-500" />
             <div>
               <p class="text-sm font-medium text-gray-700 dark:text-neutral-300">
                 Drop images here, or
@@ -127,7 +127,7 @@
                 class="absolute right-1 top-1 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
                 @click="removeMediaItem(i)"
               >
-                <Icon name="mdi:close" size="12" />
+                <Icon name="solar:close-circle-linear" size="12" />
               </button>
             </div>
 
@@ -137,7 +137,7 @@
               class="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 transition-colors hover:border-brand hover:bg-brand/5 dark:border-neutral-600"
             >
               <Icon
-                name="mdi:image-plus"
+                name="solar:gallery-add-linear"
                 size="24"
                 class="mb-1 text-gray-400 dark:text-neutral-500"
               />
@@ -159,7 +159,7 @@
             v-if="videoSizeWarning"
             class="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-400"
           >
-            <Icon name="mdi:wifi-alert" size="15" class="shrink-0" />
+            <Icon name="solar:wi-fi-router-minimalistic-linear" size="15" class="shrink-0" />
             {{ videoSizeWarning }}
           </div>
 
@@ -172,7 +172,7 @@
               <h3
                 class="flex items-center gap-1.5 text-sm font-bold text-gray-900 dark:text-white"
               >
-                <Icon name="mdi:magic-staff" class="text-brand" size="18" />
+                <Icon name="solar:magic-stick-3-linear" class="text-brand" size="18" />
                 AI Magic Lister
               </h3>
               <p class="mt-1 max-w-sm text-xs text-gray-600 dark:text-gray-300">
@@ -192,7 +192,7 @@
                 class="animate-spin"
                 size="18"
               />
-              <Icon v-else name="mdi:creation" size="18" />
+              <Icon v-else name="solar:magic-stick-3-linear" size="18" />
               {{ isGeneratingAI ? 'Generating...' : 'Auto-Fill Form' }}
             </button>
           </div>
@@ -216,7 +216,7 @@
               <div
                 class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-pink-400 to-purple-500"
               >
-                <Icon name="mdi:music-note" size="16" class="text-white" />
+                <Icon name="solar:music-note-2-bold" size="16" class="text-white" />
               </div>
               <div class="min-w-0 flex-1">
                 <p
@@ -242,7 +242,7 @@
                 class="shrink-0 rounded-full p-1 transition-colors hover:bg-pink-100 dark:hover:bg-pink-900/30"
                 @click="removeBgMusic"
               >
-                <Icon name="mdi:close" size="16" class="text-gray-500" />
+                <Icon name="solar:close-circle-linear" size="16" class="text-gray-500" />
               </button>
             </div>
 
@@ -254,7 +254,7 @@
               @click="showMusicPicker = true"
             >
               <Icon
-                name="mdi:music-note-plus"
+                name="solar:music-note-2-linear"
                 size="18"
                 class="text-gray-400 dark:text-neutral-500"
               />

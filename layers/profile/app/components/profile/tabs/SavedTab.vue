@@ -38,7 +38,7 @@
         class="flex flex-col items-center justify-center gap-3 py-12"
       >
         <Icon
-          name="mdi:bookmark-outline"
+          name="solar:bookmark-linear"
           size="48"
           class="text-gray-300 dark:text-neutral-700"
         />
@@ -90,13 +90,13 @@
               class="absolute inset-0 flex items-center justify-center gap-4 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100"
             >
               <div class="flex items-center gap-1 text-white drop-shadow">
-                <Icon name="mdi:heart" size="18" />
+                <Icon name="solar:heart-bold" size="18" />
                 <span class="text-[12px] font-semibold">{{
                   formatNum(post._count?.likes || 0)
                 }}</span>
               </div>
               <div class="flex items-center gap-1 text-white drop-shadow">
-                <Icon name="mdi:comment" size="18" />
+                <Icon name="solar:chat-round-bold" size="18" />
                 <span class="text-[12px] font-semibold">{{
                   formatNum(post._count?.comments || 0)
                 }}</span>
@@ -108,13 +108,13 @@
               class="pointer-events-none absolute right-1.5 top-1.5 flex flex-col items-end gap-1"
             >
               <Icon
-                name="mdi:bookmark"
+                name="solar:bookmark-bold"
                 size="15"
                 class="text-white drop-shadow-lg"
               />
               <Icon
                 v-if="(post.mediaItems?.length || 0) > 1"
-                name="mdi:layers"
+                name="solar:layers-bold"
                 size="14"
                 class="text-white drop-shadow-lg"
               />
@@ -125,7 +125,7 @@
               @click.stop="handleUnsave(post.id)"
               class="absolute bottom-1.5 right-1.5 rounded-full bg-red-500/80 p-1.5 text-white opacity-0 backdrop-blur-sm transition-opacity hover:bg-red-600 group-hover:opacity-100"
             >
-              <Icon name="mdi:bookmark-remove" size="14" />
+              <Icon name="solar:bookmark-linear" size="14" />
             </button>
           </div>
         </div>
@@ -168,7 +168,7 @@
         class="flex flex-col items-center justify-center gap-3 py-12"
       >
         <Icon
-          name="mdi:heart-box-outline"
+          name="solar:heart-linear"
           size="48"
           class="text-gray-300 dark:text-neutral-700"
         />
@@ -205,7 +205,7 @@
                 class="flex h-full w-full items-center justify-center"
               >
                 <Icon
-                  name="mdi:package-variant"
+                  name="solar:box-bold"
                   size="32"
                   class="text-gray-300 dark:text-neutral-600"
                 />
@@ -213,7 +213,7 @@
               <div
                 class="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur-sm dark:bg-neutral-900/90"
               >
-                <Icon name="mdi:heart" size="14" class="text-red-500" />
+                <Icon name="solar:heart-bold" size="14" class="text-red-500" />
               </div>
             </div>
             <div class="p-3">
@@ -274,8 +274,8 @@ const { formatKobo } = useCurrency()
 
 const activeView = ref<'posts' | 'products'>('posts')
 const views = [
-  { key: 'posts', label: 'Saved Posts', icon: 'mdi:bookmark-outline' },
-  { key: 'products', label: 'Liked Products', icon: 'mdi:heart-box-outline' },
+  { key: 'posts', label: 'Saved Posts', icon: 'solar:bookmark-linear' },
+  { key: 'products', label: 'Liked Products', icon: 'solar:heart-linear' },
 ]
 
 // ── Saved posts ────────────────────────────────────────────────────────────

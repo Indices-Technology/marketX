@@ -38,7 +38,7 @@
             <div
               class="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 text-3xl transition-all group-hover:scale-110 group-hover:bg-brand/20"
             >
-              <icon name="mdi:shopping-outline" class="text-white" size="22" />
+              <icon name="solar:bag-4-linear" class="text-white" size="22" />
             </div>
             <div>
               <p class="text-lg font-black text-white">I'm a Buyer</p>
@@ -62,7 +62,7 @@
             <div
               class="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 text-3xl transition-all group-hover:scale-110 group-hover:bg-brand/20"
             >
-              <icon name="mdi:store-outline" class="text-white" size="22" />
+              <icon name="solar:shop-2-linear" class="text-white" size="22" />
             </div>
             <div>
               <p class="text-lg font-black text-white">I want to Sell</p>
@@ -165,7 +165,7 @@
             class="flex flex-1 items-center justify-center rounded-xl border border-gray-300 bg-white/80 py-3 shadow-sm transition hover:bg-gray-50 disabled:opacity-60 dark:border-neutral-600 dark:bg-neutral-800/60 dark:hover:bg-neutral-700"
             @click="handleSocial('google')"
           >
-            <Icon name="mdi:google" class="h-6 w-6 text-[#4285F4]" />
+            <Icon name="simple-icons:google" class="h-6 w-6 text-[#4285F4]" />
           </button>
           <button
             type="button"
@@ -188,7 +188,7 @@
             class="flex flex-1 items-center justify-center rounded-xl border border-[#1877F2] bg-[#1877F2]/90 py-3 shadow-sm transition hover:bg-[#1877F2] disabled:opacity-60"
             @click="handleSocial('facebook')"
           >
-            <Icon name="mdi:facebook" class="h-6 w-6 text-white" />
+            <Icon name="simple-icons:facebook" class="h-6 w-6 text-white" />
           </button>
         </div>
 
@@ -209,7 +209,7 @@
             :placeholder="$t('auth.register.usernamePlaceholder')"
             autocomplete="username"
             :disabled="isBusy"
-            icon-left="mdi:account-outline"
+            icon-left="solar:user-linear"
             size="lg"
             :error="errors.username"
           />
@@ -221,7 +221,7 @@
             :placeholder="$t('auth.register.emailPlaceholder')"
             autocomplete="email"
             :disabled="isBusy"
-            icon-left="mdi:at"
+            icon-left="solar:mention-circle-linear"
             size="lg"
             :error="errors.email"
           />
@@ -234,7 +234,7 @@
               :placeholder="$t('auth.register.passwordPlaceholder')"
               autocomplete="new-password"
               :disabled="isBusy"
-              icon-left="mdi:lock-outline"
+              icon-left="solar:lock-keyhole-linear"
               size="lg"
               :error="errors.password"
             />
@@ -244,7 +244,7 @@
               :placeholder="$t('auth.register.confirmPasswordPlaceholder')"
               autocomplete="new-password"
               :disabled="isBusy"
-              icon-left="mdi:lock-check-outline"
+              icon-left="solar:lock-keyhole-linear"
               size="lg"
               :error="errors.confirmPassword"
             />
@@ -372,7 +372,7 @@
                 v-else
                 class="flex h-full w-full flex-col items-center justify-center text-gray-400"
               >
-                <Icon name="mdi:store-plus-outline" size="22" />
+                <Icon name="solar:shop-2-linear" size="22" />
               </div>
               <div
                 v-if="storeForm.uploadingLogo"
@@ -467,13 +467,13 @@
               <div class="absolute right-3 top-1/2 -translate-y-1/2">
                 <Icon
                   v-if="slugStatus === 'available'"
-                  name="mdi:check-circle"
+                  name="solar:check-circle-bold"
                   size="18"
                   class="text-emerald-500"
                 />
                 <Icon
                   v-else-if="slugStatus === 'taken'"
-                  name="mdi:close-circle"
+                  name="solar:close-circle-bold"
                   size="18"
                   class="text-red-500"
                 />
@@ -557,7 +557,7 @@
                   class="flex h-7 w-7 items-center justify-center rounded-lg bg-brand/10"
                 >
                   <Icon
-                    name="mdi:truck-fast-outline"
+                    name="solar:delivery-linear"
                     size="15"
                     class="text-brand"
                   />
@@ -578,7 +578,7 @@
                 </div>
               </div>
               <Icon
-                name="mdi:chevron-down"
+                name="solar:alt-arrow-down-linear"
                 size="18"
                 class="shrink-0 text-gray-400 transition-transform duration-200"
                 :class="shipFromOpen ? 'rotate-180' : ''"
@@ -650,7 +650,7 @@
           <div
             class="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500 shadow-2xl shadow-emerald-500/30"
           >
-            <Icon name="mdi:check" size="40" class="text-white" />
+            <Icon name="solar:check-circle-linear" size="40" class="text-white" />
           </div>
           <h1 class="text-3xl font-black text-white sm:text-4xl">
             Your store is live!
@@ -682,7 +682,7 @@
             @click="copyStoreLink"
           >
             <Icon
-              :name="linkCopied ? 'mdi:check' : 'mdi:content-copy'"
+              :name="linkCopied ? 'solar:check-circle-linear' : 'solar:copy-linear'"
               size="16"
             />
             {{ linkCopied ? 'Copied!' : 'Copy link' }}
@@ -695,7 +695,7 @@
             :to="`/seller/${createdStoreSlug}/products/create`"
             class="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-brand px-6 py-4 font-bold text-white shadow-2xl shadow-brand/30 transition hover:bg-[#d81b36]"
           >
-            <Icon name="mdi:plus" size="18" />
+            <Icon name="solar:add-circle-linear" size="18" />
             Add first product
           </NuxtLink>
           <NuxtLink

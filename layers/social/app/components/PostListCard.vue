@@ -38,7 +38,7 @@
           />
           <Icon
             v-else
-            name="mdi:account-circle-outline"
+            name="solar:user-circle-linear"
             size="16"
             class="text-gray-300 dark:text-neutral-600"
           />
@@ -85,7 +85,7 @@
           @click="handleLike"
         >
           <Icon
-            :name="localIsLiked ? 'mdi:heart' : 'mdi:heart-outline'"
+            :name="localIsLiked ? 'solar:heart-bold' : 'solar:heart-linear'"
             size="14"
           />
           {{ localLikeCount }}
@@ -95,7 +95,7 @@
           class="flex items-center gap-1 text-[12px] font-medium text-gray-500 transition-colors hover:text-blue-500 dark:text-neutral-400 dark:hover:text-blue-400"
           @click="emit('open-comments', post)"
         >
-          <Icon name="mdi:comment-outline" size="13" />
+          <Icon name="solar:chat-round-linear" size="13" />
           {{ post.commentCount }}
         </button>
 
@@ -103,7 +103,7 @@
           class="flex items-center gap-1 text-[12px] font-medium text-gray-500 transition-colors hover:text-green-500 dark:text-neutral-400 dark:hover:text-green-400"
           @click="handleShare"
         >
-          <Icon name="mdi:share-outline" size="13" />
+          <Icon name="solar:share-linear" size="13" />
         </button>
 
         <button
@@ -116,7 +116,7 @@
           @click="handleBookmark"
         >
           <Icon
-            :name="isBookmarked ? 'mdi:bookmark' : 'mdi:bookmark-outline'"
+            :name="isBookmarked ? 'solar:bookmark-bold' : 'solar:bookmark-linear'"
             size="16"
           />
         </button>
@@ -223,35 +223,35 @@ const thumbUrl = computed(() => {
 // ── Content type ──────────────────────────────────────────────────────────────
 const CT_MAP: Record<string, { icon: string; badge: string; bg: string }> = {
   EXPERIENCE: {
-    icon: 'mdi:star-outline',
+    icon: 'solar:star-linear',
     badge: 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300',
     bg: '#1a3a5c',
   },
   INSPIRATION: {
-    icon: 'mdi:lightbulb-outline',
+    icon: 'solar:lightbulb-linear',
     badge: 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300',
     bg: '#3d2800',
   },
   COMMERCE: {
-    icon: 'mdi:shopping-outline',
+    icon: 'solar:bag-4-linear',
     badge:
       'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300',
     bg: '#003d22',
   },
   EDUCATIONAL: {
-    icon: 'mdi:school-outline',
+    icon: 'solar:square-academic-cap-2-linear',
     badge:
       'bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300',
     bg: '#3b1f00',
   },
   ENTERTAINMENT: {
-    icon: 'mdi:music-note',
+    icon: 'solar:music-note-2-bold',
     badge: 'bg-pink-100 text-pink-700 dark:bg-pink-950 dark:text-pink-300',
     bg: '#3d0030',
   },
 }
 const CT_DEFAULT = {
-  icon: 'mdi:tag-outline',
+  icon: 'solar:tag-linear',
   badge: 'bg-gray-100 text-gray-600 dark:bg-neutral-800 dark:text-neutral-400',
   bg: '#222222',
 }

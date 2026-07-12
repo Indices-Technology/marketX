@@ -28,7 +28,7 @@
             class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-5"
           >
             <Icon
-              name="mdi:magnify"
+              name="solar:magnifer-linear"
               size="24"
               class="text-gray-400 transition-colors group-focus-within:text-brand"
             />
@@ -44,7 +44,7 @@
             class="absolute inset-y-0 right-0 flex items-center pr-5 text-gray-400 hover:text-gray-600 dark:hover:text-neutral-300"
             @click="searchQuery = ''"
           >
-            <Icon name="mdi:close-circle" size="22" />
+            <Icon name="solar:close-circle-bold" size="22" />
           </button>
         </div>
       </div>
@@ -58,7 +58,7 @@
           <div
             class="flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-blue-500 transition-transform group-hover:scale-110 dark:bg-blue-900/20"
           >
-            <Icon name="mdi:rocket-launch-outline" size="24" />
+            <Icon name="solar:rocket-2-linear" size="24" />
           </div>
           <span class="text-sm font-bold text-gray-900 dark:text-neutral-100"
             >Getting Started</span
@@ -72,7 +72,7 @@
           <div
             class="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-500 transition-transform group-hover:scale-110 dark:bg-emerald-900/20"
           >
-            <Icon name="mdi:package-variant-closed" size="24" />
+            <Icon name="solar:box-linear" size="24" />
           </div>
           <span class="text-sm font-bold text-gray-900 dark:text-neutral-100"
             >Orders & Tracking</span
@@ -86,7 +86,7 @@
           <div
             class="flex h-12 w-12 items-center justify-center rounded-full bg-orange-50 text-orange-500 transition-transform group-hover:scale-110 dark:bg-orange-900/20"
           >
-            <Icon name="mdi:keyboard-return" size="24" />
+            <Icon name="solar:arrow-left-linear" size="24" />
           </div>
           <span class="text-sm font-bold text-gray-900 dark:text-neutral-100"
             >Returns & Refunds</span
@@ -100,7 +100,7 @@
           <div
             class="flex h-12 w-12 items-center justify-center rounded-full bg-brand/10 text-brand transition-transform group-hover:scale-110 dark:bg-brand/20"
           >
-            <Icon name="mdi:storefront-outline" size="24" />
+            <Icon name="solar:shop-linear" size="24" />
           </div>
           <span class="text-sm font-bold text-gray-900 dark:text-neutral-100"
             >Seller Guide</span
@@ -141,7 +141,7 @@
             class="rounded-2xl border border-gray-200 bg-white py-16 text-center dark:border-neutral-800 dark:bg-neutral-900"
           >
             <Icon
-              name="mdi:file-search-outline"
+              name="solar:file-text-linear"
               size="48"
               class="mb-3 text-gray-300 dark:text-neutral-600"
             />
@@ -175,7 +175,7 @@
                 class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-50 transition-colors group-hover:bg-brand/10 group-hover:text-brand dark:bg-neutral-800"
               >
                 <Icon
-                  name="mdi:chevron-down"
+                  name="solar:alt-arrow-down-linear"
                   class="transition-transform duration-300 group-open:-rotate-180"
                   size="20"
                 />
@@ -204,7 +204,7 @@
               <div
                 class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition-colors group-hover:text-brand dark:bg-neutral-800 dark:text-neutral-400"
               >
-                <Icon name="mdi:file-document-outline" size="20" />
+                <Icon name="solar:document-text-linear" size="20" />
               </div>
               <div>
                 <h3
@@ -219,7 +219,7 @@
               </div>
             </div>
             <Icon
-              name="mdi:chevron-right"
+              name="solar:alt-arrow-right-linear"
               class="text-gray-400 transition-colors group-hover:text-brand"
             />
           </NuxtLink>
@@ -232,7 +232,7 @@
               <div
                 class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition-colors group-hover:text-brand dark:bg-neutral-800 dark:text-neutral-400"
               >
-                <Icon name="mdi:shield-check-outline" size="20" />
+                <Icon name="solar:shield-check-linear" size="20" />
               </div>
               <div>
                 <h3
@@ -246,7 +246,7 @@
               </div>
             </div>
             <Icon
-              name="mdi:chevron-right"
+              name="solar:alt-arrow-right-linear"
               class="text-gray-400 transition-colors group-hover:text-brand"
             />
           </NuxtLink>
@@ -259,7 +259,7 @@
               <div
                 class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition-colors group-hover:text-brand dark:bg-neutral-800 dark:text-neutral-400"
               >
-                <Icon name="mdi:keyboard-return" size="20" />
+                <Icon name="solar:arrow-left-linear" size="20" />
               </div>
               <div>
                 <h3
@@ -273,7 +273,7 @@
               </div>
             </div>
             <Icon
-              name="mdi:chevron-right"
+              name="solar:alt-arrow-right-linear"
               class="text-gray-400 transition-colors group-hover:text-brand"
             />
           </NuxtLink>
@@ -300,7 +300,7 @@
               </div>
             </div>
             <Icon
-              name="mdi:chevron-right"
+              name="solar:alt-arrow-right-linear"
               class="text-gray-400 transition-colors group-hover:text-brand"
             />
           </NuxtLink>
@@ -322,7 +322,7 @@
           <div
             class="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full border border-white/10 bg-white/10 backdrop-blur-md"
           >
-            <Icon name="mdi:headset" size="40" class="text-white" />
+            <Icon name="solar:headphones-round-linear" size="40" class="text-white" />
           </div>
           <h2 class="mb-3 text-2xl font-bold text-white">Still need help?</h2>
           <p
@@ -344,14 +344,14 @@
               :href="`mailto:${config.public.supportEmail || 'support@marketx.africa'}`"
               class="flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-8 py-3.5 font-bold text-white transition-all hover:bg-[#d81b36] hover:shadow-lg hover:shadow-brand/20 active:scale-95 sm:w-auto"
             >
-              <Icon name="mdi:email-fast-outline" size="20" />
+              <Icon name="solar:letter-linear" size="20" />
               Email Support
             </a>
             <button
               class="flex w-full items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/10 px-8 py-3.5 font-bold text-white transition-all hover:bg-white/20 active:scale-95 sm:w-auto"
               @click="showContact = true"
             >
-              <Icon name="mdi:ticket-confirmation-outline" size="20" />
+              <Icon name="solar:ticket-linear" size="20" />
               Submit a ticket
             </button>
           </div>
@@ -393,19 +393,19 @@ function onTicketCreated(id: string) {
 
 // Categories
 const categories = [
-  { id: 'all', label: 'All Topics', icon: 'mdi:view-grid-outline' },
-  { id: 'shopping', label: 'Shopping & Orders', icon: 'mdi:shopping-outline' },
+  { id: 'all', label: 'All Topics', icon: 'solar:widget-2-linear' },
+  { id: 'shopping', label: 'Shopping & Orders', icon: 'solar:bag-4-linear' },
   {
     id: 'selling',
     label: `Selling on ${config.public.siteName || 'MarketX'}`,
-    icon: 'mdi:storefront-outline',
+    icon: 'solar:shop-linear',
   },
   {
     id: 'account',
     label: 'Account & Security',
-    icon: 'mdi:shield-account-outline',
+    icon: 'solar:shield-user-linear',
   },
-  { id: 'ai', label: 'Dasah AI', icon: 'mdi:robot-happy-outline' },
+  { id: 'ai', label: 'Dasah AI', icon: 'solar:programming-linear' },
 ]
 
 // FAQ Data

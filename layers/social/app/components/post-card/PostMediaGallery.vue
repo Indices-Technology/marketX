@@ -7,15 +7,26 @@
       :style="videoContainerStyle"
       @click="emit('click')"
     >
+      <!--
+        Blurred backdrop fills the letterbox area for videos whose aspect ratio
+        doesn't match the container, so the frame is shown whole (object-contain)
+        without ugly black bars — same treatment as single images below.
+      -->
+      <div
+        class="absolute inset-0 scale-110 bg-cover bg-center"
+        :style="{ backgroundImage: `url(${videoPoster})`, filter: 'blur(16px)' }"
+        aria-hidden="true"
+      />
       <video
         ref="videoRef"
         :src="videoFeedUrl(primaryMedia.url, isSlowNetwork)"
-        :poster="primaryMedia.thumbnailUrl || videoThumb(primaryMedia.url)"
-        class="h-full w-full object-cover"
+        :poster="videoPoster"
+        class="relative h-full w-full object-contain"
         loop
         playsinline
         :muted="videoMuted"
         preload="none"
+        @loadedmetadata="onVideoLoad"
       />
 
       <!-- Slow network: prominent tap-to-load overlay shown until user opts in -->
@@ -24,7 +35,7 @@
         class="absolute inset-0 flex cursor-pointer flex-col items-center justify-center bg-black/60 backdrop-blur-sm"
         @click.stop="activateVideo(); videoRef?.play().catch(() => {})"
       >
-        <Icon name="mdi:play-circle-outline" size="54" class="mb-1 text-white/90" />
+        <Icon name="solar:play-circle-linear" size="54" class="mb-1 text-white/90" />
         <span class="text-xs font-medium text-white/70">Tap to play</span>
       </div>
 
@@ -36,7 +47,7 @@
         <div
           class="flex h-12 w-12 items-center justify-center rounded-full bg-black/30 backdrop-blur-sm"
         >
-          <Icon name="mdi:play" size="26" class="ml-0.5 text-white" />
+          <Icon name="solar:play-bold" size="26" class="ml-0.5 text-white" />
         </div>
       </div>
 
@@ -46,7 +57,7 @@
         :class="post.bgMusic ? 'bottom-14' : 'bottom-3'"
       >
         <Icon
-          :name="soundEnabled ? 'mdi:volume-high' : 'mdi:volume-off'"
+          :name="soundEnabled ? 'solar:volume-loud-linear' : 'solar:muted-linear'"
           size="16"
           class="text-white"
         />
@@ -98,7 +109,7 @@
         class="absolute bottom-14 right-3 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm transition-colors hover:bg-black/70"
       >
         <Icon
-          :name="soundEnabled ? 'mdi:volume-high' : 'mdi:volume-off'"
+          :name="soundEnabled ? 'solar:volume-loud-linear' : 'solar:muted-linear'"
           size="16"
           class="text-white"
         />
@@ -132,7 +143,7 @@
             <div
               class="flex h-8 w-8 items-center justify-center rounded-full bg-black/40"
             >
-              <Icon name="mdi:play" size="18" class="ml-0.5 text-white" />
+              <Icon name="solar:play-bold" size="18" class="ml-0.5 text-white" />
             </div>
           </div>
         </div>
@@ -229,7 +240,7 @@
       <span
         class="inline-flex items-center gap-1 rounded-full bg-black/50 px-2 py-1 text-[10px] font-semibold text-white backdrop-blur-sm"
       >
-        <Icon name="mdi:shopping-outline" size="11" />{{
+        <Icon name="solar:bag-4-linear" size="11" />{{
           $t('contentType.COMMERCE')
         }}
       </span>
@@ -266,6 +277,17 @@ const emit = defineEmits<{
 }>()
 
 const videoRef = ref<HTMLVideoElement | null>(null)
+
+// Poster / blurred-backdrop source for the primary video. Uses an
+// aspect-preserving thumbnail (crop: 'limit') so a portrait clip's poster shows
+// the whole frame — a square crop would slice off the top (e.g. the head).
+const videoPoster = computed(
+  () =>
+    props.mediaItems[0]?.thumbnailUrl ??
+    (props.mediaItems[0]?.url
+      ? videoThumb(props.mediaItems[0].url, { width: 720, crop: 'limit' })
+      : ''),
+)
 
 // ─── Network quality detection ────────────────────────────────────────────────
 // Detects slow connections (2G/3G or Data Saver mode) on Android/Chrome.
@@ -331,10 +353,32 @@ const imageContainerStyle = computed(() => {
 })
 
 // ─── Video aspect ratio ───────────────────────────────────────────────────────
-const videoContainerStyle = computed(() => ({
-  aspectRatio: '9 / 16',
-  maxHeight: '75vh',
-}))
+// Measured from the real video once metadata loads (no dimensions are stored on
+// the media record). The container then matches the video's own ratio — clamped
+// to an Instagram-like range — so object-contain shows the whole frame instead
+// of cover-cropping the top (e.g. a person's head) off taller-than-9:16 clips.
+const videoNaturalWidth = ref(0)
+const videoNaturalHeight = ref(0)
+const videoLoaded = ref(false)
+
+const onVideoLoad = (e: Event) => {
+  const v = e.target as HTMLVideoElement
+  if (v.videoWidth && v.videoHeight) {
+    videoNaturalWidth.value = v.videoWidth
+    videoNaturalHeight.value = v.videoHeight
+    videoLoaded.value = true
+  }
+}
+
+const videoContainerStyle = computed(() => {
+  if (!videoLoaded.value || videoNaturalWidth.value === 0) {
+    return { aspectRatio: '4 / 5', maxHeight: '75vh' }
+  }
+  const natural = videoNaturalWidth.value / videoNaturalHeight.value
+  // Tallest 9:16 portrait (0.5625) → widest 1.91:1 landscape, matching IG's feed.
+  const clamped = Math.min(1.91, Math.max(0.5625, natural))
+  return { aspectRatio: `${clamped}`, maxHeight: '75vh' }
+})
 
 // Muted when: feed sound is globally off, OR bgMusic is present
 const videoMuted = computed(() => !props.soundEnabled || !!props.post.bgMusic)

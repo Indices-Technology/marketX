@@ -50,7 +50,7 @@
         <p class="mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">Preview</p>
         <div class="flex items-start gap-2.5">
           <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand/10">
-            <Icon name="mdi:bullhorn-outline" size="16" class="text-brand" />
+            <Icon name="solar:speaker-linear" size="16" class="text-brand" />
           </div>
           <p class="text-[13px] text-gray-800 dark:text-neutral-200">{{ message }}</p>
         </div>
@@ -67,7 +67,7 @@
           :disabled="sending || message.trim().length < 3"
           @click="send"
         >
-          <Icon name="mdi:send" size="15" /> Send announcement
+          <Icon name="solar:plain-2-bold" size="15" /> Send announcement
         </BaseButton>
       </div>
     </div>

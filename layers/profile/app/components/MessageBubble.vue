@@ -45,14 +45,14 @@
           <!-- Sending -->
           <Icon
             v-if="message.status === 'sending'"
-            name="mdi:clock-outline"
+            name="solar:clock-circle-linear"
             size="12"
             class="text-white/50"
           />
           <!-- Failed -->
           <Icon
             v-else-if="message.status === 'failed'"
-            name="mdi:alert-circle-outline"
+            name="solar:danger-circle-linear"
             size="12"
             class="text-red-300"
             title="Failed to send"
@@ -60,14 +60,14 @@
           <!-- Read (double tick) -->
           <Icon
             v-else-if="message.read"
-            name="mdi:check-all"
+            name="solar:check-read-linear"
             size="13"
             class="text-white/80"
           />
           <!-- Sent / delivered (single tick) -->
           <Icon
             v-else
-            name="mdi:check"
+            name="solar:check-circle-linear"
             size="13"
             class="text-white/60"
           />

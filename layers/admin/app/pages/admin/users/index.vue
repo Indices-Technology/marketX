@@ -13,7 +13,7 @@
     <div class="flex gap-2">
       <div class="relative flex-1">
         <Icon
-          name="mdi:magnify"
+          name="solar:magnifer-linear"
           size="16"
           class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
         />

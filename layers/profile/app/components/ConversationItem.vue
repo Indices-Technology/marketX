@@ -24,7 +24,7 @@
         class="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand shadow-sm"
         title="Store"
       >
-        <Icon name="mdi:store" size="9" class="text-white" />
+        <Icon name="solar:shop-2-bold" size="9" class="text-white" />
       </div>
     </div>
 

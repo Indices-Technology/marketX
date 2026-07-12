@@ -12,7 +12,7 @@
             class="flex items-center gap-2 font-semibold text-gray-900 dark:text-neutral-100"
           >
             <Icon
-              name="mdi:rocket-launch-outline"
+              name="solar:rocket-2-linear"
               size="20"
               class="text-brand"
             />
@@ -31,7 +31,7 @@
           class="flex shrink-0 items-center gap-1.5 text-xs font-medium text-brand hover:text-brand/80 disabled:opacity-50"
         >
           <Icon
-            :name="isGenerating ? 'eos-icons:loading' : 'mdi:refresh'"
+            :name="isGenerating ? 'eos-icons:loading' : 'solar:refresh-linear'"
             :class="{ 'animate-spin': isGenerating }"
             size="14"
           />
@@ -138,7 +138,7 @@
                 class="flex flex-1 items-center justify-center gap-2 rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-700"
               >
                 <Icon
-                  :name="copied === p.id ? 'mdi:check' : 'mdi:content-copy'"
+                  :name="copied === p.id ? 'solar:check-circle-linear' : 'solar:copy-linear'"
                   size="16"
                   :class="copied === p.id ? 'text-green-500' : ''"
                 />
@@ -155,7 +155,7 @@
               >
                 <Icon :name="p.icon" size="16" />
                 Open {{ p.label }}
-                <Icon name="mdi:open-in-new" size="12" class="opacity-60" />
+                <Icon name="solar:square-top-down-linear" size="12" class="opacity-60" />
               </a>
             </div>
 
@@ -184,7 +184,7 @@
               <span
                 class="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-200 bg-amber-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
               >
-                <Icon name="mdi:lock-outline" size="10" />
+                <Icon name="solar:lock-keyhole-linear" size="10" />
                 Soon
               </span>
             </div>
@@ -207,8 +207,8 @@
           class="animate-spin"
           size="16"
         />
-        <Icon v-else-if="savedOk" name="mdi:check-circle-outline" size="16" />
-        <Icon v-else name="mdi:content-save-outline" size="16" />
+        <Icon v-else-if="savedOk" name="solar:check-circle-linear" size="16" />
+        <Icon v-else name="solar:diskette-linear" size="16" />
         {{
           isSaving ? 'Saving...' : savedOk ? 'Captions Saved!' : 'Save Captions'
         }}
@@ -242,7 +242,7 @@ const platforms = [
   {
     id: 'instagram',
     label: 'Instagram',
-    icon: 'mdi:instagram',
+    icon: 'simple-icons:instagram',
     iconColor: 'text-pink-500',
     rows: 8,
     limit: 2200,
@@ -253,7 +253,7 @@ const platforms = [
   {
     id: 'facebook',
     label: 'Facebook',
-    icon: 'mdi:facebook',
+    icon: 'simple-icons:facebook',
     iconColor: 'text-blue-600',
     rows: 5,
     limit: 63206,
@@ -264,7 +264,7 @@ const platforms = [
   {
     id: 'pinterest',
     label: 'Pinterest',
-    icon: 'mdi:pinterest',
+    icon: 'simple-icons:pinterest',
     iconColor: 'text-red-600',
     rows: 4,
     limit: 500,

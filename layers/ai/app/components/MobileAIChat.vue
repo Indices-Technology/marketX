@@ -20,7 +20,7 @@
       >
         {{ unreadMessages > 9 ? '9+' : unreadMessages }}
       </span>
-      <Icon name="mdi:message-text" size="28" />
+      <Icon name="solar:chat-line-bold" size="28" />
     </button>
 
     <!-- ── Full-screen bottom sheet ───────────────────────────────────────── -->
@@ -78,7 +78,7 @@
                 class="mb-1 flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 dark:hover:bg-neutral-800"
                 @click="close"
               >
-                <Icon name="mdi:close" size="22" />
+                <Icon name="solar:close-circle-linear" size="22" />
               </button>
             </div>
           </div>
@@ -92,7 +92,7 @@
             <div class="flex shrink-0 items-center gap-2 px-4 py-3">
               <div class="relative flex-1">
                 <Icon
-                  name="mdi:magnify"
+                  name="solar:magnifer-linear"
                   size="18"
                   class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
                 />
@@ -108,7 +108,7 @@
                 class="flex h-9 w-9 items-center justify-center rounded-xl bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700"
                 @click="close"
               >
-                <Icon name="mdi:pencil-outline" size="20" />
+                <Icon name="solar:pen-linear" size="20" />
               </NuxtLink>
             </div>
 
@@ -124,7 +124,7 @@
                 v-else-if="filteredConversations.length === 0"
                 class="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-neutral-500"
               >
-                <Icon name="mdi:message-outline" size="48" class="mb-3" />
+                <Icon name="solar:chat-round-line-linear" size="48" class="mb-3" />
                 <p class="text-sm">No messages yet</p>
                 <NuxtLink
                   to="/messages/new"

@@ -49,7 +49,7 @@
             class="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-gray-400 hover:bg-gray-100 dark:hover:bg-neutral-700"
             @click="clearOwner"
           >
-            <Icon name="mdi:close" size="15" />
+            <Icon name="solar:close-circle-linear" size="15" />
           </button>
 
           <!-- Results -->
@@ -108,7 +108,7 @@
             <img v-if="form.iconUrl" :src="form.iconUrl" class="h-full w-full object-cover" alt="" />
             <div v-else-if="uploading.icon" class="h-6 w-6 animate-spin rounded-full border-2 border-brand border-t-transparent" />
             <div v-else class="flex flex-col items-center gap-1 text-gray-400 dark:text-neutral-500">
-              <Icon name="mdi:image-plus-outline" size="24" />
+              <Icon name="solar:gallery-add-linear" size="24" />
               <span class="text-[11px]">Upload icon</span>
             </div>
             <button
@@ -117,7 +117,7 @@
               class="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
               @click.stop="form.iconUrl = ''"
             >
-              <Icon name="mdi:close" size="13" />
+              <Icon name="solar:close-circle-linear" size="13" />
             </button>
           </div>
         </div>
@@ -131,7 +131,7 @@
             <img v-if="form.bannerUrl" :src="form.bannerUrl" class="h-full w-full object-cover" alt="" />
             <div v-else-if="uploading.banner" class="h-6 w-6 animate-spin rounded-full border-2 border-brand border-t-transparent" />
             <div v-else class="flex flex-col items-center gap-1 text-gray-400 dark:text-neutral-500">
-              <Icon name="mdi:image-plus-outline" size="24" />
+              <Icon name="solar:gallery-add-linear" size="24" />
               <span class="text-[11px]">Upload banner</span>
             </div>
             <button
@@ -140,7 +140,7 @@
               class="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
               @click.stop="form.bannerUrl = ''"
             >
-              <Icon name="mdi:close" size="13" />
+              <Icon name="solar:close-circle-linear" size="13" />
             </button>
           </div>
         </div>

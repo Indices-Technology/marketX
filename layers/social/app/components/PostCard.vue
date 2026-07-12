@@ -1,9 +1,10 @@
 <template>
   <article
     ref="cardRef"
-    class="w-full overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-950"
+    class="w-full bg-white dark:bg-neutral-950"
   >
-    <!-- ─── Content-type accent stripe ──────────────────────────────── -->
+    <!-- ─── Content-type accent stripe — kept as the content-type signal
+         and the visual separator between posts now the card box is gone ── -->
     <div class="h-[3px] w-full" :class="accentBgClass" />
 
     <!-- ─── Header ──────────────────────────────────────────────────── -->
@@ -303,29 +304,29 @@ const CONTENT_TYPE_MAP: Record<
   }
 > = {
   EXPERIENCE: {
-    icon: 'mdi:star-outline',
+    icon: 'solar:star-linear',
     accent: 'bg-blue-500',
     badge: 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300',
   },
   INSPIRATION: {
-    icon: 'mdi:lightbulb-outline',
+    icon: 'solar:lightbulb-linear',
     accent: 'bg-amber-400',
     badge: 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300',
   },
   COMMERCE: {
-    icon: 'mdi:shopping-outline',
+    icon: 'solar:bag-4-linear',
     accent: 'bg-emerald-500',
     badge:
       'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300',
   },
   EDUCATIONAL: {
-    icon: 'mdi:school-outline',
+    icon: 'solar:square-academic-cap-2-linear',
     accent: 'bg-orange-500',
     badge:
       'bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300',
   },
   ENTERTAINMENT: {
-    icon: 'mdi:music-note',
+    icon: 'solar:music-note-2-bold',
     accent: 'bg-pink-500',
     badge: 'bg-pink-100 text-pink-700 dark:bg-pink-950 dark:text-pink-300',
   },
@@ -334,7 +335,7 @@ const CONTENT_TYPE_MAP: Record<
 const contentTypeDef = computed(
   () =>
     CONTENT_TYPE_MAP[props.post.contentType] ?? {
-      icon: 'mdi:tag-outline',
+      icon: 'solar:tag-linear',
       accent: 'bg-gray-300 dark:bg-neutral-700',
       badge:
         'bg-gray-100 text-gray-600 dark:bg-neutral-800 dark:text-neutral-400',

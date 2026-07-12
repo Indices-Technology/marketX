@@ -23,7 +23,7 @@
         class="flex items-center gap-1.5 rounded-lg border border-brand/30 bg-brand/5 px-3 py-1.5 text-sm font-semibold text-brand transition-colors hover:bg-brand/10"
         @click="addVariant"
       >
-        <Icon name="mdi:plus" size="15" /> Add Variant
+        <Icon name="solar:add-circle-linear" size="15" /> Add Variant
       </button>
     </div>
 
@@ -75,7 +75,7 @@
           class="mt-6 flex-shrink-0 rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
           @click="removeVariant(i)"
         >
-          <Icon name="mdi:trash-can-outline" size="16" />
+          <Icon name="solar:trash-bin-trash-linear" size="16" />
         </button>
       </div>
     </div>
@@ -86,7 +86,7 @@
       class="flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed border-gray-200 py-8 transition-colors hover:border-brand hover:bg-brand/5 dark:border-neutral-700"
       @click="addVariant"
     >
-      <Icon name="mdi:tag-multiple-outline" size="28" class="text-gray-400 dark:text-neutral-500" />
+      <Icon name="solar:tag-horizontal-linear" size="28" class="text-gray-400 dark:text-neutral-500" />
       <span class="text-sm font-medium text-gray-500 dark:text-neutral-400">
         Click to add your first variant
       </span>

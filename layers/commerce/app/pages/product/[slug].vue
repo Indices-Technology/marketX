@@ -46,7 +46,7 @@
       class="flex min-h-[60vh] flex-col items-center justify-center gap-4 text-center"
     >
       <Icon
-        name="mdi:shopping-outline"
+        name="solar:bag-4-linear"
         size="56"
         class="text-gray-300 dark:text-neutral-600"
       />
@@ -66,7 +66,7 @@
         class="mb-5 flex items-center gap-1.5 text-sm text-gray-500 transition-colors hover:text-gray-900 dark:hover:text-neutral-100"
         @click="$router.back()"
       >
-        <Icon name="mdi:arrow-left" size="18" />
+        <Icon name="solar:arrow-left-linear" size="18" />
         Back
       </button>
 
@@ -109,14 +109,14 @@
                     (currentIndex - 1 + mediaItems.length) % mediaItems.length
                 "
               >
-                <Icon name="mdi:chevron-left" size="22" />
+                <Icon name="solar:alt-arrow-left-linear" size="22" />
               </button>
               <button
                 aria-label="Next image"
                 class="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-md hover:bg-black/50"
                 @click="currentIndex = (currentIndex + 1) % mediaItems.length"
               >
-                <Icon name="mdi:chevron-right" size="22" />
+                <Icon name="solar:alt-arrow-right-linear" size="22" />
               </button>
               <div
                 class="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5"
@@ -164,7 +164,7 @@
               />
               <Icon
                 v-if="item.type === 'VIDEO'"
-                name="mdi:play-circle"
+                name="solar:play-circle-bold"
                 size="14"
                 class="pointer-events-none absolute inset-0 m-auto text-white drop-shadow"
               />
@@ -191,7 +191,7 @@
                   class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30"
                 >
                   <Icon
-                    name="mdi:truck-delivery-outline"
+                    name="solar:delivery-linear"
                     size="15"
                     class="text-emerald-600 dark:text-emerald-400"
                   />
@@ -234,7 +234,7 @@
                     class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand/10"
                   >
                     <Icon
-                      name="mdi:tag-multiple-outline"
+                      name="solar:tag-horizontal-linear"
                       size="15"
                       class="text-brand"
                     />
@@ -264,7 +264,7 @@
                   class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gray-100 dark:bg-neutral-700"
                 >
                   <Icon
-                    name="mdi:package-variant-closed"
+                    name="solar:box-linear"
                     size="15"
                     class="text-gray-500 dark:text-neutral-400"
                   />
@@ -290,7 +290,7 @@
                   class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gray-100 dark:bg-neutral-700"
                 >
                   <Icon
-                    name="mdi:truck-remove-outline"
+                    name="solar:delivery-linear"
                     size="15"
                     class="text-gray-400 dark:text-neutral-500"
                   />
@@ -342,7 +342,7 @@
                   v-else
                   class="flex h-12 w-12 items-center justify-center rounded-xl bg-brand/10"
                 >
-                  <Icon name="mdi:store-outline" size="22" class="text-brand" />
+                  <Icon name="solar:shop-2-linear" size="22" class="text-brand" />
                 </div>
               </NuxtLink>
 
@@ -359,7 +359,7 @@
                     v-if="product.seller.is_verified"
                     class="flex items-center gap-0.5 rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
                   >
-                    <Icon name="mdi:check-decagram" size="10" />
+                    <Icon name="solar:verified-check-bold" size="10" />
                     Verified
                   </span>
                   <span
@@ -377,7 +377,7 @@
                     v-if="product.seller.averageRating"
                     class="flex items-center gap-0.5"
                   >
-                    <Icon name="mdi:star" size="11" class="text-amber-400" />
+                    <Icon name="solar:star-bold" size="11" class="text-amber-400" />
                     {{ product.seller.averageRating.toFixed(1) }}
                     <span class="opacity-60"
                       >({{ product.seller.totalReviews }})</span
@@ -391,7 +391,7 @@
                     "
                     class="flex items-center gap-0.5"
                   >
-                    <Icon name="mdi:map-marker-outline" size="11" />
+                    <Icon name="solar:map-point-linear" size="11" />
                     {{
                       product.seller.locationLabel ||
                       product.seller.store_location
@@ -399,7 +399,7 @@
                   </span>
                   <!-- Member since -->
                   <span class="flex items-center gap-0.5">
-                    <Icon name="mdi:calendar-outline" size="11" />
+                    <Icon name="solar:calendar-linear" size="11" />
                     Since {{ sellerMemberSince }}
                   </span>
                   <!-- POD badge -->
@@ -407,7 +407,7 @@
                     v-if="product.seller.pod_enabled"
                     class="flex items-center gap-0.5 text-emerald-600 dark:text-emerald-400"
                   >
-                    <Icon name="mdi:truck-delivery-outline" size="11" />
+                    <Icon name="solar:delivery-linear" size="11" />
                     Pay on delivery
                   </span>
                 </div>
@@ -420,7 +420,7 @@
                 :to="`/sellers/profile/${product.seller.store_slug}`"
                 class="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-gray-200 py-2 text-xs font-semibold text-gray-700 transition-colors hover:border-brand hover:text-brand dark:border-neutral-700 dark:text-neutral-300"
               >
-                <Icon name="mdi:store-outline" size="14" />
+                <Icon name="solar:shop-2-linear" size="14" />
                 View Store
               </NuxtLink>
               <button
@@ -430,7 +430,7 @@
               >
                 <Icon
                   :name="
-                    messageLoading ? 'eos-icons:loading' : 'mdi:message-outline'
+                    messageLoading ? 'eos-icons:loading' : 'solar:chat-round-line-linear'
                   "
                   size="14"
                   :class="messageLoading ? 'animate-spin' : ''"
@@ -448,7 +448,7 @@
               :to="`/squares/${product.square.slug}`"
               class="mb-1.5 inline-flex items-center gap-1 rounded-full bg-brand/5 px-2.5 py-1 text-[12px] font-medium text-brand transition hover:bg-brand/10"
             >
-              <Icon name="mdi:store-marker-outline" size="13" />
+              <Icon name="solar:shop-2-linear" size="13" />
               {{ product.square.name }}
             </NuxtLink>
             <h1
@@ -465,7 +465,7 @@
                 href="#reviews"
                 class="flex items-center gap-0.5 font-semibold text-amber-500"
               >
-                <Icon name="mdi:star" size="12" />
+                <Icon name="solar:star-bold" size="12" />
                 {{ product.averageRating.toFixed(1) }}
                 <span class="font-normal text-gray-500 dark:text-neutral-400"
                   >({{ product.totalReviews ?? 0 }} reviews)</span
@@ -475,7 +475,7 @@
                 v-if="product.viewCount > 0"
                 class="flex items-center gap-1"
               >
-                <Icon name="mdi:eye-outline" size="12" />
+                <Icon name="solar:eye-linear" size="12" />
                 {{ product.viewCount.toLocaleString() }}
                 {{ product.viewCount === 1 ? 'view' : 'views' }}
               </span>
@@ -542,7 +542,7 @@
                   : 'text-red-500'
             "
           >
-            <Icon name="mdi:circle" size="10" class="mr-1" />
+            <Icon name="solar:record-circle-bold" size="10" class="mr-1" />
             {{
               selectedVariant.stock > 5
                 ? 'In stock'
@@ -587,7 +587,7 @@
             >
               <Icon
                 v-if="!addingToCart"
-                name="mdi:cart-plus"
+                name="solar:cart-plus-linear"
                 size="16"
                 class="mr-1"
               />
@@ -604,7 +604,7 @@
               @click="copyLink"
             >
               <Icon
-                :name="copied ? 'mdi:check' : 'mdi:link-variant'"
+                :name="copied ? 'solar:check-circle-linear' : 'solar:link-round-linear'"
                 size="15"
                 class="mr-1"
               />
@@ -616,7 +616,7 @@
               class="flex-1 touch-manipulation"
               @click="handleShare"
             >
-              <Icon name="mdi:share-variant-outline" size="15" class="mr-1" />
+              <Icon name="solar:share-linear" size="15" class="mr-1" />
               Share
             </BaseButton>
             <BaseButton
@@ -626,7 +626,7 @@
               title="Ask Dasah about this product"
               @click="askDasah"
             >
-              <Icon name="mdi:robot-happy-outline" size="16" />
+              <Icon name="solar:programming-linear" size="16" />
             </BaseButton>
           </div>
 
@@ -636,7 +636,7 @@
             class="rounded-2xl border border-brand/20 bg-brand/5 p-4 dark:border-brand/30 dark:bg-brand/10"
           >
             <div class="mb-2 flex items-center gap-2">
-              <Icon name="mdi:link-variant-plus" size="15" class="text-brand" />
+              <Icon name="solar:link-round-linear" size="15" class="text-brand" />
               <p class="text-xs font-bold uppercase tracking-wide text-brand">
                 Your Affiliate Link
               </p>
@@ -659,7 +659,7 @@
                 @click="copyAffiliateLink"
               >
                 <Icon
-                  :name="copiedAffiliate ? 'mdi:check' : 'mdi:content-copy'"
+                  :name="copiedAffiliate ? 'solar:check-circle-linear' : 'solar:copy-linear'"
                   size="13"
                   class="mr-1"
                 />
@@ -672,7 +672,7 @@
           <div class="grid grid-cols-2 gap-2">
             <div class="trust-chip">
               <Icon
-                name="mdi:shield-check-outline"
+                name="solar:shield-check-linear"
                 size="15"
                 class="shrink-0 text-emerald-500"
               />
@@ -680,7 +680,7 @@
             </div>
             <div class="trust-chip">
               <Icon
-                name="mdi:lock-outline"
+                name="solar:lock-keyhole-linear"
                 size="15"
                 class="shrink-0 text-emerald-500"
               />
@@ -688,7 +688,7 @@
             </div>
             <div class="trust-chip">
               <Icon
-                name="mdi:backup-restore"
+                name="solar:restart-linear"
                 size="15"
                 class="shrink-0 text-emerald-500"
               />
@@ -696,7 +696,7 @@
             </div>
             <div class="trust-chip">
               <Icon
-                name="mdi:magnify-scan"
+                name="solar:magnifer-linear"
                 size="15"
                 class="shrink-0 text-emerald-500"
               />
@@ -712,7 +712,7 @@
             <details v-if="product.description" open class="group">
               <summary class="acc-summary">
                 Description
-                <Icon name="mdi:chevron-down" size="18" class="acc-chev" />
+                <Icon name="solar:alt-arrow-down-linear" size="18" class="acc-chev" />
               </summary>
               <div class="px-4 pb-4">
                 <!-- eslint-disable-next-line vue/no-v-html — sanitized by DOMPurify -->
@@ -727,7 +727,7 @@
             <details v-if="productDetails.length" class="group">
               <summary class="acc-summary">
                 Specifications
-                <Icon name="mdi:chevron-down" size="18" class="acc-chev" />
+                <Icon name="solar:alt-arrow-down-linear" size="18" class="acc-chev" />
               </summary>
               <div class="px-4 pb-4">
                 <dl class="grid grid-cols-2 gap-x-4 gap-y-3">
@@ -772,7 +772,7 @@
             <details class="group">
               <summary class="acc-summary">
                 Delivery &amp; Returns
-                <Icon name="mdi:chevron-down" size="18" class="acc-chev" />
+                <Icon name="solar:alt-arrow-down-linear" size="18" class="acc-chev" />
               </summary>
               <div
                 class="space-y-2 px-4 pb-4 text-[13px] text-gray-600 dark:text-neutral-300"
@@ -782,7 +782,7 @@
                   class="flex items-start gap-1.5"
                 >
                   <Icon
-                    name="mdi:truck-delivery-outline"
+                    name="solar:delivery-linear"
                     size="15"
                     class="mt-0.5 shrink-0 text-emerald-500"
                   />
@@ -799,7 +799,7 @@
                 </p>
                 <p class="flex items-start gap-1.5">
                   <Icon
-                    name="mdi:magnify-scan"
+                    name="solar:magnifer-linear"
                     size="15"
                     class="mt-0.5 shrink-0 text-emerald-500"
                   />
@@ -808,7 +808,7 @@
                 </p>
                 <p class="flex items-start gap-1.5">
                   <Icon
-                    name="mdi:backup-restore"
+                    name="solar:restart-linear"
                     size="15"
                     class="mt-0.5 shrink-0 text-emerald-500"
                   />
@@ -817,7 +817,7 @@
                 </p>
                 <p class="flex items-start gap-1.5">
                   <Icon
-                    name="mdi:shield-check-outline"
+                    name="solar:shield-check-linear"
                     size="15"
                     class="mt-0.5 shrink-0 text-emerald-500"
                   />
@@ -926,7 +926,7 @@
         >
           <Icon
             v-if="!addingToCart"
-            name="mdi:cart-plus"
+            name="solar:cart-plus-linear"
             size="16"
             class="mr-1"
           />
@@ -1127,15 +1127,15 @@ const podZones = computed<string[]>(() => {
 
 const trustTips = [
   {
-    icon: 'mdi:shield-check-outline',
+    icon: 'solar:shield-check-linear',
     text: 'Secure checkout — payments are encrypted',
   },
   {
-    icon: 'mdi:eye-check-outline',
+    icon: 'solar:eye-linear',
     text: 'Inspect item before paying on delivery',
   },
-  { icon: 'mdi:cash-refund', text: 'Buyer protection on all orders' },
-  { icon: 'mdi:account-check-outline', text: 'Only pay when satisfied' },
+  { icon: 'solar:money-bag-linear', text: 'Buyer protection on all orders' },
+  { icon: 'solar:user-check-linear', text: 'Only pay when satisfied' },
 ]
 
 // ── Seller ───────────────────────────────────────────────────────────────────

@@ -75,7 +75,7 @@
   >
     <!-- ─── DESKTOP LEFT SIDEBAR ─────────────────────────────────────────────── -->
     <aside
-      class="scrollbar-hide fixed left-0 top-0 z-20 hidden h-full w-20 border-r border-gray-200 bg-white md:block xl:w-72 dark:border-neutral-800 dark:bg-neutral-900"
+      class="scrollbar-hide fixed left-0 top-0 z-20 hidden h-full w-20 bg-white md:block xl:w-72 dark:bg-neutral-900"
     >
       <SideNav
         @create="showCreateModal = true"
@@ -110,7 +110,7 @@
         <!-- ─── RIGHT SIDEBAR (Desktop) ──────────────────────────────────────── -->
         <aside
           v-if="showRightSidebar"
-          class="scrollbar-hide hidden h-[100dvh] shrink-0 overflow-y-auto border-l border-gray-200 bg-white p-4 lg:block dark:border-neutral-800 dark:bg-neutral-900"
+          class="scrollbar-hide hidden h-[100dvh] shrink-0 overflow-y-auto p-4 lg:block"
           :class="narrowSidebar ? 'w-64' : 'w-[420px]'"
         >
           <slot name="right-sidebar">
@@ -156,7 +156,7 @@
               class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/20"
             >
               <Icon
-                name="mdi:store-plus-outline"
+                name="solar:shop-2-linear"
                 size="16"
                 class="text-white"
               />
@@ -180,7 +180,7 @@
               aria-label="Dismiss"
               @click="dismissSellerBanner = true"
             >
-              <Icon name="mdi:close" size="16" />
+              <Icon name="solar:close-circle-linear" size="16" />
             </button>
           </div>
         </div>

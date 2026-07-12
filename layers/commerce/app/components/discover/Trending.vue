@@ -12,7 +12,7 @@
     <section v-if="isBrowseTab && (marketsLoading || marketStrip.length)">
       <div class="mb-3 flex items-center justify-between">
         <div class="flex items-center gap-2">
-          <Icon name="mdi:storefront" size="18" class="text-brand" />
+          <Icon name="solar:shop-bold" size="18" class="text-brand" />
           <h2 class="text-base font-bold text-gray-900 dark:text-white">
             Markets near you
           </h2>
@@ -48,7 +48,7 @@
     <section v-if="isBrowseTab && featuredMarket && marketProducts.length">
       <div class="mb-3 flex items-center justify-between">
         <div class="flex items-center gap-2">
-          <Icon name="mdi:store-marker-outline" size="18" class="text-brand" />
+          <Icon name="solar:shop-2-linear" size="18" class="text-brand" />
           <h2 class="text-base font-bold text-gray-900 dark:text-white">
             Fresh from {{ featuredMarket.name }}
           </h2>
@@ -83,7 +83,7 @@
     <section>
       <div class="mb-3 flex items-center justify-between">
         <div class="flex items-center gap-2">
-          <Icon name="mdi:lightning-bolt" size="18" class="text-amber-400" />
+          <Icon name="solar:bolt-bold" size="18" class="text-amber-400" />
           <h2
             class="text-base font-bold text-gray-900 dark:text-white"
           >
@@ -127,7 +127,7 @@
     <section>
       <div class="mb-3 flex items-center justify-between">
         <div class="flex items-center gap-2">
-          <Icon name="mdi:tag-heart-outline" size="18" class="text-brand" />
+          <Icon name="solar:tag-linear" size="18" class="text-brand" />
           <h2
             class="text-base font-bold text-gray-900 dark:text-white"
           >
@@ -171,7 +171,7 @@
     <section>
       <div class="mb-3 flex items-center justify-between">
         <div class="flex items-center gap-2">
-          <Icon name="mdi:recycle" size="18" class="text-emerald-500" />
+          <Icon name="solar:recive-square-linear" size="18" class="text-emerald-500" />
           <h2
             class="text-base font-bold text-gray-900 dark:text-white"
           >
@@ -233,7 +233,7 @@
     <template v-else>
       <section v-if="trendingTags.length">
         <div class="mb-3 flex items-center gap-2">
-          <Icon name="mdi:fire" size="18" class="text-orange-500" />
+          <Icon name="solar:fire-bold" size="18" class="text-orange-500" />
           <h2
             class="text-base font-bold text-gray-900 dark:text-white"
           >
@@ -262,7 +262,7 @@
       <section v-if="trendingProducts.length">
         <div class="mb-3 flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <Icon name="mdi:trending-up" size="18" class="text-brand" />
+            <Icon name="solar:graph-up-linear" size="18" class="text-brand" />
             <h2
               class="text-base font-bold text-gray-900 dark:text-white"
             >
@@ -291,7 +291,7 @@
       <section v-if="featuredSellers.length">
         <div class="mb-3 flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <Icon name="mdi:store-check-outline" size="18" class="text-brand" />
+            <Icon name="solar:shop-2-linear" size="18" class="text-brand" />
             <h2
               class="text-base font-bold text-gray-900 dark:text-white"
             >
@@ -331,7 +331,7 @@
                   v-else
                   class="flex h-full w-full items-center justify-center bg-brand"
                 >
-                  <Icon name="mdi:storefront" size="20" class="text-white" />
+                  <Icon name="solar:shop-bold" size="20" class="text-white" />
                 </div>
               </div>
               <div class="w-full min-w-0">
@@ -341,7 +341,7 @@
                   <span class="truncate">{{ seller.store_name }}</span>
                   <Icon
                     v-if="seller.is_verified"
-                    name="mdi:check-decagram"
+                    name="solar:verified-check-bold"
                     size="11"
                     class="shrink-0 text-blue-500"
                   />
@@ -382,7 +382,7 @@
                 v-else
                 class="flex h-full w-full items-center justify-center bg-brand"
               >
-                <Icon name="mdi:storefront" size="22" class="text-white" />
+                <Icon name="solar:shop-bold" size="22" class="text-white" />
               </div>
             </div>
             <div class="w-full min-w-0">
@@ -392,7 +392,7 @@
                 <span class="truncate">{{ seller.store_name }}</span>
                 <Icon
                   v-if="seller.is_verified"
-                  name="mdi:check-decagram"
+                  name="solar:verified-check-bold"
                   size="12"
                   class="shrink-0 text-blue-500"
                 />
@@ -421,7 +421,7 @@
         class="py-24 text-center"
       >
         <Icon
-          name="mdi:fire-off"
+          name="solar:fire-linear"
           size="48"
           class="mx-auto mb-3 text-gray-300 dark:text-neutral-600"
         />

@@ -7,11 +7,11 @@
           class="flex items-center gap-4 border-b border-gray-200 p-4 dark:border-neutral-800"
         >
           <button class="md:hidden" @click="$emit('close')">
-            <Icon name="mdi:arrow-left" size="24" />
+            <Icon name="solar:arrow-left-linear" size="24" />
           </button>
           <div class="relative flex-1">
             <Icon
-              name="mdi:magnify"
+              name="solar:magnifer-linear"
               size="20"
               class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
             />
@@ -28,7 +28,7 @@
             class="text-gray-500 dark:text-neutral-400"
             @click="searchQuery = ''"
           >
-            <Icon name="mdi:close" size="20" />
+            <Icon name="solar:close-circle-linear" size="20" />
           </button>
         </div>
 
@@ -39,7 +39,7 @@
             v-if="!searchQuery"
             class="py-20 text-center text-gray-500 dark:text-neutral-400"
           >
-            <Icon name="mdi:magnify" size="48" class="mx-auto mb-3" />
+            <Icon name="solar:magnifer-linear" size="48" class="mx-auto mb-3" />
             <p>Search for users, stores, products, or posts</p>
           </div>
 
@@ -53,7 +53,7 @@
             v-else-if="searchQuery && !hasResults"
             class="py-20 text-center text-gray-500 dark:text-neutral-400"
           >
-            <Icon name="mdi:magnify-close" size="48" class="mx-auto mb-3" />
+            <Icon name="solar:magnifer-linear" size="48" class="mx-auto mb-3" />
             <p>No results for "{{ searchQuery }}"</p>
           </div>
 
@@ -83,7 +83,7 @@
                     v-else
                     class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200 dark:bg-neutral-700"
                   >
-                    <Icon name="mdi:account" size="20" class="text-gray-400" />
+                    <Icon name="solar:user-linear" size="20" class="text-gray-400" />
                   </div>
                   <div class="min-w-0 flex-1">
                     <p
@@ -126,7 +126,7 @@
                     />
                     <Icon
                       v-else
-                      name="mdi:store"
+                      name="solar:shop-2-bold"
                       size="20"
                       class="text-gray-400"
                     />
@@ -195,7 +195,7 @@
                     />
                     <Icon
                       v-else
-                      name="mdi:package-variant"
+                      name="solar:box-bold"
                       size="24"
                       class="m-auto mt-3 text-gray-400"
                     />
@@ -244,7 +244,7 @@
                     />
                     <Icon
                       v-else
-                      name="mdi:post-outline"
+                      name="solar:notebook-linear"
                       size="24"
                       class="m-auto mt-3 text-gray-400"
                     />

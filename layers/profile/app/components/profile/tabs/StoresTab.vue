@@ -25,7 +25,7 @@
       class="flex flex-col items-center justify-center gap-3 py-16"
     >
       <Icon
-        name="mdi:store-outline"
+        name="solar:shop-2-linear"
         size="48"
         class="text-gray-300 dark:text-neutral-600"
       />
@@ -76,7 +76,7 @@
               v-if="seller.is_verified"
               class="flex items-center gap-0.5 rounded-full bg-blue-500 px-2 py-0.5 text-[10px] font-bold text-white"
             >
-              <Icon name="mdi:check-circle" size="10" />
+              <Icon name="solar:check-circle-bold" size="10" />
               Verified
             </span>
           </div>
@@ -101,7 +101,7 @@
                 class="flex h-full w-full items-center justify-center"
               >
                 <Icon
-                  name="mdi:store"
+                  name="solar:shop-2-bold"
                   size="20"
                   class="text-gray-400 dark:text-neutral-400"
                 />
@@ -168,7 +168,7 @@
           class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 transition-colors group-hover:bg-brand/10 dark:bg-neutral-700"
         >
           <Icon
-            name="mdi:plus"
+            name="solar:add-circle-linear"
             size="22"
             class="text-gray-400 transition-colors group-hover:text-brand dark:text-neutral-500"
           />

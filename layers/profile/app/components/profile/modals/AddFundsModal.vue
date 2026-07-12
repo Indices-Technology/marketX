@@ -85,7 +85,7 @@
               v-if="selectedMethod === method.id"
               class="flex h-5 w-5 items-center justify-center rounded-full bg-brand"
             >
-              <Icon name="mdi:check" size="16" class="text-white" />
+              <Icon name="solar:check-circle-linear" size="16" class="text-white" />
             </div>
           </button>
         </div>
@@ -109,7 +109,7 @@
 
       <!-- Security Note -->
       <p class="text-center text-xs text-gray-500 dark:text-neutral-400">
-        <Icon name="mdi:shield-check" size="14" class="inline" />
+        <Icon name="solar:shield-check-bold" size="14" class="inline" />
         Your payment information is secure and encrypted
       </p>
     </div>
@@ -148,21 +148,21 @@ const paymentMethods = [
     id: 'card',
     name: 'Credit/Debit Card',
     description: 'Visa, Mastercard, Amex',
-    icon: 'mdi:credit-card',
+    icon: 'solar:card-bold',
     color: 'bg-blue-500',
   },
   {
     id: 'paypal',
     name: 'PayPal',
     description: 'Pay with your PayPal account',
-    icon: 'mdi:paypal',
+    icon: 'simple-icons:paypal',
     color: 'bg-[#0070ba]',
   },
   {
     id: 'bank',
     name: 'Bank Transfer',
     description: 'Direct bank transfer',
-    icon: 'mdi:bank',
+    icon: 'solar:banknote-2-bold',
     color: 'bg-green-500',
   },
 ]

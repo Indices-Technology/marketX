@@ -24,7 +24,7 @@
           :aria-label="showPicker ? 'Close emoji picker' : 'Add emoji'"
         >
           <Icon
-            :name="showPicker ? 'mdi:emoticon' : 'mdi:emoticon-outline'"
+            :name="showPicker ? 'solar:emoji-funny-circle-bold' : 'solar:emoji-funny-circle-linear'"
             size="20"
           />
         </button>

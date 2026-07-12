@@ -14,7 +14,7 @@
           class="flex h-7 w-7 items-center justify-center rounded-lg bg-brand/10"
         >
           <Icon
-            name="mdi:shopping-outline"
+            name="solar:bag-4-linear"
             size="16"
             class="text-gray-500 dark:text-neutral-400"
           />
@@ -29,7 +29,7 @@
         class="flex items-center gap-0.5 text-[12px] font-medium text-gray-400 transition hover:text-gray-700 dark:text-neutral-500 dark:hover:text-neutral-300"
       >
         See all
-        <Icon name="mdi:arrow-right" size="14" />
+        <Icon name="solar:arrow-right-linear" size="14" />
       </NuxtLink>
     </div>
 
@@ -83,7 +83,7 @@
             />
             <div v-else class="flex h-full w-full items-center justify-center">
               <Icon
-                name="mdi:image-outline"
+                name="solar:gallery-linear"
                 size="28"
                 class="text-gray-300 dark:text-neutral-700"
               />

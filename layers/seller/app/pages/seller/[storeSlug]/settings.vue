@@ -23,7 +23,7 @@
         v-if="saveSuccess"
         class="mb-4 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-[13px] text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400"
       >
-        <Icon name="mdi:check-circle" size="16" />
+        <Icon name="solar:check-circle-bold" size="16" />
         Store updated successfully!
       </div>
 
@@ -69,7 +69,7 @@
                 v-if="!bannerPreview"
                 class="absolute inset-0 flex flex-col items-center justify-center gap-1 text-gray-400"
               >
-                <Icon name="mdi:image-plus-outline" size="28" />
+                <Icon name="solar:gallery-add-linear" size="28" />
                 <span class="text-[11px] font-medium">Upload banner</span>
               </div>
               <div
@@ -77,7 +77,7 @@
                 class="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/30"
               >
                 <Icon
-                  name="mdi:pencil"
+                  name="solar:pen-bold"
                   size="22"
                   class="text-white opacity-0 transition-opacity group-hover:opacity-100"
                 />
@@ -117,7 +117,7 @@
                 v-else
                 class="flex h-full w-full flex-col items-center justify-center text-gray-400"
               >
-                <Icon name="mdi:store-plus-outline" size="22" />
+                <Icon name="solar:shop-2-linear" size="22" />
               </div>
               <div
                 v-if="isUploadingLogo"
@@ -193,9 +193,7 @@
             <div
               class="w-full select-none rounded-xl border border-gray-200 bg-gray-100 px-4 py-2.5 text-[14px] text-gray-500 dark:border-neutral-700 dark:bg-neutral-800/50 dark:text-neutral-400"
             >
-              {{
-                $config.public.brandDomain || 'marketx.africa'
-              }}/sellers/profile/{{ storeSlug }}
+              {{ storeDisplayUrl(storeSlug, $config.public.brandDomain) }}
             </div>
           </div>
 
@@ -310,7 +308,7 @@
             >
               <Icon
                 :name="
-                  form.hideLocation ? 'mdi:eye-off-outline' : 'mdi:eye-outline'
+                  form.hideLocation ? 'solar:eye-closed-linear' : 'solar:eye-linear'
                 "
                 size="15"
               />
@@ -374,7 +372,7 @@
                 @click="detectLocation"
               >
                 <Icon
-                  :name="gettingLocation ? 'mdi:loading' : 'mdi:crosshairs-gps'"
+                  :name="gettingLocation ? 'solar:refresh-linear' : 'solar:gps-linear'"
                   size="13"
                   :class="gettingLocation && 'animate-spin'"
                 />
@@ -528,7 +526,7 @@
             v-if="!form.shipFromAddress || !form.shipFromCity"
             class="flex items-start gap-2 rounded-xl border border-amber-100 bg-amber-50 px-3.5 py-3 text-[12px] text-amber-700 dark:border-amber-900/30 dark:bg-amber-900/10 dark:text-amber-400"
           >
-            <Icon name="mdi:alert-outline" size="14" class="mt-0.5 shrink-0" />
+            <Icon name="solar:danger-triangle-linear" size="14" class="mt-0.5 shrink-0" />
             Shipping rates won't be shown at checkout until you save your
             ship-from address and city.
           </div>
@@ -555,7 +553,7 @@
               v-if="!form.shipFromAddress || !form.shipFromCity"
               class="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-[12px] text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-400"
             >
-              <Icon name="mdi:alert-outline" size="15" class="mt-0.5 shrink-0" />
+              <Icon name="solar:danger-triangle-linear" size="15" class="mt-0.5 shrink-0" />
               <span>
                 Pay on Delivery is fulfilled by <strong>GIG Logistics</strong>,
                 which picks up from your <strong>Shipping Origin</strong>. Add
@@ -692,7 +690,7 @@
           <div class="flex items-center justify-between gap-3">
             <div class="flex items-start gap-2">
               <Icon
-                name="mdi:movie-edit-outline"
+                name="solar:clapperboard-edit-linear"
                 size="20"
                 class="mt-0.5 shrink-0 text-brand"
               />
@@ -744,7 +742,7 @@
               class="relative flex h-24 items-end justify-end overflow-hidden rounded-xl bg-gradient-to-br from-neutral-700 to-neutral-900 p-2"
             >
               <Icon
-                name="mdi:play-circle-outline"
+                name="solar:play-circle-linear"
                 size="28"
                 class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white/20"
               />
@@ -782,6 +780,7 @@ import { useSellerManagement } from '~~/layers/seller/app/composables/useSellerM
 import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { useMediaUpload } from '~~/layers/core/app/composables/useMediaUpload'
 import { useGeocode } from '~~/layers/core/app/composables/useGeocode'
+import { storeDisplayUrl } from '~~/layers/core/app/utils/storeUrl'
 import { SUPPORTED_CURRENCIES } from '~~/shared/utils/currency'
 import { NIGERIA_STATES } from '~~/shared/utils/locations'
 
