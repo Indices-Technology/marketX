@@ -1,13 +1,11 @@
 <template>
   <NuxtLink
     :to="`/squares/${square.slug}`"
-    class="group relative block overflow-hidden rounded-2xl border bg-white transition-all hover:shadow-md dark:bg-neutral-900"
+    class="group relative block overflow-hidden rounded-2xl border border-gray-100 bg-white transition-all hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900"
     :class="[
       variant === 'compact' ? 'w-36 shrink-0' : '',
       variant === 'spotlight' ? 'w-60 shrink-0' : '',
-      variant === 'full' ? 'flex flex-col' : '',
     ]"
-    :style="`border-color: ${accent}44`"
   >
     <!-- ── COMPACT LAYOUT ──────────────────────────────────────────────────── -->
     <template v-if="variant === 'compact'">
@@ -33,13 +31,7 @@
           />
           <div
             v-else
-            class="h-full w-full"
-            :style="`background: linear-gradient(135deg, ${accent}55, ${accent}22)`"
-          />
-          <!-- Bottom gradient scrim -->
-          <div
-            class="pointer-events-none absolute inset-x-0 bottom-0 h-8"
-            :style="`background: linear-gradient(to top, ${accent}55, transparent)`"
+            class="h-full w-full bg-gradient-to-br from-gray-100 to-gray-50 dark:from-neutral-800 dark:to-neutral-900"
           />
         </div>
         <!-- Icon chip straddles the banner/body seam -->
@@ -64,8 +56,7 @@
           />
           <span
             v-else
-            class="text-[10px] font-black leading-none"
-            :style="`color: ${accent}`"
+            class="text-[10px] font-black leading-none text-gray-500 dark:text-neutral-400"
           >
             {{ square.name.slice(0, 2).toUpperCase() }}
           </span>
@@ -109,13 +100,7 @@
         />
         <div
           v-else
-          class="h-full w-full"
-          :style="`background: linear-gradient(135deg, ${accent}55, ${accent}22)`"
-        />
-        <!-- Accent scrim for legibility -->
-        <div
-          class="pointer-events-none absolute inset-0"
-          :style="`background: linear-gradient(to top, ${accent}66, transparent 60%)`"
+          class="h-full w-full bg-gradient-to-br from-gray-100 to-gray-50 dark:from-neutral-800 dark:to-neutral-900"
         />
         <!-- Type badge -->
         <span
@@ -133,7 +118,6 @@
       <div class="relative px-3">
         <div
           class="absolute -top-5 left-3 flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border-2 border-white bg-white shadow dark:border-neutral-900 dark:bg-neutral-900"
-          :style="`box-shadow: 0 2px 8px ${accent}33`"
         >
           <img
             v-if="square.iconUrl"
@@ -151,7 +135,10 @@
             loading="lazy"
             decoding="async"
           />
-          <span v-else class="text-xs font-black" :style="`color: ${accent}`">
+          <span
+            v-else
+            class="text-xs font-black text-gray-500 dark:text-neutral-400"
+          >
             {{ square.name.slice(0, 2).toUpperCase() }}
           </span>
         </div>
@@ -171,23 +158,17 @@
           <Icon name="mdi:map-marker-outline" size="11" class="shrink-0" />
           {{ [square.city, square.state].filter(Boolean).join(', ') }}
         </p>
-        <div class="mt-2 flex items-center gap-1.5 text-[11px]">
-          <span
-            class="flex items-center gap-1 font-semibold"
-            :style="`color: ${accent}`"
-          >
+        <div
+          class="mt-2 flex items-center gap-1.5 text-[11px] text-gray-400 dark:text-neutral-500"
+        >
+          <span class="flex items-center gap-1">
             <Icon name="mdi:store-outline" size="13" />
             {{ square.memberCount ?? 0 }} traders
           </span>
-          <span
-            v-if="square.productCount != null"
-            class="text-gray-400 dark:text-neutral-500"
-          >
+          <span v-if="square.productCount != null">
             · {{ square.productCount }} goods
           </span>
-          <span
-            class="ml-auto inline-flex items-center gap-1 text-gray-400 dark:text-neutral-500"
-          >
+          <span class="ml-auto inline-flex items-center gap-1">
             Visit <Icon name="mdi:arrow-right" size="12" />
           </span>
         </div>
@@ -196,12 +177,6 @@
 
     <!-- ── FULL LAYOUT ─────────────────────────────────────────────────────── -->
     <template v-else>
-      <!-- Accent left stripe -->
-      <div
-        class="absolute inset-y-0 left-0 z-10 w-[3px] rounded-l-2xl"
-        :style="`background: ${accent}`"
-      />
-
       <!-- Banner -->
       <div class="relative h-24 overflow-hidden">
         <img
@@ -222,12 +197,7 @@
         />
         <div
           v-else
-          class="h-full w-full transition-transform duration-500 group-hover:scale-105"
-          :style="`background: linear-gradient(135deg, ${accent}44, ${accent}18)`"
-        />
-        <div
-          class="pointer-events-none absolute inset-x-0 bottom-0 h-1/2"
-          :style="`background: linear-gradient(to top, ${accent}44, transparent)`"
+          class="h-full w-full bg-gradient-to-br from-gray-100 to-gray-50 transition-transform duration-500 group-hover:scale-105 dark:from-neutral-800 dark:to-neutral-900"
         />
         <span
           class="absolute left-3 top-2.5 inline-flex items-center gap-1 rounded-full bg-black/50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white backdrop-blur-sm"
@@ -241,11 +211,10 @@
       </div>
 
       <!-- Body -->
-      <div class="flex flex-1 flex-col gap-2 p-3.5 pl-5">
+      <div class="flex flex-col gap-2 p-3.5">
         <div class="flex items-start gap-2.5">
           <div
-            class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border-2 bg-white shadow-sm dark:bg-neutral-900"
-            :style="`border-color: ${accent}55`"
+            class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
           >
             <img
               v-if="square.iconUrl"
@@ -263,7 +232,10 @@
               loading="lazy"
               decoding="async"
             />
-            <span v-else class="text-sm font-black" :style="`color: ${accent}`">
+            <span
+              v-else
+              class="text-sm font-black text-gray-500 dark:text-neutral-400"
+            >
               {{ square.name.slice(0, 2).toUpperCase() }}
             </span>
           </div>
@@ -303,11 +275,11 @@
             </span>
           </div>
           <button
-            class="rounded-full px-3 py-1 text-[11px] font-bold transition-all"
+            class="rounded-full px-3 py-1 text-[11px] font-bold ring-1 transition-all"
             :class="
               following
-                ? 'bg-amber-50 text-amber-600 ring-1 ring-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:ring-amber-700/40'
-                : 'text-amber-600 ring-1 ring-amber-300 hover:bg-amber-500 hover:text-white hover:ring-amber-500 dark:text-amber-400 dark:ring-amber-700/50'
+                ? 'bg-gray-100 text-gray-700 ring-gray-200 dark:bg-neutral-800 dark:text-neutral-300 dark:ring-neutral-700'
+                : 'text-gray-700 ring-gray-300 hover:bg-gray-900 hover:text-white hover:ring-gray-900 dark:text-neutral-300 dark:ring-neutral-600 dark:hover:bg-neutral-100 dark:hover:text-neutral-900 dark:hover:ring-neutral-100'
             "
             :disabled="followLoading"
             @click.prevent="$emit('toggle-follow')"
@@ -327,10 +299,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import { cloudinaryUrl } from '~~/layers/core/app/utils/cloudinary'
 
-const props = withDefaults(
+withDefaults(
   defineProps<{
     square: {
       id: string
@@ -355,6 +326,4 @@ const props = withDefaults(
 )
 
 defineEmits<{ 'toggle-follow': [] }>()
-
-const accent = computed(() => props.square.accentColor || '#f59e0b')
 </script>

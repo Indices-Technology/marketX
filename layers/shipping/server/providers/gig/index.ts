@@ -43,15 +43,63 @@ function totalWeightKg(req: ShipmentRequest): number {
   return sum > 0 ? sum : 0.5
 }
 
-/** Map GIG scan-status codes → our normalized status. Best-effort; tune vs sandbox. */
+/**
+ * GIG scan-status codes → our normalized status, from GIG's published code list.
+ *
+ * DELIVERED gates the seller payout (walletService.releaseFundsOnDelivery), so
+ * only codes that mean the parcel reached the buyer appear there. Delay and
+ * failed-attempt scans (DLP/DLD/DUBC/ATD) keep the shipment IN_TRANSIT — the
+ * parcel is still live and a later scan will resolve it. Note DLP is "delayed
+ * PICKUP", not "delivered": mapping it to DELIVERED would pay the seller for a
+ * parcel still sitting at a terminal.
+ */
+const GIG_STATUS: Record<string, TrackingStatus> = {
+  // Created / awaiting collection — not yet moving through the network.
+  CRT: 'PRE_TRANSIT',
+  MCRT: 'PRE_TRANSIT',
+  CRH: 'PRE_TRANSIT',
+  CRTUK: 'PRE_TRANSIT',
+  CRTGH: 'PRE_TRANSIT',
+  CRTGF: 'PRE_TRANSIT',
+  MAPT: 'PRE_TRANSIT',
+  MENP: 'PRE_TRANSIT',
+
+  // With the delivery courier / en route to the buyer.
+  OFDU: 'OUT_FOR_DELIVERY',
+  WC: 'OUT_FOR_DELIVERY',
+  MSHC: 'OUT_FOR_DELIVERY',
+
+  // Reached the buyer (incl. terminal collection).
+  SHD: 'DELIVERED',
+  MAHD: 'DELIVERED',
+  OKC: 'DELIVERED',
+  OKT: 'DELIVERED',
+
+  // Coming back to us.
+  MRTE: 'RETURNED',
+  SRHUB: 'RETURNED',
+  SSR: 'RETURNED',
+  SRC: 'RETURNED',
+  RSR: 'RETURNED',
+  VFSSRR: 'RETURNED',
+
+  // Terminal failures only — an order that can no longer be fulfilled.
+  DFA: 'FAILURE',
+  FID: 'FAILURE',
+  MSCC: 'FAILURE',
+  MSCP: 'FAILURE',
+  SSC: 'FAILURE',
+  SDR: 'FAILURE',
+  DASH: 'FAILURE',
+  CLS: 'FAILURE',
+  SMIM: 'FAILURE',
+}
+
+/** Any other scan means the parcel moved — treat it as in transit. */
 function mapStatus(code: string): TrackingStatus {
-  const c = (code || '').toUpperCase()
-  if (['CRT', 'MCRT'].includes(c)) return 'PRE_TRANSIT'
-  if (['OFD', 'MOFD'].includes(c)) return 'OUT_FOR_DELIVERY'
-  if (['DLP', 'DLV', 'MDLV', 'DLVD'].includes(c)) return 'DELIVERED'
-  if (['RTS', 'RTN', 'RTND'].includes(c)) return 'RETURNED'
-  if (['FAILED', 'CNCL'].includes(c)) return 'FAILURE'
-  return 'IN_TRANSIT'
+  const c = (code || '').trim().toUpperCase()
+  if (!c) return 'UNKNOWN'
+  return GIG_STATUS[c] ?? 'IN_TRANSIT'
 }
 
 async function liveQuote(req: ShipmentRequest): Promise<Quote[] | null> {
@@ -175,6 +223,16 @@ export const gigProvider: IShippingProvider = {
     return fallbackQuote(req)
   },
 
+  /**
+   * Book a collection shipment. `/capture/preshipment` takes a NESTED body —
+   * Sender/Receiver/Shipment details grouped, `ShipmentItems` at the top level.
+   * A flat body is rejected with `"SenderName" is not allowed`. This exact shape
+   * was accepted by the sandbox (returns a Waybill); do not flatten it.
+   *
+   * The Waybill exists the moment this returns, BEFORE GIG holds the parcel — the
+   * only scan present is MCRT ("created by customer"). Callers must not treat a
+   * successful booking as proof of handover; wait for a possession scan.
+   */
   async book(req: BookRequest): Promise<ShipmentResult> {
     if (!isGigConfigured()) {
       throw createError({
@@ -185,24 +243,45 @@ export const gigProvider: IShippingProvider = {
     const { origin, destination } = req.request
     const weight = totalWeightKg(req.request)
     const cod = req.settlementMode === 'CARRIER_COD'
+
+    // /price resolves stations from state; booking must use the same pair, or the
+    // booked shipment can be routed (and priced) differently from what we quoted.
+    const [sender, receiver] = await Promise.all([
+      resolveStation(origin.state),
+      resolveStation(destination.state),
+    ])
+    if (!sender || !receiver) {
+      throw createError({
+        statusCode: 422,
+        statusMessage: `GIG has no station for ${!sender ? origin.state : destination.state}`,
+      })
+    }
+
     const res = await capturePreshipment({
-      SenderName: origin.name,
-      SenderPhoneNumber: origin.phone || '',
-      SenderAddress: origin.street1,
-      InputtedSenderAddress: origin.street1,
-      SenderLocality: origin.city,
-      SenderLocation: locationFor(origin),
-      ReceiverName: destination.name,
-      ReceiverPhoneNumber: destination.phone || '',
-      ReceiverAddress: destination.street1,
-      InputtedReceiverAddress: destination.street1,
-      ReceiverLocation: locationFor(destination),
-      CustomerCode: gigCustomerCode(),
-      VehicleType: 0,
-      IsCashOnDelivery: cod,
-      CashOnDeliveryAmount: cod
-        ? (req.request.declaredValueMinor || 0) / 100
-        : 0,
+      SenderDetails: {
+        SenderName: origin.name,
+        SenderPhoneNumber: origin.phone || '',
+        SenderStationId: sender.StationId,
+        SenderAddress: origin.street1,
+        InputtedSenderAddress: origin.street1,
+        SenderLocality: origin.city,
+        SenderLocation: locationFor(origin),
+      },
+      ReceiverDetails: {
+        ReceiverName: destination.name,
+        ReceiverPhoneNumber: destination.phone || '',
+        ReceiverStationId: receiver.StationId,
+        ReceiverAddress: destination.street1,
+        InputtedReceiverAddress: destination.street1,
+        ReceiverLocation: locationFor(destination),
+      },
+      ShipmentDetails: {
+        VehicleType: 0,
+        IsCashOnDelivery: cod,
+        CashOnDeliveryAmount: cod
+          ? (req.request.declaredValueMinor || 0) / 100
+          : 0,
+      },
       // Must mirror the quote's item shape (regular, weight-priced) so the booked
       // shipment matches the quoted price — see quote()'s note on ShipmentType.
       ShipmentItems: [
@@ -231,12 +310,20 @@ export const gigProvider: IShippingProvider = {
     const data = await gigTrack(trackingNumber)
     const shipment = Array.isArray(data) ? data[0] : null
     const raw: any[] = shipment?.MobileShipmentTrackings ?? []
-    const events: TrackingEvent[] = raw.map((e) => ({
+    const mapped: TrackingEvent[] = raw.map((e) => ({
       timestamp: e.DateTimeUtc || e.DateTime || new Date().toISOString(),
       status: mapStatus(e.Status),
       description: e.ScanStatusComment || e.ScanStatusReason || e.Status || '',
       location: e.Location || undefined,
     }))
+    // GIG repeats scans (e.g. MCRT twice at creation) — collapse consecutive
+    // duplicates so the buyer timeline shows each step once.
+    const events: TrackingEvent[] = mapped.filter(
+      (e, i) =>
+        i === 0 ||
+        e.status !== mapped[i - 1].status ||
+        e.description !== mapped[i - 1].description,
+    )
     const current = events.length ? events[events.length - 1].status : 'UNKNOWN'
     return {
       carrierId: 'gig',

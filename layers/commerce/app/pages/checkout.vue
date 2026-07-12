@@ -386,12 +386,14 @@ const shipBySeller = reactive<Record<string, SellerShip>>({})
 const insureShipment = ref(true)
 
 const fetchSellerRates = async () => {
-  if (!form.address || !form.county || !form.country) return
+  // State drives carrier station resolution — for NG we must have it before quoting.
+  const needsState = (form.country || 'NG') === 'NG'
+  if (!form.address || !form.country || (needsState && !form.state)) return
   const to = {
     name: form.name || 'Customer',
     street1: form.address,
     city: form.county,
-    state: form.state || form.county,
+    state: form.state,
     zip: form.zipcode || '000000',
     country: form.country,
   }
@@ -523,6 +525,8 @@ const isFormValid = computed(
     !!form.name.trim() &&
     !!form.address.trim() &&
     !!form.country &&
+    // NG destinations must pick a state — the carrier can't ship without it.
+    (form.country !== 'NG' || !!form.state) &&
     shippingReady.value,
 )
 
@@ -549,6 +553,8 @@ const handleCheckout = async () => {
     email: form.email || undefined,
     address: form.address,
     county: form.county,
+    shipState: form.state || undefined,
+    shipPhone: form.phone || undefined,
     zipcode: form.zipcode,
     country: form.country,
     shippingCost,

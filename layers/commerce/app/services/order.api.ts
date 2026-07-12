@@ -101,6 +101,28 @@ export class OrderApiClient extends BaseApiClient {
       body: { reason },
     })
   }
+  /** Seller books the carrier shipment ("ready to ship"). Idempotent. */
+  async bookShipment(orderId: number): Promise<{
+    success: boolean
+    data: { ok: boolean; waybill: string; carrierId: string; alreadyBooked: boolean }
+  }> {
+    return this.request('/api/shipping/book', {
+      method: 'POST',
+      body: { orderId },
+    })
+  }
+  /** Live carrier tracking timeline for an order (buyer or seller). */
+  async getOrderTracking(id: number): Promise<{
+    success: boolean
+    data: {
+      carrierStatus: string | null
+      waybill: string | null
+      shipper: string | null
+      events: Array<{ timestamp: string; status: string; description: string; location?: string }>
+    }
+  }> {
+    return this.request(`/api/commerce/orders/${id}/tracking`, { method: 'GET' })
+  }
 }
 
 let instance: OrderApiClient | null = null

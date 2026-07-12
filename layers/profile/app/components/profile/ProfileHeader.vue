@@ -174,33 +174,46 @@
             </span>
           </div>
 
-          <!-- View Store — shown when this profile owns an active store -->
-          <NuxtLink
+          <!-- View Store — shown when this profile owns an active store.
+               Subtitle is the memorable store address, copyable in one tap. -->
+          <div
             v-if="store?.store_slug"
-            :to="`/sellers/profile/${store.store_slug}`"
-            class="mt-3 flex items-center gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 transition-colors hover:bg-emerald-100 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:hover:bg-emerald-950/40"
+            class="mt-3 flex items-center gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 dark:border-emerald-900/40 dark:bg-emerald-950/20"
           >
-            <div
-              class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500"
+            <NuxtLink
+              :to="storePath(store.store_slug)"
+              class="flex min-w-0 flex-1 items-center gap-2.5"
             >
-              <Icon name="mdi:storefront" size="18" class="text-white" />
-            </div>
-            <div class="min-w-0 flex-1">
-              <p
-                class="truncate text-[13px] font-bold text-gray-900 dark:text-neutral-100"
+              <div
+                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500"
               >
-                {{ store.store_name || 'Visit store' }}
-              </p>
-              <p class="text-[11px] text-emerald-700 dark:text-emerald-400">
-                {{ isOwnProfile ? 'View your store & products' : 'View store & products' }}
-              </p>
-            </div>
-            <Icon
-              name="mdi:chevron-right"
-              size="18"
-              class="shrink-0 text-emerald-600 dark:text-emerald-500"
-            />
-          </NuxtLink>
+                <Icon name="mdi:storefront" size="18" class="text-white" />
+              </div>
+              <div class="min-w-0 flex-1">
+                <p
+                  class="truncate text-[13px] font-bold text-gray-900 dark:text-neutral-100"
+                >
+                  {{ store.store_name || 'Visit store' }}
+                </p>
+                <p
+                  class="truncate text-[11px] font-medium text-emerald-700 dark:text-emerald-400"
+                >
+                  {{ storeAddressLabel }}
+                </p>
+              </div>
+            </NuxtLink>
+            <button
+              type="button"
+              :title="`Copy ${storeAddressLabel}`"
+              class="shrink-0 rounded-lg p-1.5 text-emerald-600 transition-colors hover:bg-emerald-100 dark:text-emerald-500 dark:hover:bg-emerald-950/60"
+              @click="copyStoreAddress"
+            >
+              <Icon
+                :name="addressCopied ? 'mdi:check' : 'mdi:content-copy'"
+                size="16"
+              />
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -208,10 +221,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import { useRuntimeConfig } from '#imports'
+import { notify } from '@kyvg/vue3-notification'
 import type { IProfile, IProfileStats } from '../../types/profile.types'
 import { avatarSrc } from '~~/layers/core/app/utils/cloudinary'
 import { safeExternalUrl } from '~~/shared/utils/safeUrl'
+import {
+  storeDisplayUrl,
+  storePath,
+  storeShareUrl,
+} from '~~/layers/core/app/utils/storeUrl'
 
 const props = defineProps<{
   profile: IProfile
@@ -233,6 +253,34 @@ const store = computed(() => {
   if (!sp?.store_slug || sp.is_active === false) return null
   return sp
 })
+
+const config = useRuntimeConfig()
+const addressCopied = ref(false)
+
+const storeAddressLabel = computed(() =>
+  store.value
+    ? storeDisplayUrl(
+        store.value.store_slug!,
+        config.public.brandDomain as string,
+      )
+    : '',
+)
+
+const copyStoreAddress = async () => {
+  if (!store.value?.store_slug) return
+  try {
+    await navigator.clipboard.writeText(
+      storeShareUrl(store.value.store_slug, config.public.baseURL as string),
+    )
+    addressCopied.value = true
+    notify({ type: 'success', text: 'Store link copied!' })
+    setTimeout(() => {
+      addressCopied.value = false
+    }, 2000)
+  } catch {
+    notify({ type: 'error', text: 'Could not copy link' })
+  }
+}
 
 defineEmits([
   'edit',

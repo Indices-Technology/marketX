@@ -145,13 +145,59 @@
               >
             </div>
             <div
-              v-if="order.trackingNumber"
+              v-if="order.waybill || order.trackingNumber"
               class="mt-1 flex items-center gap-1.5 text-xs text-gray-500 dark:text-neutral-400"
             >
               <Icon name="mdi:barcode" size="14" />
-              <span>{{ order.shipper }} · {{ order.trackingNumber }}</span>
+              <span>{{ order.shipper }} · {{ order.waybill || order.trackingNumber }}</span>
             </div>
           </div>
+        </BaseCard>
+
+        <!-- Live tracking timeline (carrier scans) -->
+        <BaseCard v-if="order.waybill || order.trackingNumber" title="Tracking">
+          <div v-if="loadingTracking" class="space-y-3">
+            <BaseSkeleton v-for="i in 3" :key="i" shape="line" width="80%" />
+          </div>
+
+          <div
+            v-else-if="!trackingEvents.length"
+            class="flex items-center gap-2 text-sm text-gray-500 dark:text-neutral-400"
+          >
+            <Icon name="mdi:clock-outline" size="16" class="text-amber-500" />
+            Booked with {{ order.shipper || 'the carrier' }} — waiting for the first scan.
+          </div>
+
+          <ol v-else class="relative space-y-4">
+            <li
+              v-for="(ev, i) in trackingEvents"
+              :key="i"
+              class="flex gap-3"
+            >
+              <div class="flex flex-col items-center">
+                <span
+                  class="mt-1 h-2.5 w-2.5 shrink-0 rounded-full"
+                  :class="i === 0 ? 'bg-brand' : 'bg-gray-300 dark:bg-neutral-600'"
+                />
+                <span
+                  v-if="i < trackingEvents.length - 1"
+                  class="mt-1 w-px flex-1 bg-gray-200 dark:bg-neutral-700"
+                />
+              </div>
+              <div class="min-w-0 flex-1 pb-1">
+                <p class="text-sm font-medium text-gray-900 dark:text-neutral-100">
+                  {{ prettyStatus(ev.status) }}
+                </p>
+                <p class="text-xs text-gray-500 dark:text-neutral-400">
+                  {{ ev.description }}
+                </p>
+                <p class="mt-0.5 text-[11px] text-gray-400 dark:text-neutral-500">
+                  {{ formatDateTime(ev.timestamp) }}
+                  <span v-if="ev.location"> · {{ ev.location }}</span>
+                </p>
+              </div>
+            </li>
+          </ol>
         </BaseCard>
 
         <!-- Price breakdown -->
@@ -264,6 +310,7 @@ import { notify } from '@kyvg/vue3-notification'
 import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 import BaseBadge from '~~/layers/ui/app/components/BaseBadge.vue'
 import BaseCard from '~~/layers/ui/app/components/BaseCard.vue'
+import BaseSkeleton from '~~/layers/ui/app/components/BaseSkeleton.vue'
 import SupportNewTicketModal from '~~/layers/support/app/components/SupportNewTicketModal.vue'
 
 definePageMeta({ middleware: 'auth' })
@@ -296,10 +343,50 @@ const STEP_MAP: Record<string, number> = {
 }
 const stepIndex = computed(() => STEP_MAP[order.value?.status] ?? 0)
 
+// ── Live carrier tracking ────────────────────────────────────────────────────
+const trackingEvents = ref<
+  Array<{ timestamp: string; status: string; description: string; location?: string }>
+>([])
+const loadingTracking = ref(false)
+
+async function loadTracking() {
+  if (!order.value?.waybill && !order.value?.trackingNumber) return
+  loadingTracking.value = true
+  try {
+    const res: any = await orderApi.getOrderTracking(orderId.value)
+    // Newest scan first for a top-down timeline.
+    trackingEvents.value = (res?.data?.events ?? []).slice().reverse()
+  } catch {
+    // Non-fatal — the card falls back to "waiting for the first scan".
+  } finally {
+    loadingTracking.value = false
+  }
+}
+
+const STATUS_LABELS: Record<string, string> = {
+  PRE_TRANSIT: 'Shipment created',
+  IN_TRANSIT: 'In transit',
+  OUT_FOR_DELIVERY: 'Out for delivery',
+  DELIVERED: 'Delivered',
+  RETURNED: 'Returned',
+  FAILURE: 'Delivery failed',
+  UNKNOWN: 'Update',
+}
+const prettyStatus = (s: string) => STATUS_LABELS[s] ?? s
+
+const formatDateTime = (d: string) =>
+  new Date(d).toLocaleString('en-NG', {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+
 onMounted(async () => {
   try {
     const res: any = await orderApi.getOrderById(orderId.value)
     order.value = res?.data
+    await loadTracking()
   } catch (e: any) {
     error.value = extractErrorMessage(e, 'Order not found')
   } finally {

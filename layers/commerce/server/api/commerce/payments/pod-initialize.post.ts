@@ -27,6 +27,8 @@ const schema = z.object({
   address: z.string().min(1),
   zipcode: z.string().min(1),
   county: z.string().optional().default(''),
+  shipState: z.string().max(100).optional(),
+  shipPhone: z.string().max(30).optional(),
   country: z.string().min(2).max(2),
   shippingCost: z.number().int().min(1, 'Shipping fee is required for Pay on Delivery'),
   shippingZone: z.string().optional(),

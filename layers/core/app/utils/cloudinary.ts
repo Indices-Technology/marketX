@@ -195,7 +195,10 @@ export function videoWatermarkUrl(
  */
 export function videoThumb(
   url: string | null | undefined,
-  opts: { width?: number; height?: number } = { width: 400, height: 400 },
+  opts: { width?: number; height?: number; crop?: 'fill' | 'limit' } = {
+    width: 400,
+    height: 400,
+  },
 ): string {
   if (!url) return ''
   if (!url.includes('cloudinary.com')) return url
@@ -210,10 +213,15 @@ export function videoThumb(
   // Remove any leading transform segment (contains commas or known prefixes)
   if (/^[a-z_,]+\//.test(after)) after = after.replace(/^[^/]+\//, '')
 
+  // `fill` (default) center-crops to the requested box — right for square grid
+  // and product thumbnails. `limit` scales down within the box preserving the
+  // video's aspect ratio — use it for full-frame feed posters so a portrait
+  // clip isn't cropped (e.g. the subject's head sliced off).
+  const crop = opts.crop ?? 'fill'
   const parts: string[] = ['so_0.5'] // seek to 0.5 s
   if (opts.width) parts.push(`w_${opts.width}`)
   if (opts.height) parts.push(`h_${opts.height}`)
-  if (opts.width || opts.height) parts.push('c_fill')
+  if (opts.width || opts.height) parts.push(`c_${crop}`)
   parts.push('f_jpg', 'q_auto:good')
 
   // Replace video extension with .jpg

@@ -7,15 +7,26 @@
       :style="videoContainerStyle"
       @click="emit('click')"
     >
+      <!--
+        Blurred backdrop fills the letterbox area for videos whose aspect ratio
+        doesn't match the container, so the frame is shown whole (object-contain)
+        without ugly black bars — same treatment as single images below.
+      -->
+      <div
+        class="absolute inset-0 scale-110 bg-cover bg-center"
+        :style="{ backgroundImage: `url(${videoPoster})`, filter: 'blur(16px)' }"
+        aria-hidden="true"
+      />
       <video
         ref="videoRef"
         :src="videoFeedUrl(primaryMedia.url, isSlowNetwork)"
-        :poster="primaryMedia.thumbnailUrl || videoThumb(primaryMedia.url)"
-        class="h-full w-full object-cover"
+        :poster="videoPoster"
+        class="relative h-full w-full object-contain"
         loop
         playsinline
         :muted="videoMuted"
         preload="none"
+        @loadedmetadata="onVideoLoad"
       />
 
       <!-- Slow network: prominent tap-to-load overlay shown until user opts in -->
@@ -267,6 +278,17 @@ const emit = defineEmits<{
 
 const videoRef = ref<HTMLVideoElement | null>(null)
 
+// Poster / blurred-backdrop source for the primary video. Uses an
+// aspect-preserving thumbnail (crop: 'limit') so a portrait clip's poster shows
+// the whole frame — a square crop would slice off the top (e.g. the head).
+const videoPoster = computed(
+  () =>
+    props.mediaItems[0]?.thumbnailUrl ??
+    (props.mediaItems[0]?.url
+      ? videoThumb(props.mediaItems[0].url, { width: 720, crop: 'limit' })
+      : ''),
+)
+
 // ─── Network quality detection ────────────────────────────────────────────────
 // Detects slow connections (2G/3G or Data Saver mode) on Android/Chrome.
 // On slow networks: skip autoplay, show "Tap to play" overlay to save user data.
@@ -331,10 +353,32 @@ const imageContainerStyle = computed(() => {
 })
 
 // ─── Video aspect ratio ───────────────────────────────────────────────────────
-const videoContainerStyle = computed(() => ({
-  aspectRatio: '9 / 16',
-  maxHeight: '75vh',
-}))
+// Measured from the real video once metadata loads (no dimensions are stored on
+// the media record). The container then matches the video's own ratio — clamped
+// to an Instagram-like range — so object-contain shows the whole frame instead
+// of cover-cropping the top (e.g. a person's head) off taller-than-9:16 clips.
+const videoNaturalWidth = ref(0)
+const videoNaturalHeight = ref(0)
+const videoLoaded = ref(false)
+
+const onVideoLoad = (e: Event) => {
+  const v = e.target as HTMLVideoElement
+  if (v.videoWidth && v.videoHeight) {
+    videoNaturalWidth.value = v.videoWidth
+    videoNaturalHeight.value = v.videoHeight
+    videoLoaded.value = true
+  }
+}
+
+const videoContainerStyle = computed(() => {
+  if (!videoLoaded.value || videoNaturalWidth.value === 0) {
+    return { aspectRatio: '4 / 5', maxHeight: '75vh' }
+  }
+  const natural = videoNaturalWidth.value / videoNaturalHeight.value
+  // Tallest 9:16 portrait (0.5625) → widest 1.91:1 landscape, matching IG's feed.
+  const clamped = Math.min(1.91, Math.max(0.5625, natural))
+  return { aspectRatio: `${clamped}`, maxHeight: '75vh' }
+})
 
 // Muted when: feed sound is globally off, OR bgMusic is present
 const videoMuted = computed(() => !props.soundEnabled || !!props.post.bgMusic)

@@ -1,5 +1,6 @@
 <template>
   <div
+    ref="cardRef"
     class="rounded-2xl border border-gray-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"
   >
     <!-- Header -->
@@ -76,25 +77,18 @@
       {{ post.caption || post.content }}
     </p>
 
-    <!-- Media -->
-    <div v-if="post.media?.length" class="mt-3">
-      <div
-        :class="
-          post.media.length === 1
-            ? 'overflow-hidden rounded-xl'
-            : 'grid grid-cols-2 gap-1 overflow-hidden rounded-xl'
-        "
-      >
-        <img
-          v-for="(m, i) in post.media.slice(0, 4)"
-          :key="m.id"
-          :src="m.type === 'VIDEO' ? videoThumb(m.url) : imgFeed(m.url)"
-          :alt="m.altText ?? ''"
-          class="aspect-square w-full object-cover"
-          :class="post.media.length === 1 ? 'max-h-80 rounded-xl' : ''"
-          loading="lazy"
-        />
-      </div>
+    <!-- Media — same gallery as the main feed: full images (no square crop),
+         playable videos that autoplay on scroll, tap opens the full post. -->
+    <div v-if="mediaItems.length" class="mt-3 overflow-hidden rounded-xl">
+      <PostMediaGallery
+        ref="mediaGalleryRef"
+        :media-items="mediaItems"
+        :post="post as any"
+        :sound-enabled="soundEnabled"
+        :music-playing="false"
+        @click="openPost"
+        @music-toggle="toggleSound"
+      />
     </div>
 
     <!-- Actions -->
@@ -133,13 +127,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from '#imports'
-import {
-  imgAvatar,
-  imgFeed,
-  videoThumb,
-} from '~~/layers/core/app/utils/cloudinary'
+import { imgAvatar } from '~~/layers/core/app/utils/cloudinary'
+import PostMediaGallery from '~~/layers/social/app/components/post-card/PostMediaGallery.vue'
+import { useFeedSound } from '~~/layers/feed/app/composables/useFeedSound'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import {
   useWallApi,
@@ -163,6 +155,64 @@ const emit = defineEmits<{
 const router = useRouter()
 const profileStore = useProfileStore()
 const deleting = ref(false)
+
+// ─── Media ────────────────────────────────────────────────────────────────────
+const mediaItems = computed(() => props.post.media ?? [])
+const openPost = () => router.push(`/post/${props.post.id}`)
+
+// ─── Video autoplay-on-scroll (mirrors PostCard) ──────────────────────────────
+const cardRef = ref<HTMLElement | null>(null)
+const mediaGalleryRef = ref<InstanceType<typeof PostMediaGallery> | null>(null)
+const videoRef = computed(() => mediaGalleryRef.value?.videoRef ?? null)
+const { soundEnabled } = useFeedSound()
+const toggleSound = () => {
+  soundEnabled.value = !soundEnabled.value
+}
+let preloadObserver: IntersectionObserver | null = null
+let playObserver: IntersectionObserver | null = null
+
+watch(soundEnabled, (enabled) => {
+  if (videoRef.value) videoRef.value.muted = !enabled
+})
+
+onMounted(() => {
+  // Upgrade preload when the card is ~400px away so playback starts promptly.
+  if (cardRef.value && mediaItems.value.length) {
+    preloadObserver = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          mediaGalleryRef.value?.activateVideo()
+          preloadObserver?.disconnect()
+        }
+      },
+      { rootMargin: '400px 0px', threshold: 0 },
+    )
+    preloadObserver.observe(cardRef.value)
+  }
+
+  // Play while ≥50% visible, pause otherwise.
+  if (videoRef.value) {
+    videoRef.value.muted = !soundEnabled.value
+    playObserver = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          if (mediaGalleryRef.value?.canAutoplay !== false) {
+            videoRef.value?.play().catch(() => {})
+          }
+        } else {
+          videoRef.value?.pause()
+        }
+      },
+      { threshold: 0.5 },
+    )
+    playObserver.observe(videoRef.value)
+  }
+})
+
+onUnmounted(() => {
+  preloadObserver?.disconnect()
+  playObserver?.disconnect()
+})
 
 const localLiked = ref(props.post.viewerLiked)
 const localLikes = ref(props.post._count.likes)

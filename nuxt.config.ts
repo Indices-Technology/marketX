@@ -278,6 +278,8 @@ export default defineNuxtConfig({
       '* * * * *': ['processQueues'],
       '0 */6 * * *': ['releaseShippedOrders'],
       '*/15 * * * *': ['releaseExpiredOrders'],
+      // Pull-only carrier tracking (GIG has no webhook): advance shipped orders.
+      '*/30 * * * *': ['pollCarrierTracking'],
     },
     routeRules: {
       '/**': {

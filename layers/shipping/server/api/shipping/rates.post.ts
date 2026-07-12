@@ -51,6 +51,7 @@ export default defineEventHandler(async (event) => {
   let sellerState = ''
   let sellerLat: number | undefined
   let sellerLng: number | undefined
+  let gigOptedOut = false
 
   // Resolve seller ship-from address + BYOS config when storeSlug is provided
   if (body.storeSlug) {
@@ -77,6 +78,8 @@ export default defineEventHandler(async (event) => {
     sellerLng = seller?.longitude ?? undefined
     const cfg = seller?.shippingConfig as SellerShippingConfig | null
     if (cfg?.selfEnabled) sellerShipping = cfg
+    // GIG is on by default; only an explicit opt-out removes it for this seller.
+    gigOptedOut = cfg?.gigEnabled === false
 
     if (seller?.shipFromAddress && seller?.shipFromCity) {
       from = {
@@ -103,7 +106,8 @@ export default defineEventHandler(async (event) => {
   const hasOrigin = Boolean(from?.state || sellerState) // GIG needs a ship-from to quote
   const allowed: string[] = []
   if (sellerShipping) allowed.push('self')
-  if (isGigConfigured() && toCountry === 'NG' && hasOrigin) allowed.push('gig')
+  if (isGigConfigured() && toCountry === 'NG' && hasOrigin && !gigOptedOut)
+    allowed.push('gig')
 
   if (allowed.length) {
     try {

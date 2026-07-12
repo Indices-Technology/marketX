@@ -61,6 +61,12 @@ export type SettlementMode = 'ESCROW_POD' | 'CARRIER_COD'
 export interface SellerShippingConfig {
   /** Seller handles delivery themselves (offer self-shipping options). */
   selfEnabled: boolean
+  /**
+   * Offer GIG Logistics as a carrier option at checkout. Defaults to ENABLED:
+   * only an explicit `false` removes GIG, so existing sellers (no flag set) keep
+   * getting GIG quotes. Read via gigOptedOut() so the default lives in one place.
+   */
+  gigEnabled?: boolean
   /** Flat delivery fee in minor units (default when no zone match). */
   flatRateMinor?: number
   /** Free delivery when the order subtotal ≥ this (minor units). */

@@ -213,7 +213,7 @@
 
               <div class="shrink-0 text-right">
                 <p class="text-[13px] font-bold text-gray-900 dark:text-white">
-                  {{ formatKobo(order.totalAmount) }}
+                  {{ formatKobo(orderTotal(order)) }}
                 </p>
                 <p
                   class="mt-0.5 text-[10px] font-bold uppercase tracking-wider"
@@ -270,6 +270,11 @@ onMounted(async () => {
 
 // ── Computed ────────────────────────────────────────────────────────────────
 
+// What the buyer actually paid for an order = items + shipping. Matches the
+// Orders page and checkout total, so the same order never shows two numbers.
+const orderTotal = (o: any): number =>
+  (o.totalAmount ?? 0) + (o.shippingCost ?? 0)
+
 const totalSpentThisMonth = computed(() => {
   const now = new Date()
   return orders.value
@@ -281,7 +286,7 @@ const totalSpentThisMonth = computed(() => {
         o.paymentStatus === 'PAID'
       )
     })
-    .reduce((sum, o) => sum + (o.totalAmount ?? 0), 0)
+    .reduce((sum, o) => sum + orderTotal(o), 0)
 })
 
 const itemsThisMonth = computed(() => {

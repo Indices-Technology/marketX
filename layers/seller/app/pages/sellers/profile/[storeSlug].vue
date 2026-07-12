@@ -223,11 +223,33 @@
               </span>
             </div>
 
-            <p
-              class="mt-0.5 text-sm font-medium text-gray-400 dark:text-neutral-500"
+            <!-- Store address — the memorable link buyers can type or share -->
+            <button
+              class="group -ml-1 mt-1 inline-flex max-w-full items-center gap-1.5 rounded-lg px-1 py-0.5 transition-colors hover:bg-gray-100 dark:hover:bg-neutral-800"
+              :title="`Copy ${storeAddressLabel}`"
+              @click="copyStoreAddress"
             >
-              @{{ seller.store_slug }}
-            </p>
+              <Icon
+                name="mdi:link-variant"
+                size="13"
+                class="shrink-0 text-gray-400 dark:text-neutral-500"
+              />
+              <span
+                class="truncate text-sm font-medium text-gray-500 dark:text-neutral-400"
+              >
+                {{ storeAddressLabel }}
+              </span>
+              <Icon
+                :name="addressCopied ? 'mdi:check' : 'mdi:content-copy'"
+                size="12"
+                class="shrink-0 transition-colors"
+                :class="
+                  addressCopied
+                    ? 'text-emerald-500'
+                    : 'text-gray-300 group-hover:text-gray-500 dark:text-neutral-600 dark:group-hover:text-neutral-400'
+                "
+              />
+            </button>
 
             <div
               v-if="seller.store_description"
@@ -617,6 +639,39 @@
             <!-- Info grid -->
             <div class="grid gap-3 sm:grid-cols-2">
               <div
+                class="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"
+              >
+                <div
+                  class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand/10"
+                >
+                  <Icon name="mdi:link-variant" size="18" class="text-brand" />
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p
+                    class="text-[10px] font-black uppercase tracking-wider text-gray-400 dark:text-neutral-500"
+                  >
+                    Store address
+                  </p>
+                  <p
+                    class="truncate text-sm font-bold text-gray-900 dark:text-neutral-100"
+                  >
+                    {{ storeAddressLabel }}
+                  </p>
+                </div>
+                <button
+                  class="shrink-0 rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-neutral-800 dark:hover:text-neutral-300"
+                  :title="`Copy ${storeAddressLabel}`"
+                  @click="copyStoreAddress"
+                >
+                  <Icon
+                    :name="addressCopied ? 'mdi:check' : 'mdi:content-copy'"
+                    size="16"
+                    :class="addressCopied ? 'text-emerald-500' : ''"
+                  />
+                </button>
+              </div>
+
+              <div
                 v-if="seller.store_location"
                 class="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"
               >
@@ -802,6 +857,11 @@ import ProductCardMini from '~~/layers/commerce/app/components/ProductCardMini.v
 import ProductDetailModal from '~~/layers/commerce/app/components/modals/ProductDetailModal.vue'
 import { imgAvatar, cloudinaryUrl } from '~~/layers/core/app/utils/cloudinary'
 import { safeExternalUrl } from '~~/shared/utils/safeUrl'
+import { useRuntimeConfig } from '#imports'
+import {
+  storeDisplayUrl,
+  storeShareUrl,
+} from '~~/layers/core/app/utils/storeUrl'
 import ProductMarketModal from '~~/layers/commerce/app/components/modals/ProductMarketModal.vue'
 import { useSellerManagement } from '~~/layers/seller/app/composables/useSellerManagement'
 import { useProduct } from '~~/layers/commerce/app/composables/useProduct'
@@ -840,6 +900,15 @@ const seller = computed(() => currentSeller.value)
 // Render-time guard — neutralizes any javascript:/data: URL persisted before
 // input validation was tightened (stored-XSS defense-in-depth)
 const safeStoreWebsite = computed(() => safeExternalUrl(seller.value?.store_website))
+
+const runtimeConfig = useRuntimeConfig()
+const addressCopied = ref(false)
+const storeAddressLabel = computed(() =>
+  storeDisplayUrl(storeSlug, runtimeConfig.public.brandDomain as string),
+)
+const storeAddress = computed(() =>
+  storeShareUrl(storeSlug, runtimeConfig.public.baseURL as string),
+)
 
 watch(seller, (s) => {
   if (s) useSeo().setStorePage(s)
@@ -995,7 +1064,7 @@ const quickAdd = async (product: IProduct) => {
 }
 
 const shareStore = async () => {
-  const url = window.location.href
+  const url = storeAddress.value
   const name = seller.value?.store_name ?? 'this store'
   if (navigator.share) {
     try {
@@ -1006,6 +1075,19 @@ const shareStore = async () => {
   } else {
     await navigator.clipboard.writeText(url)
     notify({ type: 'success', text: 'Store link copied!' })
+  }
+}
+
+const copyStoreAddress = async () => {
+  try {
+    await navigator.clipboard.writeText(storeAddress.value)
+    addressCopied.value = true
+    notify({ type: 'success', text: 'Store link copied!' })
+    setTimeout(() => {
+      addressCopied.value = false
+    }, 2000)
+  } catch {
+    notify({ type: 'error', text: 'Could not copy link' })
   }
 }
 

@@ -110,13 +110,27 @@
         <div class="col-span-2">
           <BaseInput v-model="form.address" label="Delivery Address" placeholder="Street address" />
         </div>
+        <div v-if="isNigeria">
+          <label class="mb-1 block text-xs font-medium text-gray-500 dark:text-neutral-400">State</label>
+          <select
+            v-model="form.state"
+            class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+            @change="emit('address-changed')"
+          >
+            <option value="">Select state</option>
+            <option v-for="s in NIGERIA_STATES" :key="s" :value="s">{{ s }}</option>
+          </select>
+        </div>
+        <div v-else>
+          <BaseInput v-model="form.state" label="State / Province" placeholder="State" />
+        </div>
         <div>
-          <BaseInput v-model="form.county" label="City / State" placeholder="Lagos" />
+          <BaseInput v-model="form.county" label="City / LGA" placeholder="e.g. Ikeja" />
         </div>
         <div>
           <BaseInput v-model="form.zipcode" label="Postal Code" placeholder="100001" />
         </div>
-        <div>
+        <div class="col-span-2">
           <BaseInput v-model="form.phone" type="tel" label="Phone" placeholder="+2348012345678" />
         </div>
         <div>
@@ -180,13 +194,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import {
   useAddressApi,
   type ISavedAddress,
 } from '~~/layers/commerce/app/services/address.api'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import { notify } from '@kyvg/vue3-notification'
+import { NIGERIA_STATES } from '~~/shared/utils/locations'
 import BaseInput from '~~/layers/ui/app/components/BaseInput.vue'
 import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 
@@ -203,6 +218,8 @@ interface DeliveryForm {
 
 const props = defineProps<{ form: DeliveryForm }>()
 const emit = defineEmits<{ 'address-changed': [] }>()
+
+const isNigeria = computed(() => (props.form.country || 'NG') === 'NG')
 
 const addressApi = useAddressApi()
 const profileStore = useProfileStore()
