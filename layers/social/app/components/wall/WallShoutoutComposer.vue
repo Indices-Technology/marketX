@@ -43,7 +43,7 @@
                 @click="submit"
               >
                 <Icon v-if="submitting" name="eos-icons:loading" size="14" class="animate-spin" />
-                <Icon v-else name="mdi:send" size="14" />
+                <Icon v-else name="solar:plain-2-bold" size="14" />
                 {{ submitting ? 'Posting…' : 'Post' }}
               </button>
             </div>

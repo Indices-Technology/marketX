@@ -16,7 +16,7 @@
           aria-label="Close"
           @click.stop="$emit('close')"
         >
-          <Icon name="mdi:close" size="15" />
+          <Icon name="solar:close-circle-linear" size="15" />
         </button>
       </div>
 
@@ -43,7 +43,7 @@
               </p>
               <Icon
                 v-if="seller.is_verified"
-                name="mdi:shield-check"
+                name="solar:shield-check-bold"
                 size="14"
                 class="shrink-0 text-blue-400"
               />
@@ -76,7 +76,7 @@
                 : 'background:rgba(245,158,11,0.15);color:#f59e0b'"
               @click.stop
             >
-              <Icon name="mdi:storefront-outline" size="9" />
+              <Icon name="solar:shop-linear" size="9" />
               {{ seller.square.name }}
             </NuxtLink>
           </div>
@@ -90,14 +90,14 @@
             aria-label="Message seller"
             @click.stop
           >
-            <Icon name="mdi:message-outline" size="18" />
+            <Icon name="solar:chat-round-line-linear" size="18" />
           </NuxtLink>
           <button
             class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-white transition active:scale-95"
             aria-label="Get directions"
             @click.stop="openDirections(seller.latitude, seller.longitude)"
           >
-            <Icon name="mdi:navigation" size="18" />
+            <Icon name="solar:compass-linear" size="18" />
           </button>
           <NuxtLink
             :to="`/sellers/profile/${seller.store_slug}`"
@@ -114,7 +114,7 @@
 
         <!-- Loading preview -->
         <div v-if="loadingPreview" class="flex items-center justify-center py-8">
-          <Icon name="mdi:loading" size="24" class="animate-spin text-white/40" />
+          <Icon name="solar:refresh-linear" size="24" class="animate-spin text-white/40" />
         </div>
 
         <template v-else-if="preview">
@@ -149,9 +149,9 @@
                 :disabled="sheetFollowLoading"
                 @click.stop="toggleSheetFollow"
               >
-                <Icon v-if="sheetFollowLoading" name="mdi:loading" size="14" class="animate-spin" />
-                <Icon v-else-if="sheetIsFollowing" name="mdi:check" size="14" />
-                <Icon v-else name="mdi:plus" size="14" />
+                <Icon v-if="sheetFollowLoading" name="solar:refresh-linear" size="14" class="animate-spin" />
+                <Icon v-else-if="sheetIsFollowing" name="solar:check-circle-linear" size="14" />
+                <Icon v-else name="solar:add-circle-linear" size="14" />
                 {{ sheetFollowLoading ? 'Updating…' : sheetIsFollowing ? 'Following' : 'Follow Store' }}
               </button>
             </div>
@@ -166,7 +166,7 @@
                 ? `background:${(preview as any).square.accentColor}22;color:${(preview as any).square.accentColor}`
                 : 'background:rgba(245,158,11,0.15);color:#f59e0b'"
             >
-              <Icon name="mdi:storefront-outline" size="11" />
+              <Icon name="solar:shop-linear" size="11" />
               {{ (preview as any).square.name }}
             </NuxtLink>
           </div>
@@ -215,7 +215,7 @@
                     class="h-full w-full object-cover transition-transform group-hover:scale-105"
                   />
                   <div v-else class="flex h-full items-center justify-center">
-                    <Icon name="mdi:image-outline" size="20" class="text-white/20" />
+                    <Icon name="solar:gallery-linear" size="20" class="text-white/20" />
                   </div>
                 </div>
                 <div class="p-1.5">

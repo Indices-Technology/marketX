@@ -37,7 +37,7 @@
           class="absolute inset-0 flex items-center justify-center"
         >
           <Icon
-            name="mdi:image-outline"
+            name="solar:gallery-linear"
             size="48"
             class="text-gray-300 dark:text-neutral-700"
           />
@@ -174,7 +174,7 @@
             <p
               class="mb-[2px] text-[8px] font-medium uppercase leading-none tracking-widest text-white/50"
             >
-              <Icon name="mdi:music-note" size="8" class="-mt-0.5 inline" />
+              <Icon name="solar:music-note-2-bold" size="8" class="-mt-0.5 inline" />
               Music
             </p>
             <span
@@ -225,7 +225,7 @@
           :to="`/sellers/profile/${product.seller.store_slug}`"
           class="mt-1 flex items-center gap-1 truncate text-[11px] text-gray-500 dark:text-neutral-400"
         >
-          <Icon name="mdi:storefront-outline" size="12" />
+          <Icon name="solar:shop-linear" size="12" />
           {{ product.seller.store_name }}
         </NuxtLink>
       </div>
@@ -264,7 +264,7 @@
             @click="handleLike"
           >
             <Icon
-              :name="localLiked ? 'mdi:heart' : 'mdi:heart-outline'"
+              :name="localLiked ? 'solar:heart-bold' : 'solar:heart-linear'"
               size="16"
               :class="localLiked ? 'scale-110' : ''"
               class="transition-transform"
@@ -287,7 +287,7 @@
           class="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-gray-500 transition-colors hover:bg-blue-50 hover:text-blue-500 dark:text-neutral-400 dark:hover:bg-blue-500/10"
           @click="$emit('open-comments', product)"
         >
-          <Icon name="mdi:comment-outline" size="16" />
+          <Icon name="solar:chat-round-linear" size="16" />
           <span>{{ product._count?.comments ?? 0 }}</span>
         </button>
 
@@ -296,7 +296,7 @@
           v-if="product.viewCount"
           class="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-gray-400 dark:text-neutral-500"
         >
-          <Icon name="mdi:eye-outline" size="15" />
+          <Icon name="solar:eye-linear" size="15" />
           {{ product.viewCount.toLocaleString() }}
         </span>
 
@@ -305,7 +305,7 @@
           class="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-gray-500 transition-colors hover:bg-green-50 hover:text-green-500 dark:text-neutral-400 dark:hover:bg-green-500/10"
           @click="handleShare"
         >
-          <Icon name="mdi:share-outline" size="16" />
+          <Icon name="solar:share-linear" size="16" />
         </button>
       </div>
 
@@ -317,7 +317,7 @@
           class="flex items-center justify-center rounded-lg bg-brand/10 p-1.5 text-brand transition-colors hover:bg-brand/20 dark:bg-brand/10 dark:hover:bg-brand/20"
           @click="$emit('market', product)"
         >
-          <Icon name="mdi:bullhorn-outline" size="16" />
+          <Icon name="solar:speaker-linear" size="16" />
         </button>
 
         <!-- Add to Cart -->
@@ -333,7 +333,7 @@
           class="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-semibold transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-50"
           @click="handleAddToCart"
         >
-          <Icon :name="cartAdded ? 'mdi:check' : 'mdi:cart-plus'" size="14" />
+          <Icon :name="cartAdded ? 'solar:check-circle-linear' : 'solar:cart-plus-linear'" size="14" />
           <span class="xs:inline hidden">{{
             !product.variants?.length
               ? 'N/A'

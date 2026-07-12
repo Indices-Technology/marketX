@@ -5,7 +5,7 @@
         variant="icon"
         size="sm"
         aria-label="User actions"
-        icon-left="mdi:dots-horizontal"
+        icon-left="solar:menu-dots-bold"
         @click="toggle"
       />
     </template>
@@ -16,14 +16,14 @@
           class="flex w-full items-center gap-2 px-3 py-2 text-green-600 transition-colors hover:bg-green-50 dark:hover:bg-green-900/20"
           @click="toggleActive(true)"
         >
-          <Icon name="mdi:account-check-outline" size="15" /> Enable account
+          <Icon name="solar:user-check-linear" size="15" /> Enable account
         </button>
         <button
           v-else-if="!isBanned && !isSuspended"
           class="flex w-full items-center gap-2 px-3 py-2 text-gray-600 transition-colors hover:bg-gray-50 dark:text-neutral-400 dark:hover:bg-neutral-800"
           @click="toggleActive(false)"
         >
-          <Icon name="mdi:account-off-outline" size="15" /> Disable account
+          <Icon name="solar:user-cross-linear" size="15" /> Disable account
         </button>
 
         <button
@@ -31,21 +31,21 @@
           class="flex w-full items-center gap-2 px-3 py-2 text-amber-600 transition-colors hover:bg-amber-50 dark:hover:bg-amber-900/20"
           @click="openSuspend(false)"
         >
-          <Icon name="mdi:clock-outline" size="15" /> Suspend
+          <Icon name="solar:clock-circle-linear" size="15" /> Suspend
         </button>
         <button
           v-if="!isBanned"
           class="flex w-full items-center gap-2 px-3 py-2 text-red-600 transition-colors hover:bg-red-50 dark:hover:bg-red-900/20"
           @click="openSuspend(true)"
         >
-          <Icon name="mdi:ban" size="15" /> Ban permanently
+          <Icon name="solar:forbidden-circle-linear" size="15" /> Ban permanently
         </button>
         <button
           v-if="isBanned || isSuspended"
           class="flex w-full items-center gap-2 px-3 py-2 text-green-600 transition-colors hover:bg-green-50 dark:hover:bg-green-900/20"
           @click="lift"
         >
-          <Icon name="mdi:account-check-outline" size="15" /> Lift suspension
+          <Icon name="solar:user-check-linear" size="15" /> Lift suspension
         </button>
 
         <!-- Role -->
@@ -153,13 +153,13 @@ type RoleValue = 'user' | 'moderator' | 'admin' | 'support_agent'
 
 const ROLE_OPTIONS: Record<string, { label: string; icon: string; value: RoleValue }[]> = {
   user: [
-    { label: 'Promote to Moderator', icon: 'mdi:shield-account-outline', value: 'moderator' },
+    { label: 'Promote to Moderator', icon: 'solar:shield-user-linear', value: 'moderator' },
   ],
   moderator: [
-    { label: 'Demote to User', icon: 'mdi:account-outline', value: 'user' },
+    { label: 'Demote to User', icon: 'solar:user-linear', value: 'user' },
   ],
   support_agent: [
-    { label: 'Remove agent role', icon: 'mdi:account-outline', value: 'user' },
+    { label: 'Remove agent role', icon: 'solar:user-linear', value: 'user' },
   ],
   admin: [],
 }
@@ -172,9 +172,9 @@ const availableRoles = computed(() => {
   const extra: { label: string; icon: string; value: RoleValue }[] = []
   // Support agent is orthogonal to moderator/admin — offer it to anyone not already one.
   if (props.user.role !== 'support_agent') {
-    extra.push({ label: 'Make Support Agent', icon: 'mdi:headset', value: 'support_agent' })
+    extra.push({ label: 'Make Support Agent', icon: 'solar:headphones-round-linear', value: 'support_agent' })
   }
-  extra.push({ label: 'Promote to Admin', icon: 'mdi:shield-crown-outline', value: 'admin' })
+  extra.push({ label: 'Promote to Admin', icon: 'solar:shield-star-linear', value: 'admin' })
   return [...base, ...extra]
 })
 

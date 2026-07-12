@@ -7,7 +7,7 @@
           class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
           @click="clearSelectedTag"
         >
-          <Icon name="mdi:arrow-left" size="18" />
+          <Icon name="solar:arrow-left-linear" size="18" />
         </button>
         <div>
           <h2
@@ -65,7 +65,7 @@
 
       <div v-else-if="!allTags.length" class="py-24 text-center">
         <Icon
-          name="mdi:tag-outline"
+          name="solar:tag-linear"
           size="48"
           class="mx-auto mb-3 text-gray-300 dark:text-neutral-600"
         />
@@ -77,7 +77,7 @@
       <div v-else>
         <div v-if="!props.searchInput" class="mb-5">
           <div class="mb-3 flex items-center gap-2">
-            <Icon name="mdi:fire" size="16" class="text-orange-500" />
+            <Icon name="solar:fire-bold" size="16" class="text-orange-500" />
             <p
               class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-neutral-400"
             >

@@ -39,7 +39,7 @@
         v-else-if="error && !profile"
         class="flex flex-col items-center justify-center gap-4 py-24"
       >
-        <Icon name="mdi:alert-circle-outline" size="48" class="text-red-400" />
+        <Icon name="solar:danger-circle-linear" size="48" class="text-red-400" />
         <p class="font-medium text-gray-700 dark:text-neutral-300">
           {{ error }}
         </p>
@@ -70,13 +70,13 @@
           class="flex items-center gap-3 rounded-2xl bg-brand px-4 py-3.5 shadow-sm shadow-brand/20 md:hidden"
         >
           <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20">
-            <Icon name="mdi:store-plus-outline" size="22" class="text-white" />
+            <Icon name="solar:shop-2-linear" size="22" class="text-white" />
           </div>
           <div class="min-w-0 flex-1">
             <p class="text-sm font-bold text-white">Start selling on MarketX</p>
             <p class="text-[11px] text-white/80">Turn your passion into income →</p>
           </div>
-          <Icon name="mdi:chevron-right" size="20" class="shrink-0 text-white/70" />
+          <Icon name="solar:alt-arrow-right-linear" size="20" class="shrink-0 text-white/70" />
         </NuxtLink>
 
         <!-- Tab strip -->
@@ -229,27 +229,27 @@ const stats = computed(() => profileStore.getProfileStats(username.value))
 const availableTabs = computed(() => {
   type Tab = { id: string; label: string; icon: string; badge?: number }
   const publicTabs: Tab[] = [
-    { id: 'posts', label: 'Posts', icon: 'mdi:grid' },
-    { id: 'tagged', label: 'Tagged', icon: 'mdi:account-tag' },
-    { id: 'about', label: 'About', icon: 'mdi:information-outline' },
+    { id: 'posts', label: 'Posts', icon: 'solar:widget-2-linear' },
+    { id: 'tagged', label: 'Tagged', icon: 'solar:user-id-bold' },
+    { id: 'about', label: 'About', icon: 'solar:info-circle-linear' },
   ]
 
   if (isOwnProfile.value) {
     const tabs: Tab[] = [
-      { id: 'posts', label: 'Posts', icon: 'mdi:grid' },
-      { id: 'likes', label: 'Liked', icon: 'mdi:heart-outline' },
-      { id: 'saved', label: 'Saved', icon: 'mdi:bookmark-outline' },
-      { id: 'orders', label: 'Orders', icon: 'mdi:package-variant', badge: 0 },
-      { id: 'wallet', label: 'Wallet', icon: 'mdi:wallet-outline' },
-      { id: 'affiliate', label: 'Affiliate', icon: 'mdi:cash-multiple' },
-      { id: 'media', label: 'Media', icon: 'mdi:image-multiple-outline' },
-      { id: 'about', label: 'About', icon: 'mdi:information-outline' },
+      { id: 'posts', label: 'Posts', icon: 'solar:widget-2-linear' },
+      { id: 'likes', label: 'Liked', icon: 'solar:heart-linear' },
+      { id: 'saved', label: 'Saved', icon: 'solar:bookmark-linear' },
+      { id: 'orders', label: 'Orders', icon: 'solar:box-bold', badge: 0 },
+      { id: 'wallet', label: 'Wallet', icon: 'solar:wallet-linear' },
+      { id: 'affiliate', label: 'Affiliate', icon: 'solar:money-bag-linear' },
+      { id: 'media', label: 'Media', icon: 'solar:gallery-wide-linear' },
+      { id: 'about', label: 'About', icon: 'solar:info-circle-linear' },
     ]
     if (sellerStore.hasSellers) {
       tabs.splice(3, 0, {
         id: 'stores',
         label: 'My Stores',
-        icon: 'mdi:store-outline',
+        icon: 'solar:shop-2-linear',
       })
     }
     return tabs

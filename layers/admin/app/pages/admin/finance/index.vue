@@ -78,7 +78,7 @@
         </button>
         <div class="relative ml-auto">
           <Icon
-            name="mdi:magnify"
+            name="solar:magnifer-linear"
             size="15"
             class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
           />
@@ -121,7 +121,7 @@
           class="flex flex-col items-center justify-center py-16 text-center text-gray-400 dark:text-neutral-500"
         >
           <Icon
-            name="mdi:receipt-text-outline"
+            name="solar:bill-list-linear"
             size="30"
             class="mb-2 opacity-40"
           />
@@ -232,63 +232,63 @@ const tiles = computed(() => {
     {
       label: `GMV · ${f.days}d`,
       value: formatNGN(f.gmv),
-      icon: 'mdi:cash',
+      icon: 'solar:money-bag-linear',
       color: 'green',
     },
     {
       label: `Orders · ${f.days}d`,
       value: (f.orders ?? 0).toLocaleString(),
-      icon: 'mdi:receipt-text-outline',
+      icon: 'solar:bill-list-linear',
       color: 'blue',
     },
     {
       label: 'Avg order value',
       value: formatNGN(f.aov),
-      icon: 'mdi:chart-line',
+      icon: 'solar:chart-2-linear',
       color: 'purple',
     },
     {
       label: `Shipping · ${f.days}d`,
       value: formatNGN(f.shipping),
-      icon: 'mdi:truck-outline',
+      icon: 'solar:delivery-linear',
       color: 'amber',
     },
     {
       label: `Affiliate paid · ${f.days}d`,
       value: formatNGN(f.affiliatePaid),
-      icon: 'mdi:account-cash-outline',
+      icon: 'solar:user-hand-up-linear',
       color: 'rose',
     },
     {
       label: 'GMV · all time',
       value: formatNGN(f.allTimeGmv),
-      icon: 'mdi:finance',
+      icon: 'solar:chart-2-linear',
       color: 'gray',
     },
   ]
 })
 const SKELETON_TILES = [
-  { label: 'GMV', value: '—', icon: 'mdi:cash', color: 'green' },
+  { label: 'GMV', value: '—', icon: 'solar:money-bag-linear', color: 'green' },
   {
     label: 'Orders',
     value: '—',
-    icon: 'mdi:receipt-text-outline',
+    icon: 'solar:bill-list-linear',
     color: 'blue',
   },
   {
     label: 'Avg order value',
     value: '—',
-    icon: 'mdi:chart-line',
+    icon: 'solar:chart-2-linear',
     color: 'purple',
   },
-  { label: 'Shipping', value: '—', icon: 'mdi:truck-outline', color: 'amber' },
+  { label: 'Shipping', value: '—', icon: 'solar:delivery-linear', color: 'amber' },
   {
     label: 'Affiliate paid',
     value: '—',
-    icon: 'mdi:account-cash-outline',
+    icon: 'solar:user-hand-up-linear',
     color: 'rose',
   },
-  { label: 'GMV · all time', value: '—', icon: 'mdi:finance', color: 'gray' },
+  { label: 'GMV · all time', value: '—', icon: 'solar:chart-2-linear', color: 'gray' },
 ]
 
 const byStatus = computed(() => {

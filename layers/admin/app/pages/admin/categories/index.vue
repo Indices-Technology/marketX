@@ -8,7 +8,7 @@
         </p>
       </div>
       <BaseButton size="sm" variant="primary" @click="openCreate">
-        <Icon name="mdi:plus" size="15" /> New category
+        <Icon name="solar:add-circle-linear" size="15" /> New category
       </BaseButton>
     </div>
 
@@ -21,7 +21,7 @@
       </div>
 
       <div v-else-if="!categories.length" class="flex flex-col items-center justify-center py-16 text-center text-gray-400 dark:text-neutral-500">
-        <Icon name="mdi:shape-outline" size="30" class="mb-2 opacity-40" />
+        <Icon name="solar:widget-linear" size="30" class="mb-2 opacity-40" />
         <p class="text-[13px]">No categories yet</p>
       </div>
 
@@ -40,7 +40,7 @@
               <div class="flex items-center gap-2.5">
                 <div class="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gray-100 dark:bg-neutral-800">
                   <img v-if="c.thumbnailCatUrl" :src="c.thumbnailCatUrl" class="h-full w-full object-cover" alt="" />
-                  <Icon v-else name="mdi:shape-outline" size="15" class="text-gray-400" />
+                  <Icon v-else name="solar:widget-linear" size="15" class="text-gray-400" />
                 </div>
                 <span class="font-medium text-gray-900 dark:text-neutral-100">{{ c.name }}</span>
               </div>
@@ -54,14 +54,14 @@
                   title="Edit"
                   @click="openEdit(c)"
                 >
-                  <Icon name="mdi:pencil-outline" size="16" />
+                  <Icon name="solar:pen-linear" size="16" />
                 </button>
                 <button
                   class="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
                   title="Delete"
                   @click="remove(c)"
                 >
-                  <Icon name="mdi:trash-can-outline" size="16" />
+                  <Icon name="solar:trash-bin-trash-linear" size="16" />
                 </button>
               </div>
             </td>
@@ -91,14 +91,14 @@
           >
             <img v-if="form.thumbnailCatUrl" :src="form.thumbnailCatUrl" class="h-full w-full object-cover" alt="" />
             <div v-else-if="uploadingThumb" class="h-6 w-6 animate-spin rounded-full border-2 border-brand border-t-transparent" />
-            <Icon v-else name="mdi:image-plus-outline" size="22" class="text-gray-400" />
+            <Icon v-else name="solar:gallery-add-linear" size="22" class="text-gray-400" />
             <button
               v-if="form.thumbnailCatUrl && !uploadingThumb"
               type="button"
               class="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
               @click.stop="form.thumbnailCatUrl = ''"
             >
-              <Icon name="mdi:close" size="12" />
+              <Icon name="solar:close-circle-linear" size="12" />
             </button>
           </div>
           <input ref="thumbInput" type="file" accept="image/*" class="hidden" @change="onThumb" />

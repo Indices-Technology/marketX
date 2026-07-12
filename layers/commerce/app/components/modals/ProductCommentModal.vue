@@ -20,7 +20,7 @@
             class="rounded-full p-1 transition-colors hover:bg-gray-100 dark:hover:bg-neutral-800"
           >
             <Icon
-              name="mdi:close"
+              name="solar:close-circle-linear"
               size="20"
               class="text-gray-500 dark:text-neutral-400"
             />
@@ -44,7 +44,7 @@
             v-else-if="!comments.length"
             class="flex flex-col items-center justify-center gap-2 py-10 text-gray-400 dark:text-neutral-500"
           >
-            <Icon name="mdi:comment-outline" size="36" />
+            <Icon name="solar:chat-round-linear" size="36" />
             <p class="text-sm">No comments yet. Be the first!</p>
           </div>
 
@@ -59,7 +59,7 @@
                 v-else
                 class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 dark:bg-neutral-800"
               >
-                <Icon name="mdi:account" size="16" class="text-gray-400" />
+                <Icon name="solar:user-linear" size="16" class="text-gray-400" />
               </div>
               <div class="min-w-0 flex-1">
                 <div
@@ -114,7 +114,7 @@
                   size="16"
                   class="animate-spin"
                 />
-                <Icon v-else name="mdi:send" size="16" />
+                <Icon v-else name="solar:plain-2-bold" size="16" />
               </button>
             </div>
           </div>

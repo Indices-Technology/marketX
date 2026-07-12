@@ -35,7 +35,7 @@
         class="absolute inset-0 flex cursor-pointer flex-col items-center justify-center bg-black/60 backdrop-blur-sm"
         @click.stop="activateVideo(); videoRef?.play().catch(() => {})"
       >
-        <Icon name="mdi:play-circle-outline" size="54" class="mb-1 text-white/90" />
+        <Icon name="solar:play-circle-linear" size="54" class="mb-1 text-white/90" />
         <span class="text-xs font-medium text-white/70">Tap to play</span>
       </div>
 
@@ -47,7 +47,7 @@
         <div
           class="flex h-12 w-12 items-center justify-center rounded-full bg-black/30 backdrop-blur-sm"
         >
-          <Icon name="mdi:play" size="26" class="ml-0.5 text-white" />
+          <Icon name="solar:play-bold" size="26" class="ml-0.5 text-white" />
         </div>
       </div>
 
@@ -57,7 +57,7 @@
         :class="post.bgMusic ? 'bottom-14' : 'bottom-3'"
       >
         <Icon
-          :name="soundEnabled ? 'mdi:volume-high' : 'mdi:volume-off'"
+          :name="soundEnabled ? 'solar:volume-loud-linear' : 'solar:muted-linear'"
           size="16"
           class="text-white"
         />
@@ -109,7 +109,7 @@
         class="absolute bottom-14 right-3 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm transition-colors hover:bg-black/70"
       >
         <Icon
-          :name="soundEnabled ? 'mdi:volume-high' : 'mdi:volume-off'"
+          :name="soundEnabled ? 'solar:volume-loud-linear' : 'solar:muted-linear'"
           size="16"
           class="text-white"
         />
@@ -143,7 +143,7 @@
             <div
               class="flex h-8 w-8 items-center justify-center rounded-full bg-black/40"
             >
-              <Icon name="mdi:play" size="18" class="ml-0.5 text-white" />
+              <Icon name="solar:play-bold" size="18" class="ml-0.5 text-white" />
             </div>
           </div>
         </div>
@@ -240,7 +240,7 @@
       <span
         class="inline-flex items-center gap-1 rounded-full bg-black/50 px-2 py-1 text-[10px] font-semibold text-white backdrop-blur-sm"
       >
-        <Icon name="mdi:shopping-outline" size="11" />{{
+        <Icon name="solar:bag-4-linear" size="11" />{{
           $t('contentType.COMMERCE')
         }}
       </span>

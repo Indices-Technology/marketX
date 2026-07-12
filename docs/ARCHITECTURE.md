@@ -736,7 +736,7 @@ CLOUDINARY_UPLOAD_PRESET=xxx   # Must be a restricted preset, not ml_default
 
 # Email
 RESEND_API_KEY=re_xxx
-SENDER_EMAIL=noreply@marketx.app
+SENDER_EMAIL=noreply@marketx.africa
 
 # Payments
 PAYSTACK_SECRET_KEY=sk_live_xxx   # sk_test_ for dev
@@ -768,8 +768,8 @@ GOOGLE_API_KEY=xxx
 # Platform
 PLATFORM_COMMISSION_RATE=0.10
 NUXT_PUBLIC_SITE_NAME=MarketX
-NUXT_PUBLIC_BRAND_DOMAIN=marketx.app
-NUXT_PUBLIC_BASE_URL=https://marketx.app
+NUXT_PUBLIC_BRAND_DOMAIN=marketx.africa
+NUXT_PUBLIC_BASE_URL=https://marketx.africa
 NODE_ENV=production
 ```
 

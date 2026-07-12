@@ -17,7 +17,7 @@
               <div
                 class="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-pink-500 to-purple-600 shadow-sm"
               >
-                <Icon name="mdi:music-note" size="17" class="text-white" />
+                <Icon name="solar:music-note-2-bold" size="17" class="text-white" />
               </div>
               <h2
                 class="text-[15px] font-bold text-gray-900 dark:text-neutral-100"
@@ -29,7 +29,7 @@
               class="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 dark:hover:bg-neutral-800"
               @click="$emit('close')"
             >
-              <Icon name="mdi:close" size="20" />
+              <Icon name="solar:close-circle-linear" size="20" />
             </button>
           </div>
 
@@ -66,7 +66,7 @@
             <div class="px-4 pt-3">
               <div class="relative">
                 <Icon
-                  name="mdi:magnify"
+                  name="solar:magnifer-linear"
                   size="17"
                   class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
                 />
@@ -134,7 +134,7 @@
                 class="flex flex-col items-center gap-3 py-12 text-center"
               >
                 <Icon
-                  name="mdi:music-off"
+                  name="solar:music-note-slider-linear"
                   size="40"
                   class="text-gray-300 dark:text-neutral-700"
                 />
@@ -155,7 +155,7 @@
                 class="flex flex-col items-center gap-3 py-12 text-center"
               >
                 <Icon
-                  name="mdi:music-note-off"
+                  name="solar:music-note-slider-linear"
                   size="40"
                   class="text-gray-300 dark:text-neutral-700"
                 />
@@ -191,7 +191,7 @@
                       class="flex h-full w-full items-center justify-center"
                     >
                       <Icon
-                        name="mdi:music"
+                        name="solar:music-notes-bold"
                         size="20"
                         class="text-gray-400 dark:text-neutral-500"
                       />
@@ -206,8 +206,8 @@
                       <Icon
                         :name="
                           previewTrackId === track.id && isPreviewPlaying
-                            ? 'mdi:pause'
-                            : 'mdi:play'
+                            ? 'solar:pause-bold'
+                            : 'solar:play-bold'
                         "
                         size="20"
                         class="text-white"
@@ -276,7 +276,7 @@
                 class="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-pink-500/15 to-purple-500/15"
               >
                 <Icon
-                  name="mdi:music-box-outline"
+                  name="solar:music-library-2-linear"
                   size="30"
                   class="text-pink-500"
                 />
@@ -309,7 +309,7 @@
                 <div
                   class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-pink-500 to-purple-600"
                 >
-                  <Icon name="mdi:music-note" size="15" class="text-white" />
+                  <Icon name="solar:music-note-2-bold" size="15" class="text-white" />
                 </div>
                 <p
                   class="min-w-0 flex-1 truncate text-[12px] font-semibold text-gray-900 dark:text-neutral-100"
@@ -320,7 +320,7 @@
                   class="text-gray-400 transition-colors hover:text-gray-600 dark:hover:text-neutral-300"
                   @click="clearUpload"
                 >
-                  <Icon name="mdi:close" size="16" />
+                  <Icon name="solar:close-circle-linear" size="16" />
                 </button>
               </div>
 
@@ -373,7 +373,7 @@
                   <div
                     class="-ml-2 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-pink-500 to-purple-600 shadow-md"
                   >
-                    <Icon name="mdi:chevron-left" size="12" class="text-white" />
+                    <Icon name="solar:alt-arrow-left-linear" size="12" class="text-white" />
                   </div>
                 </div>
 
@@ -387,7 +387,7 @@
                   <div
                     class="-mr-2 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-pink-500 to-purple-600 shadow-md"
                   >
-                    <Icon name="mdi:chevron-right" size="12" class="text-white" />
+                    <Icon name="solar:alt-arrow-right-linear" size="12" class="text-white" />
                   </div>
                   <div
                     class="h-full w-1 rounded-r-full bg-gradient-to-b from-pink-500 to-purple-600"
@@ -409,7 +409,7 @@
                   @click="toggleLocalPreview"
                 >
                   <Icon
-                    :name="isLocalPlaying ? 'mdi:pause' : 'mdi:play'"
+                    :name="isLocalPlaying ? 'solar:pause-bold' : 'solar:play-bold'"
                     size="20"
                   />
                 </button>
@@ -472,7 +472,7 @@
                 v-if="selectedTrack"
                 class="mb-3 flex items-center gap-2 rounded-xl border border-pink-100 bg-gradient-to-r from-pink-50 to-purple-50 px-3 py-2 dark:border-pink-900/30 dark:from-pink-950/20 dark:to-purple-950/20"
               >
-                <Icon name="mdi:music-note" size="16" class="shrink-0 text-pink-500" />
+                <Icon name="solar:music-note-2-bold" size="16" class="shrink-0 text-pink-500" />
                 <span
                   class="min-w-0 flex-1 truncate text-[12px] font-semibold text-gray-900 dark:text-neutral-100"
                 >
@@ -491,7 +491,7 @@
                   class="text-gray-400 transition-colors hover:text-gray-700 dark:hover:text-neutral-300"
                   @click="selectedTrack = null"
                 >
-                  <Icon name="mdi:close" size="14" />
+                  <Icon name="solar:close-circle-linear" size="14" />
                 </button>
               </div>
             </Transition>
@@ -588,8 +588,8 @@ const emit = defineEmits<{
 const MAX_DURATION = 60 // seconds
 
 const TABS = [
-  { id: 'discover', label: 'Discover', icon: 'mdi:compass-outline' },
-  { id: 'upload', label: 'Upload', icon: 'mdi:upload-outline' },
+  { id: 'discover', label: 'Discover', icon: 'solar:compass-linear' },
+  { id: 'upload', label: 'Upload', icon: 'solar:upload-linear' },
 ]
 
 const GENRES = [

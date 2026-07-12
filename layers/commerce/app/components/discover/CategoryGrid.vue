@@ -133,8 +133,8 @@ const CATEGORIES: CategoryDef[] = [
 ]
 
 const COMING_SOON = [
-  { label: 'Vehicles', icon: 'mdi:car-outline', desc: 'Cars, bikes & more' },
-  { label: 'Property', icon: 'mdi:home-city-outline', desc: 'Rent, buy & lease' },
+  { label: 'Vehicles', icon: 'solar:wheel-angle-linear', desc: 'Cars, bikes & more' },
+  { label: 'Property', icon: 'solar:city-linear', desc: 'Rent, buy & lease' },
 ]
 
 async function selectCategory(cat: CategoryDef) {

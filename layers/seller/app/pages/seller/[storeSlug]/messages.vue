@@ -90,7 +90,7 @@
         </div>
 
         <Icon
-          name="mdi:chevron-right"
+          name="solar:alt-arrow-right-linear"
           size="18"
           class="shrink-0 text-gray-400 dark:text-neutral-500"
         />
@@ -106,7 +106,7 @@
         class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 dark:bg-neutral-800"
       >
         <Icon
-          name="mdi:message-outline"
+          name="solar:chat-round-line-linear"
           size="32"
           class="text-gray-400 dark:text-neutral-500"
         />

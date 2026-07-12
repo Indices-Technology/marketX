@@ -7,7 +7,7 @@
           to="/"
           class="mb-2 inline-flex items-center gap-1.5 text-sm text-gray-500 transition-colors hover:text-brand dark:text-neutral-400"
         >
-          <Icon name="mdi:arrow-left" size="16" /> All
+          <Icon name="solar:arrow-left-linear" size="16" /> All
         </NuxtLink>
         <h1 class="text-[22px] font-bold text-gray-900 dark:text-neutral-100">
           {{ categoryName }}
@@ -42,7 +42,7 @@
         class="flex flex-col items-center justify-center gap-3 py-24"
       >
         <Icon
-          name="mdi:tag-off-outline"
+          name="solar:tag-linear"
           size="48"
           class="text-gray-300 dark:text-neutral-600"
         />

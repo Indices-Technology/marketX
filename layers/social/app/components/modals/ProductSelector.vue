@@ -23,7 +23,7 @@
         <!-- Search -->
         <div class="relative">
           <Icon
-            name="mdi:magnify"
+            name="solar:magnifer-linear"
             size="20"
             class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
           />
@@ -79,7 +79,7 @@
                 class="flex h-full w-full items-center justify-center"
               >
                 <Icon
-                  name="mdi:image-outline"
+                  name="solar:gallery-linear"
                   size="40"
                   class="text-gray-300"
                 />
@@ -105,7 +105,7 @@
               v-if="isSelected(product.id)"
               class="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-brand"
             >
-              <Icon name="mdi:check" size="16" class="text-white" />
+              <Icon name="solar:check-circle-linear" size="16" class="text-white" />
             </div>
           </button>
         </div>

@@ -18,7 +18,7 @@
       class="flex flex-col items-center justify-center gap-3 py-16"
     >
       <Icon
-        name="mdi:camera-off-outline"
+        name="solar:camera-linear"
         size="56"
         class="text-gray-300 dark:text-neutral-700"
       />
@@ -74,13 +74,13 @@
             class="absolute inset-0 flex items-center justify-center gap-4 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100"
           >
             <div class="flex items-center gap-1 text-white drop-shadow">
-              <Icon name="mdi:heart" size="20" />
+              <Icon name="solar:heart-bold" size="20" />
               <span class="text-[13px] font-semibold">{{
                 formatNum(post._count?.likes || 0)
               }}</span>
             </div>
             <div class="flex items-center gap-1 text-white drop-shadow">
-              <Icon name="mdi:comment" size="20" />
+              <Icon name="solar:chat-round-bold" size="20" />
               <span class="text-[13px] font-semibold">{{
                 formatNum(post._count?.comments || 0)
               }}</span>
@@ -95,7 +95,7 @@
             class="absolute bottom-1.5 left-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white transition-opacity hover:bg-black/80 md:opacity-0 md:group-hover:opacity-100"
             title="Edit post"
           >
-            <Icon name="mdi:pencil" size="12" />
+            <Icon name="solar:pen-bold" size="12" />
           </button>
 
           <!-- Indicators -->
@@ -104,13 +104,13 @@
           >
             <Icon
               v-if="firstMedia(post)?.type === 'VIDEO'"
-              name="mdi:play-circle"
+              name="solar:play-circle-bold"
               size="18"
               class="text-white drop-shadow-lg"
             />
             <Icon
               v-if="post.visibility === 'PRIVATE'"
-              name="mdi:lock"
+              name="solar:lock-keyhole-bold"
               size="15"
               class="text-white drop-shadow-lg"
             />

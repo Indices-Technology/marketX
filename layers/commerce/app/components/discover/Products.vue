@@ -34,7 +34,7 @@
       <template #empty>
         <div class="py-24 text-center">
           <Icon
-            name="mdi:text-search"
+            name="solar:magnifer-linear"
             size="48"
             class="mx-auto mb-3 text-gray-300 dark:text-neutral-600"
           />

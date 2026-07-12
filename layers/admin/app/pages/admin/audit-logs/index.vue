@@ -35,7 +35,7 @@
 
       <div class="relative">
         <Icon
-          name="mdi:magnify"
+          name="solar:magnifer-linear"
           size="15"
           class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
         />
@@ -47,7 +47,7 @@
       </div>
 
       <div class="ml-auto flex items-center gap-1.5 text-[11px] text-gray-400 dark:text-neutral-600">
-        <Icon name="mdi:shield-lock-outline" size="14" />
+        <Icon name="solar:shield-keyhole-linear" size="14" />
         Admin-only view
       </div>
     </div>
@@ -83,7 +83,7 @@
         v-else-if="!logs.length"
         class="py-16 text-center text-gray-400 dark:text-neutral-600"
       >
-        <Icon name="mdi:text-search" size="40" class="mx-auto mb-3 opacity-40" />
+        <Icon name="solar:magnifer-linear" size="40" class="mx-auto mb-3 opacity-40" />
         <p class="text-[13px]">No audit logs found</p>
       </div>
 

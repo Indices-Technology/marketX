@@ -4,7 +4,7 @@
     class="rounded-xl border border-brand/20 bg-brand/5 p-4 sm:p-6 dark:bg-brand/10"
   >
     <div class="mb-4 flex items-center gap-2">
-      <Icon name="mdi:share-variant-outline" size="20" class="text-brand" />
+      <Icon name="solar:share-linear" size="20" class="text-brand" />
       <div>
         <h2 class="font-semibold text-gray-900 dark:text-neutral-100">Distribution</h2>
         <p class="text-xs text-gray-500 dark:text-neutral-400">Choose where this product appears</p>
@@ -18,7 +18,7 @@
       >
         <div class="flex items-center gap-3">
           <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-brand/10">
-            <Icon name="mdi:storefront-outline" size="18" class="text-brand" />
+            <Icon name="solar:shop-linear" size="18" class="text-brand" />
           </div>
           <div>
             <p class="text-sm font-medium text-gray-900 dark:text-neutral-100">Shop &amp; Discover</p>
@@ -48,7 +48,7 @@
               :class="form.showInFeed ? 'bg-brand/10' : 'bg-gray-100 dark:bg-neutral-700'"
             >
               <Icon
-                name="mdi:image-multiple-outline"
+                name="solar:gallery-wide-linear"
                 size="18"
                 :class="form.showInFeed ? 'text-brand' : 'text-gray-500 dark:text-neutral-400'"
               />
@@ -122,7 +122,7 @@
               :class="form.isDeal ? 'bg-amber-50 dark:bg-amber-900/20' : 'bg-gray-100 dark:bg-neutral-700'"
             >
               <Icon
-                name="mdi:tag-outline"
+                name="solar:tag-linear"
                 size="18"
                 :class="form.isDeal ? 'text-amber-500' : 'text-gray-500 dark:text-neutral-400'"
               />
@@ -189,7 +189,7 @@
               :class="form.showInReels ? 'bg-brand/10' : 'bg-gray-100 dark:bg-neutral-700'"
             >
               <Icon
-                name="mdi:play-box-multiple-outline"
+                name="solar:clapperboard-play-linear"
                 size="18"
                 :class="form.showInReels ? 'text-brand' : 'text-gray-500 dark:text-neutral-400'"
               />
@@ -241,7 +241,7 @@
               :class="form.isThrift ? 'bg-pink-50 dark:bg-pink-900/20' : 'bg-gray-100 dark:bg-neutral-700'"
             >
               <Icon
-                name="mdi:heart-circle-outline"
+                name="solar:heart-linear"
                 size="18"
                 :class="form.isThrift ? 'text-pink-500' : 'text-gray-500 dark:text-neutral-400'"
               />

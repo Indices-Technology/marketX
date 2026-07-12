@@ -26,7 +26,7 @@
 
       <div class="relative ml-auto">
         <Icon
-          name="mdi:magnify"
+          name="solar:magnifer-linear"
           size="15"
           class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
         />
@@ -124,7 +124,7 @@
                   class="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 dark:bg-neutral-800"
                 >
                   <Icon
-                    name="mdi:store-outline"
+                    name="solar:shop-2-linear"
                     size="15"
                     class="text-gray-400"
                   />
@@ -171,7 +171,7 @@
                   class="flex items-center gap-1 rounded-lg border border-gray-200 px-2.5 py-1 text-[11px] font-semibold text-gray-600 transition-colors hover:bg-gray-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
                   @click="openDocs(seller)"
                 >
-                  <Icon name="mdi:file-document-outline" size="13" /> Docs
+                  <Icon name="solar:document-text-linear" size="13" /> Docs
                 </button>
                 <template v-if="seller.verification_status === 'PENDING'">
                   <button
@@ -226,7 +226,7 @@
         v-else-if="!docs.length"
         class="flex flex-col items-center justify-center py-12 text-center text-gray-400 dark:text-neutral-500"
       >
-        <Icon name="mdi:file-remove-outline" size="30" class="mb-2 opacity-40" />
+        <Icon name="solar:file-remove-linear" size="30" class="mb-2 opacity-40" />
         <p class="text-[13px]">This seller hasn't uploaded any verification documents.</p>
       </div>
 
@@ -247,7 +247,7 @@
               v-else
               class="flex h-40 w-full flex-col items-center justify-center gap-1 bg-gray-50 text-gray-400 dark:bg-neutral-800"
             >
-              <Icon name="mdi:file-document-outline" size="30" />
+              <Icon name="solar:document-text-linear" size="30" />
               <span class="text-[11px]">Open document</span>
             </div>
           </a>

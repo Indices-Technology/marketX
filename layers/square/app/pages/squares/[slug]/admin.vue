@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-gray-50 dark:bg-neutral-950">
     <!-- Loading -->
     <div v-if="loadingSquare" class="flex min-h-screen items-center justify-center">
-      <Icon name="mdi:loading" size="32" class="animate-spin text-brand" />
+      <Icon name="solar:refresh-linear" size="32" class="animate-spin text-brand" />
     </div>
 
     <!-- Access denied -->
@@ -10,7 +10,7 @@
       v-else-if="!hasAnyAdminAccess"
       class="flex min-h-screen flex-col items-center justify-center gap-4 text-center"
     >
-      <Icon name="mdi:shield-lock-outline" size="48" class="text-gray-300 dark:text-neutral-700" />
+      <Icon name="solar:shield-keyhole-linear" size="48" class="text-gray-300 dark:text-neutral-700" />
       <p class="text-lg font-semibold text-gray-700 dark:text-neutral-300">Access denied</p>
       <p class="text-sm text-gray-500 dark:text-neutral-500">You need to be an officer of this square.</p>
       <NuxtLink :to="`/squares/${slug}`" class="text-sm font-medium text-brand hover:underline">
@@ -27,7 +27,7 @@
               :to="`/squares/${slug}`"
               class="rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 dark:text-neutral-400 dark:hover:bg-neutral-800"
             >
-              <Icon name="mdi:arrow-left" size="20" />
+              <Icon name="solar:arrow-left-linear" size="20" />
             </NuxtLink>
             <div class="flex min-w-0 items-center gap-3">
               <div class="h-9 w-9 shrink-0 overflow-hidden rounded-xl bg-gray-100 dark:bg-neutral-800">
@@ -37,7 +37,7 @@
                   class="h-full w-full object-cover"
                 />
                 <div v-else class="flex h-full w-full items-center justify-center">
-                  <Icon name="mdi:storefront-outline" size="18" class="text-gray-400" />
+                  <Icon name="solar:shop-linear" size="18" class="text-gray-400" />
                 </div>
               </div>
               <div>
@@ -101,7 +101,7 @@
             v-else-if="!requests.length"
             class="flex flex-col items-center justify-center gap-3 py-16 text-center"
           >
-            <Icon name="mdi:inbox-outline" size="40" class="text-gray-300 dark:text-neutral-700" />
+            <Icon name="solar:inbox-linear" size="40" class="text-gray-300 dark:text-neutral-700" />
             <p class="font-semibold text-gray-600 dark:text-neutral-400">No pending requests</p>
           </div>
 
@@ -120,7 +120,7 @@
                     class="h-full w-full object-cover"
                   />
                   <div v-else class="flex h-full w-full items-center justify-center">
-                    <Icon name="mdi:store-outline" size="22" class="text-gray-400" />
+                    <Icon name="solar:shop-2-linear" size="22" class="text-gray-400" />
                   </div>
                 </div>
 
@@ -137,7 +137,7 @@
                       v-if="m.seller.is_verified"
                       class="flex items-center gap-0.5 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700 dark:bg-blue-950/40 dark:text-blue-400"
                     >
-                      <Icon name="mdi:check-decagram" size="10" />Verified
+                      <Icon name="solar:verified-check-bold" size="10" />Verified
                     </span>
                   </div>
                   <p class="mt-0.5 text-sm text-gray-500 dark:text-neutral-400">
@@ -161,7 +161,7 @@
                     :disabled="acting === m.id"
                     @click="actOnMember(m.seller.id, 'APPROVE')"
                   >
-                    <Icon v-if="acting === m.id" name="mdi:loading" size="14" class="animate-spin" />
+                    <Icon v-if="acting === m.id" name="solar:refresh-linear" size="14" class="animate-spin" />
                     <span v-else>Approve</span>
                   </button>
                 </div>
@@ -210,7 +210,7 @@
             v-else-if="!members.length"
             class="flex flex-col items-center justify-center gap-3 py-16 text-center"
           >
-            <Icon name="mdi:account-group-outline" size="40" class="text-gray-300 dark:text-neutral-700" />
+            <Icon name="solar:users-group-rounded-linear" size="40" class="text-gray-300 dark:text-neutral-700" />
             <p class="font-semibold text-gray-600 dark:text-neutral-400">No {{ memberStatus.toLowerCase() }} members</p>
           </div>
 
@@ -223,7 +223,7 @@
               <div class="h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-gray-100 dark:bg-neutral-800">
                 <img v-if="m.seller.store_logo" :src="m.seller.store_logo" class="h-full w-full object-cover" />
                 <div v-else class="flex h-full w-full items-center justify-center">
-                  <Icon name="mdi:store-outline" size="18" class="text-gray-400" />
+                  <Icon name="solar:shop-2-linear" size="18" class="text-gray-400" />
                 </div>
               </div>
               <div class="min-w-0 flex-1">
@@ -274,7 +274,7 @@
               class="flex items-center gap-1.5 rounded-xl bg-brand px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand/90"
               @click="appointModal = true"
             >
-              <Icon name="mdi:plus" size="16" />
+              <Icon name="solar:add-circle-linear" size="16" />
               Appoint Officer
             </button>
           </div>
@@ -302,7 +302,7 @@
               <div class="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-gray-100 dark:bg-neutral-800">
                 <img v-if="o.profile.avatar" :src="o.profile.avatar" class="h-full w-full object-cover" />
                 <div v-else class="flex h-full w-full items-center justify-center">
-                  <Icon name="mdi:account-outline" size="18" class="text-gray-400" />
+                  <Icon name="solar:user-linear" size="18" class="text-gray-400" />
                 </div>
               </div>
               <div class="min-w-0 flex-1">
@@ -325,7 +325,7 @@
                 :disabled="removingOfficer === o.profile.id"
                 @click="removeOfficer(o.profile.id)"
               >
-                <Icon v-if="removingOfficer === o.profile.id" name="mdi:loading" size="14" class="animate-spin" />
+                <Icon v-if="removingOfficer === o.profile.id" name="solar:refresh-linear" size="14" class="animate-spin" />
                 <span v-else>Remove</span>
               </button>
             </div>
@@ -408,7 +408,7 @@
                 class="rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand/90 disabled:opacity-60"
                 :disabled="savingSettings"
               >
-                <Icon v-if="savingSettings" name="mdi:loading" size="16" class="animate-spin" />
+                <Icon v-if="savingSettings" name="solar:refresh-linear" size="16" class="animate-spin" />
                 <span v-else>Save Changes</span>
               </button>
             </div>
@@ -484,7 +484,7 @@
                 >
                   <div class="h-7 w-7 shrink-0 overflow-hidden rounded-full bg-gray-100 dark:bg-neutral-800">
                     <img v-if="u.avatar" :src="u.avatar" class="h-full w-full object-cover" />
-                    <Icon v-else name="mdi:account" size="16" class="m-auto text-gray-400" />
+                    <Icon v-else name="solar:user-linear" size="16" class="m-auto text-gray-400" />
                   </div>
                   <p class="text-sm font-medium text-gray-900 dark:text-white">@{{ u.username }}</p>
                 </button>
@@ -496,10 +496,10 @@
               v-if="appointForm.selectedUser"
               class="mb-3 flex items-center gap-2 rounded-xl bg-brand/5 px-3 py-2"
             >
-              <Icon name="mdi:account-check-outline" size="16" class="text-brand" />
+              <Icon name="solar:user-check-linear" size="16" class="text-brand" />
               <p class="flex-1 text-sm font-medium text-brand">@{{ appointForm.selectedUser.username }}</p>
               <button @click="appointForm.selectedUser = null">
-                <Icon name="mdi:close" size="14" class="text-brand/60" />
+                <Icon name="solar:close-circle-linear" size="14" class="text-brand/60" />
               </button>
             </div>
 
@@ -524,7 +524,7 @@
                 :disabled="!appointForm.selectedUser || appointingOfficer"
                 @click="confirmAppoint"
               >
-                <Icon v-if="appointingOfficer" name="mdi:loading" size="16" class="animate-spin" />
+                <Icon v-if="appointingOfficer" name="solar:refresh-linear" size="16" class="animate-spin" />
                 <span v-else>Appoint</span>
               </button>
             </div>
@@ -587,13 +587,13 @@ const activeTab = ref<'requests' | 'members' | 'officers' | 'settings'>('request
 const visibleTabs = computed(() => {
   const tabs = []
   if (canManageMembers.value) {
-    tabs.push({ id: 'requests', label: 'Requests', icon: 'mdi:inbox-outline', badge: pendingCount.value || null })
-    tabs.push({ id: 'members',  label: 'Members',  icon: 'mdi:account-group-outline', badge: null })
+    tabs.push({ id: 'requests', label: 'Requests', icon: 'solar:inbox-linear', badge: pendingCount.value || null })
+    tabs.push({ id: 'members',  label: 'Members',  icon: 'solar:users-group-rounded-linear', badge: null })
   }
   if (canManageOfficers.value)
-    tabs.push({ id: 'officers', label: 'Officers', icon: 'mdi:shield-account-outline', badge: null })
+    tabs.push({ id: 'officers', label: 'Officers', icon: 'solar:shield-user-linear', badge: null })
   if (canEditSettings.value)
-    tabs.push({ id: 'settings', label: 'Settings',  icon: 'mdi:cog-outline', badge: null })
+    tabs.push({ id: 'settings', label: 'Settings',  icon: 'solar:settings-linear', badge: null })
   return tabs
 })
 

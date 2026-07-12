@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex h-full flex-col border-l border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
+    class="flex h-full flex-col bg-white dark:bg-neutral-900"
   >
     <!-- ─── HEADER ────────────────────────────────────────────────────────── -->
     <div
@@ -10,7 +10,7 @@
         <h2
           class="flex items-center gap-2 font-bold text-gray-900 dark:text-neutral-100"
         >
-          <Icon name="mdi:shopping-outline" size="20" class="text-brand" />
+          <Icon name="solar:bag-4-linear" size="20" class="text-brand" />
           Shopping Activity
         </h2>
         <p class="mt-0.5 text-[11px] text-gray-500 dark:text-neutral-400">
@@ -22,7 +22,7 @@
         class="rounded-lg bg-gray-50 p-1.5 text-gray-500 transition-colors hover:text-gray-900 dark:bg-neutral-800 dark:hover:text-white"
         title="View all orders"
       >
-        <Icon name="mdi:history" size="18" />
+        <Icon name="solar:history-linear" size="18" />
       </NuxtLink>
     </div>
 
@@ -68,7 +68,7 @@
           <div
             class="relative z-10 mt-3 flex w-max items-center gap-1.5 rounded-md border border-gray-200/50 bg-white/50 px-2 py-1 text-xs font-bold text-gray-600 backdrop-blur-sm dark:border-neutral-700/50 dark:bg-neutral-800/50 dark:text-gray-400"
           >
-            <Icon name="mdi:wallet-outline" size="14" />
+            <Icon name="solar:wallet-linear" size="14" />
             <span
               >{{ itemsThisMonth }} item{{
                 itemsThisMonth !== 1 ? 's' : ''
@@ -236,7 +236,7 @@
         to="/buyer/orders"
         class="flex w-full items-center justify-center gap-2 rounded-xl bg-gray-900 py-3 text-[13px] font-bold text-white transition-all hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] dark:bg-white dark:text-gray-900"
       >
-        <Icon name="mdi:history" size="18" />
+        <Icon name="solar:history-linear" size="18" />
         Full Order History
       </NuxtLink>
     </div>
@@ -325,24 +325,24 @@ const recentOrders = computed(() => orders.value.slice(0, 4))
 const statusConfig = (status: string) => {
   if (['PENDING', 'CONFIRMED'].includes(status))
     return {
-      icon: 'mdi:package-variant',
+      icon: 'solar:box-bold',
       iconClass: 'text-amber-600 dark:text-amber-500',
       bgClass: 'bg-amber-50 dark:bg-amber-500/10',
     }
   if (status === 'SHIPPED')
     return {
-      icon: 'mdi:truck-fast-outline',
+      icon: 'solar:delivery-linear',
       iconClass: 'text-blue-600 dark:text-blue-500',
       bgClass: 'bg-blue-50 dark:bg-blue-500/10',
     }
   if (status === 'DELIVERED')
     return {
-      icon: 'mdi:check-decagram-outline',
+      icon: 'solar:verified-check-linear',
       iconClass: 'text-emerald-600 dark:text-emerald-500',
       bgClass: 'bg-emerald-50 dark:bg-emerald-500/10',
     }
   return {
-    icon: 'mdi:close-circle-outline',
+    icon: 'solar:close-circle-linear',
     iconClass: 'text-gray-400 dark:text-neutral-500',
     bgClass: 'bg-gray-100 dark:bg-neutral-800',
   }

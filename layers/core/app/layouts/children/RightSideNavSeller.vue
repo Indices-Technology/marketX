@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex h-full flex-col border-l border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
+    class="flex h-full flex-col bg-white dark:bg-neutral-900"
   >
     <!-- ─── TAB NAVIGATION ──────────────────────────────────────────────────── -->
     <div
@@ -24,7 +24,7 @@
                 v-if="profileStore.me?.email_verified"
                 class="absolute -bottom-0.5 -right-0.5 z-10 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-white bg-blue-500 dark:border-neutral-900"
               >
-                <Icon name="mdi:check-decagram" size="12" class="text-white" />
+                <Icon name="solar:verified-check-bold" size="12" class="text-white" />
               </div>
             </div>
             <div class="min-w-0 flex-1">
@@ -59,7 +59,7 @@
       >
         <div class="mb-4 flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <Icon name="mdi:store-check-outline" size="20" class="text-brand" />
+            <Icon name="solar:shop-2-linear" size="20" class="text-brand" />
             <h3 class="font-bold text-gray-900 dark:text-neutral-100">
               Top Shops
             </h3>
@@ -90,7 +90,7 @@
                   class="absolute -bottom-0.5 -right-0.5 z-10 flex h-[10px] w-[18px] shrink-0 items-center justify-center rounded-full border-2 border-white bg-blue-500 dark:border-neutral-900"
                 >
                   <Icon
-                    name="mdi:check-decagram"
+                    name="solar:verified-check-bold"
                     size="10"
                     class="text-white"
                   />
@@ -142,7 +142,7 @@
         class="mb-4 rounded-xl border border-gray-200 bg-gray-50/50 p-4 dark:border-neutral-800 dark:bg-neutral-800/30"
       >
         <div class="mb-3 flex items-center gap-2">
-          <Icon name="mdi:link-variant" size="20" class="text-brand" />
+          <Icon name="solar:link-round-linear" size="20" class="text-brand" />
           <h3 class="font-bold text-gray-900 dark:text-neutral-100">
             Quick Links
           </h3>
@@ -152,7 +152,7 @@
             <div
               class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white transition-colors group-hover:border-brand/30 group-hover:text-brand dark:border-neutral-700 dark:bg-neutral-900"
             >
-              <Icon name="mdi:compass-outline" size="18" />
+              <Icon name="solar:compass-linear" size="18" />
             </div>
             <span
               class="text-sm font-medium text-gray-700 transition-colors group-hover:text-brand dark:text-neutral-300"
@@ -163,7 +163,7 @@
             <div
               class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white transition-colors group-hover:border-brand/30 group-hover:text-brand dark:border-neutral-700 dark:bg-neutral-900"
             >
-              <Icon name="mdi:recycle" size="18" />
+              <Icon name="solar:recive-square-linear" size="18" />
             </div>
             <span
               class="text-sm font-medium text-gray-700 transition-colors group-hover:text-brand dark:text-neutral-300"
@@ -174,7 +174,7 @@
             <div
               class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white transition-colors group-hover:border-brand/30 group-hover:text-brand dark:border-neutral-700 dark:bg-neutral-900"
             >
-              <Icon name="mdi:fire" size="18" />
+              <Icon name="solar:fire-bold" size="18" />
             </div>
             <span
               class="text-sm font-medium text-gray-700 transition-colors group-hover:text-brand dark:text-neutral-300"

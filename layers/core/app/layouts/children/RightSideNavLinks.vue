@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex h-full flex-col border-l border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
+    class="flex h-full flex-col bg-white dark:bg-neutral-900"
   >
     <!-- ─── SCROLLABLE CONTENT AREA ─────────────────────────────────────────── -->
     <div class="custom-scrollbar flex-1 space-y-4 overflow-y-auto p-3">
@@ -10,7 +10,7 @@
       >
         <div class="mb-3 flex items-center gap-2">
           <Icon
-            name="mdi:book-open-page-variant-outline"
+            name="solar:book-2-linear"
             size="20"
             class="text-brand"
           />
@@ -23,7 +23,7 @@
             <div
               class="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white transition-colors group-hover:border-brand/30 group-hover:text-brand dark:border-neutral-700 dark:bg-neutral-900"
             >
-              <Icon name="mdi:rocket-launch-outline" size="18" />
+              <Icon name="solar:rocket-2-linear" size="18" />
             </div>
             <span
               class="text-sm font-medium text-gray-700 transition-colors group-hover:text-brand dark:text-neutral-300"
@@ -34,7 +34,7 @@
             <div
               class="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white transition-colors group-hover:border-brand/30 group-hover:text-brand dark:border-neutral-700 dark:bg-neutral-900"
             >
-              <Icon name="mdi:package-variant-closed" size="18" />
+              <Icon name="solar:box-linear" size="18" />
             </div>
             <span
               class="text-sm font-medium text-gray-700 transition-colors group-hover:text-brand dark:text-neutral-300"
@@ -45,7 +45,7 @@
             <div
               class="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white transition-colors group-hover:border-brand/30 group-hover:text-brand dark:border-neutral-700 dark:bg-neutral-900"
             >
-              <Icon name="mdi:keyboard-return" size="18" />
+              <Icon name="solar:arrow-left-linear" size="18" />
             </div>
             <span
               class="text-sm font-medium text-gray-700 transition-colors group-hover:text-brand dark:text-neutral-300"
@@ -56,7 +56,7 @@
             <div
               class="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white transition-colors group-hover:border-brand/30 group-hover:text-brand dark:border-neutral-700 dark:bg-neutral-900"
             >
-              <Icon name="mdi:storefront-outline" size="18" />
+              <Icon name="solar:shop-linear" size="18" />
             </div>
             <span
               class="text-sm font-medium text-gray-700 transition-colors group-hover:text-brand dark:text-neutral-300"
@@ -71,7 +71,7 @@
         class="rounded-xl border border-gray-200 bg-gray-50/50 p-4 dark:border-neutral-800 dark:bg-neutral-800/30"
       >
         <div class="mb-3 flex items-center gap-2">
-          <Icon name="mdi:scale-balance" size="20" class="text-brand" />
+          <Icon name="solar:scale-linear" size="20" class="text-brand" />
           <h3 class="font-bold text-gray-900 dark:text-neutral-100">
             Legal & Policies
           </h3>
@@ -81,7 +81,7 @@
             <div
               class="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white transition-colors group-hover:border-brand/30 group-hover:text-brand dark:border-neutral-700 dark:bg-neutral-900"
             >
-              <Icon name="mdi:file-document-outline" size="18" />
+              <Icon name="solar:document-text-linear" size="18" />
             </div>
             <span
               class="text-sm font-medium text-gray-700 transition-colors group-hover:text-brand dark:text-neutral-300"
@@ -92,7 +92,7 @@
             <div
               class="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white transition-colors group-hover:border-brand/30 group-hover:text-brand dark:border-neutral-700 dark:bg-neutral-900"
             >
-              <Icon name="mdi:shield-check-outline" size="18" />
+              <Icon name="solar:shield-check-linear" size="18" />
             </div>
             <span
               class="text-sm font-medium text-gray-700 transition-colors group-hover:text-brand dark:text-neutral-300"
@@ -150,7 +150,7 @@
         <div
           class="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-brand/10 text-brand"
         >
-          <Icon name="mdi:email-fast-outline" size="20" />
+          <Icon name="solar:letter-linear" size="20" />
         </div>
         <h4 class="mb-1 text-sm font-bold text-gray-900 dark:text-white">
           Need direct help?

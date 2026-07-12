@@ -86,7 +86,11 @@ export default defineNuxtConfig({
 
   icon: {
     serverBundle: {
-      collections: ['mdi'],
+      // 'solar' — MarketX's base set (see AppIcon.vue). 'simple-icons' — brand
+      // logos (facebook/google/x/whatsapp/…). 'mdi' — 5 rare icons with no Solar
+      // equivalent still in use (shoe-sneaker, diamond-stone, cookie-outline,
+      // format-quote-open, lifebuoy).
+      collections: ['solar', 'simple-icons', 'mdi'],
     },
   },
 

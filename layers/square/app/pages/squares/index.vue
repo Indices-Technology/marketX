@@ -14,7 +14,7 @@
             aria-label="Go back"
             @click="router.back()"
           >
-            <Icon name="mdi:arrow-left" size="20" />
+            <Icon name="solar:arrow-left-linear" size="20" />
           </button>
           <div>
             <h1
@@ -32,7 +32,7 @@
           to="/map"
           class="flex shrink-0 items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition-colors hover:border-brand/30 hover:text-brand dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-400"
         >
-          <Icon name="mdi:map-marker-radius-outline" size="16" />
+          <Icon name="solar:map-point-wave-linear" size="16" />
           View on Map
         </NuxtLink>
       </div>
@@ -40,7 +40,7 @@
       <!-- Search bar -->
       <div class="relative mb-6">
         <Icon
-          name="mdi:magnify"
+          name="solar:magnifer-linear"
           size="18"
           class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-neutral-500"
         />
@@ -90,7 +90,7 @@
       <!-- Error -->
       <div v-else-if="error" class="py-24 text-center">
         <Icon
-          name="mdi:store-off-outline"
+          name="solar:shop-2-linear"
           size="52"
           class="mx-auto mb-3 text-gray-300 dark:text-neutral-600"
         />
@@ -112,7 +112,7 @@
           class="mb-8"
         >
           <div class="mb-3 flex items-center gap-2">
-            <Icon name="mdi:map-marker" size="16" class="text-amber-500" />
+            <Icon name="solar:map-point-bold" size="16" class="text-amber-500" />
             <h2
               class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-neutral-500"
             >
@@ -135,7 +135,7 @@
         <section v-if="catSquares.length && activeType !== 'GEOGRAPHIC'">
           <div class="mb-3 flex items-center gap-2">
             <Icon
-              name="mdi:tag-multiple-outline"
+              name="solar:tag-horizontal-linear"
               size="16"
               class="text-purple-500"
             />
@@ -163,7 +163,7 @@
           class="py-24 text-center"
         >
           <Icon
-            name="mdi:storefront-outline"
+            name="solar:shop-linear"
             size="52"
             class="mx-auto mb-3 text-gray-300 dark:text-neutral-600"
           />
@@ -188,7 +188,7 @@
           >
             <Icon
               v-if="loadingMore"
-              name="mdi:loading"
+              name="solar:refresh-linear"
               size="16"
               class="mr-1.5 inline animate-spin"
             />

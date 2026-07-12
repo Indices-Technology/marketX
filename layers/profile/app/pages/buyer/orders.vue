@@ -7,7 +7,7 @@
           to="/"
           class="rounded-full p-2 transition-colors hover:bg-gray-100 dark:hover:bg-neutral-800"
         >
-          <Icon name="mdi:arrow-left" size="22" />
+          <Icon name="solar:arrow-left-linear" size="22" />
         </NuxtLink>
         <h1 class="text-xl font-bold text-gray-900 dark:text-neutral-100">
           Orders
@@ -24,7 +24,7 @@
           >
             <div class="flex items-center gap-2">
               <Icon
-                name="mdi:store-clock"
+                name="solar:shop-2-linear"
                 size="18"
                 class="text-amber-600 dark:text-amber-400"
               />
@@ -114,7 +114,7 @@
         class="mb-5 flex items-center gap-3 rounded-2xl border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20"
       >
         <Icon
-          name="mdi:check-circle"
+          name="solar:check-circle-bold"
           size="24"
           class="shrink-0 text-green-500"
         />
@@ -135,7 +135,7 @@
       <!-- My Purchases label -->
       <div class="mb-3 flex items-center gap-2">
         <Icon
-          name="mdi:shopping-outline"
+          name="solar:bag-4-linear"
           size="16"
           class="text-gray-400 dark:text-neutral-500"
         />
@@ -265,7 +265,7 @@
               v-if="order.trackingNumber"
               class="mt-2 flex items-center gap-1.5 border-t border-gray-200 pt-2 text-xs text-brand dark:border-neutral-800"
             >
-              <Icon name="mdi:truck-outline" size="14" />
+              <Icon name="solar:delivery-linear" size="14" />
               {{ order.shipper || 'Courier' }} · {{ order.trackingNumber }}
             </div>
           </NuxtLink>
@@ -275,7 +275,7 @@
             v-if="order.paymentMethod === 'pay_on_delivery' && !['DELIVERED','CANCELLED','RETURNED'].includes(order.status) && !confirmedIds.has(order.id)"
             class="flex items-center gap-2 border-t border-emerald-100 bg-emerald-50 px-5 py-2.5 text-xs text-emerald-700 dark:border-emerald-900/30 dark:bg-emerald-900/10 dark:text-emerald-400"
           >
-            <Icon name="mdi:cash" size="14" class="shrink-0" />
+            <Icon name="solar:money-bag-linear" size="14" class="shrink-0" />
             Have <strong class="mx-0.5">{{ formatPrice(order.totalAmount) }}</strong> ready to pay in cash on delivery
           </div>
 
@@ -289,7 +289,7 @@
                 class="flex items-center gap-1.5 text-xs text-amber-700 dark:text-amber-400"
               >
                 <Icon
-                  name="mdi:clock-alert-outline"
+                  name="solar:alarm-linear"
                   size="14"
                   class="shrink-0"
                 />
@@ -313,7 +313,7 @@
             v-if="confirmedIds.has(order.id)"
             class="flex items-center gap-1.5 border-t border-green-100 bg-green-50 px-5 py-3 text-xs font-medium text-green-700 dark:border-green-900/30 dark:bg-green-900/10 dark:text-green-400"
           >
-            <Icon name="mdi:check-circle" size="14" />
+            <Icon name="solar:check-circle-bold" size="14" />
             Receipt confirmed — funds released to seller
           </div>
         </div>
@@ -329,7 +329,7 @@
           class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 dark:bg-neutral-800"
         >
           <Icon
-            name="mdi:package-variant-closed-outline"
+            name="solar:box-linear"
             size="32"
             class="text-gray-400 dark:text-neutral-500"
           />

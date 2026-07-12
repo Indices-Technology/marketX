@@ -29,7 +29,7 @@
       </div>
 
       <Icon
-        name="mdi:chevron-down"
+        name="solar:alt-arrow-down-linear"
         size="16"
         class="hidden shrink-0 text-gray-400 transition-transform duration-200 xl:block dark:text-neutral-500"
         :class="{ 'rotate-180': isOpen }"
@@ -69,7 +69,7 @@
             </div>
             <Icon
               v-if="activeSeller?.id === seller.id"
-              name="mdi:check"
+              name="solar:check-circle-linear"
               size="14"
               class="shrink-0 text-brand"
             />
@@ -82,7 +82,7 @@
             @click="isOpen = false"
             class="flex items-center gap-2.5 px-3 py-2 text-brand transition-colors hover:bg-gray-50 dark:hover:bg-neutral-800"
           >
-            <Icon name="mdi:plus" size="16" class="shrink-0" />
+            <Icon name="solar:add-circle-linear" size="16" class="shrink-0" />
             <span class="text-[12px] font-semibold">Create Store</span>
           </NuxtLink>
         </div>

@@ -27,7 +27,7 @@
     />
     <Icon
       v-else
-      name="mdi:message-outline"
+      name="solar:chat-round-line-linear"
       size="18"
       class="shrink-0 text-gray-300 dark:text-neutral-600"
     />

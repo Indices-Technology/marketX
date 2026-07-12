@@ -31,7 +31,7 @@
           class="pointer-events-auto absolute left-3 top-3 z-[60] flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-sm transition-colors hover:bg-black/80 sm:hidden"
           aria-label="Back"
         >
-          <Icon name="mdi:arrow-left" size="20" />
+          <Icon name="solar:arrow-left-linear" size="20" />
         </button>
 
         <div
@@ -76,7 +76,7 @@
                 "
                 aria-label="Previous"
               >
-                <Icon name="mdi:chevron-left" size="22" />
+                <Icon name="solar:alt-arrow-left-linear" size="22" />
               </button>
               <button
                 @click.stop="next"
@@ -88,7 +88,7 @@
                 "
                 aria-label="Next"
               >
-                <Icon name="mdi:chevron-right" size="22" />
+                <Icon name="solar:alt-arrow-right-linear" size="22" />
               </button>
 
               <!-- Dot indicators -->
@@ -114,7 +114,7 @@
               <div
                 class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-pink-500 to-purple-600"
               >
-                <Icon name="mdi:music-note" size="14" class="text-white" />
+                <Icon name="solar:music-note-2-bold" size="14" class="text-white" />
               </div>
               <p class="flex-1 truncate text-[11px] text-white/90">
                 {{ post.bgMusic.name ?? 'Background music' }}
@@ -130,7 +130,7 @@
                 class="shrink-0 text-white/80 transition-colors hover:text-white"
               >
                 <Icon
-                  :name="isMusicPlaying ? 'mdi:pause' : 'mdi:play'"
+                  :name="isMusicPlaying ? 'solar:pause-bold' : 'solar:play-bold'"
                   size="18"
                 />
               </button>
@@ -173,7 +173,7 @@
                   class="absolute left-1.5 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white"
                   @click.stop="prev"
                 >
-                  <Icon name="mdi:chevron-left" size="20" />
+                  <Icon name="solar:alt-arrow-left-linear" size="20" />
                 </button>
                 <button
                   :class="
@@ -184,7 +184,7 @@
                   class="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white"
                   @click.stop="next"
                 >
-                  <Icon name="mdi:chevron-right" size="20" />
+                  <Icon name="solar:alt-arrow-right-linear" size="20" />
                 </button>
                 <!-- Mobile dots -->
                 <div
@@ -206,7 +206,7 @@
                 class="absolute bottom-10 left-2 right-2 flex items-center gap-2 rounded-lg bg-black/60 px-2.5 py-1.5 backdrop-blur-sm"
               >
                 <Icon
-                  name="mdi:music-note"
+                  name="solar:music-note-2-bold"
                   size="12"
                   class="shrink-0 text-pink-400"
                 />
@@ -224,7 +224,7 @@
                   @click.stop="toggleMusicMob"
                 >
                   <Icon
-                    :name="isMusicPlayingMob ? 'mdi:pause' : 'mdi:play'"
+                    :name="isMusicPlayingMob ? 'solar:pause-bold' : 'solar:play-bold'"
                     size="16"
                   />
                 </button>

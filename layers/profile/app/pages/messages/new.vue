@@ -12,7 +12,7 @@
             to="/messages"
             class="text-gray-500 transition-colors hover:text-gray-700 dark:text-neutral-400 dark:hover:text-neutral-200"
           >
-            <Icon name="mdi:arrow-left" size="22" />
+            <Icon name="solar:arrow-left-linear" size="22" />
           </NuxtLink>
           <h2 class="text-lg font-bold text-gray-900 dark:text-neutral-100">
             New Message
@@ -23,7 +23,7 @@
         <div class="border-b border-gray-200 p-4 dark:border-neutral-800">
           <div class="relative">
             <Icon
-              name="mdi:magnify"
+              name="solar:magnifer-linear"
               size="18"
               class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
             />
@@ -55,7 +55,7 @@
               class="py-16 text-center text-sm text-gray-500 dark:text-neutral-400"
             >
               <Icon
-                name="mdi:account-search-outline"
+                name="solar:magnifer-linear"
                 size="40"
                 class="mx-auto mb-2 opacity-50"
               />
@@ -96,7 +96,7 @@
                         </p>
                         <Icon
                           v-if="item.isVerified"
-                          name="mdi:check-decagram"
+                          name="solar:verified-check-bold"
                           size="14"
                           class="shrink-0 text-blue-500"
                         />
@@ -176,7 +176,7 @@
                         </p>
                         <Icon
                           v-if="item.isVerified"
-                          name="mdi:check-decagram"
+                          name="solar:verified-check-bold"
                           size="14"
                           class="shrink-0 text-blue-500"
                         />
@@ -211,7 +211,7 @@
               <div
                 class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-50 dark:bg-neutral-900"
               >
-                <Icon name="mdi:account-group-outline" size="32" />
+                <Icon name="solar:users-group-rounded-linear" size="32" />
               </div>
               <p class="text-sm font-bold text-gray-900 dark:text-white">
                 Follow people to message them

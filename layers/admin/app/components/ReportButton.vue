@@ -4,7 +4,7 @@
     @click="open = true"
     class="w-full flex items-center gap-2.5 px-3 py-2 text-[13px] text-gray-600 dark:text-neutral-400 hover:bg-gray-50 dark:hover:bg-neutral-800 hover:text-rose-500 dark:hover:text-rose-400 transition-colors"
   >
-    <Icon name="mdi:flag-outline" size="16" />
+    <Icon name="solar:flag-linear" size="16" />
     Report
   </button>
 
@@ -38,7 +38,7 @@
       />
 
       <div v-if="submitted" class="flex items-center gap-2 text-[13px] text-green-600 dark:text-green-400">
-        <Icon name="mdi:check-circle-outline" size="18" />
+        <Icon name="solar:check-circle-linear" size="18" />
         Report submitted. Thank you.
       </div>
       <div v-else class="flex gap-2">
@@ -78,13 +78,13 @@ const submitted = ref(false)
 const adminApi = useAdminApi()
 
 const REASONS = [
-  { value: 'SPAM', label: 'Spam or misleading', icon: 'mdi:email-alert-outline' },
-  { value: 'INAPPROPRIATE', label: 'Inappropriate content', icon: 'mdi:eye-off-outline' },
-  { value: 'COUNTERFEIT', label: 'Counterfeit or fake product', icon: 'mdi:tag-off-outline' },
-  { value: 'HARASSMENT', label: 'Harassment or bullying', icon: 'mdi:account-alert-outline' },
-  { value: 'MISINFORMATION', label: 'False information', icon: 'mdi:information-off-outline' },
-  { value: 'VIOLENCE', label: 'Violence or dangerous', icon: 'mdi:shield-alert-outline' },
-  { value: 'OTHER', label: 'Something else', icon: 'mdi:dots-horizontal-circle-outline' },
+  { value: 'SPAM', label: 'Spam or misleading', icon: 'solar:letter-unread-linear' },
+  { value: 'INAPPROPRIATE', label: 'Inappropriate content', icon: 'solar:eye-closed-linear' },
+  { value: 'COUNTERFEIT', label: 'Counterfeit or fake product', icon: 'solar:tag-linear' },
+  { value: 'HARASSMENT', label: 'Harassment or bullying', icon: 'solar:user-speak-linear' },
+  { value: 'MISINFORMATION', label: 'False information', icon: 'solar:info-circle-linear' },
+  { value: 'VIOLENCE', label: 'Violence or dangerous', icon: 'solar:shield-warning-linear' },
+  { value: 'OTHER', label: 'Something else', icon: 'solar:menu-dots-circle-linear' },
 ]
 
 const contentTypeLabel = computed(() => {

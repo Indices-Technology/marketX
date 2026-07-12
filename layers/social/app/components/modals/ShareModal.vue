@@ -55,7 +55,7 @@
               class="flex items-center gap-2 rounded-xl bg-gray-50 px-3 py-2.5 dark:bg-neutral-800"
             >
               <Icon
-                name="mdi:link-variant"
+                name="solar:link-round-linear"
                 size="18"
                 class="shrink-0 text-gray-400"
               />
@@ -101,28 +101,28 @@ const platforms = computed(() => [
   {
     id: 'whatsapp',
     label: 'WhatsApp',
-    icon: 'mdi:whatsapp',
+    icon: 'simple-icons:whatsapp',
     bg: '#25D366',
     href: `https://wa.me/?text=${encodeURIComponent((props.title ? props.title + '\n' : '') + props.url)}`,
   },
   {
     id: 'twitter',
     label: 'X / Twitter',
-    icon: 'mdi:twitter',
+    icon: 'simple-icons:x',
     bg: '#000000',
     href: `https://twitter.com/intent/tweet?text=${encodeURIComponent(props.title || '')}&url=${encodeURIComponent(props.url)}`,
   },
   {
     id: 'facebook',
     label: 'Facebook',
-    icon: 'mdi:facebook',
+    icon: 'simple-icons:facebook',
     bg: '#1877F2',
     href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(props.url)}`,
   },
   {
     id: 'telegram',
     label: 'Telegram',
-    icon: 'mdi:telegram',
+    icon: 'simple-icons:telegram',
     bg: '#229ED9',
     href: `https://t.me/share/url?url=${encodeURIComponent(props.url)}&text=${encodeURIComponent(props.title || '')}`,
   },

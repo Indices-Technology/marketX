@@ -72,7 +72,7 @@
         <p
           class="mt-0.5 flex items-center gap-1 text-[10px] text-gray-400 dark:text-neutral-500"
         >
-          <Icon name="mdi:store-outline" size="10" class="shrink-0" />
+          <Icon name="solar:shop-2-linear" size="10" class="shrink-0" />
           {{ square.memberCount ?? 0 }} traders
         </p>
       </div>
@@ -107,7 +107,7 @@
           class="absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-full bg-black/45 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white backdrop-blur-sm"
         >
           <Icon
-            :name="square.type === 'GEOGRAPHIC' ? 'mdi:map-marker' : 'mdi:tag'"
+            :name="square.type === 'GEOGRAPHIC' ? 'solar:map-point-bold' : 'solar:tag-bold'"
             size="11"
           />
           {{ square.type === 'GEOGRAPHIC' ? 'Market' : 'Category' }}
@@ -155,21 +155,21 @@
           v-if="square.city || square.state"
           class="mt-0.5 flex items-center gap-1 truncate text-[11px] text-gray-500 dark:text-neutral-400"
         >
-          <Icon name="mdi:map-marker-outline" size="11" class="shrink-0" />
+          <Icon name="solar:map-point-linear" size="11" class="shrink-0" />
           {{ [square.city, square.state].filter(Boolean).join(', ') }}
         </p>
         <div
           class="mt-2 flex items-center gap-1.5 text-[11px] text-gray-400 dark:text-neutral-500"
         >
           <span class="flex items-center gap-1">
-            <Icon name="mdi:store-outline" size="13" />
+            <Icon name="solar:shop-2-linear" size="13" />
             {{ square.memberCount ?? 0 }} traders
           </span>
           <span v-if="square.productCount != null">
             · {{ square.productCount }} goods
           </span>
           <span class="ml-auto inline-flex items-center gap-1">
-            Visit <Icon name="mdi:arrow-right" size="12" />
+            Visit <Icon name="solar:arrow-right-linear" size="12" />
           </span>
         </div>
       </div>
@@ -203,7 +203,7 @@
           class="absolute left-3 top-2.5 inline-flex items-center gap-1 rounded-full bg-black/50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white backdrop-blur-sm"
         >
           <Icon
-            :name="square.type === 'GEOGRAPHIC' ? 'mdi:map-marker' : 'mdi:tag'"
+            :name="square.type === 'GEOGRAPHIC' ? 'solar:map-point-bold' : 'solar:tag-bold'"
             size="11"
           />
           {{ square.type === 'GEOGRAPHIC' ? 'Location' : 'Category' }}
@@ -266,11 +266,11 @@
             class="flex items-center gap-3 text-[11px] text-gray-400 dark:text-neutral-500"
           >
             <span class="flex items-center gap-1">
-              <Icon name="mdi:store-outline" size="13" />
+              <Icon name="solar:shop-2-linear" size="13" />
               {{ square.memberCount ?? 0 }} traders
             </span>
             <span class="flex items-center gap-1">
-              <Icon name="mdi:account-multiple-outline" size="13" />
+              <Icon name="solar:users-group-two-rounded-linear" size="13" />
               {{ square.followerCount ?? 0 }} following
             </span>
           </div>
@@ -286,7 +286,7 @@
           >
             <Icon
               v-if="followLoading"
-              name="mdi:loading"
+              name="solar:refresh-linear"
               size="12"
               class="animate-spin"
             />

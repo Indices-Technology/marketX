@@ -39,7 +39,7 @@ export const RESERVED_SLUGS = new Set([
   'static',
   'marketx',
   'marketx.africa',
-  'marketx.app',
+  'marketx.africa',
   'marketx_ng',
   'marketx_ng_africa',
   'marketx_ng_app',

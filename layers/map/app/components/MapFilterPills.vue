@@ -35,10 +35,10 @@ const props = defineProps<{
 defineEmits<{ 'update:active': [filter: MapFilter] }>()
 
 const pills = computed(() => [
-  { value: 'all' as MapFilter,      icon: 'mdi:map-marker-multiple-outline', label: 'All',      count: props.totalCount },
-  { value: 'deals' as MapFilter,    icon: 'mdi:tag-outline',                 label: 'Deals',    count: props.dealCount },
-  { value: 'premium' as MapFilter,  icon: 'mdi:crown-outline',               label: 'Premium',  count: props.premiumCount },
-  { value: 'verified' as MapFilter, icon: 'mdi:shield-check-outline',        label: 'Verified', count: props.verifiedCount },
+  { value: 'all' as MapFilter,      icon: 'solar:map-point-linear', label: 'All',      count: props.totalCount },
+  { value: 'deals' as MapFilter,    icon: 'solar:tag-linear',                 label: 'Deals',    count: props.dealCount },
+  { value: 'premium' as MapFilter,  icon: 'solar:crown-linear',               label: 'Premium',  count: props.premiumCount },
+  { value: 'verified' as MapFilter, icon: 'solar:shield-check-linear',        label: 'Verified', count: props.verifiedCount },
 ])
 </script>
 

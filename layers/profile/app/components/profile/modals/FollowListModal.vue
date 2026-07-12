@@ -9,7 +9,7 @@
       <!-- Search -->
       <BaseInput
         v-model="searchQuery"
-        icon-left="mdi:magnify"
+        icon-left="solar:magnifer-linear"
         placeholder="Search..."
       />
 
@@ -21,7 +21,7 @@
       <!-- Empty -->
       <div v-else-if="filteredUsers.length === 0" class="py-8 text-center">
         <Icon
-          name="mdi:account-search"
+          name="solar:magnifer-linear"
           size="48"
           class="mx-auto mb-2 text-gray-300 dark:text-neutral-700"
         />

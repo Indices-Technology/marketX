@@ -20,7 +20,7 @@
             class="flex items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-neutral-800"
           >
             <div class="flex items-center gap-2">
-              <Icon name="mdi:bullhorn-outline" size="20" class="text-brand" />
+              <Icon name="solar:speaker-linear" size="20" class="text-brand" />
               <h2
                 class="text-base font-semibold text-gray-900 dark:text-neutral-100"
               >
@@ -32,7 +32,7 @@
               class="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-gray-100 dark:hover:bg-neutral-800"
             >
               <Icon
-                name="mdi:close"
+                name="solar:close-circle-linear"
                 size="18"
                 class="text-gray-500 dark:text-neutral-400"
               />
@@ -57,7 +57,7 @@
                   class="flex h-full w-full items-center justify-center"
                 >
                   <Icon
-                    name="mdi:image-outline"
+                    name="solar:gallery-linear"
                     size="24"
                     class="text-gray-300 dark:text-neutral-600"
                   />
@@ -169,7 +169,7 @@
               @click="shareLink"
               class="flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand py-3 text-sm font-semibold text-white transition-colors hover:bg-[#d81b36]"
             >
-              <Icon name="mdi:share-variant-outline" size="18" />
+              <Icon name="solar:share-linear" size="18" />
               Share Now
             </button>
             <button

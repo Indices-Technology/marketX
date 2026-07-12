@@ -21,7 +21,7 @@
       <div class="flex-1 space-y-1.5 pt-0.5">
         <div v-for="star in [5, 4, 3, 2, 1]" :key="star" class="flex items-center gap-2">
           <span class="w-2.5 text-right text-[11px] font-semibold text-gray-500 dark:text-neutral-400">{{ star }}</span>
-          <Icon name="mdi:star" size="11" class="shrink-0 text-amber-400" />
+          <Icon name="solar:star-bold" size="11" class="shrink-0 text-amber-400" />
           <div class="h-2 flex-1 overflow-hidden rounded-full bg-gray-200 dark:bg-neutral-700">
             <div
               class="h-full rounded-full bg-amber-400 transition-all duration-500"
@@ -43,7 +43,7 @@
         v-if="userReview"
         class="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-800/60 dark:bg-emerald-900/20"
       >
-        <Icon name="mdi:check-circle" size="20" class="shrink-0 text-emerald-500" />
+        <Icon name="solar:check-circle-bold" size="20" class="shrink-0 text-emerald-500" />
         <div class="min-w-0">
           <p class="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
             You reviewed this product
@@ -60,7 +60,7 @@
         v-else-if="!canReview"
         class="flex items-start gap-3 rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-4 py-4 dark:border-neutral-700 dark:bg-neutral-800/40"
       >
-        <Icon name="mdi:lock-outline" size="20" class="mt-0.5 shrink-0 text-gray-400" />
+        <Icon name="solar:lock-keyhole-linear" size="20" class="mt-0.5 shrink-0 text-gray-400" />
         <div>
           <p class="text-sm font-semibold text-gray-600 dark:text-neutral-300">
             Verified buyers only
@@ -164,7 +164,7 @@
                 v-if="review.verified"
                 class="flex items-center gap-0.5 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
               >
-                <Icon name="mdi:check-circle" size="10" />
+                <Icon name="solar:check-circle-bold" size="10" />
                 Verified buyer
               </span>
             </div>
@@ -198,7 +198,7 @@
       v-else-if="!loading"
       class="flex flex-col items-center gap-2 py-12 text-center"
     >
-      <Icon name="mdi:star-outline" size="40" class="text-gray-200 dark:text-neutral-700" />
+      <Icon name="solar:star-linear" size="40" class="text-gray-200 dark:text-neutral-700" />
       <p class="text-sm font-semibold text-gray-400 dark:text-neutral-500">No reviews yet</p>
       <p class="text-xs text-gray-400 dark:text-neutral-600">
         Be the first verified buyer to review this product

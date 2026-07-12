@@ -31,7 +31,7 @@
         <div
           class="flex h-16 w-16 items-center justify-center rounded-full border border-white/10 bg-black/50 backdrop-blur-sm"
         >
-          <Icon name="mdi:play" size="36" class="ml-1 text-white" />
+          <Icon name="solar:play-bold" size="36" class="ml-1 text-white" />
         </div>
       </div>
     </Transition>
@@ -53,9 +53,9 @@
         aria-label="Tap to enable sound"
       >
         <div class="unmute-pill">
-          <Icon name="mdi:volume-off" size="18" class="text-white" />
+          <Icon name="solar:muted-linear" size="18" class="text-white" />
           <span class="text-[13px] font-bold text-white">Tap for sound</span>
-          <Icon name="mdi:chevron-right" size="16" class="text-white/70" />
+          <Icon name="solar:alt-arrow-right-linear" size="16" class="text-white/70" />
         </div>
       </button>
     </Transition>
@@ -77,7 +77,7 @@
             loading="lazy"
           />
           <div v-else class="flex h-full w-full items-center justify-center">
-            <Icon name="mdi:shopping-outline" size="20" class="text-white/40" />
+            <Icon name="solar:bag-4-linear" size="20" class="text-white/40" />
           </div>
         </div>
         <!-- Info -->
@@ -91,7 +91,7 @@
           class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand text-white shadow-md shadow-brand/40"
           @click.stop
         >
-          <Icon name="mdi:arrow-right" size="16" />
+          <Icon name="solar:arrow-right-linear" size="16" />
         </NuxtLink>
       </div>
     </Transition>
@@ -114,7 +114,7 @@
         <button
           class="absolute -bottom-2 left-1/2 flex h-6 w-6 -translate-x-1/2 items-center justify-center rounded-full border-2 border-black bg-brand transition-transform hover:scale-110"
         >
-          <Icon name="mdi:plus" size="14" class="text-white" />
+          <Icon name="solar:add-circle-linear" size="14" class="text-white" />
         </button>
       </div>
 
@@ -127,7 +127,7 @@
           class="flex h-10 w-10 items-center justify-center rounded-full bg-black/20 backdrop-blur-md transition-colors group-hover:bg-black/40"
         >
           <Icon
-            :name="isLiked ? 'mdi:heart' : 'mdi:heart-outline'"
+            :name="isLiked ? 'solar:heart-bold' : 'solar:heart-linear'"
             size="26"
             class="transition-transform group-active:scale-75"
             :class="
@@ -151,7 +151,7 @@
           class="flex h-10 w-10 items-center justify-center rounded-full bg-black/20 backdrop-blur-md transition-colors group-hover:bg-black/40"
         >
           <Icon
-            name="mdi:comment-processing-outline"
+            name="solar:chat-round-dots-linear"
             size="24"
             class="text-white transition-transform group-active:scale-75"
           />
@@ -170,7 +170,7 @@
           class="flex h-10 w-10 items-center justify-center rounded-full bg-black/20 backdrop-blur-md transition-colors group-hover:bg-black/40"
         >
           <Icon
-            name="mdi:share-variant"
+            name="solar:share-bold"
             size="24"
             class="text-white transition-transform group-active:scale-75"
           />
@@ -190,7 +190,7 @@
           class="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-black/20 backdrop-blur-md"
         >
           <Icon
-            :name="isMuted ? 'mdi:volume-off' : 'mdi:volume-high'"
+            :name="isMuted ? 'solar:muted-linear' : 'solar:volume-loud-linear'"
             size="16"
             class="text-white"
           />
@@ -217,7 +217,7 @@
         v-if="reel.viewCount"
         class="text-shadow flex items-center gap-1 text-[12px] font-medium text-white/70"
       >
-        <Icon name="mdi:play-outline" size="14" />
+        <Icon name="solar:play-linear" size="14" />
         {{ formatCount(reel.viewCount) }} views
       </p>
 
@@ -237,7 +237,7 @@
         @click.stop
       >
         <div class="rounded-full bg-brand/10 p-1 text-brand">
-          <Icon name="mdi:shopping" size="16" />
+          <Icon name="solar:bag-4-bold" size="16" />
         </div>
         Shop Now • {{ formatPrice(taggedProduct.price || 0) }}
       </NuxtLink>

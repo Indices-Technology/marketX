@@ -37,7 +37,7 @@
       v-else-if="!loading && items.length === 0"
       class="flex flex-col items-center justify-center gap-3 py-16"
     >
-      <Icon name="mdi:image-off-outline" size="52" class="text-gray-300 dark:text-neutral-700" />
+      <Icon name="solar:gallery-remove-linear" size="52" class="text-gray-300 dark:text-neutral-700" />
       <p class="text-[14px] text-gray-500 dark:text-neutral-400">No media uploaded yet</p>
     </div>
 
@@ -72,7 +72,7 @@
             class="absolute inset-0 flex items-end justify-between bg-black/40 p-2 opacity-0 transition-opacity group-hover:opacity-100"
           >
             <Icon
-              :name="item.type === 'VIDEO' ? 'mdi:play-circle' : item.type === 'AUDIO' ? 'mdi:music' : 'mdi:image'"
+              :name="item.type === 'VIDEO' ? 'solar:play-circle-bold' : item.type === 'AUDIO' ? 'solar:music-notes-bold' : 'solar:gallery-bold'"
               size="16"
               class="text-white drop-shadow"
             />
@@ -81,7 +81,7 @@
               @click.stop="copyUrl(item.url, item.id)"
               class="flex items-center gap-1 rounded bg-white/20 px-1.5 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm hover:bg-white/30"
             >
-              <Icon :name="copied === item.id ? 'mdi:check' : 'mdi:link'" size="11" />
+              <Icon :name="copied === item.id ? 'solar:check-circle-linear' : 'solar:link-linear'" size="11" />
               {{ copied === item.id ? 'Copied' : 'URL' }}
             </button>
           </div>
@@ -124,7 +124,7 @@
             class="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
             @click="lightboxItem = null"
           >
-            <Icon name="mdi:close" size="20" />
+            <Icon name="solar:close-circle-linear" size="20" />
           </button>
 
           <div class="max-h-[90vh] max-w-3xl w-full">
@@ -159,7 +159,7 @@
                 @click="copyUrl(lightboxItem!.url, lightboxItem!.id)"
                 class="flex items-center gap-2 rounded-lg bg-white/15 px-3 py-2 text-[12px] font-semibold text-white hover:bg-white/25"
               >
-                <Icon :name="copied === lightboxItem.id ? 'mdi:check' : 'mdi:content-copy'" size="14" />
+                <Icon :name="copied === lightboxItem.id ? 'solar:check-circle-linear' : 'solar:copy-linear'" size="14" />
                 {{ copied === lightboxItem.id ? 'Copied!' : 'Copy URL' }}
               </button>
             </div>
@@ -197,10 +197,10 @@ const lightboxItem = ref<MediaItem | null>(null)
 const copied = ref<string | null>(null)
 
 const filters = [
-  { value: 'ALL', label: 'All', icon: 'mdi:view-grid-outline' },
-  { value: 'IMAGE', label: 'Images', icon: 'mdi:image-outline' },
-  { value: 'VIDEO', label: 'Videos', icon: 'mdi:video-outline' },
-  { value: 'AUDIO', label: 'Audio', icon: 'mdi:music-note-outline' },
+  { value: 'ALL', label: 'All', icon: 'solar:widget-2-linear' },
+  { value: 'IMAGE', label: 'Images', icon: 'solar:gallery-linear' },
+  { value: 'VIDEO', label: 'Videos', icon: 'solar:videocamera-linear' },
+  { value: 'AUDIO', label: 'Audio', icon: 'solar:music-note-2-linear' },
 ]
 
 const fetchMedia = async (reset = false) => {

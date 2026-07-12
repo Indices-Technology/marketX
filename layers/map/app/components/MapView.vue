@@ -63,9 +63,9 @@ const emit = defineEmits<{
 }>()
 
 const viewModes: { id: ViewMode; icon: string; label: string }[] = [
-  { id: 'stores',  icon: 'mdi:store-outline',      label: 'Stores'  },
-  { id: 'both',    icon: 'mdi:layers-outline',       label: 'Both'    },
-  { id: 'squares', icon: 'mdi:storefront-outline',   label: 'Squares' },
+  { id: 'stores',  icon: 'solar:shop-2-linear',      label: 'Stores'  },
+  { id: 'both',    icon: 'solar:layers-linear',       label: 'Both'    },
+  { id: 'squares', icon: 'solar:shop-linear',   label: 'Squares' },
 ]
 
 const mapEl = ref<HTMLElement | null>(null)
@@ -104,9 +104,9 @@ const MAP_STYLES: Record<'dark' | 'streets' | 'satellite', any> = {
   },
 }
 const mapStyles = [
-  { id: 'dark',      icon: 'mdi:map-outline',         label: 'Dark' },
-  { id: 'streets',   icon: 'mdi:city-variant-outline', label: 'Light' },
-  { id: 'satellite', icon: 'mdi:satellite-variant',    label: 'Satellite' },
+  { id: 'dark',      icon: 'solar:map-linear',         label: 'Dark' },
+  { id: 'streets',   icon: 'solar:city-linear', label: 'Light' },
+  { id: 'satellite', icon: 'solar:satellite-linear',    label: 'Satellite' },
 ]
 const activeStyle = ref<keyof typeof MAP_STYLES>('dark')
 

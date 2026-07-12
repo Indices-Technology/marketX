@@ -11,7 +11,7 @@
         loading="lazy"
       />
       <div v-else class="flex h-14 w-14 items-center justify-center rounded-lg bg-gray-100 dark:bg-neutral-800">
-        <Icon name="mdi:shopping-outline" size="20" class="text-gray-400" />
+        <Icon name="solar:bag-4-linear" size="20" class="text-gray-400" />
       </div>
     </NuxtLink>
 

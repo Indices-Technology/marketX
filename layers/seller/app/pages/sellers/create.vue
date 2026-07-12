@@ -6,7 +6,7 @@
         to="/seller/dashboard"
         class="mb-5 inline-flex items-center gap-1.5 text-[13px] text-gray-400 transition-colors hover:text-gray-700 dark:hover:text-neutral-300"
       >
-        <Icon name="mdi:arrow-left" size="16" />
+        <Icon name="solar:arrow-left-linear" size="16" />
         Back to My Stores
       </NuxtLink>
 
@@ -53,7 +53,7 @@
                 v-if="!bannerPreview"
                 class="absolute inset-0 flex flex-col items-center justify-center gap-1 text-gray-400"
               >
-                <Icon name="mdi:image-plus-outline" size="28" />
+                <Icon name="solar:gallery-add-linear" size="28" />
                 <span class="text-[11px] font-medium"
                   >Upload banner (recommended: 1200×400)</span
                 >
@@ -63,7 +63,7 @@
                 class="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/30"
               >
                 <Icon
-                  name="mdi:pencil"
+                  name="solar:pen-bold"
                   size="22"
                   class="text-white opacity-0 transition-opacity group-hover:opacity-100"
                 />
@@ -103,7 +103,7 @@
                 v-else
                 class="flex h-full w-full flex-col items-center justify-center text-gray-400"
               >
-                <Icon name="mdi:store-plus-outline" size="22" />
+                <Icon name="solar:shop-2-linear" size="22" />
               </div>
               <div
                 v-if="isUploadingLogo"
@@ -190,13 +190,13 @@
             <div class="absolute right-3 top-1/2 -translate-y-1/2">
               <Icon
                 v-if="slugStatus === 'available'"
-                name="mdi:check-circle"
+                name="solar:check-circle-bold"
                 size="18"
                 class="text-emerald-500"
               />
               <Icon
                 v-else-if="slugStatus === 'taken'"
-                name="mdi:close-circle"
+                name="solar:close-circle-bold"
                 size="18"
                 class="text-red-500"
               />
@@ -342,7 +342,7 @@
                 class="flex h-8 w-8 items-center justify-center rounded-xl bg-brand/10"
               >
                 <Icon
-                  name="mdi:truck-fast-outline"
+                  name="solar:delivery-linear"
                   size="16"
                   class="text-brand"
                 />
@@ -363,7 +363,7 @@
               </div>
             </div>
             <Icon
-              name="mdi:chevron-down"
+              name="solar:alt-arrow-down-linear"
               size="18"
               class="shrink-0 text-gray-400 transition-transform duration-200"
               :class="shipFromOpen ? 'rotate-180' : ''"
@@ -386,7 +386,7 @@
                 class="flex items-start gap-2 rounded-xl bg-blue-50 px-3 py-2 text-[11px] text-blue-600 dark:bg-blue-950/30 dark:text-blue-400"
               >
                 <Icon
-                  name="mdi:information-outline"
+                  name="solar:info-circle-linear"
                   size="14"
                   class="mt-0.5 shrink-0"
                 />
@@ -489,7 +489,7 @@
               <div
                 class="flex h-8 w-8 items-center justify-center rounded-xl bg-brand/10"
               >
-                <Icon name="mdi:map-marker-outline" size="16" class="text-brand" />
+                <Icon name="solar:map-point-linear" size="16" class="text-brand" />
               </div>
               <div>
                 <p class="text-[13px] font-semibold text-gray-800 dark:text-neutral-200">
@@ -502,7 +502,7 @@
               </div>
             </div>
             <Icon
-              name="mdi:chevron-down"
+              name="solar:alt-arrow-down-linear"
               size="18"
               class="shrink-0 text-gray-400 transition-transform duration-200"
               :class="mapOpen ? 'rotate-180' : ''"
@@ -532,7 +532,7 @@
                     : 'bg-brand/10 text-brand'"
                   @click="form.hideLocation = !form.hideLocation"
                 >
-                  <Icon :name="form.hideLocation ? 'mdi:eye-off-outline' : 'mdi:eye-outline'" size="15" />
+                  <Icon :name="form.hideLocation ? 'solar:eye-closed-linear' : 'solar:eye-linear'" size="15" />
                   {{ form.hideLocation ? 'Hidden' : 'Visible on map' }}
                 </button>
               </div>
@@ -565,7 +565,7 @@
                     class="flex items-center gap-1 rounded-lg bg-gray-100 px-2.5 py-1.5 text-[11px] font-semibold text-gray-600 transition hover:bg-brand/10 hover:text-brand disabled:opacity-50 dark:bg-neutral-800 dark:text-neutral-300"
                     @click="detectLocation"
                   >
-                    <Icon :name="gettingLocation ? 'mdi:loading' : 'mdi:crosshairs-gps'" size="13" :class="gettingLocation && 'animate-spin'" />
+                    <Icon :name="gettingLocation ? 'solar:refresh-linear' : 'solar:gps-linear'" size="13" :class="gettingLocation && 'animate-spin'" />
                     {{ gettingLocation ? 'Detecting…' : 'Detect my location' }}
                   </button>
                 </div>

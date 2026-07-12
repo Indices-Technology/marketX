@@ -23,12 +23,12 @@
                 {{ formatAmount(buyerBalance) }}
               </h2>
             </div>
-            <Icon name="mdi:cash-multiple" size="48" class="text-white/20" />
+            <Icon name="solar:money-bag-linear" size="48" class="text-white/20" />
           </div>
           <div class="mb-4 rounded-lg bg-white/10 px-4 py-3">
             <div class="flex items-center gap-2">
               <Icon
-                name="mdi:information-outline"
+                name="solar:info-circle-linear"
                 size="16"
                 class="text-white/70"
               />
@@ -52,7 +52,7 @@
             class="rounded-xl border border-gray-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"
           >
             <Icon
-              name="mdi:trending-up"
+              name="solar:graph-up-linear"
               size="24"
               class="mb-2 text-brand"
             />
@@ -67,7 +67,7 @@
             class="rounded-xl border border-gray-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"
           >
             <Icon
-              name="mdi:cash-multiple"
+              name="solar:money-bag-linear"
               size="24"
               class="mb-2 text-green-500"
             />
@@ -92,7 +92,7 @@
             v-if="buyerTransactions.length === 0"
             class="p-8 text-center text-gray-400 dark:text-neutral-500"
           >
-            <Icon name="mdi:receipt-text-outline" size="40" class="mx-auto mb-2" />
+            <Icon name="solar:bill-list-linear" size="40" class="mx-auto mb-2" />
             <p class="text-sm">No earnings yet</p>
             <p class="mt-1 text-xs">Share affiliate links to earn commissions</p>
           </div>
@@ -105,7 +105,7 @@
             >
               <div class="flex items-center gap-3">
                 <div class="flex h-10 w-10 items-center justify-center rounded-full bg-brand/10 dark:bg-brand/20">
-                  <Icon name="mdi:tag-heart" size="20" class="text-brand dark:text-brand/80" />
+                  <Icon name="solar:tag-bold" size="20" class="text-brand dark:text-brand/80" />
                 </div>
                 <div>
                   <p class="text-sm font-medium text-gray-900 dark:text-neutral-100">
@@ -145,7 +145,7 @@
               class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand/10"
             >
               <Icon
-                name="mdi:store-plus-outline"
+                name="solar:shop-2-linear"
                 size="24"
                 class="text-brand"
               />
@@ -180,14 +180,14 @@
               <p class="text-sm text-white/80">Total Available Balance</p>
               <h2 class="text-4xl font-bold">{{ formatAmount(balance) }}</h2>
             </div>
-            <Icon name="mdi:wallet" size="48" class="text-white/20" />
+            <Icon name="solar:wallet-bold" size="48" class="text-white/20" />
           </div>
           <!-- Pending balance row — always visible -->
           <div class="mb-4 rounded-lg bg-white/10 px-4 py-3">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
                 <Icon
-                  name="mdi:clock-outline"
+                  name="solar:clock-circle-linear"
                   size="16"
                   class="text-white/70"
                 />
@@ -202,7 +202,7 @@
             </p>
           </div>
           <div class="flex items-center gap-2 rounded-lg bg-white/10 px-4 py-2.5">
-            <Icon name="mdi:information-outline" size="16" class="shrink-0 text-white/70" />
+            <Icon name="solar:info-circle-linear" size="16" class="shrink-0 text-white/70" />
             <p class="text-[12px] text-white/80">
               Withdrawals and payout accounts are managed per store — open a
               store's <span class="font-semibold">Finance</span> page below.
@@ -216,7 +216,7 @@
             class="rounded-xl border border-gray-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"
           >
             <Icon
-              name="mdi:trending-up"
+              name="solar:graph-up-linear"
               size="24"
               class="mb-2 text-green-500"
             />
@@ -232,7 +232,7 @@
             class="rounded-xl border border-gray-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"
           >
             <Icon
-              name="mdi:trending-down"
+              name="solar:graph-down-linear"
               size="24"
               class="mb-2 text-red-500"
             />
@@ -287,7 +287,7 @@
                   </p>
                 </div>
                 <Icon
-                  name="mdi:chevron-right"
+                  name="solar:alt-arrow-right-linear"
                   size="18"
                   class="text-gray-300 dark:text-neutral-600"
                 />
@@ -311,7 +311,7 @@
             class="p-8 text-center text-gray-400 dark:text-neutral-500"
           >
             <Icon
-              name="mdi:receipt-text-outline"
+              name="solar:bill-list-linear"
               size="40"
               class="mx-auto mb-2"
             />
@@ -423,10 +423,10 @@ const txIconBg = (type: string) => {
   return 'bg-green-100 dark:bg-green-900/20'
 }
 const txIcon = (type: string) => {
-  if (TX_DEBIT_TYPES.has(type)) return 'mdi:arrow-up'
-  if (TX_PENDING_TYPES.has(type)) return 'mdi:clock-outline'
-  if (TX_REFUND_TYPES.has(type)) return 'mdi:arrow-u-left-top'
-  return 'mdi:arrow-down'
+  if (TX_DEBIT_TYPES.has(type)) return 'solar:arrow-up-linear'
+  if (TX_PENDING_TYPES.has(type)) return 'solar:clock-circle-linear'
+  if (TX_REFUND_TYPES.has(type)) return 'solar:arrow-left-linear'
+  return 'solar:arrow-down-linear'
 }
 const txIconColor = (type: string) => {
   if (TX_DEBIT_TYPES.has(type)) return 'text-red-600'

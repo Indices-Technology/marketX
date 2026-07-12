@@ -3,7 +3,7 @@
     <!-- Empty State -->
     <div v-if="!posts || posts.length === 0" class="py-12 text-center">
       <Icon
-        name="mdi:image-outline"
+        name="solar:gallery-linear"
         size="48"
         class="mx-auto mb-3 text-gray-300 dark:text-neutral-700"
       />
@@ -31,11 +31,11 @@
           class="absolute inset-0 flex items-center justify-center gap-4 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100"
         >
           <div class="flex items-center gap-1 text-white">
-            <Icon name="mdi:heart" size="20" />
+            <Icon name="solar:heart-bold" size="20" />
             <span class="font-semibold">{{ post._count?.likes || 0 }}</span>
           </div>
           <div class="flex items-center gap-1 text-white">
-            <Icon name="mdi:chat" size="20" />
+            <Icon name="solar:chat-round-bold" size="20" />
             <span class="font-semibold">{{ post._count?.comments || 0 }}</span>
           </div>
         </div>
@@ -46,7 +46,7 @@
           class="absolute right-2 top-2"
         >
           <Icon
-            name="mdi:play-circle"
+            name="solar:play-circle-bold"
             size="20"
             class="text-white drop-shadow-lg"
           />
@@ -55,7 +55,7 @@
         <!-- Multi-image Indicator -->
         <div v-if="hasMultipleImages(post)" class="absolute right-2 top-2">
           <Icon
-            name="mdi:content-copy"
+            name="solar:copy-linear"
             size="20"
             class="text-white drop-shadow-lg"
           />

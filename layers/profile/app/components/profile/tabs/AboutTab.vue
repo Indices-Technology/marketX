@@ -27,7 +27,7 @@
             class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/20"
           >
             <Icon
-              name="mdi:link"
+              name="solar:link-linear"
               size="20"
               class="text-blue-600 dark:text-blue-400"
             />
@@ -58,7 +58,7 @@
             class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20"
           >
             <Icon
-              name="mdi:map-marker"
+              name="solar:map-point-bold"
               size="20"
               class="text-green-600 dark:text-green-400"
             />
@@ -84,7 +84,7 @@
             class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-brand/10 dark:bg-brand/20"
           >
             <Icon
-              name="mdi:email"
+              name="solar:letter-bold"
               size="20"
               class="text-brand dark:text-brand/80"
             />
@@ -109,7 +109,7 @@
             class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900/20"
           >
             <Icon
-              name="mdi:calendar"
+              name="solar:calendar-bold"
               size="20"
               class="text-orange-600 dark:text-orange-400"
             />
@@ -145,7 +145,7 @@
           "
         >
           <Icon
-            :name="profile.role === 'SELLER' ? 'mdi:store' : 'mdi:account'"
+            :name="profile.role === 'SELLER' ? 'solar:shop-2-bold' : 'solar:user-linear'"
             size="24"
             :class="
               profile.role === 'SELLER'
@@ -177,7 +177,7 @@
       class="rounded-xl border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/10"
     >
       <div class="flex items-center gap-2 text-green-700 dark:text-green-400">
-        <Icon name="mdi:check-circle" size="20" />
+        <Icon name="solar:check-circle-bold" size="20" />
         <span class="font-medium">Verified Account</span>
       </div>
     </div>

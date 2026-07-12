@@ -16,7 +16,7 @@
       <!-- Search -->
       <div class="relative">
         <Icon
-          name="mdi:magnify"
+          name="solar:magnifer-linear"
           size="18"
           class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
         />
@@ -54,7 +54,7 @@
       <!-- Empty -->
       <div v-else-if="!isLoading && !sellers.length" class="py-16 text-center">
         <Icon
-          name="mdi:store-search-outline"
+          name="solar:shop-linear"
           size="64"
           class="mx-auto mb-4 text-gray-300 dark:text-neutral-700"
         />
@@ -108,7 +108,7 @@
                 v-else
                 class="flex h-full w-full items-center justify-center bg-brand"
               >
-                <Icon name="mdi:storefront" size="20" class="text-white" />
+                <Icon name="solar:shop-bold" size="20" class="text-white" />
               </div>
             </div>
 
@@ -122,7 +122,7 @@
                   </p>
                   <Icon
                     v-if="seller.is_verified"
-                    name="mdi:check-decagram"
+                    name="solar:verified-check-bold"
                     size="14"
                     class="shrink-0 text-blue-500"
                   />

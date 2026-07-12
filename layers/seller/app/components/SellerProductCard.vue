@@ -13,14 +13,14 @@
       />
       <div v-else class="flex h-full w-full items-center justify-center">
         <Icon
-          name="mdi:image-off-outline"
+          name="solar:gallery-remove-linear"
           size="40"
           class="text-gray-300 dark:text-neutral-600"
         />
       </div>
       <Icon
         v-if="product.media?.[0]?.type === 'VIDEO'"
-        name="mdi:play-circle"
+        name="solar:play-circle-bold"
         size="18"
         class="pointer-events-none absolute right-2 top-2 text-white drop-shadow-lg"
       />
@@ -79,7 +79,7 @@
             : 'text-amber-600 dark:text-amber-400'
         "
       >
-        <Icon name="mdi:package-variant-closed" size="12" />
+        <Icon name="solar:box-linear" size="12" />
         <span v-if="stock.isOut">All sizes out of stock</span>
         <span v-else>
           {{ stock.refill }} of {{ stock.totalVariants }} size{{
@@ -95,18 +95,18 @@
         class="mt-1.5 flex items-center gap-2 text-[10px] text-gray-500 dark:text-neutral-400"
       >
         <span v-if="product.viewCount" class="flex items-center gap-0.5">
-          <Icon name="mdi:eye-outline" size="10" />
+          <Icon name="solar:eye-linear" size="10" />
           {{ fmtCount(product.viewCount) }}
         </span>
         <span
           v-if="product.soldCount"
           class="flex items-center gap-0.5 text-emerald-600 dark:text-emerald-400"
         >
-          <Icon name="mdi:shopping-outline" size="10" />
+          <Icon name="solar:bag-4-linear" size="10" />
           {{ fmtCount(product.soldCount) }} sold
         </span>
         <span v-if="product.cartCount" class="flex items-center gap-0.5">
-          <Icon name="mdi:cart-outline" size="10" />
+          <Icon name="solar:cart-large-2-linear" size="10" />
           {{ fmtCount(product.cartCount) }}
         </span>
       </div>
@@ -140,7 +140,7 @@
           :to="`/seller/${storeSlug}/products/${product.id}/edit?tab=promote`"
           class="flex flex-1 items-center justify-center gap-1 rounded-lg border border-brand/40 py-1.5 text-center text-xs font-medium text-brand transition-colors hover:bg-brand/5"
         >
-          <Icon name="mdi:rocket-launch-outline" size="12" />
+          <Icon name="solar:rocket-2-linear" size="12" />
           Promote
         </NuxtLink>
         <button
@@ -148,7 +148,7 @@
           class="rounded-lg border border-red-200 px-2.5 py-1.5 text-center text-xs font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
           title="Archive product"
         >
-          <Icon name="mdi:archive-outline" size="14" />
+          <Icon name="solar:archive-linear" size="14" />
         </button>
       </div>
     </div>

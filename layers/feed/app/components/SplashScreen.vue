@@ -7,7 +7,7 @@
       <div
         class="z-10 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand shadow-2xl shadow-brand/40"
       >
-        <Icon name="mdi:shopping-outline" size="32" class="text-white" />
+        <Icon name="solar:bag-4-linear" size="32" class="text-white" />
       </div>
     </div>
 

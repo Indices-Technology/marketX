@@ -21,7 +21,7 @@
         <div class="p-2">
           <button class="create-option" @click="$emit('open-post-modal')">
             <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand">
-              <Icon name="mdi:image-plus" size="22" class="text-white" />
+              <Icon name="solar:gallery-add-linear" size="22" class="text-white" />
             </div>
             <div class="flex-1 text-left">
               <p class="font-semibold text-gray-900 dark:text-neutral-100">Post</p>
@@ -31,7 +31,7 @@
 
           <button class="create-option" @click="$emit('open-story-modal')">
             <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500">
-              <Icon name="mdi:camera-plus" size="22" class="text-white" />
+              <Icon name="solar:camera-add-linear" size="22" class="text-white" />
             </div>
             <div class="flex-1 text-left">
               <p class="font-semibold text-gray-900 dark:text-neutral-100">Story</p>
@@ -45,7 +45,7 @@
             @click="$emit('open-product-modal')"
           >
             <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-mint">
-              <Icon name="mdi:shopping-outline" size="22" class="text-white" />
+              <Icon name="solar:bag-4-linear" size="22" class="text-white" />
             </div>
             <div class="flex-1 text-left">
               <p class="font-semibold text-gray-900 dark:text-neutral-100">Product</p>

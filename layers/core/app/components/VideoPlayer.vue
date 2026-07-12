@@ -44,7 +44,7 @@
         <div
           class="flex h-16 w-16 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm transition-transform active:scale-95"
         >
-          <Icon name="mdi:play" size="36" class="translate-x-0.5 text-white" />
+          <Icon name="solar:play-bold" size="36" class="translate-x-0.5 text-white" />
         </div>
       </button>
     </Transition>
@@ -81,7 +81,7 @@
             :aria-label="playing ? 'Pause' : 'Play'"
             @click="togglePlay"
           >
-            <Icon :name="playing ? 'mdi:pause' : 'mdi:play'" size="20" />
+            <Icon :name="playing ? 'solar:pause-bold' : 'solar:play-bold'" size="20" />
           </button>
 
           <span class="flex-1 text-[11px] tabular-nums text-white/80">
@@ -94,7 +94,7 @@
             @click="toggleMute"
           >
             <Icon
-              :name="isMuted ? 'mdi:volume-off' : 'mdi:volume-high'"
+              :name="isMuted ? 'solar:muted-linear' : 'solar:volume-loud-linear'"
               size="18"
             />
           </button>
@@ -105,7 +105,7 @@
             @click="toggleFullscreen"
           >
             <Icon
-              :name="isFullscreen ? 'mdi:fullscreen-exit' : 'mdi:fullscreen'"
+              :name="isFullscreen ? 'solar:minimize-square-3-linear' : 'solar:maximize-square-3-linear'"
               size="20"
             />
           </button>

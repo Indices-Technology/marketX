@@ -10,7 +10,7 @@
     >
       <Icon v-if="icon" :name="icon" size="16" />
       <span v-if="label">{{ label }}</span>
-      <Icon name="mdi:chevron-down" size="16" />
+      <Icon name="solar:alt-arrow-down-linear" size="16" />
     </button>
     <slot v-else name="trigger" :open="open" :toggle="toggle" :close="close" />
 
@@ -74,7 +74,7 @@ const props = withDefaults(
   {
     modelValue: undefined,
     items: () => [],
-    icon: 'mdi:dots-horizontal',
+    icon: 'solar:menu-dots-bold',
     placement: 'right',
     width: 'md',
   },

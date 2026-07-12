@@ -17,7 +17,7 @@
             class="rounded-full p-1.5 text-gray-400 transition-colors hover:text-gray-700 dark:hover:text-neutral-200"
             @click="$emit('close')"
           >
-            <Icon name="mdi:close" size="20" />
+            <Icon name="solar:close-circle-linear" size="20" />
           </button>
           <h2
             class="text-[15px] font-semibold text-gray-900 dark:text-neutral-100"
@@ -63,7 +63,7 @@
                     class="absolute right-0.5 top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
                     @click="removeExisting(m.id)"
                   >
-                    <Icon name="mdi:close" size="11" />
+                    <Icon name="solar:close-circle-linear" size="11" />
                   </button>
                 </div>
 
@@ -117,7 +117,7 @@
                     class="absolute right-0.5 top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
                     @click="removeNew(i)"
                   >
-                    <Icon name="mdi:close" size="11" />
+                    <Icon name="solar:close-circle-linear" size="11" />
                   </button>
                 </div>
 
@@ -127,7 +127,7 @@
                   class="flex h-20 w-20 shrink-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-gray-300 transition-colors hover:border-brand hover:bg-brand/5 dark:border-neutral-600"
                 >
                   <Icon
-                    name="mdi:image-plus"
+                    name="solar:gallery-add-linear"
                     size="20"
                     class="text-gray-400 dark:text-neutral-500"
                   />

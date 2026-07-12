@@ -71,7 +71,7 @@
           aria-label="Close post"
           @click="$emit('close')"
         >
-          <Icon name="mdi:close" size="20" />
+          <Icon name="solar:close-circle-linear" size="20" />
         </button>
       </div>
     </div>
@@ -131,7 +131,7 @@
         >
           <div class="mb-3 flex items-center gap-2">
             <Icon
-              name="mdi:shopping-outline"
+              name="solar:bag-4-linear"
               size="16"
               class="text-emerald-600 dark:text-emerald-400"
             />
@@ -240,7 +240,7 @@
             @click="handleCommentLike(comment)"
           >
             <Icon
-              :name="comment._liked ? 'mdi:heart' : 'mdi:heart-outline'"
+              :name="comment._liked ? 'solar:heart-bold' : 'solar:heart-linear'"
               size="16"
               :class="
                 comment._liked
@@ -268,7 +268,7 @@
           class="flex flex-col items-center justify-center py-12 text-center"
         >
           <Icon
-            name="mdi:comment-outline"
+            name="solar:chat-round-linear"
             size="40"
             class="mb-3 text-gray-300 dark:text-neutral-600"
           />
@@ -296,7 +296,7 @@
             @click="handleLike"
           >
             <Icon
-              :name="isLiked ? 'mdi:heart' : 'mdi:heart-outline'"
+              :name="isLiked ? 'solar:heart-bold' : 'solar:heart-linear'"
               size="22"
               class="transition-transform group-active:scale-90"
               :class="
@@ -316,7 +316,7 @@
             @click="focusCommentInput"
           >
             <Icon
-              name="mdi:comment-outline"
+              name="solar:chat-round-linear"
               size="20"
               class="text-gray-900 dark:text-neutral-100"
             />
@@ -333,7 +333,7 @@
             @click="sharePost"
           >
             <Icon
-              name="mdi:send-outline"
+              name="solar:plain-2-linear"
               size="20"
               class="-rotate-12 text-gray-900 transition-transform group-active:scale-90 dark:text-neutral-100"
             />
@@ -346,7 +346,7 @@
           @click="handleSave"
         >
           <Icon
-            :name="isSaved ? 'mdi:bookmark' : 'mdi:bookmark-outline'"
+            :name="isSaved ? 'solar:bookmark-bold' : 'solar:bookmark-linear'"
             size="22"
             class="transition-transform group-active:scale-90"
             :class="
@@ -379,7 +379,7 @@
           class="text-gray-400 hover:text-gray-600 dark:hover:text-neutral-300"
           @click="replyingTo = null"
         >
-          <Icon name="mdi:close" size="14" />
+          <Icon name="solar:close-circle-linear" size="14" />
         </button>
       </div>
 
@@ -484,33 +484,33 @@ const CONTENT_TYPE_MAP: Record<
 > = {
   EXPERIENCE: {
     label: 'Experience',
-    icon: 'mdi:star-outline',
+    icon: 'solar:star-linear',
     accent: 'bg-blue-500',
     badge: 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300',
   },
   INSPIRATION: {
     label: 'Inspire',
-    icon: 'mdi:lightbulb-outline',
+    icon: 'solar:lightbulb-linear',
     accent: 'bg-amber-400',
     badge: 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300',
   },
   COMMERCE: {
     label: 'Shop',
-    icon: 'mdi:shopping-outline',
+    icon: 'solar:bag-4-linear',
     accent: 'bg-emerald-500',
     badge:
       'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300',
   },
   EDUCATIONAL: {
     label: 'Learn',
-    icon: 'mdi:school-outline',
+    icon: 'solar:square-academic-cap-2-linear',
     accent: 'bg-orange-500',
     badge:
       'bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300',
   },
   ENTERTAINMENT: {
     label: 'Fun',
-    icon: 'mdi:music-note',
+    icon: 'solar:music-note-2-bold',
     accent: 'bg-pink-500',
     badge: 'bg-pink-100 text-pink-700 dark:bg-pink-950 dark:text-pink-300',
   },
@@ -520,7 +520,7 @@ const contentTypeDef = computed(
   () =>
     CONTENT_TYPE_MAP[props.post.contentType] ?? {
       label: props.post.contentType || 'Post',
-      icon: 'mdi:tag-outline',
+      icon: 'solar:tag-linear',
       accent: 'bg-gray-400',
       badge:
         'bg-gray-100 text-gray-600 dark:bg-neutral-800 dark:text-neutral-400',

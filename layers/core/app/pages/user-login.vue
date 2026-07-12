@@ -72,7 +72,7 @@
                   d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
                 />
               </svg>
-              <Icon v-else name="mdi:email-sync-outline" size="13" />
+              <Icon v-else name="solar:letter-linear" size="13" />
               {{
                 resendCooldown > 0
                   ? `Resend in ${resendCooldown}s`
@@ -98,7 +98,7 @@
             class="flex flex-1 items-center justify-center rounded-xl border border-gray-300 bg-white/80 py-3 shadow-sm transition hover:bg-gray-50 disabled:opacity-60 dark:border-neutral-600 dark:bg-neutral-800/60 dark:hover:bg-neutral-700"
             @click="handleSocial('google')"
           >
-            <Icon name="mdi:google" class="h-6 w-6 text-[#4285F4]" />
+            <Icon name="simple-icons:google" class="h-6 w-6 text-[#4285F4]" />
           </button>
           <button
             type="button"
@@ -121,7 +121,7 @@
             class="flex flex-1 items-center justify-center rounded-xl border border-[#1877F2] bg-[#1877F2]/90 py-3 shadow-sm transition hover:bg-[#1877F2] disabled:opacity-60"
             @click="handleSocial('facebook')"
           >
-            <Icon name="mdi:facebook" class="h-6 w-6 text-white" />
+            <Icon name="simple-icons:facebook" class="h-6 w-6 text-white" />
           </button>
         </div>
 
@@ -142,7 +142,7 @@
             autocomplete="email"
             :disabled="isBusy"
             placeholder="you@example.com"
-            icon-left="mdi:at"
+            icon-left="solar:mention-circle-linear"
             size="lg"
             :error="errors.email"
           />
@@ -153,7 +153,7 @@
             autocomplete="current-password"
             :disabled="isBusy"
             placeholder="Enter your password"
-            icon-left="mdi:lock-outline"
+            icon-left="solar:lock-keyhole-linear"
             size="lg"
             :error="errors.password"
           />

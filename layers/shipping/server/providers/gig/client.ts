@@ -81,9 +81,12 @@ async function login(): Promise<string> {
   if (!token) throw new Error('GIG login: access-token not found in response')
   // Derive the customer code/type for /price + /capture from the login payload.
   derived = {
-    customerCode: userData?.UserChannelCode || userData?.UserName || derived.customerCode,
+    customerCode:
+      userData?.UserChannelCode || userData?.UserName || derived.customerCode,
     customerType:
-      typeof userData?.CustomerType === 'number' ? userData.CustomerType : derived.customerType,
+      typeof userData?.CustomerType === 'number'
+        ? userData.CustomerType
+        : derived.customerType,
   }
   cachedToken = { token, expiresAt: Date.now() + TOKEN_TTL_MS }
   return token
@@ -164,7 +167,9 @@ export interface GigPriceResult {
   Discount?: number
 }
 
-export async function fetchPrice(payload: Record<string, unknown>): Promise<GigPriceResult> {
+export async function fetchPrice(
+  payload: Record<string, unknown>,
+): Promise<GigPriceResult> {
   const body: any = await gigFetch('/price', {
     method: 'POST',
     body: JSON.stringify(payload),
@@ -172,7 +177,9 @@ export async function fetchPrice(payload: Record<string, unknown>): Promise<GigP
   return (body?.data?.data ?? body?.data ?? {}) as GigPriceResult
 }
 
-export async function capturePreshipment(payload: Record<string, unknown>): Promise<{ Waybill?: string }> {
+export async function capturePreshipment(
+  payload: Record<string, unknown>,
+): Promise<{ Waybill?: string }> {
   const body: any = await gigFetch('/capture/preshipment', {
     method: 'POST',
     body: JSON.stringify(payload),

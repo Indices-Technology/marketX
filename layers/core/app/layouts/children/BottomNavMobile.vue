@@ -11,7 +11,7 @@
         :class="{ active: isHome }"
         aria-label="Home"
       >
-        <Icon :name="isHome ? 'mdi:home' : 'mdi:home-outline'" size="26" />
+        <Icon :name="isHome ? 'solar:home-2-bold' : 'solar:home-2-linear'" size="26" />
       </NuxtLink>
 
       <!-- Near Me -->
@@ -21,7 +21,7 @@
         active-class="active"
         aria-label="Near Me"
       >
-        <Icon name="mdi:storefront" size="26" />
+        <Icon name="solar:shop-bold" size="26" />
       </NuxtLink>
 
       <!-- Create (centre CTA) — logged in: open create modal; guest: go to register -->
@@ -32,7 +32,7 @@
           aria-label="Sell"
           @click="$emit('create')"
         >
-          <Icon name="mdi:plus-circle-outline" size="20" class="text-white" />
+          <Icon name="solar:add-circle-linear" size="20" class="text-white" />
           <span class="text-[11px] font-bold leading-none text-white"
             >Create</span
           >
@@ -43,7 +43,7 @@
           class="sell-btn"
           aria-label="Start selling"
         >
-          <Icon name="mdi:plus-circle-outline" size="20" class="text-white" />
+          <Icon name="solar:add-circle-linear" size="20" class="text-white" />
           <span class="text-[11px] font-bold leading-none text-white"
             >Create</span
           >
@@ -61,7 +61,7 @@
         aria-label="Discover"
       >
         <Icon
-          :name="isDiscover ? 'mdi:store-search' : 'mdi:store-search-outline'"
+          :name="isDiscover ? 'solar:shop-linear' : 'solar:shop-linear'"
           size="26"
         />
       </NuxtLink>
@@ -94,7 +94,7 @@
                 class="menu-item"
                 @click="menuOpen = false"
               >
-                <Icon name="mdi:account-circle-outline" size="18" />
+                <Icon name="solar:user-circle-linear" size="18" />
                 <span>View Profile</span>
               </NuxtLink>
               <NuxtLink
@@ -102,7 +102,7 @@
                 class="menu-item"
                 @click="menuOpen = false"
               >
-                <Icon name="mdi:package-variant-closed" size="18" />
+                <Icon name="solar:box-linear" size="18" />
                 <span>My Orders</span>
               </NuxtLink>
               <NuxtLink
@@ -111,7 +111,7 @@
                 class="menu-item"
                 @click="menuOpen = false"
               >
-                <Icon name="mdi:store-outline" size="18" />
+                <Icon name="solar:shop-2-linear" size="18" />
                 <span>My Stores</span>
               </NuxtLink>
               <NuxtLink
@@ -123,7 +123,7 @@
                 class="menu-item text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-900/20"
                 @click="menuOpen = false"
               >
-                <Icon name="mdi:shield-crown-outline" size="18" />
+                <Icon name="solar:shield-star-linear" size="18" />
                 <span>Admin Panel</span>
               </NuxtLink>
               <NuxtLink
@@ -131,7 +131,7 @@
                 class="menu-item"
                 @click="menuOpen = false"
               >
-                <Icon name="mdi:cog-outline" size="18" />
+                <Icon name="solar:settings-linear" size="18" />
                 <span>Settings</span>
               </NuxtLink>
               <div class="mx-3 h-px bg-gray-100 dark:bg-neutral-800" />
@@ -139,7 +139,7 @@
                 class="menu-item w-full text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
                 @click="handleLogout"
               >
-                <Icon name="mdi:logout-variant" size="18" />
+                <Icon name="solar:logout-3-linear" size="18" />
                 <span>Log Out</span>
               </button>
             </div>
@@ -147,7 +147,7 @@
         </div>
 
         <NuxtLink v-else to="/user-login" class="nav-item" aria-label="Sign in">
-          <Icon name="mdi:account-circle-outline" size="26" />
+          <Icon name="solar:user-circle-linear" size="26" />
         </NuxtLink>
       </ClientOnly>
     </div>

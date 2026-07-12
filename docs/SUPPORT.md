@@ -157,7 +157,7 @@ layers/support/server/
 There is no UI for role assignment yet — do it in the DB / an admin script.
 
 **Config:** `SUPPORT_EMAIL` env var sets the reply-to on outgoing support emails
-(defaults to `support@marketx.app`).
+(defaults to `support@marketx.africa`).
 
 **Not yet done / verify:**
 - No automated tests yet (Playwright API specs are the natural next step).

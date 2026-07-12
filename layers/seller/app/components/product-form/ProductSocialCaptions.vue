@@ -8,7 +8,7 @@
       class="flex w-full items-center gap-2 text-left"
       @click="open = !open"
     >
-      <Icon name="mdi:share-all-outline" size="24" class="shrink-0 text-brand" />
+      <Icon name="solar:share-linear" size="24" class="shrink-0 text-brand" />
       <div class="min-w-0 flex-1">
         <h2 class="font-semibold text-gray-900 dark:text-neutral-100">Social Media Posts</h2>
         <p class="text-xs text-gray-500 dark:text-neutral-400">
@@ -16,7 +16,7 @@
         </p>
       </div>
       <Icon
-        name="mdi:chevron-down"
+        name="solar:alt-arrow-down-linear"
         size="22"
         class="shrink-0 text-gray-400 transition-transform"
         :class="open ? 'rotate-180' : ''"
@@ -26,7 +26,7 @@
     <div v-show="open" class="space-y-4">
       <div class="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-neutral-700 dark:bg-neutral-900">
         <label class="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-neutral-300">
-          <Icon name="mdi:instagram" class="text-pink-600" size="16" />
+          <Icon name="simple-icons:instagram" class="text-pink-600" size="16" />
           Instagram
         </label>
         <textarea
@@ -38,7 +38,7 @@
 
       <div class="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-neutral-700 dark:bg-neutral-900">
         <label class="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-neutral-300">
-          <Icon name="mdi:facebook" class="text-blue-600" size="16" />
+          <Icon name="simple-icons:facebook" class="text-blue-600" size="16" />
           Facebook
         </label>
         <textarea
@@ -50,7 +50,7 @@
 
       <div class="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-neutral-700 dark:bg-neutral-900">
         <label class="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-neutral-300">
-          <Icon name="mdi:pinterest" class="text-red-600" size="16" />
+          <Icon name="simple-icons:pinterest" class="text-red-600" size="16" />
           Pinterest
         </label>
         <textarea

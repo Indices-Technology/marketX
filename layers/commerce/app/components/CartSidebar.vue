@@ -15,7 +15,7 @@
           >
             <div class="flex items-center gap-2">
               <Icon
-                name="mdi:shopping-outline"
+                name="solar:bag-4-linear"
                 size="22"
                 class="text-gray-700 dark:text-neutral-300"
               />
@@ -37,7 +37,7 @@
               @click="$emit('close')"
             >
               <Icon
-                name="mdi:close"
+                name="solar:close-circle-linear"
                 size="20"
                 class="text-gray-500 dark:text-neutral-400"
               />
@@ -55,7 +55,7 @@
                 class="flex h-20 w-20 items-center justify-center rounded-full bg-gray-100 dark:bg-neutral-800"
               >
                 <Icon
-                  name="mdi:shopping-outline"
+                  name="solar:bag-4-linear"
                   size="36"
                   class="text-gray-300 dark:text-neutral-600"
                 />
@@ -123,8 +123,8 @@
                   <Icon
                     :name="
                       itemWarning(item.variantId)?.status === 'price_decreased'
-                        ? 'mdi:tag-arrow-down-outline'
-                        : 'mdi:alert-circle-outline'
+                        ? 'solar:tag-linear'
+                        : 'solar:danger-circle-linear'
                     "
                     size="13"
                   />
@@ -146,7 +146,7 @@
                       class="flex h-full w-full items-center justify-center"
                     >
                       <Icon
-                        name="mdi:image-outline"
+                        name="solar:gallery-linear"
                         size="22"
                         class="text-gray-300 dark:text-neutral-600"
                       />
@@ -207,7 +207,7 @@
                           class="flex h-9 w-9 items-center justify-center text-gray-500 transition-colors hover:bg-gray-100 dark:hover:bg-neutral-800"
                           @click="handleDecrement(item)"
                         >
-                          <Icon name="mdi:minus" size="14" />
+                          <Icon name="solar:minus-circle-linear" size="14" />
                         </button>
                         <span
                           class="w-8 text-center text-[13px] font-semibold text-gray-900 dark:text-neutral-100"
@@ -220,7 +220,7 @@
                             updateQuantity(item.variantId, item.quantity + 1)
                           "
                         >
-                          <Icon name="mdi:plus" size="14" />
+                          <Icon name="solar:add-circle-linear" size="14" />
                         </button>
                       </div>
 
@@ -230,7 +230,7 @@
                         class="ml-auto rounded-full p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500 sm:opacity-0 sm:group-hover:opacity-100 dark:text-neutral-500 dark:hover:bg-red-950/30"
                         @click="removeFromCart(item.variantId)"
                       >
-                        <Icon name="mdi:trash-can-outline" size="16" />
+                        <Icon name="solar:trash-bin-trash-linear" size="16" />
                       </button>
                     </div>
                   </div>
@@ -258,7 +258,7 @@
               class="flex w-full items-center justify-center gap-2 rounded-xl bg-brand py-3.5 text-[14px] font-bold text-white transition-all hover:bg-[#d81b36] active:scale-[0.98]"
               @click="$emit('close')"
             >
-              <Icon name="mdi:lock-outline" size="16" />
+              <Icon name="solar:lock-keyhole-linear" size="16" />
               Checkout
             </NuxtLink>
           </div>

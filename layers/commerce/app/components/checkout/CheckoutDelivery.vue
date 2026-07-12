@@ -73,7 +73,7 @@
             class="shrink-0 rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
             @click.stop="deleteAddress(addr.id)"
           >
-            <Icon name="mdi:trash-can-outline" size="15" />
+            <Icon name="solar:trash-bin-trash-linear" size="15" />
           </button>
         </div>
       </button>
@@ -83,7 +83,7 @@
         class="mt-1 flex w-full items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-gray-200 py-2.5 text-[13px] font-semibold text-gray-500 transition-colors hover:border-brand hover:text-brand dark:border-neutral-700"
         @click="showNewAddressForm = !showNewAddressForm"
       >
-        <Icon :name="showNewAddressForm ? 'mdi:minus' : 'mdi:plus'" size="15" />
+        <Icon :name="showNewAddressForm ? 'solar:minus-circle-linear' : 'solar:add-circle-linear'" size="15" />
         {{
           showNewAddressForm
             ? 'Cancel new address'
@@ -159,7 +159,7 @@
             class="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-[12px] font-semibold text-gray-600 transition-colors hover:border-brand hover:text-brand dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400"
             @click="showSavePanel = true"
           >
-            <Icon name="mdi:bookmark-plus-outline" size="14" />
+            <Icon name="solar:bookmark-linear" size="14" />
             Save address
           </button>
         </template>
@@ -184,7 +184,7 @@
             type="button"
             variant="icon"
             size="xs"
-            icon-left="mdi:close"
+            icon-left="solar:close-circle-linear"
             @click="showSavePanel = false"
           />
         </template>

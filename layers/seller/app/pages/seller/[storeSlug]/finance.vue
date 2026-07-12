@@ -27,7 +27,7 @@
             {{ formatKobo(wallet.pendingBalance) }} pending (releases on delivery)
           </p>
         </div>
-        <Icon name="mdi:wallet" size="40" class="shrink-0 text-white/20" />
+        <Icon name="solar:wallet-bold" size="40" class="shrink-0 text-white/20" />
       </div>
 
       <div class="mt-5 flex gap-6 border-t border-white/15 pt-4">
@@ -62,7 +62,7 @@
         class="flex items-center justify-between border-b border-gray-100 p-4 dark:border-neutral-800"
       >
         <div class="flex items-center gap-2">
-          <Icon name="mdi:bank-outline" size="20" class="text-brand" />
+          <Icon name="solar:banknote-2-linear" size="20" class="text-brand" />
           <h2
             class="font-display text-base font-bold text-gray-900 dark:text-neutral-100"
           >
@@ -70,7 +70,7 @@
           </h2>
         </div>
         <BaseButton variant="ghost" size="xs" @click="showAddBank = !showAddBank">
-          <Icon name="mdi:plus" size="14" />
+          <Icon name="solar:add-circle-linear" size="14" />
           Add account
         </BaseButton>
       </div>
@@ -90,7 +90,7 @@
               class="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 dark:bg-neutral-800"
             >
               <Icon
-                name="mdi:bank"
+                name="solar:banknote-2-bold"
                 size="16"
                 class="text-gray-500 dark:text-neutral-400"
               />
@@ -127,7 +127,7 @@
               title="Remove account"
               @click="removeAccount(account.id)"
             >
-              <Icon name="mdi:trash-can-outline" size="16" />
+              <Icon name="solar:trash-bin-trash-linear" size="16" />
             </button>
           </div>
         </div>
@@ -135,7 +135,7 @@
 
       <BaseEmptyState
         v-else-if="!showAddBank"
-        icon="mdi:bank-plus"
+        icon="solar:banknote-2-linear"
         title="No payout accounts yet"
         description="Add a bank account for this store to enable withdrawals."
         compact
@@ -202,7 +202,7 @@
 
       <BaseEmptyState
         v-if="!transactions.length"
-        icon="mdi:receipt-text-outline"
+        icon="solar:bill-list-linear"
         title="No transactions yet"
         description="Payouts and earnings for this store will appear here."
         compact
@@ -431,10 +431,10 @@ const txIconBg = (type: string) => {
   return 'bg-mint/10'
 }
 const txIcon = (type: string) => {
-  if (TX_DEBIT_TYPES.has(type)) return 'mdi:arrow-up'
-  if (TX_PENDING_TYPES.has(type)) return 'mdi:clock-outline'
-  if (TX_REFUND_TYPES.has(type)) return 'mdi:arrow-u-left-top'
-  return 'mdi:arrow-down'
+  if (TX_DEBIT_TYPES.has(type)) return 'solar:arrow-up-linear'
+  if (TX_PENDING_TYPES.has(type)) return 'solar:clock-circle-linear'
+  if (TX_REFUND_TYPES.has(type)) return 'solar:arrow-left-linear'
+  return 'solar:arrow-down-linear'
 }
 const txColor = (type: string) => {
   if (TX_DEBIT_TYPES.has(type)) return 'text-red-600 dark:text-red-400'

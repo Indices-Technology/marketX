@@ -1,11 +1,14 @@
 <!-- Market home — rendered inside HomeLayout by the auth-aware index.vue -->
 <template>
-  <div class="w-full space-y-10 px-1 sm:px-2">
+  <!-- Browse sections use the full width (rails show more cards on wider
+       screens); only the community post column is slimmed, left-aligned so its
+       edge still lines up with the section headers above. -->
+  <div class="w-full space-y-8 px-2 sm:px-4">
     <!-- ─── 0. SEARCH (hero) — mobile/tablet only; desktop uses the right-rail search -->
     <section class="pt-1 lg:hidden">
       <form class="relative" role="search" @submit.prevent="goSearch">
         <Icon
-          name="mdi:magnify"
+          name="solar:magnifer-linear"
           size="20"
           class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-neutral-500"
         />
@@ -126,7 +129,7 @@
           to="/squares"
           class="flex w-20 shrink-0 flex-col items-center justify-center gap-1 rounded-2xl border border-dashed border-gray-200 text-gray-400 transition hover:border-brand/40 hover:text-brand dark:border-neutral-700"
         >
-          <Icon name="mdi:plus" size="20" />
+          <Icon name="solar:add-circle-linear" size="20" />
           <span class="text-[10px] font-semibold">More</span>
         </NuxtLink>
       </div>
@@ -242,13 +245,13 @@
       >
         <Icon
           v-if="sellersRequesting"
-          name="mdi:loading"
+          name="solar:refresh-linear"
           size="18"
           class="animate-spin text-brand"
         />
         <Icon
           v-else
-          name="mdi:crosshairs-gps"
+          name="solar:gps-linear"
           size="18"
           class="text-gray-400"
         />
@@ -305,7 +308,9 @@
     </section>
 
     <!-- ─── 5. MARKET PULSE (community posts) ─────────────────────────────── -->
-    <section ref="section5Ref">
+    <!-- Slim, left-aligned so portrait media fills the column (no side-blur) and
+         its left edge lines up with the wider browse sections above. -->
+    <section ref="section5Ref" class="max-w-[512px]">
       <div class="mb-4 flex items-end justify-between">
         <div>
           <p
@@ -356,7 +361,7 @@
       <!-- Empty — encourage exploration instead of a dangling header -->
       <BaseEmptyState
         v-else
-        icon="mdi:storefront-outline"
+        icon="solar:shop-linear"
         title="The market is quiet right now"
         description="Follow traders and markets to see their latest here."
         compact
@@ -368,7 +373,7 @@
             @click="navigateTo('/squares')"
           >
             Explore markets
-            <Icon name="mdi:arrow-right" size="13" />
+            <Icon name="solar:arrow-right-linear" size="13" />
           </BaseButton>
         </template>
       </BaseEmptyState>
@@ -381,7 +386,7 @@
         class="flex items-center gap-4 rounded-2xl bg-gray-900 px-5 py-4 transition hover:bg-neutral-800 dark:bg-neutral-800 dark:hover:bg-neutral-700"
       >
         <Icon
-          name="mdi:map-search-outline"
+          name="solar:map-arrow-square-linear"
           size="28"
           class="shrink-0 text-white/60"
         />
@@ -393,7 +398,7 @@
             Stores, pop-ups and deals near you
           </p>
         </div>
-        <Icon name="mdi:arrow-right" size="20" class="shrink-0 text-white/40" />
+        <Icon name="solar:arrow-right-linear" size="20" class="shrink-0 text-white/40" />
       </NuxtLink>
     </section>
 

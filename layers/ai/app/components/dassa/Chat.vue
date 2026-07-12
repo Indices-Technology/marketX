@@ -90,7 +90,7 @@
         class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand text-white shadow-sm shadow-brand/30 transition-all active:scale-90 disabled:cursor-not-allowed disabled:opacity-40"
         @click="submit"
       >
-        <Icon name="mdi:send" size="17" />
+        <Icon name="solar:plain-2-bold" size="17" />
       </button>
     </div>
   </div>

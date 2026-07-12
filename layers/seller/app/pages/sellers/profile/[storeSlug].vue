@@ -46,7 +46,7 @@
           class="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gray-100 dark:bg-neutral-800"
         >
           <Icon
-            name="mdi:store-off-outline"
+            name="solar:shop-2-linear"
             size="36"
             class="text-gray-400 dark:text-neutral-600"
           />
@@ -126,7 +126,7 @@
                   v-else
                   class="flex h-full w-full items-center justify-center bg-brand"
                 >
-                  <Icon name="mdi:storefront" size="40" class="text-white" />
+                  <Icon name="solar:shop-bold" size="40" class="text-white" />
                 </div>
               </div>
               <!-- Verified badge -->
@@ -135,7 +135,7 @@
                 class="absolute -bottom-1.5 -right-1.5 flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-blue-500 shadow-md dark:border-neutral-950"
                 title="Verified Store"
               >
-                <Icon name="mdi:check-bold" size="13" class="text-white" />
+                <Icon name="solar:check-circle-bold" size="13" class="text-white" />
               </div>
             </div>
 
@@ -154,7 +154,7 @@
                   size="15"
                   class="animate-spin"
                 />
-                <Icon v-else name="mdi:message-outline" size="15" />
+                <Icon v-else name="solar:chat-round-line-linear" size="15" />
                 Message
               </button>
               <button
@@ -176,7 +176,7 @@
                 />
                 <Icon
                   v-else
-                  :name="isFollowing ? 'mdi:account-check' : 'mdi:account-plus'"
+                  :name="isFollowing ? 'solar:user-check-bold' : 'solar:user-plus-bold'"
                   size="15"
                 />
                 {{ isFollowing ? 'Following' : 'Follow' }}
@@ -186,7 +186,7 @@
                 title="Share store"
                 @click="shareStore"
               >
-                <Icon name="mdi:share-variant-outline" size="18" />
+                <Icon name="solar:share-linear" size="18" />
               </button>
               <a
                 v-if="safeStoreWebsite"
@@ -196,7 +196,7 @@
                 class="rounded-xl border border-gray-200 bg-white p-2.5 text-gray-600 transition-colors hover:bg-gray-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
                 title="Visit website"
               >
-                <Icon name="mdi:web" size="18" />
+                <Icon name="solar:global-linear" size="18" />
               </a>
             </div>
           </div>
@@ -218,7 +218,7 @@
                 v-if="seller.is_verified"
                 class="flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-[10px] font-black text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"
               >
-                <Icon name="mdi:check-decagram" size="11" />
+                <Icon name="solar:verified-check-bold" size="11" />
                 Verified
               </span>
             </div>
@@ -230,7 +230,7 @@
               @click="copyStoreAddress"
             >
               <Icon
-                name="mdi:link-variant"
+                name="solar:link-round-linear"
                 size="13"
                 class="shrink-0 text-gray-400 dark:text-neutral-500"
               />
@@ -240,7 +240,7 @@
                 {{ storeAddressLabel }}
               </span>
               <Icon
-                :name="addressCopied ? 'mdi:check' : 'mdi:content-copy'"
+                :name="addressCopied ? 'solar:check-circle-linear' : 'solar:copy-linear'"
                 size="12"
                 class="shrink-0 transition-colors"
                 :class="
@@ -272,10 +272,10 @@
                 class="flex items-center gap-1 text-brand hover:underline"
                 title="View on map"
               >
-                <Icon name="mdi:map-marker" size="13" class="text-brand" />
+                <Icon name="solar:map-point-bold" size="13" class="text-brand" />
                 {{ seller.store_location }}
                 <Icon
-                  name="mdi:map-search-outline"
+                  name="solar:map-arrow-square-linear"
                   size="11"
                   class="opacity-60"
                 />
@@ -285,7 +285,7 @@
                 class="flex items-center gap-1"
               >
                 <Icon
-                  name="mdi:map-marker-outline"
+                  name="solar:map-point-linear"
                   size="13"
                   class="text-brand"
                 />
@@ -293,7 +293,7 @@
               </span>
               <span class="flex items-center gap-1">
                 <Icon
-                  name="mdi:calendar-outline"
+                  name="solar:calendar-linear"
                   size="13"
                   class="text-brand"
                 />
@@ -306,7 +306,7 @@
                 rel="noopener"
                 class="flex items-center gap-1 text-brand hover:underline sm:hidden"
               >
-                <Icon name="mdi:web" size="13" />
+                <Icon name="solar:global-linear" size="13" />
                 Website
               </a>
             </div>
@@ -357,7 +357,7 @@
                 </p>
                 <Icon
                   v-if="(seller as any).averageRating"
-                  name="mdi:star"
+                  name="solar:star-bold"
                   size="16"
                   class="mt-0.5 text-yellow-400"
                 />
@@ -389,7 +389,7 @@
                 size="15"
                 class="animate-spin"
               />
-              <Icon v-else name="mdi:message-outline" size="15" />
+              <Icon v-else name="solar:chat-round-line-linear" size="15" />
               Message
             </button>
             <button
@@ -411,7 +411,7 @@
               />
               <Icon
                 v-else
-                :name="isFollowing ? 'mdi:account-check' : 'mdi:account-plus'"
+                :name="isFollowing ? 'solar:user-check-bold' : 'solar:user-plus-bold'"
                 size="15"
               />
               {{ isFollowing ? 'Following' : 'Follow' }}
@@ -420,7 +420,7 @@
               class="rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-600 transition-colors hover:bg-gray-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
               @click="shareStore"
             >
-              <Icon name="mdi:share-variant-outline" size="18" />
+              <Icon name="solar:share-linear" size="18" />
             </button>
           </div>
         </div>
@@ -491,7 +491,7 @@
                 class="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100 dark:bg-neutral-800"
               >
                 <Icon
-                  name="mdi:bulletin-board"
+                  name="solar:clipboard-list-linear"
                   size="30"
                   class="text-gray-300 dark:text-neutral-600"
                 />
@@ -571,7 +571,7 @@
                 class="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100 dark:bg-neutral-800"
               >
                 <Icon
-                  name="mdi:package-variant-closed"
+                  name="solar:box-linear"
                   size="30"
                   class="text-gray-300 dark:text-neutral-600"
                 />
@@ -644,7 +644,7 @@
                 <div
                   class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand/10"
                 >
-                  <Icon name="mdi:link-variant" size="18" class="text-brand" />
+                  <Icon name="solar:link-round-linear" size="18" class="text-brand" />
                 </div>
                 <div class="min-w-0 flex-1">
                   <p
@@ -664,7 +664,7 @@
                   @click="copyStoreAddress"
                 >
                   <Icon
-                    :name="addressCopied ? 'mdi:check' : 'mdi:content-copy'"
+                    :name="addressCopied ? 'solar:check-circle-linear' : 'solar:copy-linear'"
                     size="16"
                     :class="addressCopied ? 'text-emerald-500' : ''"
                   />
@@ -679,7 +679,7 @@
                   class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand/10"
                 >
                   <Icon
-                    name="mdi:map-marker-outline"
+                    name="solar:map-point-linear"
                     size="18"
                     class="text-brand"
                   />
@@ -705,7 +705,7 @@
                   class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand/10"
                 >
                   <Icon
-                    name="mdi:calendar-check-outline"
+                    name="solar:calendar-mark-linear"
                     size="18"
                     class="text-brand"
                   />
@@ -731,7 +731,7 @@
                 <div
                   class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand/10"
                 >
-                  <Icon name="mdi:phone-outline" size="18" class="text-brand" />
+                  <Icon name="solar:phone-linear" size="18" class="text-brand" />
                 </div>
                 <div>
                   <p
@@ -754,7 +754,7 @@
                 <div
                   class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand/10"
                 >
-                  <Icon name="mdi:web" size="18" class="text-brand" />
+                  <Icon name="solar:global-linear" size="18" class="text-brand" />
                 </div>
                 <div class="min-w-0">
                   <p
@@ -780,7 +780,7 @@
                   class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50"
                 >
                   <Icon
-                    name="mdi:currency-usd"
+                    name="solar:dollar-linear"
                     size="18"
                     class="text-amber-500"
                   />
@@ -806,7 +806,7 @@
                   class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50"
                 >
                   <Icon
-                    name="mdi:package-variant"
+                    name="solar:box-bold"
                     size="18"
                     class="text-emerald-500"
                   />
@@ -937,10 +937,10 @@ const trigger = ref<HTMLElement | null>(null)
 let observer: IntersectionObserver | null = null
 
 const tabs = [
-  { key: 'wall', label: 'All', icon: 'mdi:view-dashboard-outline' },
-  { key: 'products', label: 'Products', icon: 'mdi:grid' },
-  { key: 'reviews', label: 'Reviews', icon: 'mdi:star-outline' },
-  { key: 'about', label: 'About', icon: 'mdi:information-outline' },
+  { key: 'wall', label: 'All', icon: 'solar:widget-5-linear' },
+  { key: 'products', label: 'Products', icon: 'solar:widget-2-linear' },
+  { key: 'reviews', label: 'Reviews', icon: 'solar:star-linear' },
+  { key: 'about', label: 'About', icon: 'solar:info-circle-linear' },
 ]
 
 // ── Wall ─────────────────────────────────────────────────────────────────────

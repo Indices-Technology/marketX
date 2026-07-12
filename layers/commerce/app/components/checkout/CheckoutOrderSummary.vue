@@ -16,7 +16,7 @@
           class="flex items-center gap-1.5 border-b border-gray-100 pb-2 dark:border-neutral-800"
         >
           <Icon
-            name="mdi:storefront-outline"
+            name="solar:shop-linear"
             size="14"
             class="shrink-0 text-gray-400 dark:text-neutral-500"
           />

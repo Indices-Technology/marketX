@@ -22,7 +22,7 @@
           class="ml-0.5 rounded-full hover:bg-brand/20"
           @click="tagNames.splice(i, 1)"
         >
-          <Icon name="mdi:close" size="13" />
+          <Icon name="solar:close-circle-linear" size="13" />
         </button>
       </span>
     </div>

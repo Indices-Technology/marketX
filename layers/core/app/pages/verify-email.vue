@@ -21,7 +21,7 @@
           class="flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30"
         >
           <Icon
-            name="mdi:check"
+            name="solar:check-circle-linear"
             class="h-8 w-8 text-green-600 dark:text-green-400"
           />
         </div>
@@ -65,7 +65,7 @@
           class="flex h-16 w-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30"
         >
           <Icon
-            name="mdi:alert-circle"
+            name="solar:danger-circle-bold"
             class="h-8 w-8 text-red-600 dark:text-red-400"
           />
         </div>
@@ -109,7 +109,7 @@
     >
       <div class="flex gap-3">
         <Icon
-          name="mdi:information"
+          name="solar:info-circle-bold"
           class="mt-0.5 h-5 w-5 flex-shrink-0 text-gray-600 dark:text-gray-400"
         />
         <div>

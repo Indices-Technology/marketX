@@ -11,7 +11,7 @@
       <!-- Square not found -->
       <div v-else-if="!square && !pending" class="py-24 text-center">
         <Icon
-          name="mdi:store-off-outline"
+          name="solar:shop-2-linear"
           size="52"
           class="mx-auto mb-3 text-gray-300 dark:text-neutral-600"
         />
@@ -121,7 +121,7 @@
           <ul class="space-y-1.5 text-sm text-amber-800 dark:text-amber-300">
             <li class="flex items-start gap-2">
               <Icon
-                name="mdi:information-outline"
+                name="solar:info-circle-linear"
                 size="15"
                 class="mt-0.5 shrink-0"
               />
@@ -135,7 +135,7 @@
               class="flex items-start gap-2"
             >
               <Icon
-                name="mdi:map-marker-outline"
+                name="solar:map-point-linear"
                 size="15"
                 class="mt-0.5 shrink-0"
               />
@@ -145,7 +145,7 @@
               >
             </li>
             <li v-else class="flex items-start gap-2">
-              <Icon name="mdi:tag-outline" size="15" class="mt-0.5 shrink-0" />
+              <Icon name="solar:tag-linear" size="15" class="mt-0.5 shrink-0" />
               <span
                 >Category squares are secondary — you can join up to 2 alongside
                 your primary.</span
@@ -153,7 +153,7 @@
             </li>
             <li class="flex items-start gap-2">
               <Icon
-                name="mdi:store-outline"
+                name="solar:shop-2-linear"
                 size="15"
                 class="mt-0.5 shrink-0"
               />
@@ -171,7 +171,7 @@
           class="mt-4 rounded-2xl border border-gray-200 bg-white p-6 text-center dark:border-neutral-800 dark:bg-neutral-900"
         >
           <Icon
-            name="mdi:store-plus-outline"
+            name="solar:shop-2-linear"
             size="40"
             class="mx-auto mb-3 text-gray-300 dark:text-neutral-600"
           />
@@ -200,7 +200,7 @@
               class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-50 dark:bg-green-900/20"
             >
               <Icon
-                name="mdi:check-circle-outline"
+                name="solar:check-circle-linear"
                 size="36"
                 class="text-green-500"
               />
@@ -249,7 +249,7 @@
             >
               <Icon
                 v-if="joining"
-                name="mdi:loading"
+                name="solar:refresh-linear"
                 size="16"
                 class="mr-1.5 inline animate-spin"
               />

@@ -42,7 +42,7 @@
               v-if="post.type === 'SHOUTOUT'"
               class="flex items-center gap-0.5 rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-bold text-brand"
             >
-              <Icon name="mdi:bullhorn-outline" size="10" />
+              <Icon name="solar:speaker-linear" size="10" />
               Shoutout
             </span>
           </div>
@@ -65,7 +65,7 @@
           size="14"
           class="animate-spin"
         />
-        <Icon v-else name="mdi:delete-outline" size="16" />
+        <Icon v-else name="solar:trash-bin-trash-linear" size="16" />
       </button>
     </div>
 
@@ -106,7 +106,7 @@
         @click="toggleLike"
       >
         <Icon
-          :name="localLiked ? 'mdi:heart' : 'mdi:heart-outline'"
+          :name="localLiked ? 'solar:heart-bold' : 'solar:heart-linear'"
           size="16"
         />
         {{ localLikes > 0 ? localLikes : '' }}
@@ -118,7 +118,7 @@
         class="flex items-center gap-1.5 text-xs font-semibold text-gray-400 transition hover:text-brand dark:text-neutral-500"
         @click="router.push(`/post/${post.id}`)"
       >
-        <Icon name="mdi:comment-outline" size="16" />
+        <Icon name="solar:chat-round-linear" size="16" />
         {{ post._count.comments > 0 ? post._count.comments : '' }}
         <span>Comment</span>
       </button>

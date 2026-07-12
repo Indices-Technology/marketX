@@ -30,7 +30,7 @@
             <div class="relative flex h-16 w-16 items-center justify-center">
               <div class="absolute inset-0 animate-ping rounded-full bg-brand/20" />
               <div class="relative z-10 flex h-full w-full items-center justify-center rounded-full bg-brand/10 ring-1 ring-brand/30">
-                <Icon name="mdi:map-marker-radius-outline" size="30" class="text-brand" />
+                <Icon name="solar:map-point-wave-linear" size="30" class="text-brand" />
               </div>
             </div>
             <div>
@@ -44,8 +44,8 @@
               :disabled="loading"
               @click="handleAllowLocation"
             >
-              <Icon v-if="loading" name="mdi:loading" size="16" class="animate-spin" />
-              <Icon v-else name="mdi:crosshairs-gps" size="16" />
+              <Icon v-if="loading" name="solar:refresh-linear" size="16" class="animate-spin" />
+              <Icon v-else name="solar:gps-linear" size="16" />
               {{ loading ? 'Finding…' : 'Allow Location' }}
             </button>
           </div>
@@ -74,7 +74,7 @@
           <template #fallback>
             <div class="map-fill flex items-center justify-center bg-[#1a1a2e]">
               <Icon
-                name="mdi:loading"
+                name="solar:refresh-linear"
                 size="32"
                 class="animate-spin text-white/40"
               />
@@ -93,7 +93,7 @@
                 <div class="relative flex h-12 w-12 shrink-0 items-center justify-center">
                   <div class="absolute inset-0 animate-ping rounded-full bg-brand/20" />
                   <div class="relative z-10 flex h-full w-full items-center justify-center rounded-full bg-brand/10 ring-1 ring-brand/30">
-                    <Icon name="mdi:map-marker-radius-outline" size="22" class="text-brand" />
+                    <Icon name="solar:map-point-wave-linear" size="22" class="text-brand" />
                   </div>
                 </div>
                 <div>
@@ -106,8 +106,8 @@
                 :disabled="loading"
                 @click="handleAllowLocation"
               >
-                <Icon v-if="loading" name="mdi:loading" size="16" class="animate-spin" />
-                <Icon v-else name="mdi:crosshairs-gps" size="16" />
+                <Icon v-if="loading" name="solar:refresh-linear" size="16" class="animate-spin" />
+                <Icon v-else name="solar:gps-linear" size="16" />
                 {{ loading ? 'Getting location…' : 'Allow Location' }}
               </button>
               <p v-if="error" class="mt-2 text-center text-xs text-red-400">{{ error }}</p>
@@ -122,14 +122,14 @@
             aria-label="Back"
             @click="$router.back()"
           >
-            <Icon name="mdi:arrow-left" size="20" class="text-white" />
+            <Icon name="solar:arrow-left-linear" size="20" class="text-white" />
           </button>
 
           <!-- Mobile search — functional, debounced -->
           <div
             class="pointer-events-auto flex flex-1 items-center gap-2 rounded-2xl border border-white/10 bg-black/40 px-3.5 py-2.5 backdrop-blur-md lg:hidden"
           >
-            <Icon name="mdi:magnify" size="18" class="shrink-0 text-white/50" />
+            <Icon name="solar:magnifer-linear" size="18" class="shrink-0 text-white/50" />
             <input
               v-model="mobileSearch"
               type="search"
@@ -142,7 +142,7 @@
               class="shrink-0 text-white/40"
               @click="clearMobileSearch"
             >
-              <Icon name="mdi:close-circle" size="16" />
+              <Icon name="solar:close-circle-bold" size="16" />
             </button>
           </div>
 
@@ -154,7 +154,7 @@
             aria-label="Recenter"
             @click="handleAllowLocation"
           >
-            <Icon name="mdi:crosshairs-gps" size="20" class="text-white" />
+            <Icon name="solar:gps-linear" size="20" class="text-white" />
           </button>
         </div>
 
@@ -177,7 +177,7 @@
               class="flex items-center gap-2 rounded-2xl border border-white/10 bg-black/40 px-3.5 py-2 backdrop-blur-md"
             >
               <Icon
-                name="mdi:map-marker-radius-outline"
+                name="solar:map-point-wave-linear"
                 size="14"
                 class="shrink-0 text-white/40"
               />
@@ -221,7 +221,7 @@
             v-if="locationGranted && outsideRadius && sellers.length"
             class="map-nearest-banner"
           >
-            <Icon name="mdi:map-marker-distance" size="14" class="shrink-0" />
+            <Icon name="solar:map-point-wave-linear" size="14" class="shrink-0" />
             <span>No stores within {{ radiusKm }} km — showing the {{ sellers.length }} nearest</span>
           </div>
         </Transition>
@@ -232,7 +232,7 @@
             v-if="locationGranted && !selectedSeller && !outsideRadius && sellers.length > 0"
             class="map-count-badge lg:hidden"
           >
-            <Icon name="mdi:store-outline" size="13" />
+            <Icon name="solar:shop-2-linear" size="13" />
             {{ sellers.length }} store{{ sellers.length !== 1 ? 's' : '' }}
             nearby
           </div>

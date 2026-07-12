@@ -52,10 +52,10 @@ const resolving = ref(false)
 const adminApi = useAdminApi()
 
 const ACTIONS = [
-  { value: 'DISMISS', label: 'Dismiss', icon: 'mdi:close', class: 'flex items-center gap-1 px-3 py-1.5 rounded-lg text-[12px] font-medium bg-gray-50 dark:bg-neutral-800 text-gray-600 dark:text-neutral-400 hover:bg-gray-100 dark:hover:bg-neutral-700 disabled:opacity-40 transition-colors' },
-  { value: 'WARN', label: 'Warn', icon: 'mdi:alert-outline', class: 'flex items-center gap-1 px-3 py-1.5 rounded-lg text-[12px] font-medium bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 hover:bg-amber-100 disabled:opacity-40 transition-colors' },
-  { value: 'HIDE', label: 'Hide', icon: 'mdi:eye-off-outline', class: 'flex items-center gap-1 px-3 py-1.5 rounded-lg text-[12px] font-medium bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400 hover:bg-orange-100 disabled:opacity-40 transition-colors' },
-  { value: 'REMOVE', label: 'Remove', icon: 'mdi:delete-outline', class: 'flex items-center gap-1 px-3 py-1.5 rounded-lg text-[12px] font-medium bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 hover:bg-rose-100 disabled:opacity-40 transition-colors' },
+  { value: 'DISMISS', label: 'Dismiss', icon: 'solar:close-circle-linear', class: 'flex items-center gap-1 px-3 py-1.5 rounded-lg text-[12px] font-medium bg-gray-50 dark:bg-neutral-800 text-gray-600 dark:text-neutral-400 hover:bg-gray-100 dark:hover:bg-neutral-700 disabled:opacity-40 transition-colors' },
+  { value: 'WARN', label: 'Warn', icon: 'solar:danger-triangle-linear', class: 'flex items-center gap-1 px-3 py-1.5 rounded-lg text-[12px] font-medium bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 hover:bg-amber-100 disabled:opacity-40 transition-colors' },
+  { value: 'HIDE', label: 'Hide', icon: 'solar:eye-closed-linear', class: 'flex items-center gap-1 px-3 py-1.5 rounded-lg text-[12px] font-medium bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400 hover:bg-orange-100 disabled:opacity-40 transition-colors' },
+  { value: 'REMOVE', label: 'Remove', icon: 'solar:trash-bin-trash-linear', class: 'flex items-center gap-1 px-3 py-1.5 rounded-lg text-[12px] font-medium bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 hover:bg-rose-100 disabled:opacity-40 transition-colors' },
 ]
 
 async function resolve(action: string) {

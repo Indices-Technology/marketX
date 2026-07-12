@@ -13,7 +13,7 @@
         :to="`/seller/${storeSlug}/products`"
         class="text-gray-500 hover:text-gray-700 dark:text-neutral-400 dark:hover:text-neutral-200"
       >
-        <Icon name="mdi:arrow-left" size="20" />
+        <Icon name="solar:arrow-left-linear" size="20" />
       </NuxtLink>
       <h1 class="text-2xl font-bold text-gray-900 dark:text-neutral-100">
         Edit Product
@@ -117,7 +117,7 @@
                 />
                 <Icon
                   v-if="img.type === 'VIDEO'"
-                  name="mdi:play-circle"
+                  name="solar:play-circle-bold"
                   size="18"
                   class="pointer-events-none absolute right-1.5 top-1.5 text-white drop-shadow-lg"
                 />
@@ -132,7 +132,7 @@
                   class="absolute right-1 top-1 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
                   @click="removeExistingMedia(img.id)"
                 >
-                  <Icon name="mdi:close" size="12" />
+                  <Icon name="solar:close-circle-linear" size="12" />
                 </button>
               </div>
 
@@ -189,7 +189,7 @@
                   class="absolute right-1 top-1 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
                   @click="removeNewMedia(i)"
                 >
-                  <Icon name="mdi:close" size="12" />
+                  <Icon name="solar:close-circle-linear" size="12" />
                 </button>
               </div>
 
@@ -199,7 +199,7 @@
                 class="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 transition-colors hover:border-brand hover:bg-brand/5 dark:border-neutral-600"
               >
                 <Icon
-                  name="mdi:image-plus"
+                  name="solar:gallery-add-linear"
                   size="24"
                   class="mb-1 text-gray-400 dark:text-neutral-500"
                 />
@@ -232,7 +232,7 @@
                 class="flex items-center gap-3 rounded-lg bg-gray-50 p-3 dark:bg-neutral-900"
               >
                 <Icon
-                  name="mdi:music-note"
+                  name="solar:music-note-2-bold"
                   size="20"
                   class="flex-shrink-0 text-brand"
                 />
@@ -252,7 +252,7 @@
                   class="flex-shrink-0 text-gray-400 hover:text-red-500"
                   @click="bgMusicRemoved = true"
                 >
-                  <Icon name="mdi:close" size="16" />
+                  <Icon name="solar:close-circle-linear" size="16" />
                 </button>
               </div>
 
@@ -262,7 +262,7 @@
                 class="flex items-center gap-3 rounded-lg bg-gray-50 p-3 dark:bg-neutral-900"
               >
                 <Icon
-                  name="mdi:music-note"
+                  name="solar:music-note-2-bold"
                   size="20"
                   class="flex-shrink-0 text-brand"
                 />
@@ -273,7 +273,7 @@
                 </span>
                 <div v-if="bgMusicUploading" class="flex-shrink-0">
                   <Icon
-                    name="mdi:loading"
+                    name="solar:refresh-linear"
                     size="16"
                     class="animate-spin text-brand"
                   />
@@ -283,7 +283,7 @@
                   class="flex-shrink-0 text-gray-400 hover:text-red-500"
                   @click="newBgMusic = null"
                 >
-                  <Icon name="mdi:close" size="16" />
+                  <Icon name="solar:close-circle-linear" size="16" />
                 </button>
               </div>
 
@@ -293,7 +293,7 @@
                 class="flex w-fit cursor-pointer items-center gap-2 rounded-lg border border-dashed border-gray-300 px-4 py-2.5 transition-colors hover:border-brand hover:bg-brand/5 dark:border-neutral-600"
               >
                 <Icon
-                  name="mdi:music-plus"
+                  name="solar:music-note-2-linear"
                   size="18"
                   class="text-gray-400 dark:text-neutral-500"
                 />
@@ -418,7 +418,7 @@
               <h3
                 class="flex items-center gap-1.5 text-sm font-bold text-gray-900 dark:text-white"
               >
-                <Icon name="mdi:magic-staff" class="text-brand" size="18" />
+                <Icon name="solar:magic-stick-3-linear" class="text-brand" size="18" />
                 AI Magic Lister
               </h3>
               <p class="mt-1 max-w-sm text-xs text-gray-600 dark:text-gray-300">
@@ -438,7 +438,7 @@
                 class="animate-spin"
                 size="18"
               />
-              <Icon v-else name="mdi:creation" size="18" />
+              <Icon v-else name="solar:magic-stick-3-linear" size="18" />
               {{ isGeneratingAI ? 'Generating...' : 'Regenerate Captions' }}
             </button>
           </div>
@@ -489,8 +489,8 @@ const { uploadMedia } = useMediaUpload()
 const aiApi = useAiApi()
 
 const tabs = [
-  { id: 'details', label: 'Details', icon: 'mdi:pencil-outline' },
-  { id: 'promote', label: 'Promote', icon: 'mdi:rocket-launch-outline' },
+  { id: 'details', label: 'Details', icon: 'solar:pen-linear' },
+  { id: 'promote', label: 'Promote', icon: 'solar:rocket-2-linear' },
 ]
 const activeTab = ref<'details' | 'promote'>(
   route.query.tab === 'promote' ? 'promote' : 'details',

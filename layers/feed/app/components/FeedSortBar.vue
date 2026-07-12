@@ -9,7 +9,7 @@
         <Icon :name="current.icon" size="14" class="text-gray-500 dark:text-neutral-400" />
         {{ current.label }}
         <Icon
-          name="mdi:chevron-down"
+          name="solar:alt-arrow-down-linear"
           size="13"
           class="text-gray-400 transition-transform dark:text-neutral-500"
           :class="open ? 'rotate-180' : ''"
@@ -55,7 +55,7 @@
         "
         @click="$emit('update:layout', 'card')"
       >
-        <Icon name="mdi:view-agenda-outline" size="16" />
+        <Icon name="solar:posts-carousel-vertical-linear" size="16" />
       </button>
       <button
         title="List view"
@@ -67,7 +67,7 @@
         "
         @click="$emit('update:layout', 'list')"
       >
-        <Icon name="mdi:format-list-bulleted" size="16" />
+        <Icon name="solar:list-linear" size="16" />
       </button>
     </div>
   </div>
@@ -97,11 +97,11 @@ const open = ref(false)
 const dropdownRoot = ref<HTMLElement | null>(null)
 
 const OPTIONS: Array<{ value: SortMode; label: string; icon: string }> = [
-  { value: 'new',    label: 'New',    icon: 'mdi:clock-outline' },
-  { value: 'best',   label: 'Best',   icon: 'mdi:fire' },
-  { value: 'hot',    label: 'Hot',    icon: 'mdi:trending-up' },
-  { value: 'top',    label: 'Top',    icon: 'mdi:arrow-up-bold' },
-  { value: 'rising', label: 'Rising', icon: 'mdi:rocket-launch-outline' },
+  { value: 'new',    label: 'New',    icon: 'solar:clock-circle-linear' },
+  { value: 'best',   label: 'Best',   icon: 'solar:fire-bold' },
+  { value: 'hot',    label: 'Hot',    icon: 'solar:graph-up-linear' },
+  { value: 'top',    label: 'Top',    icon: 'solar:arrow-up-bold' },
+  { value: 'rising', label: 'Rising', icon: 'solar:rocket-2-linear' },
 ]
 
 const current = computed(() => OPTIONS.find((o) => o.value === props.sort) ?? OPTIONS[0]!)

@@ -33,7 +33,7 @@
         "
       >
         <Icon
-          :name="isPlaying ? 'mdi:pause' : 'mdi:play'"
+          :name="isPlaying ? 'solar:pause-bold' : 'solar:play-bold'"
           size="22"
           class="text-white"
           :class="isPlaying ? '' : 'ml-0.5'"
@@ -72,7 +72,7 @@
         style="background: rgba(255, 255, 255, 0.1)"
       >
         <Icon
-          :name="isMuted ? 'mdi:volume-off' : 'mdi:volume-high'"
+          :name="isMuted ? 'solar:muted-linear' : 'solar:volume-loud-linear'"
           size="16"
           class="text-white"
         />

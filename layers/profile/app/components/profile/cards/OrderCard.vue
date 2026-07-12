@@ -52,7 +52,7 @@
       v-if="order.trackingNumber"
       class="flex items-center gap-1.5 border-t border-gray-200 px-4 py-2 text-xs text-brand dark:border-neutral-800"
     >
-      <Icon name="mdi:truck-outline" size="14" />
+      <Icon name="solar:delivery-linear" size="14" />
       {{ order.shipper || 'Courier' }} · {{ order.trackingNumber }}
     </div>
 
@@ -61,7 +61,7 @@
       v-if="order.status === 'SHIPPED' && !confirmed"
       class="flex items-start gap-1.5 border-t border-gray-200 px-4 py-2 text-xs text-amber-600 dark:border-neutral-800 dark:text-amber-400"
     >
-      <Icon name="mdi:clock-alert-outline" size="14" class="mt-0.5 shrink-0" />
+      <Icon name="solar:alarm-linear" size="14" class="mt-0.5 shrink-0" />
       Payment will be automatically released to the seller in 7 days. Confirm
       receipt above to release it now.
     </div>

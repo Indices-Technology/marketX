@@ -203,14 +203,14 @@
             class="flex flex-col gap-0.5 text-xs text-gray-500 dark:text-neutral-400"
           >
             <span class="flex items-center gap-1.5">
-              <Icon name="mdi:barcode" size="14" />
+              <Icon name="solar:sale-linear" size="14" />
               {{ order.shipper || 'Carrier' }} · {{ order.waybill || order.trackingNumber }}
             </span>
             <span
               v-if="isGigOrder(order) && order.status === 'CONFIRMED'"
               class="flex items-center gap-1 text-[11px] font-medium text-amber-600 dark:text-amber-400"
             >
-              <Icon name="mdi:clock-outline" size="12" />
+              <Icon name="solar:clock-circle-linear" size="12" />
               Booked — hand the parcel to GIG. Marked shipped once they scan it.
             </span>
           </div>
@@ -238,7 +238,7 @@
         class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 dark:bg-neutral-800"
       >
         <Icon
-          name="mdi:package-variant-closed-outline"
+          name="solar:box-linear"
           size="32"
           class="text-gray-400 dark:text-neutral-500"
         />

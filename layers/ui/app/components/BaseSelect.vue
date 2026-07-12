@@ -36,7 +36,7 @@
           </slot>
         </select>
         <Icon
-          name="mdi:chevron-down"
+          name="solar:alt-arrow-down-linear"
           size="18"
           class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-neutral-500"
         />

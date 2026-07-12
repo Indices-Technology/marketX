@@ -11,7 +11,7 @@
         <!-- Success Icon -->
         <div class="mb-6">
           <Icon
-            name="mdi:check-circle-outline"
+            name="solar:check-circle-linear"
             class="h-20 w-20 text-green-500"
           />
         </div>
@@ -31,7 +31,7 @@
           <ul class="space-y-3 text-left text-sm text-gray-500">
             <li class="flex items-start">
               <Icon
-                name="mdi:email-fast-outline"
+                name="solar:letter-linear"
                 class="mr-3 mt-1 shrink-0 text-gray-400"
                 size="18"
               />
@@ -39,7 +39,7 @@
             </li>
             <li class="flex items-start">
               <Icon
-                name="mdi:package-variant-closed-check"
+                name="solar:box-minimalistic-linear"
                 class="mr-3 mt-1 shrink-0 text-gray-400"
                 size="18"
               />
@@ -47,7 +47,7 @@
             </li>
             <li class="flex items-start">
               <Icon
-                name="mdi:account-clock-outline"
+                name="solar:user-linear"
                 class="mr-3 mt-1 shrink-0 text-gray-400"
                 size="18"
               />

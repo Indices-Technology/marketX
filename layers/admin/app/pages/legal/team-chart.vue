@@ -23,7 +23,7 @@
 
         <label class="relative block w-full sm:w-56">
           <Icon
-            name="mdi:magnify"
+            name="solar:magnifer-linear"
             size="16"
             class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
           />

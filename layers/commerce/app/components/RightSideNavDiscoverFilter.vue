@@ -89,7 +89,7 @@
           <p
             class="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300"
           >
-            <Icon name="mdi:recycle" size="12" class="mr-1" />Pre-loved &amp;
+            <Icon name="solar:recive-square-linear" size="12" class="mr-1" />Pre-loved &amp;
             thrift items only
           </p>
         </div>
@@ -201,7 +201,7 @@
                   <span class="truncate">{{ s.store_name }}</span>
                   <Icon
                     v-if="s.is_verified"
-                    name="mdi:check-decagram"
+                    name="solar:verified-check-bold"
                     size="12"
                     class="shrink-0 text-blue-500"
                   />
@@ -270,17 +270,17 @@ const formatNum = (n: number) => {
 }
 
 const SORT_OPTIONS = [
-  { value: 'newest' as const, label: 'Newest', icon: 'mdi:lightning-bolt' },
-  { value: 'popular' as const, label: 'Popular', icon: 'mdi:fire' },
+  { value: 'newest' as const, label: 'Newest', icon: 'solar:bolt-bold' },
+  { value: 'popular' as const, label: 'Popular', icon: 'solar:fire-bold' },
   {
     value: 'price_asc' as const,
     label: 'Low to high',
-    icon: 'mdi:sort-ascending',
+    icon: 'solar:sort-vertical-linear',
   },
   {
     value: 'price_desc' as const,
     label: 'High to low',
-    icon: 'mdi:sort-descending',
+    icon: 'solar:sort-vertical-linear',
   },
 ]
 
@@ -303,7 +303,7 @@ const MEMBER_OPTIONS = [
 ]
 
 const TAG_SORT_OPTIONS = [
-  { value: 'popular' as const, label: 'Popular', icon: 'mdi:fire' },
-  { value: 'newest' as const, label: 'Newest', icon: 'mdi:lightning-bolt' },
+  { value: 'popular' as const, label: 'Popular', icon: 'solar:fire-bold' },
+  { value: 'newest' as const, label: 'Newest', icon: 'solar:bolt-bold' },
 ]
 </script>

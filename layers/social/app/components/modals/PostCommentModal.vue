@@ -16,7 +16,7 @@
             @click="$emit('close')"
             class="text-gray-500 hover:text-gray-700 dark:text-neutral-400"
           >
-            <Icon name="mdi:close" class="h-6 w-6" />
+            <Icon name="solar:close-circle-linear" class="h-6 w-6" />
           </button>
         </div>
         <p class="text-sm text-gray-500 dark:text-neutral-400">

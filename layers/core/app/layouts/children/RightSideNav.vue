@@ -1,7 +1,7 @@
 <!-- ~~/layers/core/app/layouts/children/RightSideNav.vue -->
 <template>
   <div
-    class="flex h-full flex-col border-l border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
+    class="flex h-full flex-col bg-white dark:bg-neutral-900"
   >
     <!-- ── Search Bar ────────────────────────────────────────────────────────── -->
     <div
@@ -12,7 +12,7 @@
           class="flex items-center gap-2 rounded-full bg-gray-100 px-3 py-2 transition-colors focus-within:bg-gray-50 focus-within:ring-2 focus-within:ring-brand/25 dark:bg-neutral-800 dark:focus-within:bg-neutral-700/80"
         >
           <Icon
-            name="mdi:magnify"
+            name="solar:magnifer-linear"
             size="15"
             class="shrink-0 text-gray-400 dark:text-neutral-500"
           />
@@ -26,14 +26,14 @@
           />
           <button v-if="searchQuery" class="shrink-0" @click="clearSearch">
             <Icon
-              name="mdi:close-circle"
+              name="solar:close-circle-bold"
               size="14"
               class="text-gray-400 dark:text-neutral-500"
             />
           </button>
           <Icon
             v-else-if="searchLoading"
-            name="mdi:loading"
+            name="solar:refresh-linear"
             size="14"
             class="animate-spin text-brand"
           />
@@ -50,7 +50,7 @@
               v-if="searchLoading && !searchResults"
               class="flex items-center justify-center p-5"
             >
-              <Icon name="mdi:loading" size="20" class="animate-spin text-gray-300 dark:text-neutral-600" />
+              <Icon name="solar:refresh-linear" size="20" class="animate-spin text-gray-300 dark:text-neutral-600" />
             </div>
 
             <!-- No results -->
@@ -85,7 +85,7 @@
                       v-else
                       class="flex h-full w-full items-center justify-center"
                     >
-                      <Icon name="mdi:shopping-outline" size="14" class="text-gray-400" />
+                      <Icon name="solar:bag-4-linear" size="14" class="text-gray-400" />
                     </div>
                   </div>
                   <div class="min-w-0 flex-1">
@@ -137,7 +137,7 @@
                   @click="clearSearch"
                 >
                   See all results
-                  <Icon name="mdi:arrow-right" size="14" />
+                  <Icon name="solar:arrow-right-linear" size="14" />
                 </NuxtLink>
               </div>
             </div>
@@ -159,7 +159,7 @@
         "
         @click="activeTab = 'discover'"
       >
-        <Icon name="mdi:compass-outline" size="17" />
+        <Icon name="solar:compass-linear" size="17" />
         <span>Discover</span>
       </button>
 
@@ -177,7 +177,7 @@
           class="pointer-events-none absolute inset-0 bg-white/15 blur-sm"
         />
         <Icon
-          :name="activeTab === 'ai' ? 'mdi:robot-happy' : 'mdi:robot-happy-outline'"
+          :name="activeTab === 'ai' ? 'solar:programming-bold' : 'solar:programming-linear'"
           size="17"
           class="relative z-10"
         />
@@ -236,7 +236,7 @@
                 </p>
               </div>
               <Icon
-                name="mdi:chevron-right"
+                name="solar:alt-arrow-right-linear"
                 size="18"
                 class="shrink-0 text-gray-300 dark:text-neutral-600"
               />
@@ -314,7 +314,7 @@
                   v-if="seller.is_verified"
                   class="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-blue-500 ring-2 ring-white dark:ring-neutral-900"
                 >
-                  <Icon name="mdi:check" size="10" class="text-white" />
+                  <Icon name="solar:check-circle-linear" size="10" class="text-white" />
                 </div>
               </NuxtLink>
 
@@ -395,7 +395,7 @@
                   loading="lazy"
                 />
                 <div v-else class="flex h-full w-full items-center justify-center">
-                  <Icon name="mdi:tag-outline" size="18" class="text-gray-400" />
+                  <Icon name="solar:tag-linear" size="18" class="text-gray-400" />
                 </div>
               </div>
               <div class="min-w-0 flex-1">
@@ -460,7 +460,7 @@
                     loading="lazy"
                   />
                   <div v-else class="flex h-full w-full items-center justify-center">
-                    <Icon name="mdi:shopping-outline" size="16" class="text-gray-400" />
+                    <Icon name="solar:bag-4-linear" size="16" class="text-gray-400" />
                   </div>
                 </div>
                 <div class="min-w-0 flex-1">

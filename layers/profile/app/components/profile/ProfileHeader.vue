@@ -20,7 +20,7 @@
             v-if="profile.role === 'SELLER'"
             class="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 ring-2 ring-white dark:ring-neutral-900"
           >
-            <Icon name="mdi:store" size="13" class="text-white" />
+            <Icon name="solar:shop-2-bold" size="13" class="text-white" />
           </div>
         </div>
 
@@ -37,7 +37,7 @@
               v-if="profile.role === 'SELLER'"
               class="inline-flex select-none items-center gap-0.5 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-widest text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
             >
-              <Icon name="mdi:store" size="9" />
+              <Icon name="solar:shop-2-bold" size="9" />
               {{ $t('profile.seller') }}
             </span>
 
@@ -54,7 +54,7 @@
                 aria-label="Settings"
                 class="rounded-lg bg-gray-100 p-1.5 text-gray-500 transition-colors hover:bg-gray-200 dark:bg-neutral-800 dark:hover:bg-neutral-700"
               >
-                <Icon name="mdi:cog-outline" size="18" />
+                <Icon name="solar:settings-linear" size="18" />
               </button>
             </template>
 
@@ -90,7 +90,7 @@
                 aria-label="More options"
                 class="rounded-lg bg-gray-100 p-1.5 text-gray-500 transition-colors hover:bg-gray-200 dark:bg-neutral-800 dark:hover:bg-neutral-700"
               >
-                <Icon name="mdi:dots-horizontal" size="18" />
+                <Icon name="solar:menu-dots-bold" size="18" />
               </button>
             </template>
           </div>
@@ -162,14 +162,14 @@
               rel="noopener noreferrer"
               class="flex items-center gap-1 text-brand hover:underline"
             >
-              <Icon name="mdi:link-variant" size="13" />
+              <Icon name="solar:link-round-linear" size="13" />
               {{ safeProfileUrl.replace(/^https?:\/\//, '').split('/')[0] }}
             </a>
             <span
               v-if="profile.stateOfResidence"
               class="flex items-center gap-1 text-gray-400 dark:text-neutral-500"
             >
-              <Icon name="mdi:map-marker-outline" size="13" />
+              <Icon name="solar:map-point-linear" size="13" />
               {{ profile.stateOfResidence }}
             </span>
           </div>
@@ -187,7 +187,7 @@
               <div
                 class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500"
               >
-                <Icon name="mdi:storefront" size="18" class="text-white" />
+                <Icon name="solar:shop-bold" size="18" class="text-white" />
               </div>
               <div class="min-w-0 flex-1">
                 <p
@@ -209,7 +209,7 @@
               @click="copyStoreAddress"
             >
               <Icon
-                :name="addressCopied ? 'mdi:check' : 'mdi:content-copy'"
+                :name="addressCopied ? 'solar:check-circle-linear' : 'solar:copy-linear'"
                 size="16"
               />
             </button>

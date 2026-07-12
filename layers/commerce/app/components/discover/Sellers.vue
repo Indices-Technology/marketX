@@ -24,7 +24,7 @@
       class="py-24 text-center"
     >
       <Icon
-        name="mdi:store-search-outline"
+        name="solar:shop-linear"
         size="48"
         class="mx-auto mb-3 text-gray-300 dark:text-neutral-600"
       />
@@ -67,7 +67,7 @@
               v-else
               class="flex h-full w-full items-center justify-center bg-brand"
             >
-              <Icon name="mdi:storefront" size="18" class="text-white" />
+              <Icon name="solar:shop-bold" size="18" class="text-white" />
             </div>
           </div>
           <div class="flex items-start justify-between gap-1">
@@ -80,7 +80,7 @@
                 </p>
                 <Icon
                   v-if="seller.is_verified"
-                  name="mdi:check-decagram"
+                  name="solar:verified-check-bold"
                   size="13"
                   class="shrink-0 text-blue-500"
                 />

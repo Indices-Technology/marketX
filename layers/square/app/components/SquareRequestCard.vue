@@ -37,7 +37,7 @@
             {{ request.sizeSpec }}
           </span>
           <span v-if="request.deliverTo" class="rounded-full bg-gray-100 px-2 py-0.5 font-medium text-gray-600 dark:bg-neutral-800 dark:text-neutral-300">
-            <Icon name="mdi:map-marker-outline" size="11" /> {{ request.deliverTo }}
+            <Icon name="solar:map-point-linear" size="11" /> {{ request.deliverTo }}
           </span>
         </div>
 
@@ -54,7 +54,7 @@
             variant="primary"
             @click="$emit('respond', request)"
           >
-            <Icon name="mdi:tag-plus-outline" size="15" /> Respond with product
+            <Icon name="solar:tag-linear" size="15" /> Respond with product
           </BaseButton>
 
           <!-- Owner: view offers / close -->

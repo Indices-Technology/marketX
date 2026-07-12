@@ -14,7 +14,7 @@
         to="/sellers/create"
         class="flex items-center gap-1.5 rounded-xl bg-brand px-4 py-2 text-[13px] font-bold text-white transition-all hover:opacity-90 active:scale-[0.98]"
       >
-        <Icon name="mdi:plus" size="16" />
+        <Icon name="solar:add-circle-linear" size="16" />
         Create Store
       </NuxtLink>
     </div>
@@ -126,7 +126,7 @@
         class="flex h-20 w-20 items-center justify-center rounded-full bg-gray-100 dark:bg-neutral-800"
       >
         <Icon
-          name="mdi:store-outline"
+          name="solar:shop-2-linear"
           size="40"
           class="text-gray-300 dark:text-neutral-600"
         />
@@ -183,7 +183,7 @@
               v-if="seller.is_verified"
               class="flex items-center gap-0.5 rounded-full bg-blue-500 px-2 py-0.5 text-[10px] font-bold text-white"
             >
-              <Icon name="mdi:check-circle" size="10" />
+              <Icon name="solar:check-circle-bold" size="10" />
               Verified
             </span>
           </div>
@@ -208,7 +208,7 @@
                 class="flex h-full w-full items-center justify-center"
               >
                 <Icon
-                  name="mdi:store"
+                  name="solar:shop-2-bold"
                   size="24"
                   class="text-gray-400 dark:text-neutral-500"
                 />
@@ -278,7 +278,7 @@
             <span
               class="flex items-center gap-1.5 text-[11px] font-medium text-gray-400 dark:text-neutral-500"
             >
-              <Icon name="mdi:wallet-outline" size="13" />
+              <Icon name="solar:wallet-linear" size="13" />
               Balance
             </span>
             <span

@@ -15,7 +15,7 @@
               :title="composing ? 'Cancel' : 'New message'"
               @click="toggleCompose"
             >
-              <Icon :name="composing ? 'mdi:close' : 'mdi:pencil-outline'" size="22" />
+              <Icon :name="composing ? 'solar:close-circle-linear' : 'solar:pen-linear'" size="22" />
             </button>
           </div>
 
@@ -30,7 +30,7 @@
           >
             <div v-if="!composing" class="relative">
               <Icon
-                name="mdi:magnify"
+                name="solar:magnifer-linear"
                 size="16"
                 class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
               />
@@ -55,7 +55,7 @@
             <div v-if="composing">
               <div class="relative">
                 <Icon
-                  name="mdi:magnify"
+                  name="solar:magnifer-linear"
                   size="16"
                   class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
                 />
@@ -100,7 +100,7 @@
               v-else-if="composeQuery.trim() && composeResults.length === 0"
               class="py-10 text-center text-sm text-gray-500 dark:text-neutral-400"
             >
-              <Icon name="mdi:account-search-outline" size="36" class="mx-auto mb-2 opacity-40" />
+              <Icon name="solar:magnifer-linear" size="36" class="mx-auto mb-2 opacity-40" />
               No results for "{{ composeQuery }}"
             </div>
 
@@ -133,7 +133,7 @@
                       </p>
                       <Icon
                         v-if="item.isVerified"
-                        name="mdi:check-decagram"
+                        name="solar:verified-check-bold"
                         size="13"
                         class="shrink-0 text-blue-500"
                       />
@@ -163,7 +163,7 @@
                   v-if="!composeQuery.trim() && composeResults.length === 0 && !isLoadingFollowing"
                   class="py-10 text-center text-sm text-gray-500 dark:text-neutral-400"
                 >
-                  <Icon name="mdi:account-group-outline" size="36" class="mx-auto mb-2 opacity-40" />
+                  <Icon name="solar:users-group-rounded-linear" size="36" class="mx-auto mb-2 opacity-40" />
                   <p class="font-medium">Follow people to message them</p>
                   <p class="mt-1 text-xs">Or search above to find someone</p>
                 </div>
@@ -184,7 +184,7 @@
             v-else-if="filteredConversations.length === 0"
             class="flex flex-col items-center justify-center py-20 text-gray-500 dark:text-neutral-400"
           >
-            <Icon name="mdi:message-outline" size="48" class="mb-3 opacity-40" />
+            <Icon name="solar:chat-round-line-linear" size="48" class="mb-3 opacity-40" />
             <p class="font-medium">No messages yet</p>
             <button
               class="mt-2 text-sm font-semibold text-brand hover:underline"

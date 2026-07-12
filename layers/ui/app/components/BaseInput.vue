@@ -47,7 +47,7 @@
             :aria-label="showPassword ? 'Hide password' : 'Show password'"
             @click="showPassword = !showPassword"
           >
-            <Icon :name="showPassword ? 'mdi:eye-off-outline' : 'mdi:eye-outline'" size="16" />
+            <Icon :name="showPassword ? 'solar:eye-closed-linear' : 'solar:eye-linear'" size="16" />
           </button>
           <Icon
             v-else-if="iconRight"

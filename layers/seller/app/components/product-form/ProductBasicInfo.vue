@@ -28,7 +28,7 @@
           @click="improveDescription"
         >
           <Icon
-            :name="aiBusy ? 'eos-icons:loading' : 'mdi:creation'"
+            :name="aiBusy ? 'eos-icons:loading' : 'solar:magic-stick-3-linear'"
             :class="{ 'animate-spin': aiBusy }"
             size="14"
           />
@@ -100,7 +100,7 @@
           class="flex items-center gap-1 text-xs font-medium text-brand hover:underline"
           @click="showAffiliateHelp = !showAffiliateHelp"
         >
-          <Icon name="mdi:help-circle-outline" size="14" />
+          <Icon name="solar:question-circle-linear" size="14" />
           How it works
         </button>
       </div>
@@ -119,15 +119,15 @@
           class="mb-3 space-y-1.5 rounded-lg bg-white/60 p-3 text-xs text-gray-600 dark:bg-neutral-900/50 dark:text-neutral-400"
         >
           <p class="flex items-start gap-2">
-            <Icon name="mdi:numeric-1-circle" size="15" class="mt-px shrink-0 text-brand" />
+            <Icon name="solar:round-arrow-right-linear" size="15" class="mt-px shrink-0 text-brand" />
             A creator shares your product with their audience.
           </p>
           <p class="flex items-start gap-2">
-            <Icon name="mdi:numeric-2-circle" size="15" class="mt-px shrink-0 text-brand" />
+            <Icon name="solar:round-arrow-right-linear" size="15" class="mt-px shrink-0 text-brand" />
             A buyer purchases through their link.
           </p>
           <p class="flex items-start gap-2">
-            <Icon name="mdi:numeric-3-circle" size="15" class="mt-px shrink-0 text-brand" />
+            <Icon name="solar:round-arrow-right-linear" size="15" class="mt-px shrink-0 text-brand" />
             You pay this fixed reward from that sale — not before.
           </p>
         </div>

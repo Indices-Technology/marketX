@@ -7,7 +7,7 @@
           to="/buyer/orders"
           class="rounded-full p-2 transition-colors hover:bg-gray-100 dark:hover:bg-neutral-800"
         >
-          <Icon name="mdi:arrow-left" size="22" />
+          <Icon name="solar:arrow-left-linear" size="22" />
         </NuxtLink>
         <div>
           <h1 class="text-xl font-bold text-gray-900 dark:text-neutral-100">
@@ -66,7 +66,7 @@
                     : 'bg-gray-100 text-gray-400 dark:bg-neutral-800'
                 "
               >
-                <Icon v-if="stepIndex > i" name="mdi:check" size="14" />
+                <Icon v-if="stepIndex > i" name="solar:check-circle-linear" size="14" />
                 <span v-else>{{ i + 1 }}</span>
               </div>
               <p class="mt-1 text-center text-[9px] text-gray-400">
@@ -136,7 +136,7 @@
               v-if="order.shippingZone"
               class="mt-2 flex items-center gap-1.5 text-xs text-brand"
             >
-              <Icon name="mdi:truck-outline" size="14" />
+              <Icon name="solar:delivery-linear" size="14" />
               {{ order.shippingZone }}
               <span
                 v-if="order.estimatedDays"
@@ -148,7 +148,7 @@
               v-if="order.waybill || order.trackingNumber"
               class="mt-1 flex items-center gap-1.5 text-xs text-gray-500 dark:text-neutral-400"
             >
-              <Icon name="mdi:barcode" size="14" />
+              <Icon name="solar:sale-linear" size="14" />
               <span>{{ order.shipper }} · {{ order.waybill || order.trackingNumber }}</span>
             </div>
           </div>
@@ -164,7 +164,7 @@
             v-else-if="!trackingEvents.length"
             class="flex items-center gap-2 text-sm text-gray-500 dark:text-neutral-400"
           >
-            <Icon name="mdi:clock-outline" size="16" class="text-amber-500" />
+            <Icon name="solar:clock-circle-linear" size="16" class="text-amber-500" />
             Booked with {{ order.shipper || 'the carrier' }} — waiting for the first scan.
           </div>
 

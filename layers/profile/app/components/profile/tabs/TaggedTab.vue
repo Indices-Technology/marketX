@@ -12,7 +12,7 @@
     <!-- Empty State -->
     <div v-else-if="taggedPosts.length === 0" class="py-20 text-center">
       <Icon
-        name="mdi:account-tag-outline"
+        name="solar:user-id-linear"
         size="64"
         class="mx-auto mb-4 text-gray-300 dark:text-neutral-700"
       />
@@ -43,13 +43,13 @@
             class="absolute inset-0 flex items-center justify-center gap-4 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100"
           >
             <div class="flex items-center gap-1 text-white">
-              <Icon name="mdi:heart" size="24" />
+              <Icon name="solar:heart-bold" size="24" />
               <span class="font-semibold">{{
                 formatNumber(post._count?.likes || 0)
               }}</span>
             </div>
             <div class="flex items-center gap-1 text-white">
-              <Icon name="mdi:comment" size="24" />
+              <Icon name="solar:chat-round-bold" size="24" />
               <span class="font-semibold">{{
                 formatNumber(post._count?.comments || 0)
               }}</span>
@@ -60,7 +60,7 @@
           <div
             class="absolute right-2 top-2 rounded-full bg-black/50 px-2 py-1 backdrop-blur-sm"
           >
-            <Icon name="mdi:account-tag" size="16" class="text-white" />
+            <Icon name="solar:user-id-bold" size="16" class="text-white" />
           </div>
         </button>
       </div>

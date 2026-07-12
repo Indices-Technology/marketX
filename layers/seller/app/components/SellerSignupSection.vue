@@ -11,7 +11,7 @@
     >
       <div class="flex items-center gap-3">
         <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand/10">
-          <Icon name="mdi:storefront-outline" size="17" class="text-brand" />
+          <Icon name="solar:shop-linear" size="17" class="text-brand" />
         </div>
         <div>
           <p class="text-sm font-semibold text-gray-800 dark:text-neutral-200">
@@ -23,7 +23,7 @@
         </div>
       </div>
       <Icon
-        name="mdi:chevron-down"
+        name="solar:alt-arrow-down-linear"
         size="18"
         class="shrink-0 text-gray-400 transition-transform duration-200"
         :class="open ? 'rotate-180' : ''"
@@ -41,7 +41,7 @@
     >
       <div v-if="open" class="border-t border-gray-200 px-4 pb-4 pt-3 dark:border-neutral-700">
         <p class="mb-3 flex items-start gap-1.5 text-xs text-blue-600 dark:text-blue-400">
-          <Icon name="mdi:information-outline" size="13" class="mt-0.5 shrink-0" />
+          <Icon name="solar:info-circle-linear" size="13" class="mt-0.5 shrink-0" />
           Your account is created first. Then we'll set up your store — logo, products, and more.
         </p>
 

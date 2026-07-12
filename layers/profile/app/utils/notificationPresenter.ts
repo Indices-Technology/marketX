@@ -22,22 +22,22 @@ export interface PresentedNotification {
 }
 
 const ICON: Record<string, string> = {
-  NEW_FOLLOWER: 'mdi:account-plus-outline',
-  POST_LIKE: 'mdi:heart',
-  COMMENT_LIKE: 'mdi:heart-outline',
-  NEW_COMMENT: 'mdi:comment-outline',
-  REPLY: 'mdi:comment-text-outline',
-  MENTION: 'mdi:at',
-  NEW_POST: 'mdi:image-outline',
-  ORDER: 'mdi:package-variant-closed',
-  PRODUCT: 'mdi:tag-outline',
-  PRODUCT_SHARE: 'mdi:share-outline',
-  REVIEW: 'mdi:star-outline',
-  GENERAL: 'mdi:bell-outline',
-  SQUARE_ANNOUNCEMENT: 'mdi:bullhorn-outline',
-  SQUARE_REQUEST: 'mdi:hand-wave-outline',
-  SQUARE_OFFER: 'mdi:tag-heart-outline',
-  WALL_SHOUTOUT: 'mdi:message-star-outline',
+  NEW_FOLLOWER: 'solar:user-plus-linear',
+  POST_LIKE: 'solar:heart-bold',
+  COMMENT_LIKE: 'solar:heart-linear',
+  NEW_COMMENT: 'solar:chat-round-linear',
+  REPLY: 'solar:chat-line-linear',
+  MENTION: 'solar:mention-circle-linear',
+  NEW_POST: 'solar:gallery-linear',
+  ORDER: 'solar:box-linear',
+  PRODUCT: 'solar:tag-linear',
+  PRODUCT_SHARE: 'solar:share-linear',
+  REVIEW: 'solar:star-linear',
+  GENERAL: 'solar:bell-linear',
+  SQUARE_ANNOUNCEMENT: 'solar:speaker-linear',
+  SQUARE_REQUEST: 'solar:hand-shake-linear',
+  SQUARE_OFFER: 'solar:tag-linear',
+  WALL_SHOUTOUT: 'solar:chat-round-like-linear',
   SUPPORT: 'mdi:lifebuoy',
 }
 
@@ -68,7 +68,7 @@ function linkifyOrder(message: string, to: string | null): NotifSegment[] {
 }
 
 export function presentNotification(n: INotification): PresentedNotification {
-  const icon = ICON[n.type] ?? 'mdi:bell-outline'
+  const icon = ICON[n.type] ?? 'solar:bell-linear'
   const actorName = n.actor?.username || 'Someone'
   const actorLink = n.actor?.username
     ? `/profile/${n.actor.username}`

@@ -56,7 +56,7 @@
         ]"
       >
         <Icon
-          :name="message.metadata.cartUpdate.success ? 'mdi:check-circle' : 'mdi:alert-circle'"
+          :name="message.metadata.cartUpdate.success ? 'solar:check-circle-bold' : 'solar:danger-circle-bold'"
           size="14"
         />
         {{ message.metadata.cartUpdate.message }}

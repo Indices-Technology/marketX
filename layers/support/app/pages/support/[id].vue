@@ -7,7 +7,7 @@
           to="/support"
           class="rounded-full p-2 hover:bg-gray-100 dark:hover:bg-neutral-800"
         >
-          <Icon name="mdi:arrow-left" size="22" />
+          <Icon name="solar:arrow-left-linear" size="22" />
         </NuxtLink>
         <div class="min-w-0 flex-1">
           <div class="flex items-center gap-2">
@@ -46,9 +46,9 @@
         :to="`/buyer/orders/${ticket.order.id}`"
         class="mb-4 flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600 dark:border-neutral-800 dark:bg-neutral-800/50 dark:text-neutral-300"
       >
-        <Icon name="mdi:package-variant-closed" size="16" />
+        <Icon name="solar:box-linear" size="16" />
         Order #{{ ticket.order.id }} · {{ ticket.order.status }}
-        <Icon name="mdi:chevron-right" size="16" class="ml-auto" />
+        <Icon name="solar:alt-arrow-right-linear" size="16" class="ml-auto" />
       </NuxtLink>
 
       <!-- Thread -->

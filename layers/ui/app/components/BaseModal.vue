@@ -42,7 +42,7 @@
                 aria-label="Close"
                 @click="$emit('update:modelValue', false)"
               >
-                <Icon name="mdi:close" size="18" />
+                <Icon name="solar:close-circle-linear" size="18" />
               </button>
             </div>
 

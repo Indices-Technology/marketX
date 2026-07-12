@@ -4,7 +4,7 @@
       <!-- Header -->
       <div class="mb-6">
         <h1 class="text-xl font-bold text-gray-900 dark:text-white">
-          <Icon name="mdi:tag-outline" size="22" class="-mt-0.5 inline text-amber-500" />
+          <Icon name="solar:tag-linear" size="22" class="-mt-0.5 inline text-amber-500" />
           {{ $t('nav.deals') }}
         </h1>
         <p class="text-sm text-gray-500 dark:text-neutral-400">Flash sales and time-limited discounts from sellers you love</p>
@@ -18,7 +18,7 @@
       <!-- Empty -->
       <div v-else-if="!pending && products.length === 0" class="flex min-h-[50vh] flex-col items-center justify-center gap-6 text-center">
         <div class="flex h-20 w-20 items-center justify-center rounded-3xl bg-amber-50 dark:bg-amber-950/30">
-          <Icon name="mdi:tag-outline" size="40" class="text-amber-500" />
+          <Icon name="solar:tag-linear" size="40" class="text-amber-500" />
         </div>
         <div>
           <h2 class="text-xl font-bold text-gray-900 dark:text-white">No active deals right now</h2>
@@ -48,7 +48,7 @@
               class="h-full w-full transition-transform duration-300 group-hover:scale-105"
             />
             <div v-else class="flex h-full w-full items-center justify-center">
-              <Icon name="mdi:image-outline" size="32" class="text-gray-300" />
+              <Icon name="solar:gallery-linear" size="32" class="text-gray-300" />
             </div>
           </div>
 

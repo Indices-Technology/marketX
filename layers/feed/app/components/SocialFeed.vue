@@ -1,6 +1,6 @@
 <!-- Social feed — rendered inside HomeLayout by the auth-aware index.vue -->
 <template>
-  <div class="w-full space-y-4 px-2 sm:px-4">
+  <div class="mx-auto w-full max-w-[512px] space-y-4 px-2 sm:px-4">
     <!-- Initial Splash Screen -->
     <Transition name="splash" mode="out-in">
       <SplashScreen
@@ -14,7 +14,7 @@
       >
         <div class="rounded-full bg-red-50/80 p-5 dark:bg-red-950/30">
           <Icon
-            name="mdi:wifi-off"
+            name="solar:wi-fi-router-minimalistic-linear"
             size="48"
             class="text-red-500 dark:text-red-400"
           />
@@ -56,7 +56,7 @@
             @click="scrollStories('left')"
           >
             <Icon
-              name="mdi:chevron-left"
+              name="solar:alt-arrow-left-linear"
               size="20"
               class="text-gray-600 dark:text-neutral-300"
             />
@@ -69,7 +69,7 @@
             @click="scrollStories('right')"
           >
             <Icon
-              name="mdi:chevron-right"
+              name="solar:alt-arrow-right-linear"
               size="20"
               class="text-gray-600 dark:text-neutral-300"
             />
@@ -90,7 +90,7 @@
                 <div
                   class="flex h-full w-full items-center justify-center rounded-full bg-white dark:bg-neutral-900"
                 >
-                  <Icon name="mdi:plus" size="28" class="text-brand" />
+                  <Icon name="solar:add-circle-linear" size="28" class="text-brand" />
                 </div>
               </button>
               <span
@@ -137,7 +137,7 @@
           <div
             class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/20"
           >
-            <Icon name="mdi:cash-multiple" size="26" class="text-white" />
+            <Icon name="solar:money-bag-linear" size="26" class="text-white" />
           </div>
           <div class="min-w-0 flex-1">
             <p class="text-sm font-bold text-white">
@@ -151,7 +151,7 @@
             class="shrink-0 rounded-xl bg-white/20 px-3 py-1.5 text-[12px] font-bold text-white transition-colors group-hover:bg-white/30"
           >
             {{ $t('affiliate.enrollNow') }}
-            <Icon name="mdi:arrow-right" size="14" class="ml-0.5 inline" />
+            <Icon name="solar:arrow-right-linear" size="14" class="ml-0.5 inline" />
           </div>
         </NuxtLink>
       </section>
@@ -165,7 +165,7 @@
             class="flex h-6 w-6 items-center justify-center rounded-full bg-brand/10"
           >
             <Icon
-              name="mdi:map-marker-radius-outline"
+              name="solar:map-point-wave-linear"
               size="14"
               class="text-gray-500 dark:text-neutral-400"
             />
@@ -179,7 +179,7 @@
           to="/map"
           class="flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-gray-700 dark:text-neutral-500 dark:hover:text-neutral-300"
         >
-          See all <Icon name="mdi:chevron-right" size="14" />
+          See all <Icon name="solar:alt-arrow-right-linear" size="14" />
         </NuxtLink>
       </div>
 
@@ -266,13 +266,13 @@
           >
             <Icon
               v-if="nearbyRequesting"
-              name="mdi:loading"
+              name="solar:refresh-linear"
               size="18"
               class="animate-spin text-brand"
             />
             <Icon
               v-else
-              name="mdi:crosshairs-gps"
+              name="solar:gps-linear"
               size="18"
               class="text-brand"
             />
@@ -292,7 +292,7 @@
             </p>
           </div>
           <Icon
-            name="mdi:chevron-right"
+            name="solar:alt-arrow-right-linear"
             size="18"
             class="ml-auto shrink-0 text-gray-300 dark:text-neutral-600"
           />
@@ -390,7 +390,7 @@
       class="flex flex-col items-center gap-4 py-16 text-center"
     >
       <Icon
-        name="mdi:account-group-outline"
+        name="solar:users-group-rounded-linear"
         size="48"
         class="text-gray-300 dark:text-neutral-600"
       />

@@ -4,10 +4,10 @@
       class="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-gray-500 transition-colors hover:bg-gray-100 dark:text-neutral-400 dark:hover:bg-neutral-800"
       @click="isOpen = !isOpen"
     >
-      <Icon name="mdi:web" size="14" />
+      <Icon name="solar:global-linear" size="14" />
       <span>{{ currentLocale?.name ?? 'EN' }}</span>
       <Icon
-        name="mdi:chevron-down"
+        name="solar:alt-arrow-down-linear"
         size="13"
         :class="isOpen ? 'rotate-180' : ''"
         class="transition-transform"
@@ -41,7 +41,7 @@
           <span>{{ locale.name }}</span>
           <Icon
             v-if="locale.code === currentCode"
-            name="mdi:check"
+            name="solar:check-circle-linear"
             size="12"
             class="ml-auto text-brand"
           />
