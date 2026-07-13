@@ -71,8 +71,8 @@
       class="flex items-center justify-between bg-gray-50 p-4 dark:bg-neutral-800"
     >
       <div class="text-sm">
-        <span class="text-gray-500 dark:text-neutral-400">Total:</span>
-        <span class="ml-2 font-bold text-gray-900 dark:text-neutral-100">
+        <span class="ink-soft">Total:</span>
+        <span class="ml-2 font-display font-bold ink-strong">
           {{
             formatPrice((order.totalAmount || 0) + (order.shippingCost || 0))
           }}

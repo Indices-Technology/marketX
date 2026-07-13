@@ -7,11 +7,11 @@
     <div class="min-w-0 flex-1">
       <p
         v-if="title"
-        class="text-sm font-semibold text-gray-900 dark:text-neutral-100"
+        class="t-subheading"
       >
         {{ title }}
       </p>
-      <p v-if="message" class="text-sm text-gray-600 dark:text-neutral-300">
+      <p v-if="message" class="t-body">
         {{ message }}
       </p>
       <slot />

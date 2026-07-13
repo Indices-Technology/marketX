@@ -82,8 +82,8 @@
     <!-- ─── INFO BLOCK ────────────────────────────────────────────────── -->
     <div class="flex flex-col gap-1 px-2.5 py-2">
       <h3
-        class="font-semibold leading-snug text-gray-900 transition-colors group-hover:text-brand dark:text-neutral-100"
-        :class="featured ? 'line-clamp-2 text-sm' : 'line-clamp-1 text-[12px]'"
+        class="t-card-title transition-colors group-hover:text-brand"
+        :class="featured ? 'line-clamp-2' : 'line-clamp-1 text-[12px]'"
       >
         {{ product.title }}
       </h3>
@@ -97,10 +97,9 @@
               ? `/sellers/profile/${product.seller.store_slug}`
               : undefined
           "
-          class="flex min-w-0 items-center gap-1 truncate text-[11px] text-gray-500 transition-colors hover:text-brand dark:text-neutral-400"
+          class="flex min-w-0 items-center gap-1 truncate text-[11px] ink-faint transition-colors hover:text-brand"
           @click.stop
         >
-          <Icon name="solar:shop-linear" size="11" class="shrink-0" />
           <span class="truncate">{{ product.seller.store_name }}</span>
           <Icon
             v-if="product.seller?.is_verified"
@@ -120,7 +119,7 @@
           <!-- Like count as subtle social proof -->
           <span
             v-if="localLikeCount > 0"
-            class="flex items-center gap-0.5 text-[10px] text-gray-400 dark:text-neutral-500"
+            class="flex items-center gap-0.5 text-[10px] ink-faint"
           >
             <Icon name="solar:heart-linear" size="10" />
             {{ localLikeCount }}
@@ -135,14 +134,13 @@
         class="flex w-fit max-w-full items-center gap-1 truncate rounded-full bg-brand/5 px-1.5 py-0.5 text-[10px] font-medium text-brand/80 transition hover:bg-brand/10"
         @click.stop
       >
-        <Icon name="solar:shop-2-linear" size="10" class="shrink-0" />
         <span class="truncate">{{ product.square.name }}</span>
       </NuxtLink>
 
       <!-- Rating · trader location — shown when the feed provides trust data -->
       <div
         v-if="product.averageRating || product.seller?.locationLabel"
-        class="flex items-center gap-1.5 text-[10px] text-gray-500 dark:text-neutral-400"
+        class="flex items-center gap-1.5 text-[10px] ink-soft"
       >
         <span
           v-if="product.averageRating"
@@ -150,7 +148,7 @@
         >
           <Icon name="solar:star-bold" size="11" />
           {{ product.averageRating.toFixed(1) }}
-          <span class="font-normal text-gray-400 dark:text-neutral-500"
+          <span class="font-normal ink-faint"
             >({{ product.totalReviews ?? 0 }})</span
           >
         </span>
@@ -163,7 +161,6 @@
           v-if="product.seller?.locationLabel"
           class="flex min-w-0 items-center gap-0.5 truncate"
         >
-          <Icon name="solar:map-point-linear" size="10" class="shrink-0" />
           <span class="truncate">{{ product.seller.locationLabel }}</span>
         </span>
       </div>
@@ -173,12 +170,12 @@
         <div class="flex flex-col">
           <span
             v-if="discountPercent > 0"
-            class="text-[9px] leading-none text-gray-400 line-through dark:text-neutral-500"
+            class="text-[9px] leading-none ink-faint line-through"
           >
             {{ formatPrice(product.price) }}
           </span>
           <span
-            class="font-bold leading-none text-gray-900 dark:text-neutral-100"
+            class="font-display font-bold leading-none ink-strong"
             :class="featured ? 'text-base' : 'text-[13px]'"
           >
             {{ formatPrice(discountedPrice) }}

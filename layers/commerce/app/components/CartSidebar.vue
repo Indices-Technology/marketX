@@ -20,7 +20,7 @@
                 class="text-gray-700 dark:text-neutral-300"
               />
               <h2
-                class="text-[16px] font-bold text-gray-900 dark:text-neutral-100"
+                class="t-heading text-[16px]"
               >
                 Cart
               </h2>
@@ -156,7 +156,7 @@
                   <!-- Info -->
                   <div class="min-w-0 flex-1">
                     <p
-                      class="truncate text-[13px] font-semibold leading-snug text-gray-900 dark:text-neutral-100"
+                      class="truncate t-card-title text-[13px] leading-snug"
                     >
                       {{ item.variant?.product?.title ?? 'Product' }}
                     </p>
@@ -169,7 +169,7 @@
                     <!-- Price row: effective price + crossed-out original -->
                     <div class="mt-0.5 flex items-baseline gap-1.5">
                       <p
-                        class="text-[13px] font-bold text-gray-900 dark:text-neutral-100"
+                        class="font-display text-[13px] font-bold ink-strong"
                       >
                         {{
                           formatPrice(itemEffectivePrice(item) * item.quantity)
@@ -179,7 +179,7 @@
                         v-if="
                           itemOriginalPrice(item) > itemEffectivePrice(item)
                         "
-                        class="text-[11px] text-gray-400 line-through dark:text-neutral-500"
+                        class="text-[11px] ink-faint line-through"
                       >
                         {{
                           formatPrice(itemOriginalPrice(item) * item.quantity)
@@ -246,8 +246,8 @@
           >
             <!-- Subtotal -->
             <div class="flex items-center justify-between text-[14px]">
-              <span class="text-gray-500 dark:text-neutral-400">Subtotal</span>
-              <span class="font-bold text-gray-900 dark:text-neutral-100">{{
+              <span class="ink-soft">Subtotal</span>
+              <span class="font-display font-bold ink-strong">{{
                 formatPrice(cartTotal)
               }}</span>
             </div>

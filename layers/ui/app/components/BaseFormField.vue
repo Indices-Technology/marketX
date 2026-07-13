@@ -3,7 +3,7 @@
     <div v-if="label || $slots.label" class="flex items-center justify-between gap-3">
       <label
         :for="fieldId"
-        class="text-xs font-semibold text-gray-600 dark:text-neutral-400"
+        class="t-label"
       >
         <slot name="label">
           {{ label }}
@@ -19,7 +19,7 @@
       v-if="error || hint || $slots.hint"
       :id="describedBy"
       class="text-2xs"
-      :class="error ? 'text-red-500' : 'text-gray-400 dark:text-neutral-500'"
+      :class="error ? 'text-red-500' : 'ink-faint'"
     >
       <slot name="hint">{{ error || hint }}</slot>
     </p>
