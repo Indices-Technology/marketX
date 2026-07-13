@@ -201,7 +201,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from '#imports'
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import SquareCard from '../../components/SquareCard.vue'
@@ -292,6 +292,20 @@ const catSquares = computed(() =>
 // ── Follow state ─────────────────────────────────────────────────────────────
 const following = ref<Set<string>>(new Set())
 const followLoading = ref<Set<string>>(new Set())
+
+// Seed follow state from the server. The browse list (/api/squares) is shared-
+// cached and user-agnostic, so it can't carry per-user isFollowing — without
+// this every square would render "Follow" on load until toggled. Client-only
+// (depends on the auth token) and non-fatal.
+onMounted(async () => {
+  if (!profileStore.isLoggedIn) return
+  try {
+    const res = await squareApi.getFollowedSquareIds()
+    following.value = new Set(res.data ?? [])
+  } catch {
+    // Non-fatal — buttons just default to "Follow".
+  }
+})
 
 const toggleFollow = async (sq: any) => {
   if (!profileStore.isLoggedIn) {

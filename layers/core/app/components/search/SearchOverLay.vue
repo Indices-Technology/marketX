@@ -34,14 +34,14 @@
 
         <!-- Results -->
         <div class="flex-1 overflow-y-auto">
-          <!-- Empty State -->
-          <div
+          <!-- Empty state → pre-query suggestions (recent, trending, popular
+               markets/traders, categories). Same panel as the Discover search. -->
+          <SearchSuggestions
             v-if="!searchQuery"
-            class="py-20 text-center text-gray-500 dark:text-neutral-400"
-          >
-            <Icon name="solar:magnifer-linear" size="48" class="mx-auto mb-3" />
-            <p>Search for users, stores, products, or posts</p>
-          </div>
+            class="m-4"
+            @search="onSuggestion"
+            @close="$emit('close')"
+          />
 
           <!-- Loading -->
           <div v-else-if="isSearching" class="flex justify-center py-20">
@@ -285,12 +285,28 @@
 <script setup lang="ts">
 import { useSearchApi } from '~~/layers/core/app/services/search.api'
 import { imgAvatar, imgThumb } from '~~/layers/core/app/utils/cloudinary'
+import SearchSuggestions from '~~/layers/commerce/app/components/discover/SearchSuggestions.vue'
+import { useRecentSearches } from '~~/layers/commerce/app/composables/useRecentSearches'
 
 defineProps<{ isOpen: boolean }>()
 const emit = defineEmits(['close'])
 
 const router = useRouter()
 const searchApi = useSearchApi()
+const recentSearches = useRecentSearches()
+
+// Pick a suggestion chip → run it as a live search and remember it.
+const onSuggestion = (term: string) => {
+  searchQuery.value = term
+  recentSearches.add(term)
+}
+
+// Remember the query that led to a chosen result (not per-keystroke) so the
+// "Recent searches" chips stay meaningful — mirrors Discover.
+const recordRecent = () => {
+  const t = searchQuery.value.trim()
+  if (t) recentSearches.add(t)
+}
 
 const searchQuery = ref('')
 const isSearching = ref(false)
@@ -357,26 +373,31 @@ watch(searchQuery, (val) => {
 })
 
 const navigateToUser = (username: string) => {
+  recordRecent()
   emit('close')
   router.push(`/profile/${username}`)
 }
 
 const navigateToStore = (slug: string) => {
+  recordRecent()
   emit('close')
   router.push(`/sellers/profile/${slug}`)
 }
 
 const navigateToProduct = (slug: string) => {
+  recordRecent()
   emit('close')
   router.push(`/product/${slug}`)
 }
 
 const navigateToPost = (id: number) => {
+  recordRecent()
   emit('close')
   router.push(`/post/${id}`)
 }
 
 const navigateToTag = (tag: any) => {
+  recordRecent()
   emit('close')
   router.push({ path: '/discover', query: { tab: 'tags', tagId: tag.id } })
 }

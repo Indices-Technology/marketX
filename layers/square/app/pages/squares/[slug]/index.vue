@@ -736,6 +736,20 @@ useSeoMeta({
 const isFollowing = ref((squareData.value as any)?.data?.isFollowing ?? false)
 const followLoading = ref(false)
 
+// SSR fetches this page without the localStorage Bearer token, so the server
+// can't resolve the viewer's follow state — isFollowing arrives false and the
+// SSR useFetch doesn't re-run on the client. Re-seed on the client (authenticated)
+// so the button reflects reality. Mirrors the browse-list seed in squares/index.vue.
+onMounted(async () => {
+  if (!profileStore.isLoggedIn || !square.value?.id) return
+  try {
+    const res = await squareApi.getFollowedSquareIds()
+    isFollowing.value = (res.data ?? []).includes(square.value.id)
+  } catch {
+    // Non-fatal — button falls back to the SSR value.
+  }
+})
+
 const toggleFollow = async () => {
   if (followLoading.value || !square.value) return
   followLoading.value = true

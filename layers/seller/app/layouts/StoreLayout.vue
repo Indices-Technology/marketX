@@ -200,6 +200,14 @@
           <span>Orders</span>
         </NuxtLink>
         <NuxtLink
+          :to="`/seller/${storeSlug}/finance`"
+          class="mobile-tab"
+          active-class="mobile-tab-active"
+        >
+          <Icon name="solar:wallet-linear" size="24" />
+          <span>Finance</span>
+        </NuxtLink>
+        <NuxtLink
           :to="`/seller/${storeSlug}/messages`"
           class="mobile-tab"
           active-class="mobile-tab-active"
@@ -216,27 +224,64 @@
           </div>
           <span>Messages</span>
         </NuxtLink>
-        <NuxtLink
-          :to="`/seller/${storeSlug}/analytics`"
+        <!-- More — overflow menu for the links that don't fit a bottom bar -->
+        <button
+          type="button"
           class="mobile-tab"
-          active-class="mobile-tab-active"
+          :class="moreOpen ? 'mobile-tab-active' : ''"
+          aria-label="More"
+          @click="moreOpen = !moreOpen"
         >
-          <Icon name="solar:chart-2-linear" size="24" />
-          <span>Analytics</span>
-        </NuxtLink>
-        <NuxtLink
-          :to="`/seller/${storeSlug}/settings`"
-          class="mobile-tab"
-          active-class="mobile-tab-active"
-        >
-          <Icon name="solar:settings-linear" size="24" />
-          <span>Settings</span>
-        </NuxtLink>
+          <Icon name="solar:hamburger-menu-linear" size="24" />
+          <span>More</span>
+        </button>
       </nav>
+
+      <!-- "More" overflow sheet (store context, < xl) -->
+      <Teleport to="body">
+        <div
+          v-if="moreOpen && storeSlug"
+          class="fixed inset-0 z-40 xl:hidden"
+          @click="moreOpen = false"
+        >
+          <div class="absolute inset-0 bg-black/30" />
+          <div
+            class="absolute right-2 w-56 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl dark:border-neutral-800 dark:bg-neutral-900"
+            style="bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px))"
+            @click.stop
+          >
+            <NuxtLink
+              :to="`/seller/${storeSlug}/analytics`"
+              class="more-item"
+              active-class="more-item-active"
+            >
+              <Icon name="solar:chart-2-linear" size="20" />
+              <span>Analytics</span>
+            </NuxtLink>
+            <NuxtLink
+              :to="`/seller/${storeSlug}/settings`"
+              class="more-item"
+              active-class="more-item-active"
+            >
+              <Icon name="solar:settings-linear" size="20" />
+              <span>Settings</span>
+            </NuxtLink>
+            <div class="my-1 border-t border-gray-200 dark:border-neutral-800" />
+            <NuxtLink to="/seller/dashboard" class="more-item">
+              <Icon name="solar:shop-2-linear" size="20" />
+              <span>My Stores</span>
+            </NuxtLink>
+            <NuxtLink to="/sellers/create" class="more-item">
+              <Icon name="solar:add-circle-linear" size="20" />
+              <span>New Store</span>
+            </NuxtLink>
+          </div>
+        </div>
+      </Teleport>
 
       <!-- Mobile bottom tab bar — no store context -->
       <nav
-        v-else
+        v-if="!storeSlug"
         class="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around border-t border-gray-200 bg-white px-2 xl:hidden dark:border-neutral-800 dark:bg-neutral-900"
         style="
           height: calc(4rem + env(safe-area-inset-bottom, 0px));
@@ -269,6 +314,9 @@ import { useOrderApi } from '~~/layers/commerce/app/services/order.api'
 const route = useRoute()
 const storeSlug = computed(() => route.params.storeSlug as string | undefined)
 
+// Mobile "More" overflow menu (Analytics / Settings / store switching)
+const moreOpen = ref(false)
+
 const chatStore = useChatStore()
 const { fetchUnreadCount } = useChat()
 
@@ -297,7 +345,10 @@ onMounted(() => {
 // orders page (they may have just shipped one) so the badge stays accurate.
 watch(
   () => [storeSlug.value, route.path] as const,
-  ([slug]) => loadPendingOrders(slug),
+  ([slug]) => {
+    loadPendingOrders(slug)
+    moreOpen.value = false // close the overflow sheet on navigation
+  },
 )
 </script>
 
@@ -310,9 +361,19 @@ watch(
 }
 
 .mobile-tab {
-  @apply flex min-w-[56px] flex-col items-center gap-0.5 rounded-xl px-2 py-1 text-[10px] font-medium text-gray-500 transition-colors dark:text-neutral-500;
+  @apply flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl px-1 py-1 text-[10px] font-medium text-gray-500 transition-colors dark:text-neutral-500;
+}
+.mobile-tab span {
+  @apply max-w-full truncate;
 }
 .mobile-tab-active {
+  @apply text-brand;
+}
+
+.more-item {
+  @apply flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:text-neutral-300 dark:hover:bg-neutral-800;
+}
+.more-item-active {
   @apply text-brand;
 }
 </style>
