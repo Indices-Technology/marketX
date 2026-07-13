@@ -1,5 +1,6 @@
 <template>
   <div
+    ref="rootEl"
     class="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-xl shadow-gray-200/60 dark:border-neutral-800 dark:bg-neutral-900 dark:shadow-black/40"
   >
     <!-- Cover — kept docile (muted + faded into the card) so the logo and text
@@ -15,6 +16,7 @@
           })
         "
         :alt="`${seller.store_name} cover`"
+        crossorigin="anonymous"
         class="h-full w-full object-cover"
       />
       <div
@@ -28,7 +30,9 @@
       />
     </div>
 
-    <div class="px-5 pb-5">
+    <!-- relative z-10: the cover above is positioned, so without this the banner
+         paints over the logo/name where the -mt-9 pulls them up into it. -->
+    <div class="relative z-10 px-5 pb-5">
       <!-- Logo + name -->
       <div class="-mt-9 flex items-end gap-3">
         <div
@@ -38,6 +42,7 @@
             v-if="seller.store_logo"
             :src="imgAvatar(seller.store_logo)"
             :alt="seller.store_name"
+            crossorigin="anonymous"
             class="h-full w-full object-cover"
           />
           <div
@@ -86,6 +91,7 @@
                 : 'solar:copy-linear'
             "
             size="13"
+            class="capture-hide"
             :class="copied === 'Seller ID' ? 'text-emerald-500' : ''"
           />
         </button>
@@ -205,7 +211,7 @@
                 copied === 'Link' ? 'solar:check-circle-bold' : 'solar:copy-linear'
               "
               size="13"
-              class="shrink-0"
+              class="shrink-0 capture-hide"
             />
           </button>
           <p class="mt-1 text-[10px] text-gray-400 dark:text-neutral-500">
@@ -218,9 +224,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { imgAvatar, cloudinaryUrl } from '~~/layers/core/app/utils/cloudinary'
 import { resolveCardSettings } from '~~/shared/utils/cardSettings'
+
+// Exposed so parents can snapshot the card to an image (business-card download).
+const rootEl = ref<HTMLElement | null>(null)
+defineExpose({ rootEl })
 
 const props = defineProps<{
   seller: any

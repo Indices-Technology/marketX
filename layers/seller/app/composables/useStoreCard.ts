@@ -8,6 +8,9 @@ import {
   storeDisplayUrl,
   storeShareUrl,
 } from '~~/layers/core/app/utils/storeUrl'
+import { SHARE_TEMPLATES } from '~~/layers/core/app/utils/cardTemplate'
+
+const tpl = (id: string) => SHARE_TEMPLATES.find((t) => t.id === id)
 
 /**
  * Everything the MarketX Card surfaces need: load a store (into a LOCAL ref so
@@ -124,6 +127,10 @@ export function useStoreCard() {
     a.click()
   }
 
+
+  // One row of platform buttons. Each shares the card IMAGE (sized for that
+  // platform) together with the link/caption — `tpl` picks the size, `href` is
+  // the desktop fallback composer. See useCardCapture.shareImage.
   const shareTargets = computed(() => {
     const url = encodeURIComponent(shareUrl.value)
     const text = encodeURIComponent(caption.value)
@@ -133,27 +140,39 @@ export function useStoreCard() {
         label: 'WhatsApp',
         icon: 'simple-icons:whatsapp',
         bg: '#25D366',
+        tpl: tpl('story'),
         href: `https://wa.me/?text=${text}`,
       },
       {
-        id: 'x',
-        label: 'X',
-        icon: 'simple-icons:x',
-        bg: '#000000',
-        href: `https://twitter.com/intent/tweet?text=${text}`,
+        id: 'instagram',
+        label: 'Instagram',
+        icon: 'simple-icons:instagram',
+        bg: '#E4405F',
+        tpl: tpl('square'),
+        href: undefined, // no web composer — image is saved to post manually
       },
       {
         id: 'facebook',
         label: 'Facebook',
         icon: 'simple-icons:facebook',
         bg: '#1877F2',
+        tpl: tpl('facebook'),
         href: `https://www.facebook.com/sharer/sharer.php?u=${url}`,
+      },
+      {
+        id: 'x',
+        label: 'X',
+        icon: 'simple-icons:x',
+        bg: '#000000',
+        tpl: tpl('facebook'),
+        href: `https://twitter.com/intent/tweet?text=${text}`,
       },
       {
         id: 'telegram',
         label: 'Telegram',
         icon: 'simple-icons:telegram',
         bg: '#229ED9',
+        tpl: tpl('square'),
         href: `https://t.me/share/url?url=${url}&text=${text}`,
       },
     ]
@@ -172,5 +191,6 @@ export function useStoreCard() {
     share,
     downloadQr,
     shareTargets,
+    caption,
   }
 }

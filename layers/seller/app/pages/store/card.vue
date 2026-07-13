@@ -40,6 +40,7 @@
 
       <template v-else>
         <MarketXCard
+          ref="cardRef"
           :seller="seller"
           :product-count="productCount"
           :qr="qr"
@@ -49,30 +50,16 @@
           @copy="copy"
         />
 
-        <div class="mt-4 grid grid-cols-2 gap-2.5">
-          <BaseButton variant="primary" class="w-full" @click="share">
-            <Icon name="solar:share-bold" size="16" />
-            Share
-          </BaseButton>
-          <BaseButton variant="secondary" class="w-full" @click="downloadQr">
-            <Icon name="solar:download-minimalistic-linear" size="16" />
-            Save QR
-          </BaseButton>
-        </div>
-
-        <div class="mt-3 flex items-center justify-center gap-3">
-          <a
-            v-for="t in shareTargets"
-            :key="t.id"
-            :href="t.href"
-            target="_blank"
-            rel="noopener"
-            :title="t.label"
-            class="flex h-10 w-10 items-center justify-center rounded-full text-white transition-transform hover:scale-105"
-            :style="{ background: t.bg }"
-          >
-            <Icon :name="t.icon" size="18" />
-          </a>
+        <div class="mt-4">
+          <CardShareActions
+            :share="share"
+            :download-qr="downloadQr"
+            :download-card="downloadCardImage"
+            :download-template="downloadTemplateImage"
+            :on-share-target="onShareTarget"
+            :downloading="capturing"
+            :share-targets="shareTargets"
+          />
         </div>
 
         <div v-if="isOwner" class="mt-4">
@@ -91,8 +78,11 @@ import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 import BaseEmptyState from '~~/layers/ui/app/components/BaseEmptyState.vue'
 import MarketXCard from '~~/layers/seller/app/components/MarketXCard.vue'
 import CardSettingsPanel from '~~/layers/seller/app/components/CardSettingsPanel.vue'
+import CardShareActions from '~~/layers/seller/app/components/CardShareActions.vue'
 import { useStoreCard } from '~~/layers/seller/app/composables/useStoreCard'
+import { useCardCapture } from '~~/layers/seller/app/composables/useCardCapture'
 import { useSellerStore } from '~~/layers/seller/app/store/seller.store'
+import type { ShareTemplate } from '~~/layers/core/app/utils/cardTemplate'
 import type { CardSettings } from '~~/shared/utils/cardSettings'
 
 const route = useRoute()
@@ -110,7 +100,23 @@ const {
   share,
   downloadQr,
   shareTargets,
+  caption,
 } = useStoreCard()
+
+const cardRef = ref<{ rootEl: HTMLElement | null } | null>(null)
+const { capture, captureTemplate, shareImage, capturing } = useCardCapture()
+const downloadCardImage = () =>
+  capture(cardRef.value?.rootEl, `${seller.value?.store_slug || 'store'}-card.png`)
+const downloadTemplateImage = (tpl: ShareTemplate) =>
+  captureTemplate(cardRef.value?.rootEl, tpl, seller.value?.store_slug || 'store')
+const onShareTarget = (t: { tpl?: ShareTemplate; href?: string }) =>
+  shareImage(cardRef.value?.rootEl, {
+    tpl: t.tpl,
+    slug: seller.value?.store_slug || 'store',
+    text: caption.value,
+    title: seller.value?.store_name,
+    fallbackHref: t.href,
+  })
 
 // Which store: ?store=slug, else the logged-in seller's own stores.
 const stores = computed(() => sellerStore.sellers ?? [])

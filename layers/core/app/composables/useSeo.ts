@@ -12,6 +12,7 @@
  *   setStorePage({ store_name: 'Kemi Fabrics', ... })
  */
 import { BRAND } from '~~/layers/core/app/utils/brand'
+import { storeCardImage } from '~~/layers/core/app/utils/cardImage'
 
 export const useSeo = () => {
   const config = useRuntimeConfig()
@@ -128,7 +129,9 @@ export const useSeo = () => {
     store_name?: string | null
     store_description?: string | null
     store_logo?: string | null
+    store_banner?: string | null
     store_slug: string
+    publicId?: string | null
     city?: string | null
     category?: string | null
   }) => {
@@ -138,14 +141,40 @@ export const useSeo = () => {
     const desc =
       seller.store_description ||
       `Shop${category}products from ${name}${location} on ${siteName}. Verified seller with fast delivery.`
+
+    // Rich preview: a Cloudinary-composited card so every pasted link (WhatsApp,
+    // Telegram, X, …) shows a branded image, not a bare logo.
+    const brandDomain = (config.public.brandDomain as string) || BRAND.domain
+    const ogImage =
+      storeCardImage(
+        {
+          store_name: name,
+          store_banner: seller.store_banner,
+          publicId: seller.publicId,
+        },
+        {
+          cloud: (config.public.cloudinaryCloud as string) || '',
+          displayUrl: `${brandDomain}/${seller.store_slug}`,
+          width: 1200,
+          height: 630,
+        },
+      ) ||
+      seller.store_logo ||
+      defaultImage
+
     useSeoMeta({
       title: name,
       description: desc,
       ogTitle: `${name} | ${siteName}`,
       ogDescription: desc,
-      ogImage: seller.store_logo || defaultImage,
+      ogImage,
+      ogImageWidth: 1200,
+      ogImageHeight: 630,
+      ogImageAlt: `${name} on ${siteName}`,
       ogUrl: `${baseURL}/sellers/profile/${seller.store_slug}`,
       ogType: 'profile',
+      twitterCard: 'summary_large_image',
+      twitterImage: ogImage,
     })
   }
 
