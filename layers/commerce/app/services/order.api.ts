@@ -1,4 +1,4 @@
-import { BaseApiClient } from "~~/layers/core/app/services/base.api"
+import { BaseApiClient } from '~~/layers/core/app/services/base.api'
 
 export class OrderApiClient extends BaseApiClient {
   async getOrders(params?: { limit?: number; offset?: number }) {
@@ -23,7 +23,13 @@ export class OrderApiClient extends BaseApiClient {
   }
   async initializePayment(data: Record<string, unknown>): Promise<{
     success: boolean
-    data: { purchaseGroupId: string; orderIds: number[]; reference: string; authorizationUrl: string; accessCode: string }
+    data: {
+      purchaseGroupId: string
+      orderIds: number[]
+      reference: string
+      authorizationUrl: string
+      accessCode: string
+    }
   }> {
     return this.request('/api/commerce/payments/initialize', {
       method: 'POST',
@@ -46,6 +52,15 @@ export class OrderApiClient extends BaseApiClient {
     const q = new URLSearchParams(entries).toString()
     return this.request(`/api/commerce/orders/seller?${q}`, { method: 'GET' })
   }
+  /** Count of orders awaiting the seller's action (paid, not yet shipped). */
+  async getSellerPendingCount(
+    storeSlug: string,
+  ): Promise<{ success: boolean; data: { count: number } }> {
+    return this.request(
+      `/api/commerce/orders/seller-pending-count?storeSlug=${encodeURIComponent(storeSlug)}`,
+      { method: 'GET' },
+    )
+  }
   async updateOrderStatus(
     id: number,
     body: { status: string; trackingNumber?: string; shipper?: string },
@@ -57,7 +72,13 @@ export class OrderApiClient extends BaseApiClient {
   }
   async initializePayPal(data: Record<string, unknown>): Promise<{
     success: boolean
-    data: { purchaseGroupId: string; orderIds: number[]; paypalOrderId: string; approvalUrl: string; amountUSD: number }
+    data: {
+      purchaseGroupId: string
+      orderIds: number[]
+      paypalOrderId: string
+      approvalUrl: string
+      amountUSD: number
+    }
   }> {
     return this.request('/api/commerce/payments/paypal/create', {
       method: 'POST',
@@ -77,7 +98,15 @@ export class OrderApiClient extends BaseApiClient {
   }
   async initializePOD(data: Record<string, unknown>): Promise<{
     success: boolean
-    data: { purchaseGroupId: string; orderIds: number[]; reference: string; authorizationUrl: string; accessCode: string; shippingCost: number; productAmount: number }
+    data: {
+      purchaseGroupId: string
+      orderIds: number[]
+      reference: string
+      authorizationUrl: string
+      accessCode: string
+      shippingCost: number
+      productAmount: number
+    }
   }> {
     return this.request('/api/commerce/payments/pod-initialize', {
       method: 'POST',
@@ -104,11 +133,23 @@ export class OrderApiClient extends BaseApiClient {
   /** Seller books the carrier shipment ("ready to ship"). Idempotent. */
   async bookShipment(orderId: number): Promise<{
     success: boolean
-    data: { ok: boolean; waybill: string; carrierId: string; alreadyBooked: boolean }
+    data: {
+      ok: boolean
+      waybill: string
+      carrierId: string
+      alreadyBooked: boolean
+    }
   }> {
     return this.request('/api/shipping/book', {
       method: 'POST',
       body: { orderId },
+    })
+  }
+  /** TEST (admin): inject a carrier status to drive an order through the loop. */
+  async simulateScan(orderId: number, status: string) {
+    return this.request('/api/shipping/simulate-scan', {
+      method: 'POST',
+      body: { orderId, status },
     })
   }
   /** Live carrier tracking timeline for an order (buyer or seller). */
@@ -118,10 +159,17 @@ export class OrderApiClient extends BaseApiClient {
       carrierStatus: string | null
       waybill: string | null
       shipper: string | null
-      events: Array<{ timestamp: string; status: string; description: string; location?: string }>
+      events: Array<{
+        timestamp: string
+        status: string
+        description: string
+        location?: string
+      }>
     }
   }> {
-    return this.request(`/api/commerce/orders/${id}/tracking`, { method: 'GET' })
+    return this.request(`/api/commerce/orders/${id}/tracking`, {
+      method: 'GET',
+    })
   }
 }
 

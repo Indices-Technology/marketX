@@ -43,8 +43,24 @@ export async function getQuotes(
   )
 
   const quotes: Quote[] = []
-  for (const result of settled) {
-    if (result.status !== 'fulfilled') continue
+  for (let i = 0; i < settled.length; i++) {
+    const result = settled[i]!
+    const providerId = providers[i]?.id ?? 'unknown'
+    // Surface WHY a carrier dropped out — otherwise a failing GIG quote silently
+    // falls back to the flat rate with no trace of the cause.
+    if (result.status !== 'fulfilled') {
+      const reason =
+        result.reason instanceof Error
+          ? result.reason.message
+          : String(result.reason)
+      logger.warn(`[shipping] provider "${providerId}" quote failed: ${reason}`)
+      continue
+    }
+    if (!result.value.length) {
+      logger.warn(
+        `[shipping] provider "${providerId}" returned no quote (no serviceable rate for this origin→destination)`,
+      )
+    }
     for (const q of result.value) {
       // Platform pricing dial. Carriers (GIG + any future provider) are marked up
       // centrally via SHIPPING_MARKUP_PCT — provider-agnostic, no per-carrier env.

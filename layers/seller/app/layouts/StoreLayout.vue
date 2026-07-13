@@ -54,6 +54,11 @@
           >
             <Icon name="solar:delivery-linear" size="22" />
             <span>Orders</span>
+            <span
+              v-if="pendingOrders > 0"
+              class="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-brand px-1.5 text-[10px] font-bold text-white"
+              >{{ pendingOrders > 99 ? '99+' : pendingOrders }}</span
+            >
           </NuxtLink>
           <NuxtLink
             :to="`/seller/${storeSlug}/finance`"
@@ -73,7 +78,9 @@
             <span
               v-if="chatStore.totalUnread > 0"
               class="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-brand px-1.5 text-[10px] font-bold text-white"
-              >{{ chatStore.totalUnread > 99 ? '99+' : chatStore.totalUnread }}</span
+              >{{
+                chatStore.totalUnread > 99 ? '99+' : chatStore.totalUnread
+              }}</span
             >
           </NuxtLink>
           <NuxtLink
@@ -182,7 +189,14 @@
           class="mobile-tab"
           active-class="mobile-tab-active"
         >
-          <Icon name="solar:delivery-linear" size="24" />
+          <div class="relative">
+            <Icon name="solar:delivery-linear" size="24" />
+            <span
+              v-if="pendingOrders > 0"
+              class="absolute -right-1.5 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-brand px-1 text-[9px] font-bold text-white"
+              >{{ pendingOrders > 99 ? '99+' : pendingOrders }}</span
+            >
+          </div>
           <span>Orders</span>
         </NuxtLink>
         <NuxtLink
@@ -195,7 +209,9 @@
             <span
               v-if="chatStore.totalUnread > 0"
               class="absolute -right-1.5 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-brand px-1 text-[9px] font-bold text-white"
-              >{{ chatStore.totalUnread > 99 ? '99+' : chatStore.totalUnread }}</span
+              >{{
+                chatStore.totalUnread > 99 ? '99+' : chatStore.totalUnread
+              }}</span
             >
           </div>
           <span>Messages</span>
@@ -248,15 +264,41 @@
 import StoreSwitcher from '~~/layers/seller/app/components/StoreSwitcher.vue'
 import { useChat } from '~~/layers/profile/app/composables/useChat'
 import { useChatStore } from '~~/layers/profile/app/stores/chat.store'
+import { useOrderApi } from '~~/layers/commerce/app/services/order.api'
 
 const route = useRoute()
 const storeSlug = computed(() => route.params.storeSlug as string | undefined)
 
 const chatStore = useChatStore()
 const { fetchUnreadCount } = useChat()
+
+// Orders awaiting the seller's action (paid, not yet shipped) → nav badge.
+const orderApi = useOrderApi()
+const pendingOrders = ref(0)
+const loadPendingOrders = async (slug?: string) => {
+  if (!slug) {
+    pendingOrders.value = 0
+    return
+  }
+  try {
+    const res = await orderApi.getSellerPendingCount(slug)
+    pendingOrders.value = res?.data?.count ?? 0
+  } catch {
+    pendingOrders.value = 0
+  }
+}
+
 onMounted(() => {
   fetchUnreadCount()
+  loadPendingOrders(storeSlug.value)
 })
+
+// Refresh when switching stores, and whenever the seller navigates back to their
+// orders page (they may have just shipped one) so the badge stays accurate.
+watch(
+  () => [storeSlug.value, route.path] as const,
+  ([slug]) => loadPendingOrders(slug),
+)
 </script>
 
 <style scoped>

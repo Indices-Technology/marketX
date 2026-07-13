@@ -606,6 +606,42 @@
           </template>
         </div>
 
+        <!-- Carrier Delivery — GIG Logistics -->
+        <div class="space-y-4 rounded-2xl border border-gray-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900">
+          <div class="flex items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-[14px] font-semibold text-gray-900 dark:text-neutral-100">GIG Logistics</h2>
+                <span class="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-green-700 dark:bg-green-900/30 dark:text-green-400">Nationwide</span>
+              </div>
+              <p class="mt-0.5 text-[12px] text-gray-400 dark:text-neutral-500">
+                Offer GIG doorstep delivery at checkout — priced live and collected from your Shipping Origin. On by default.
+              </p>
+            </div>
+            <button
+              type="button"
+              @click="form.gig_enabled = !form.gig_enabled"
+              class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors"
+              :class="form.gig_enabled ? 'bg-brand' : 'bg-gray-200 dark:bg-neutral-700'"
+              :aria-pressed="form.gig_enabled"
+              aria-label="Offer GIG Logistics at checkout"
+            >
+              <span
+                class="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform"
+                :class="form.gig_enabled ? 'translate-x-6' : 'translate-x-1'"
+              />
+            </button>
+          </div>
+
+          <p
+            v-if="form.gig_enabled && (!form.shipFromAddress || !form.shipFromCity || !form.shipFromState)"
+            class="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-[12px] text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-400"
+          >
+            <Icon name="solar:danger-triangle-linear" size="15" class="mt-0.5 shrink-0" />
+            <span>Add your <strong>Shipping Origin</strong> above (address, city and <strong>state</strong>) — GIG resolves the pickup station from the state, so without it GIG won't appear at checkout.</span>
+          </p>
+        </div>
+
         <!-- Self / Own Delivery (BYOS) -->
         <div class="space-y-4 rounded-2xl border border-gray-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900">
           <div class="flex items-center justify-between">
@@ -860,6 +896,8 @@ const form = reactive({
   pod_enabled: false,
   pod_zones: [] as string[],
   pod_delivery_days: 3,
+  // Carrier delivery — GIG Logistics (on by default)
+  gig_enabled: true,
   // Bring-your-own-shipping (BYOS) — money fields in major NGN
   byos_enabled: false,
   byos_flat: 0,
@@ -946,6 +984,8 @@ const prefillForm = (s: any) => {
   form.pod_delivery_days = s.pod_delivery_days ?? 3
   // BYOS (stored in kobo → display in naira)
   const sc = (s.shippingConfig ?? {}) as Record<string, any>
+  // GIG is on unless explicitly turned off (matches the server default).
+  form.gig_enabled = sc.gigEnabled !== false
   form.byos_enabled = !!sc.selfEnabled
   form.byos_flat = (sc.flatRateMinor ?? 0) / 100
   form.byos_freeOver = (sc.freeOverMinor ?? 0) / 100
@@ -1041,20 +1081,24 @@ const handleSubmit = async () => {
       pod_enabled: form.pod_enabled,
       pod_zones: form.pod_zones,
       pod_delivery_days: form.pod_delivery_days,
-      // Bring-your-own-shipping (convert major NGN → kobo)
-      shippingConfig: form.byos_enabled
-        ? {
-            selfEnabled: true,
-            flatRateMinor: Math.max(0, Math.round(form.byos_flat * 100)),
-            freeOverMinor:
-              form.byos_freeOver > 0
-                ? Math.round(form.byos_freeOver * 100)
-                : undefined,
-            pickupEnabled: form.byos_pickup,
-            pickupNote: form.byos_pickupNote || undefined,
-            etaText: form.byos_eta || undefined,
-          }
-        : { selfEnabled: false },
+      // Carrier (GIG) + bring-your-own-shipping (money fields major NGN → kobo).
+      // gigEnabled is always written so the toggle persists independently of BYOS.
+      shippingConfig: {
+        gigEnabled: form.gig_enabled,
+        ...(form.byos_enabled
+          ? {
+              selfEnabled: true,
+              flatRateMinor: Math.max(0, Math.round(form.byos_flat * 100)),
+              freeOverMinor:
+                form.byos_freeOver > 0
+                  ? Math.round(form.byos_freeOver * 100)
+                  : undefined,
+              pickupEnabled: form.byos_pickup,
+              pickupNote: form.byos_pickupNote || undefined,
+              etaText: form.byos_eta || undefined,
+            }
+          : { selfEnabled: false }),
+      },
       // Media watermark. When enabled but blank, send null so it resets to the
       // store-name default instead of keeping a stale custom label.
       watermark_enabled: form.watermark_enabled,

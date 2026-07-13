@@ -224,6 +224,21 @@ export const updateSellerProfileSchema = z
       })
       .nullable()
       .optional(),
+    // MarketX Card — owner-controlled visibility toggles (values live on the
+    // store's own fields: store_phone, store_location, store_email).
+    cardSettings: z
+      .object({
+        showRating: z.boolean().optional(),
+        showFollowers: z.boolean().optional(),
+        showProducts: z.boolean().optional(),
+        showDescription: z.boolean().optional(),
+        showPhone: z.boolean().optional(),
+        showEmail: z.boolean().optional(),
+        showAddress: z.boolean().optional(),
+      })
+      .optional(),
+    // Public business email (shown on the card when showEmail is on).
+    store_email: z.string().email().max(120).optional().or(z.literal('')),
   })
   .refine(
     (data) => Object.values(data).some((value) => value !== undefined),

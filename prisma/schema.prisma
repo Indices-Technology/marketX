@@ -94,6 +94,7 @@ model SellerProfile {
   store_banner          String?
   store_location        String?
   store_phone           String?
+  store_email           String? // public business email (distinct from the owner's private login email)
   store_website         String?
   store_socials         Json?
   followers_count       Int                    @default(0)
@@ -107,6 +108,21 @@ model SellerProfile {
   auto_answer_enabled   Boolean                @default(false)
   default_currency      String                 @default("NGN")
   isPremium             Boolean                @default(false)
+  // ── Public identity (Share Identity System) ────────────────────────────────
+  /// Immutable, human-friendly public seller ID, e.g. "MX-LAG-J8KP". Assigned
+  /// once at creation and never changed — printed on cards, QR, invoices, receipts.
+  publicId              String?                @unique
+  /// Owner-controlled MarketX Card config: which fields show + the business-card
+  /// contact values the seller chooses to make public. Shape (all optional):
+  /// { showRating, showFollowers, showProducts, showDescription, showPhone,
+  ///   showEmail, showAddress, phone, email, address }. Disabled fields are
+  ///   stripped from public API responses (see publicCardSettings()).
+  cardSettings          Json?
+  // ── Business registration (Nigeria — CAC) ──────────────────────────────────
+  business_name         String? // registered legal entity name (may differ from store_name)
+  cac_number            String? // CAC registration number — RC (company) or BN (business name)
+  cac_type              CacType? // which kind of CAC registration this number is
+  cac_verified          Boolean                @default(false) // verified against the CAC registry
   // ── Media watermark (reels/video) ─────────────────────────────────────────
   watermark_enabled     Boolean                @default(false)
   watermark_text        String? // null → falls back to store_name at render time
@@ -1452,6 +1468,12 @@ enum VerificationStatus {
   PENDING
   VERIFIED
   REJECTED
+}
+
+/// Nigerian CAC registration type carried by SellerProfile.cac_number.
+enum CacType {
+  RC // Limited liability company (Registration Certificate)
+  BN // Registered Business Name
 }
 
 enum NotificationType {

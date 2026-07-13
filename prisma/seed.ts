@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client'
 import { config } from 'dotenv'
 import argon2 from 'argon2'
 import { randomUUID } from 'crypto'
+import { generatePublicSellerId } from '../layers/seller/server/utils/publicSellerId'
 
 config()
 
@@ -10,6 +11,17 @@ const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! })
 const prisma = new PrismaClient({ adapter })
 
 const uuid = () => randomUUID()
+
+// Immutable public seller ID (MX-LAG-J8KP) for seeded stores.
+const mkPublicId = (state?: string | null) =>
+  generatePublicSellerId(
+    state,
+    async (pid) =>
+      !!(await prisma.sellerProfile.findUnique({
+        where: { publicId: pid },
+        select: { id: true },
+      })),
+  )
 
 // Real fashion image URLs from Unsplash (permanent CDN links)
 const U = (id: string, w = 800, h?: number) =>
@@ -326,6 +338,7 @@ async function main() {
     sellers[s.slug] = await prisma.sellerProfile.create({
       data: {
         profileId: profile.id,
+        publicId: await mkPublicId(),
         store_slug: s.slug,
         store_name: s.name,
         store_description: s.desc,
@@ -1206,7 +1219,7 @@ async function main() {
     if (existing) { sqSellers[s.slug] = existing; continue }
     sqSellers[s.slug] = await prisma.sellerProfile.create({
       data: {
-        profileId: prof.id, store_slug: s.slug, store_name: s.name,
+        profileId: prof.id, publicId: await mkPublicId(), store_slug: s.slug, store_name: s.name,
         store_description: s.desc, store_logo: s.logo, store_banner: s.banner,
         is_verified: s.verified, is_active: true,
         verification_status: s.verified ? 'VERIFIED' : 'PENDING',
