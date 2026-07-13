@@ -302,7 +302,9 @@ export default defineNuxtConfig({
             "font-src 'self' https://fonts.gstatic.com",
             "img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com https://picsum.photos https://fastly.picsum.photos https://*.googleusercontent.com https://graph.facebook.com https://*.fbsbx.com https://platform-lookaside.fbsbx.com https://tiles.stadiamaps.com https://tiles.openfreemap.org https://api.maptiler.com https://*.cartocdn.com https://*.tile.openstreetmap.org",
             "media-src 'self' blob: https://res.cloudinary.com",
-            "connect-src 'self' https://api.paystack.co https://api.upstash.io https://api.iconify.design https://api.cloudinary.com https://tiles.stadiamaps.com https://tiles.openfreemap.org https://api.maptiler.com https://*.cartocdn.com https://nominatim.openstreetmap.org https://*.tile.openstreetmap.org wss: ws:",
+            // res.cloudinary.com + picsum: the MarketX Card download (html-to-image)
+            // must fetch the store's images to inline them into the captured PNG.
+            "connect-src 'self' https://api.paystack.co https://api.upstash.io https://api.iconify.design https://api.cloudinary.com https://res.cloudinary.com https://picsum.photos https://fastly.picsum.photos https://tiles.stadiamaps.com https://tiles.openfreemap.org https://api.maptiler.com https://*.cartocdn.com https://nominatim.openstreetmap.org https://*.tile.openstreetmap.org wss: ws:",
             'frame-src https://checkout.paystack.com',
             "worker-src 'self' blob:",
           ].join('; '),
@@ -381,6 +383,9 @@ export default defineNuxtConfig({
         process.env.NUXT_PUBLIC_PRIVACY_EMAIL || 'privacy@marketx.africa',
       legalEmail: process.env.NUXT_PUBLIC_LEGAL_EMAIL || 'legal@marketx.africa',
       baseURL: process.env.NUXT_PUBLIC_BASE_URL || 'http://localhost:3000',
+      // Cloudinary cloud name — exposed so the client (card downloads) and SSR
+      // (OG images) can build composite card-image URLs from scratch.
+      cloudinaryCloud: process.env.CLOUDINARY_CLOUD_NAME || '',
       dassaSocketUrl:
         process.env.NUXT_PUBLIC_DASSA_SOCKET_URL || 'http://localhost:4000',
       // Payments

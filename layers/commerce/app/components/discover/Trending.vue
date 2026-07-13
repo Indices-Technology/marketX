@@ -2,7 +2,7 @@
   <div class="mt-5 space-y-8">
     <!-- Category grid — only shown on the browse landing, not on standalone trending -->
     <section v-if="isBrowseTab">
-      <h2 class="mb-3 text-lg font-bold text-gray-900 dark:text-white">
+      <h2 class="mb-3 t-heading text-lg">
         What are you looking for today?
       </h2>
       <DiscoverCategoryGrid />
@@ -13,7 +13,7 @@
       <div class="mb-3 flex items-center justify-between">
         <div class="flex items-center gap-2">
           <Icon name="solar:shop-bold" size="18" class="text-brand" />
-          <h2 class="text-base font-bold text-gray-900 dark:text-white">
+          <h2 class="t-heading">
             Markets near you
           </h2>
         </div>
@@ -49,7 +49,7 @@
       <div class="mb-3 flex items-center justify-between">
         <div class="flex items-center gap-2">
           <Icon name="solar:shop-2-linear" size="18" class="text-brand" />
-          <h2 class="text-base font-bold text-gray-900 dark:text-white">
+          <h2 class="t-heading">
             Fresh from {{ featuredMarket.name }}
           </h2>
         </div>
@@ -85,7 +85,7 @@
         <div class="flex items-center gap-2">
           <Icon name="solar:bolt-bold" size="18" class="text-amber-400" />
           <h2
-            class="text-base font-bold text-gray-900 dark:text-white"
+            class="t-heading"
           >
             Fresh from the markets
           </h2>
@@ -129,7 +129,7 @@
         <div class="flex items-center gap-2">
           <Icon name="solar:tag-linear" size="18" class="text-brand" />
           <h2
-            class="text-base font-bold text-gray-900 dark:text-white"
+            class="t-heading"
           >
             Deals across the markets
           </h2>
@@ -173,7 +173,7 @@
         <div class="flex items-center gap-2">
           <Icon name="solar:recive-square-linear" size="18" class="text-emerald-500" />
           <h2
-            class="text-base font-bold text-gray-900 dark:text-white"
+            class="t-heading"
           >
             Pre-loved from traders
           </h2>
@@ -235,7 +235,7 @@
         <div class="mb-3 flex items-center gap-2">
           <Icon name="solar:fire-bold" size="18" class="text-orange-500" />
           <h2
-            class="text-base font-bold text-gray-900 dark:text-white"
+            class="t-heading"
           >
             Popular in the markets
           </h2>
@@ -264,7 +264,7 @@
           <div class="flex items-center gap-2">
             <Icon name="solar:graph-up-linear" size="18" class="text-brand" />
             <h2
-              class="text-base font-bold text-gray-900 dark:text-white"
+              class="t-heading"
             >
               Trending with traders
             </h2>
@@ -293,7 +293,7 @@
           <div class="flex items-center gap-2">
             <Icon name="solar:shop-2-linear" size="18" class="text-brand" />
             <h2
-              class="text-base font-bold text-gray-900 dark:text-white"
+              class="t-heading"
             >
               Traders to discover
             </h2>
@@ -336,7 +336,7 @@
               </div>
               <div class="w-full min-w-0">
                 <p
-                  class="flex items-center justify-center gap-0.5 truncate text-[11px] font-bold text-gray-900 group-hover:text-brand dark:text-neutral-100"
+                  class="flex items-center justify-center gap-0.5 truncate text-[11px] font-semibold ink-strong group-hover:text-brand"
                 >
                   <span class="truncate">{{ seller.store_name }}</span>
                   <Icon
@@ -346,7 +346,7 @@
                     class="shrink-0 text-blue-500"
                   />
                 </p>
-                <p class="text-[10px] text-gray-500 dark:text-neutral-400">
+                <p class="text-[10px] ink-soft">
                   <span
                     v-if="seller.averageRating"
                     class="font-semibold text-amber-500"
@@ -387,7 +387,7 @@
             </div>
             <div class="w-full min-w-0">
               <p
-                class="flex items-center justify-center gap-0.5 truncate text-xs font-bold text-gray-900 transition-colors group-hover:text-brand dark:text-neutral-100"
+                class="flex items-center justify-center gap-0.5 truncate text-xs font-semibold ink-strong transition-colors group-hover:text-brand"
               >
                 <span class="truncate">{{ seller.store_name }}</span>
                 <Icon
@@ -397,7 +397,7 @@
                   class="shrink-0 text-blue-500"
                 />
               </p>
-              <p class="text-[11px] text-gray-500 dark:text-neutral-400">
+              <p class="text-[11px] ink-soft">
                 <span
                   v-if="seller.averageRating"
                   class="font-semibold text-amber-500"

@@ -11,13 +11,13 @@
 
     <h3
       v-if="title"
-      class="text-sm font-semibold text-gray-900 dark:text-neutral-100"
+      class="t-subheading"
     >
       {{ title }}
     </h3>
     <p
       v-if="description"
-      class="mt-1 max-w-sm text-sm text-gray-500 dark:text-neutral-400"
+      class="mt-1 max-w-sm text-sm ink-soft leading-relaxed"
     >
       {{ description }}
     </p>

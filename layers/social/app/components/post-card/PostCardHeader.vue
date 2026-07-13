@@ -12,7 +12,7 @@
         <div class="flex flex-wrap items-center gap-1.5">
           <NuxtLink
             :to="`/profile/${post.author?.username}`"
-            class="text-[13px] font-semibold leading-tight text-gray-900 transition-opacity hover:opacity-75 dark:text-neutral-100"
+            class="text-[13px] font-semibold leading-tight ink-strong transition-opacity hover:opacity-75"
           >
             {{ post.author?.username }}
           </NuxtLink>

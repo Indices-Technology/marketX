@@ -39,6 +39,7 @@
     "bullmq": "^5.71.0",
     "dompurify": "^3.4.0",
     "dotenv": "^17.3.1",
+    "html-to-image": "^1.11.13",
     "i18next": "^25.8.18",
     "jsonwebtoken": "^9.0.3",
     "leaflet": "^1.9.4",

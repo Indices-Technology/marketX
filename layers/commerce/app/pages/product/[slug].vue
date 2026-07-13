@@ -351,7 +351,7 @@
                 <div class="flex flex-wrap items-center gap-1.5">
                   <NuxtLink
                     :to="`/sellers/profile/${product.seller.store_slug}`"
-                    class="text-sm font-bold text-gray-900 hover:text-brand dark:text-neutral-100"
+                    class="text-sm font-semibold ink-strong hover:text-brand"
                   >
                     {{ product.seller.store_name || product.seller.store_slug }}
                   </NuxtLink>
@@ -452,7 +452,7 @@
               {{ product.square.name }}
             </NuxtLink>
             <h1
-              class="text-2xl font-bold leading-snug text-gray-900 dark:text-neutral-100"
+              class="t-title text-2xl leading-snug"
             >
               {{ product.title }}
             </h1>
@@ -481,12 +481,12 @@
               </span>
             </div>
             <div class="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <span class="text-2xl font-bold text-brand">{{
+              <span class="t-price-lg text-brand">{{
                 formatProductPrice(discountedPrice, 'NGN')
               }}</span>
               <span
                 v-if="product.discount && product.discount > 0"
-                class="text-base text-gray-400 line-through dark:text-neutral-500"
+                class="text-base ink-faint line-through"
               >
                 {{ formatProductPrice(product.price, 'NGN') }}
               </span>
@@ -717,7 +717,7 @@
               <div class="px-4 pb-4">
                 <!-- eslint-disable-next-line vue/no-v-html — sanitized by DOMPurify -->
                 <div
-                  class="product-desc text-sm leading-relaxed text-gray-700 dark:text-neutral-300"
+                  class="product-desc t-body"
                   v-html="safeDescription"
                 />
               </div>
@@ -832,7 +832,7 @@
       <!-- ── More from this trader ── -->
       <section v-if="traderProducts.length" class="mt-10">
         <div class="mb-3 flex items-center justify-between">
-          <h2 class="text-lg font-bold text-gray-900 dark:text-white">
+          <h2 class="t-heading text-lg">
             More from {{ product.seller.store_name }}
           </h2>
           <NuxtLink
@@ -858,7 +858,7 @@
       <!-- ── More from this market ── -->
       <section v-if="product.square && marketProducts.length" class="mt-10">
         <div class="mb-3 flex items-center justify-between">
-          <h2 class="text-lg font-bold text-gray-900 dark:text-white">
+          <h2 class="t-heading text-lg">
             More from {{ product.square.name }}
           </h2>
           <NuxtLink
@@ -883,7 +883,7 @@
 
       <!-- ── Recently viewed ── -->
       <section v-if="recentlyViewedItems.length" class="mt-10">
-        <h2 class="mb-3 text-lg font-bold text-gray-900 dark:text-white">
+        <h2 class="mb-3 t-heading text-lg">
           Recently viewed
         </h2>
         <div
@@ -901,7 +901,7 @@
 
       <!-- ── Reviews ── -->
       <div id="reviews" class="mt-10 scroll-mt-24">
-        <h2 class="mb-4 text-lg font-bold text-gray-900 dark:text-white">
+        <h2 class="mb-4 t-heading text-lg">
           Customer Reviews
         </h2>
         <ProductReviews :product-id="product.id" />

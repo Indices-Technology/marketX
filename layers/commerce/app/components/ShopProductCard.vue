@@ -216,28 +216,24 @@
     <div class="flex flex-1 flex-col justify-between px-1 pb-1 pt-2.5">
       <div>
         <h3
-          class="line-clamp-2 text-[13px] font-medium leading-snug text-gray-900 transition-colors group-hover:text-brand dark:text-neutral-100"
+          class="line-clamp-2 t-card-title text-[13px] transition-colors group-hover:text-brand"
         >
           {{ product.title }}
         </h3>
         <NuxtLink
           v-if="product.seller?.store_name"
           :to="`/sellers/profile/${product.seller.store_slug}`"
-          class="mt-1 flex items-center gap-1 truncate text-[11px] text-gray-500 dark:text-neutral-400"
+          class="mt-1 flex items-center gap-1 truncate text-xs ink-faint hover:text-brand"
         >
-          <Icon name="solar:shop-linear" size="12" />
           {{ product.seller.store_name }}
         </NuxtLink>
       </div>
 
       <div class="mt-2 flex flex-wrap items-baseline gap-1.5">
-        <span
-          class="font-display text-[17px] font-bold text-gray-900 dark:text-neutral-100"
-          >{{ formatPrice(discountedPrice) }}</span
-        >
+        <span class="t-price">{{ formatPrice(discountedPrice) }}</span>
         <span
           v-if="discountPercent > 0"
-          class="text-[11px] text-gray-400 line-through dark:text-neutral-500"
+          class="text-xs ink-faint line-through"
           >{{ formatPrice(product.price) }}</span
         >
       </div>

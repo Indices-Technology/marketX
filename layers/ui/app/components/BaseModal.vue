@@ -30,7 +30,7 @@
                 <slot name="header">
                   <h2
                     v-if="title"
-                    class="truncate text-base font-semibold text-gray-900 dark:text-neutral-100"
+                    class="truncate t-heading text-base"
                   >
                     {{ title }}
                   </h2>

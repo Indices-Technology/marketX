@@ -7,7 +7,110 @@
   --color-brand: 244 63 94; /* #F43F5E */
 }
 
-/* ── Global font application ────────────────────────────────────────────── */
-body {
-  font-family: 'Manrope', system-ui, -apple-system, sans-serif;
+/* ═══════════════════════════════════════════════════════════════════════════
+   TYPOGRAPHY SYSTEM  —  single source of truth
+   ───────────────────────────────────────────────────────────────────────────
+   Two orthogonal axes solve the "no hierarchy" drift:
+
+     1. INK  (color hierarchy)  — how prominent is this text?
+          .ink-strong  primary   — titles, prices, key content
+          .ink         default   — body copy
+          .ink-soft    secondary — seller names, descriptions, supporting copy
+          .ink-faint   tertiary  — metadata, timestamps, counts, captions
+
+     2. TYPE ROLE (family + size + weight) — what job does this text do?
+          .t-display / .t-title / .t-heading / .t-subheading
+          .t-body / .t-body-strong / .t-meta / .t-label / .t-eyebrow
+          .t-price / .t-price-lg
+
+   Each .t-* role bakes in a sensible default ink. Override color on colored
+   surfaces with a normal utility (utilities layer wins over components).
+   Sizes/weights are FIXED per role — that is the whole point. Reach for a
+   role, not an ad-hoc `text-[13px] font-medium text-gray-500` soup.
+
+   Dark mode: the app uses Tailwind's `media` strategy, so `dark:` here tracks
+   prefers-color-scheme, exactly like every existing utility in the codebase.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@layer base {
+  /* Sensible defaults so raw/unclassed text already lands in the system.
+     Explicit utility classes always win over these element defaults. */
+  body {
+    font-family: 'Manrope', system-ui, -apple-system, sans-serif;
+    @apply text-gray-700 dark:text-neutral-300;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Sora', system-ui, -apple-system, sans-serif;
+    @apply font-bold text-gray-900 dark:text-neutral-100;
+  }
+}
+
+@layer components {
+  /* ── INK — color hierarchy ────────────────────────────────────────────── */
+  .ink-strong { @apply text-gray-900 dark:text-neutral-100; }
+  .ink        { @apply text-gray-700 dark:text-neutral-300; }
+  .ink-soft   { @apply text-gray-500 dark:text-neutral-400; }
+  .ink-faint  { @apply text-gray-400 dark:text-neutral-500; }
+
+  /* ── TYPE ROLES — family + size + weight (+ default ink) ───────────────── */
+
+  /* Page titles / hero numbers */
+  .t-display {
+    @apply font-display text-3xl font-bold leading-tight tracking-tight text-gray-900 dark:text-neutral-100;
+  }
+
+  /* Section titles */
+  .t-title {
+    @apply font-display text-xl font-bold leading-snug text-gray-900 dark:text-neutral-100;
+  }
+
+  /* Card titles / subsection headings (display) */
+  .t-heading {
+    @apply font-display text-base font-bold leading-snug text-gray-900 dark:text-neutral-100;
+  }
+
+  /* Dense card titles / list-row headers (body font, still prominent) */
+  .t-subheading {
+    @apply font-sans text-sm font-semibold leading-snug text-gray-900 dark:text-neutral-100;
+  }
+
+  /* Product / catalog titles — medium weight so the PRICE stays the anchor.
+     Softer than .t-subheading on purpose (dense grids should breathe). */
+  .t-card-title {
+    @apply font-sans text-sm font-medium leading-snug text-gray-900 dark:text-neutral-100;
+  }
+
+  /* Body copy */
+  .t-body {
+    @apply font-sans text-sm font-normal leading-relaxed text-gray-700 dark:text-neutral-300;
+  }
+
+  /* Emphasised body */
+  .t-body-strong {
+    @apply font-sans text-sm font-semibold leading-relaxed text-gray-900 dark:text-neutral-100;
+  }
+
+  /* Metadata — timestamps, counts, secondary captions */
+  .t-meta {
+    @apply font-sans text-xs font-medium text-gray-400 dark:text-neutral-500;
+  }
+
+  /* Form labels (sentence-case; use .t-eyebrow for the uppercase kicker) */
+  .t-label {
+    @apply font-sans text-xs font-semibold text-gray-600 dark:text-neutral-400;
+  }
+
+  /* Section eyebrows — the "ON SALE NOW" kicker */
+  .t-eyebrow {
+    @apply font-sans text-xs font-bold uppercase tracking-widest text-brand;
+  }
+
+  /* Prices — a product's face */
+  .t-price {
+    @apply font-display text-lg font-bold text-gray-900 dark:text-neutral-100;
+  }
+  .t-price-lg {
+    @apply font-display text-2xl font-bold text-gray-900 dark:text-neutral-100;
+  }
 }

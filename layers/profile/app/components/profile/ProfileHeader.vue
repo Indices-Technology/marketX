@@ -29,7 +29,7 @@
           <!-- Username + actions -->
           <div class="mb-3 flex flex-wrap items-center gap-2">
             <h1
-              class="text-[17px] font-bold leading-tight text-gray-900 dark:text-neutral-100"
+              class="t-heading text-[17px] leading-tight"
             >
               {{ profile.username }}
             </h1>
@@ -99,11 +99,11 @@
           <div class="mb-3 flex items-center gap-5">
             <div class="text-center">
               <div
-                class="text-[15px] font-bold leading-tight text-gray-900 dark:text-neutral-100"
+                class="font-display text-[15px] font-bold leading-tight ink-strong"
               >
                 {{ formatNum(stats.postsCount) }}
               </div>
-              <div class="text-[11px] text-gray-400 dark:text-neutral-500">
+              <div class="text-[11px] ink-faint">
                 {{ $t('profile.posts') }}
               </div>
             </div>
@@ -112,11 +112,11 @@
               class="text-center transition-opacity hover:opacity-70"
             >
               <div
-                class="text-[15px] font-bold leading-tight text-gray-900 dark:text-neutral-100"
+                class="font-display text-[15px] font-bold leading-tight ink-strong"
               >
                 {{ formatNum(stats.followersCount) }}
               </div>
-              <div class="text-[11px] text-gray-400 dark:text-neutral-500">
+              <div class="text-[11px] ink-faint">
                 {{ $t('profile.followers') }}
               </div>
             </button>
@@ -125,21 +125,21 @@
               class="text-center transition-opacity hover:opacity-70"
             >
               <div
-                class="text-[15px] font-bold leading-tight text-gray-900 dark:text-neutral-100"
+                class="font-display text-[15px] font-bold leading-tight ink-strong"
               >
                 {{ formatNum(stats.followingCount) }}
               </div>
-              <div class="text-[11px] text-gray-400 dark:text-neutral-500">
+              <div class="text-[11px] ink-faint">
                 {{ $t('profile.following') }}
               </div>
             </button>
             <div v-if="stats.likesCount" class="text-center">
               <div
-                class="text-[15px] font-bold leading-tight text-gray-900 dark:text-neutral-100"
+                class="font-display text-[15px] font-bold leading-tight ink-strong"
               >
                 {{ formatNum(stats.likesCount) }}
               </div>
-              <div class="text-[11px] text-gray-400 dark:text-neutral-500">
+              <div class="text-[11px] ink-faint">
                 {{ $t('profile.likes') }}
               </div>
             </div>
@@ -148,7 +148,7 @@
           <!-- Bio -->
           <p
             v-if="profile.bio"
-            class="mb-1.5 whitespace-pre-wrap text-[13px] leading-relaxed text-gray-700 dark:text-neutral-300"
+            class="mb-1.5 whitespace-pre-wrap text-[13px] leading-relaxed ink"
           >
             {{ profile.bio }}
           </p>
@@ -167,7 +167,7 @@
             </a>
             <span
               v-if="profile.stateOfResidence"
-              class="flex items-center gap-1 text-gray-400 dark:text-neutral-500"
+              class="flex items-center gap-1 ink-faint"
             >
               <Icon name="solar:map-point-linear" size="13" />
               {{ profile.stateOfResidence }}
@@ -191,7 +191,7 @@
               </div>
               <div class="min-w-0 flex-1">
                 <p
-                  class="truncate text-[13px] font-bold text-gray-900 dark:text-neutral-100"
+                  class="truncate text-[13px] font-semibold ink-strong"
                 >
                   {{ store.store_name || 'Visit store' }}
                 </p>

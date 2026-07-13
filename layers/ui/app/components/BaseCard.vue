@@ -7,13 +7,13 @@
       <div>
         <p
           v-if="eyebrow"
-          class="text-2xs mb-0.5 font-semibold uppercase tracking-widest text-brand"
+          class="t-eyebrow mb-0.5"
         >
           {{ eyebrow }}
         </p>
         <h3
           v-if="title"
-          class="text-sm font-semibold text-gray-800 dark:text-neutral-200"
+          class="t-subheading"
         >
           {{ title }}
         </h3>

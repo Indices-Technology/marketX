@@ -20,13 +20,13 @@
           />
         </div>
         <span
-          class="text-[13px] font-bold tracking-wide text-gray-900 dark:text-white"
+          class="font-display text-[13px] font-bold tracking-wide ink-strong"
           >{{ label || 'Shop Today' }}</span
         >
       </div>
       <NuxtLink
         to="/fresh-drops"
-        class="flex items-center gap-0.5 text-[12px] font-medium text-gray-400 transition hover:text-gray-700 dark:text-neutral-500 dark:hover:text-neutral-300"
+        class="flex items-center gap-0.5 text-[12px] font-medium ink-faint transition hover:text-gray-700 dark:hover:text-neutral-300"
       >
         See all
         <Icon name="solar:arrow-right-linear" size="14" />
@@ -104,19 +104,19 @@
           <!-- Info -->
           <div class="flex flex-1 flex-col p-2.5">
             <p
-              class="line-clamp-2 text-[11px] leading-tight text-gray-700 dark:text-neutral-300"
+              class="line-clamp-2 text-[11px] leading-tight ink"
             >
               {{ product.title }}
             </p>
             <div class="mt-auto flex items-center gap-1.5 pt-1.5">
               <span
-                class="text-[13px] font-bold text-gray-900 dark:text-neutral-100"
+                class="font-display text-[13px] font-bold ink-strong"
               >
                 {{ formatPrice(effectivePrice(product)) }}
               </span>
               <span
                 v-if="product.discount"
-                class="text-[10px] text-gray-400 line-through dark:text-neutral-600"
+                class="text-[10px] ink-faint line-through"
                 >{{ formatPrice(product.price) }}</span
               >
             </div>

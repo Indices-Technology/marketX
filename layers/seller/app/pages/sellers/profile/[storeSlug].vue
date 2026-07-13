@@ -135,7 +135,11 @@
                 class="absolute -bottom-1.5 -right-1.5 flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-blue-500 shadow-md dark:border-neutral-950"
                 title="Verified Store"
               >
-                <Icon name="solar:check-circle-bold" size="13" class="text-white" />
+                <Icon
+                  name="solar:check-circle-bold"
+                  size="13"
+                  class="text-white"
+                />
               </div>
             </div>
 
@@ -176,7 +180,11 @@
                 />
                 <Icon
                   v-else
-                  :name="isFollowing ? 'solar:user-check-bold' : 'solar:user-plus-bold'"
+                  :name="
+                    isFollowing
+                      ? 'solar:user-check-bold'
+                      : 'solar:user-plus-bold'
+                  "
                   size="15"
                 />
                 {{ isFollowing ? 'Following' : 'Follow' }}
@@ -187,7 +195,7 @@
                 @click="showCard = true"
               >
                 <Icon name="solar:card-linear" size="16" />
-                Card
+                Biz Card
               </button>
               <button
                 class="rounded-xl border border-gray-200 bg-white p-2.5 text-gray-600 transition-colors hover:bg-gray-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
@@ -248,7 +256,11 @@
                 {{ storeAddressLabel }}
               </span>
               <Icon
-                :name="addressCopied ? 'solar:check-circle-linear' : 'solar:copy-linear'"
+                :name="
+                  addressCopied
+                    ? 'solar:check-circle-linear'
+                    : 'solar:copy-linear'
+                "
                 size="12"
                 class="shrink-0 transition-colors"
                 :class="
@@ -280,7 +292,11 @@
                 class="flex items-center gap-1 text-brand hover:underline"
                 title="View on map"
               >
-                <Icon name="solar:map-point-bold" size="13" class="text-brand" />
+                <Icon
+                  name="solar:map-point-bold"
+                  size="13"
+                  class="text-brand"
+                />
                 {{ seller.store_location }}
                 <Icon
                   name="solar:map-arrow-square-linear"
@@ -419,7 +435,9 @@
               />
               <Icon
                 v-else
-                :name="isFollowing ? 'solar:user-check-bold' : 'solar:user-plus-bold'"
+                :name="
+                  isFollowing ? 'solar:user-check-bold' : 'solar:user-plus-bold'
+                "
                 size="15"
               />
               {{ isFollowing ? 'Following' : 'Follow' }}
@@ -659,7 +677,11 @@
                 <div
                   class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand/10"
                 >
-                  <Icon name="solar:link-round-linear" size="18" class="text-brand" />
+                  <Icon
+                    name="solar:link-round-linear"
+                    size="18"
+                    class="text-brand"
+                  />
                 </div>
                 <div class="min-w-0 flex-1">
                   <p
@@ -679,7 +701,11 @@
                   @click="copyStoreAddress"
                 >
                   <Icon
-                    :name="addressCopied ? 'solar:check-circle-linear' : 'solar:copy-linear'"
+                    :name="
+                      addressCopied
+                        ? 'solar:check-circle-linear'
+                        : 'solar:copy-linear'
+                    "
                     size="16"
                     :class="addressCopied ? 'text-emerald-500' : ''"
                   />
@@ -746,7 +772,11 @@
                 <div
                   class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand/10"
                 >
-                  <Icon name="solar:phone-linear" size="18" class="text-brand" />
+                  <Icon
+                    name="solar:phone-linear"
+                    size="18"
+                    class="text-brand"
+                  />
                 </div>
                 <div>
                   <p
@@ -769,7 +799,11 @@
                 <div
                   class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand/10"
                 >
-                  <Icon name="solar:global-linear" size="18" class="text-brand" />
+                  <Icon
+                    name="solar:global-linear"
+                    size="18"
+                    class="text-brand"
+                  />
                 </div>
                 <div class="min-w-0">
                   <p
@@ -885,6 +919,7 @@ import {
 } from '~~/layers/core/app/utils/storeUrl'
 import ProductMarketModal from '~~/layers/commerce/app/components/modals/ProductMarketModal.vue'
 import MarketXCardModal from '~~/layers/seller/app/components/MarketXCardModal.vue'
+import { useSellerApi } from '~~/layers/seller/app/services/seller.services'
 import { useSellerManagement } from '~~/layers/seller/app/composables/useSellerManagement'
 import { useProduct } from '~~/layers/commerce/app/composables/useProduct'
 import { useAffiliate } from '~~/layers/commerce/app/composables/useAffiliate'
@@ -904,6 +939,17 @@ const route = useRoute()
 const storeSlug =
   (route.params.storeSlug as string) || (route.params.store_slug as string)
 
+// SSR-fetch the store so the OG/Twitter meta (incl. the Cloudinary card image)
+// is in the server HTML — the only thing link-preview crawlers (WhatsApp,
+// Telegram, X, Facebook, Slack…) read. Client interactivity still loads below.
+const { data: seoSeller } = await useAsyncData(`store-seo-${storeSlug}`, () =>
+  useSellerApi()
+    .getSellerBySlug(storeSlug)
+    .then((r: any) => r?.data ?? r)
+    .catch(() => null),
+)
+if (seoSeller.value) useSeo().setStorePage(seoSeller.value as any)
+
 const {
   loadPublicSeller,
   currentSeller,
@@ -921,7 +967,9 @@ const activeTab = ref('wall')
 const seller = computed(() => currentSeller.value)
 // Render-time guard — neutralizes any javascript:/data: URL persisted before
 // input validation was tightened (stored-XSS defense-in-depth)
-const safeStoreWebsite = computed(() => safeExternalUrl(seller.value?.store_website))
+const safeStoreWebsite = computed(() =>
+  safeExternalUrl(seller.value?.store_website),
+)
 
 const runtimeConfig = useRuntimeConfig()
 const addressCopied = ref(false)
@@ -932,9 +980,13 @@ const storeAddress = computed(() =>
   storeShareUrl(storeSlug, runtimeConfig.public.baseURL as string),
 )
 
-watch(seller, (s) => {
-  if (s) useSeo().setStorePage(s)
-}, { immediate: true })
+watch(
+  seller,
+  (s) => {
+    if (s) useSeo().setStorePage(s)
+  },
+  { immediate: true },
+)
 
 const isFollowing = ref(false)
 const followLoading = ref(false)
