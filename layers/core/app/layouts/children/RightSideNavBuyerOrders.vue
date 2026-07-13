@@ -259,7 +259,9 @@ onMounted(async () => {
   if (!profileStore.isLoggedIn) return
   try {
     isLoading.value = true
-    const res = await orderApi.getOrders({ limit: 20 })
+    const res = (await orderApi.getOrders({ limit: 20 })) as {
+      data?: { orders?: any[] }
+    }
     orders.value = res?.data?.orders ?? []
   } catch {
     // fail silently — widget is non-critical

@@ -182,6 +182,14 @@
                 {{ isFollowing ? 'Following' : 'Follow' }}
               </button>
               <button
+                class="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                title="Store card"
+                @click="showCard = true"
+              >
+                <Icon name="solar:card-linear" size="16" />
+                Card
+              </button>
+              <button
                 class="rounded-xl border border-gray-200 bg-white p-2.5 text-gray-600 transition-colors hover:bg-gray-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
                 title="Share store"
                 @click="shareStore"
@@ -415,6 +423,13 @@
                 size="15"
               />
               {{ isFollowing ? 'Following' : 'Follow' }}
+            </button>
+            <button
+              class="rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-600 transition-colors hover:bg-gray-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+              title="Store card"
+              @click="showCard = true"
+            >
+              <Icon name="solar:card-linear" size="18" />
             </button>
             <button
               class="rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-600 transition-colors hover:bg-gray-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
@@ -845,6 +860,12 @@
       :product="marketProduct"
       @close="marketProduct = null"
     />
+    <MarketXCardModal
+      :open="showCard"
+      :store-slug="storeSlug"
+      :is-owner="isOwnStore"
+      @close="showCard = false"
+    />
   </HomeLayout>
 </template>
 
@@ -863,6 +884,7 @@ import {
   storeShareUrl,
 } from '~~/layers/core/app/utils/storeUrl'
 import ProductMarketModal from '~~/layers/commerce/app/components/modals/ProductMarketModal.vue'
+import MarketXCardModal from '~~/layers/seller/app/components/MarketXCardModal.vue'
 import { useSellerManagement } from '~~/layers/seller/app/composables/useSellerManagement'
 import { useProduct } from '~~/layers/commerce/app/composables/useProduct'
 import { useAffiliate } from '~~/layers/commerce/app/composables/useAffiliate'
@@ -922,7 +944,9 @@ const sellerStore = useSellerStore()
 
 // True when the logged-in user owns this store
 const isOwnStore = computed(() =>
-  sellerStore.sellers?.some((s: any) => s.storeSlug === storeSlug.value),
+  sellerStore.sellers?.some(
+    (s: any) => (s.storeSlug || s.store_slug) === storeSlug,
+  ),
 )
 
 const products = ref<IProduct[]>([])
@@ -933,6 +957,7 @@ const hasMore = computed(() => products.value.length < total.value)
 
 const selectedProduct = ref<IProduct | null>(null)
 const marketProduct = ref<IProduct | null>(null)
+const showCard = ref(false)
 const trigger = ref<HTMLElement | null>(null)
 let observer: IntersectionObserver | null = null
 

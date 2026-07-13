@@ -48,6 +48,8 @@ export interface SellerProfileWithProfile extends SellerProfile {
 
 export interface SellerProfilePublic {
   id: string
+  /** Immutable public seller ID, e.g. "MX-LAG-J8KP" (Share Identity System). */
+  publicId: string | null
   store_name: string | null
   store_description: string | null
   store_logo: string | null
@@ -59,6 +61,15 @@ export interface SellerProfilePublic {
   store_website: string | null
   store_socials: Record<string, any> | null
   verification_status: VerificationStatus
+  store_phone: string | null
+  store_email: string | null
+  // ── Nigeria CAC business registration ──
+  business_name: string | null
+  cac_number: string | null
+  cac_type: 'RC' | 'BN' | null
+  cac_verified: boolean
+  // ── MarketX Card visibility toggles ──
+  cardSettings: import('~~/shared/utils/cardSettings').CardSettings | null
 }
 
 export interface SellerProfileDashboard extends SellerProfile {

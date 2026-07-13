@@ -64,11 +64,13 @@ export class SellerApiClient extends BaseApiClient {
       store_description?: string
       store_location?: string
       store_phone?: string
+      store_email?: string
       store_website?: string
       store_logo?: string
       store_banner?: string
       store_socials?: Record<string, any>
       auto_answer_enabled?: boolean
+      cardSettings?: import('~~/shared/utils/cardSettings').CardSettings
     },
   ): Promise<any> {
     return this.request(`/api/seller/${sellerId}`, {

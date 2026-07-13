@@ -1,0 +1,144 @@
+<template>
+  <HomeLayout :narrow-feed="true" :hide-right-sidebar="true">
+    <div class="mx-auto max-w-[440px] px-3 py-5">
+      <!-- Header -->
+      <div class="mb-4 flex items-center justify-between">
+        <div>
+          <p class="text-[11px] font-bold uppercase tracking-widest text-brand">
+            Your MarketX Card
+          </p>
+          <h1 class="font-display text-xl font-bold text-gray-900 dark:text-white">
+            Share your store
+          </h1>
+        </div>
+        <button
+          v-if="stores.length > 1"
+          class="rounded-lg bg-gray-100 px-3 py-1.5 text-[12px] font-semibold text-gray-700 dark:bg-neutral-800 dark:text-neutral-300"
+          @click="cycleStore"
+        >
+          Switch store
+        </button>
+      </div>
+
+      <div
+        v-if="loading"
+        class="aspect-[4/5] w-full animate-pulse rounded-3xl bg-gray-100 dark:bg-neutral-800"
+      />
+
+      <BaseEmptyState
+        v-else-if="!seller"
+        icon="solar:shop-2-linear"
+        title="No store yet"
+        description="Create a store to get your shareable MarketX Card."
+      >
+        <template #actions>
+          <BaseButton variant="primary" @click="$router.push('/sellers/create')">
+            Start selling
+          </BaseButton>
+        </template>
+      </BaseEmptyState>
+
+      <template v-else>
+        <MarketXCard
+          :seller="seller"
+          :product-count="productCount"
+          :qr="qr"
+          :share-url="shareUrl"
+          :display-url="displayUrl"
+          :copied="copied"
+          @copy="copy"
+        />
+
+        <div class="mt-4 grid grid-cols-2 gap-2.5">
+          <BaseButton variant="primary" class="w-full" @click="share">
+            <Icon name="solar:share-bold" size="16" />
+            Share
+          </BaseButton>
+          <BaseButton variant="secondary" class="w-full" @click="downloadQr">
+            <Icon name="solar:download-minimalistic-linear" size="16" />
+            Save QR
+          </BaseButton>
+        </div>
+
+        <div class="mt-3 flex items-center justify-center gap-3">
+          <a
+            v-for="t in shareTargets"
+            :key="t.id"
+            :href="t.href"
+            target="_blank"
+            rel="noopener"
+            :title="t.label"
+            class="flex h-10 w-10 items-center justify-center rounded-full text-white transition-transform hover:scale-105"
+            :style="{ background: t.bg }"
+          >
+            <Icon :name="t.icon" size="18" />
+          </a>
+        </div>
+
+        <div v-if="isOwner" class="mt-4">
+          <CardSettingsPanel :seller="seller" @saved="onSaved" />
+        </div>
+      </template>
+    </div>
+  </HomeLayout>
+</template>
+
+<script setup lang="ts">
+import { computed, ref, watch, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
+import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
+import BaseEmptyState from '~~/layers/ui/app/components/BaseEmptyState.vue'
+import MarketXCard from '~~/layers/seller/app/components/MarketXCard.vue'
+import CardSettingsPanel from '~~/layers/seller/app/components/CardSettingsPanel.vue'
+import { useStoreCard } from '~~/layers/seller/app/composables/useStoreCard'
+import { useSellerStore } from '~~/layers/seller/app/store/seller.store'
+import type { CardSettings } from '~~/shared/utils/cardSettings'
+
+const route = useRoute()
+const sellerStore = useSellerStore()
+const {
+  seller,
+  productCount,
+  qr,
+  copied,
+  loading,
+  displayUrl,
+  shareUrl,
+  load,
+  copy,
+  share,
+  downloadQr,
+  shareTargets,
+} = useStoreCard()
+
+// Which store: ?store=slug, else the logged-in seller's own stores.
+const stores = computed(() => sellerStore.sellers ?? [])
+const slugOf = (s: any) => s?.storeSlug || s?.store_slug
+const storeIndex = ref(0)
+const activeSlug = computed(() => {
+  const q = route.query.store as string | undefined
+  return q || slugOf(stores.value[storeIndex.value])
+})
+
+// Owner when the resolved store is one of the current user's stores.
+const isOwner = computed(() =>
+  stores.value.some((s: any) => slugOf(s) === seller.value?.store_slug),
+)
+
+const cycleStore = () => {
+  storeIndex.value = (storeIndex.value + 1) % Math.max(1, stores.value.length)
+}
+
+const onSaved = (patch: {
+  cardSettings: CardSettings
+  store_email: string
+}) => {
+  if (!seller.value) return
+  seller.value.cardSettings = patch.cardSettings
+  seller.value.store_email = patch.store_email
+}
+
+watch(activeSlug, (s) => load(s))
+onMounted(() => load(activeSlug.value))
+</script>

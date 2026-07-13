@@ -109,6 +109,24 @@ export default defineEventHandler(async (event) => {
   if (isGigConfigured() && toCountry === 'NG' && hasOrigin && !gigOptedOut)
     allowed.push('gig')
 
+  // Diagnostics: when a store is checking out, make it explicit in the logs why
+  // GIG did or didn't reach checkout — this is what tells us whether a missing
+  // GIG option was a gate (config/origin/opt-out) or a live quote failure.
+  if (body.storeSlug && !allowed.includes('gig')) {
+    const reason = !isGigConfigured()
+      ? 'GIG credentials not configured (GIG_EMAIL/GIG_PASSWORD)'
+      : toCountry !== 'NG'
+        ? `destination country is ${toCountry}, not NG`
+        : !hasOrigin
+          ? 'seller has no ship-from state set'
+          : gigOptedOut
+            ? 'seller disabled GIG in settings'
+            : 'unknown'
+    logger.info(
+      `[shipping/rates] GIG not offered for "${body.storeSlug}": ${reason}`,
+    )
+  }
+
   if (allowed.length) {
     try {
       const dest = body.to as IAddress & { lat?: number; lng?: number }
@@ -141,6 +159,17 @@ export default defineEventHandler(async (event) => {
         sellerShipping,
       }
       const quotes = await getQuotes(req, { only: allowed })
+      // If GIG was eligible but produced no quote, the failure detail is already
+      // logged by the orchestrator — flag the outcome here so it's traceable to
+      // this specific checkout (origin/destination state pair).
+      if (
+        allowed.includes('gig') &&
+        !quotes.some((q) => q.carrierId === 'gig')
+      ) {
+        logger.warn(
+          `[shipping/rates] GIG was eligible but returned no quote for "${body.storeSlug}" (origin state="${req.origin.state}" → destination state="${req.destination.state}") — falling back to other options`,
+        )
+      }
       for (const q of quotes) {
         out.push({
           rateId: q.rateRef

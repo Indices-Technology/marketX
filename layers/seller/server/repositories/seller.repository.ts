@@ -12,6 +12,9 @@
  * User profile operations: user.repository.ts
  */
 
+import { generatePublicSellerId } from '~~/layers/seller/server/utils/publicSellerId'
+import { resolveCardSettings } from '~~/shared/utils/cardSettings'
+
 /**
  * Fields that must never appear in client-facing seller responses — the public
  * store page and the update echo both feed the shared `currentSeller` store, so
@@ -56,11 +59,24 @@ export const sellerRepository = {
       store_website?: string
       store_socials?: Record<string, any>
       default_currency?: string
+      /** Region hint for the public seller ID prefix (e.g. "Lagos"). */
+      state?: string
     },
   ): Promise<any> {
+    // Assign the immutable public seller ID (MX-LAG-J8KP) at creation.
+    const publicId = await generatePublicSellerId(
+      data.state,
+      async (id) =>
+        !!(await prisma.sellerProfile.findUnique({
+          where: { publicId: id },
+          select: { id: true },
+        })),
+    )
+
     return prisma.sellerProfile.create({
       data: {
         profileId: userId,
+        publicId,
         store_name: data.store_name,
         store_slug: data.store_slug,
         store_description: data.store_description,
@@ -135,6 +151,13 @@ export const sellerRepository = {
     return {
       ...seller,
       followers_count: realFollowerCount,
+      // Card visibility toggles (values come from the store's own fields).
+      cardSettings: resolveCardSettings(seller.cardSettings),
+      // store_email is only surfaced when the seller enabled it on the card
+      // (store_phone/store_location are already public store fields).
+      ...(resolveCardSettings(seller.cardSettings).showEmail
+        ? {}
+        : { store_email: null }),
       // Ghost mode: never expose exact coordinates on the public read.
       ...(seller.hideLocation ? { latitude: null, longitude: null } : {}),
     }
@@ -226,6 +249,7 @@ export const sellerRepository = {
       store_banner?: string
       store_location?: string
       store_phone?: string
+      store_email?: string
       store_website?: string
       store_socials?: Record<string, any>
       default_currency?: string
@@ -252,6 +276,8 @@ export const sellerRepository = {
       // Media watermark
       watermark_enabled?: boolean
       watermark_text?: string | null
+      // MarketX Card config (owner-controlled)
+      cardSettings?: Record<string, unknown>
     },
   ): Promise<any> {
     // Verify ownership
@@ -280,6 +306,9 @@ export const sellerRepository = {
         ...(data.store_banner && { store_banner: data.store_banner }),
         ...(data.store_location && { store_location: data.store_location }),
         ...(data.store_phone && { store_phone: data.store_phone }),
+        ...(data.store_email !== undefined && {
+          store_email: data.store_email || null,
+        }),
         ...(data.store_website && { store_website: data.store_website }),
         ...(data.store_socials && { store_socials: data.store_socials }),
         ...(data.default_currency && {
@@ -327,6 +356,10 @@ export const sellerRepository = {
         }),
         ...(data.watermark_text !== undefined && {
           watermark_text: data.watermark_text || null,
+        }),
+        // MarketX Card config
+        ...(data.cardSettings !== undefined && {
+          cardSettings: data.cardSettings,
         }),
       },
     })
