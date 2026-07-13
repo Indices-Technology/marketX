@@ -120,6 +120,11 @@ export class SquareApiClient extends BaseApiClient {
 
   // ── Follow ───────────────────────────────────────────────────────────────────
 
+  /** IDs of squares the current user follows — used to seed browse-list follow state. */
+  async getFollowedSquareIds(): Promise<{ success: boolean; data: string[] }> {
+    return this.request('/api/squares/following', { method: 'GET' })
+  }
+
   async followSquare(slug: string): Promise<any> {
     return this.request(`/api/squares/${slug}/follow`, { method: 'POST' })
   }

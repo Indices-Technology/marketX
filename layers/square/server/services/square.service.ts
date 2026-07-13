@@ -484,6 +484,19 @@ export const squareService = {
 
   // ── User follow ─────────────────────────────────────────────────────────────
 
+  /**
+   * IDs of the squares a user currently follows. Used to seed follow state on
+   * the browse list, whose per-square payload is shared-cached and therefore
+   * user-agnostic — follow state must be resolved per-request, not baked in.
+   */
+  async getFollowedSquareIds(userId: string): Promise<string[]> {
+    const rows = await prisma.userSquareFollow.findMany({
+      where: { userId },
+      select: { squareId: true },
+    })
+    return rows.map((r) => r.squareId)
+  },
+
   async followSquare(userId: string, squareSlug: string) {
     const square = await prisma.square.findUnique({
       where: { slug: squareSlug, status: 'ACTIVE' },

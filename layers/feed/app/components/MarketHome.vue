@@ -4,24 +4,8 @@
        screens); only the community post column is slimmed, left-aligned so its
        edge still lines up with the section headers above. -->
   <div class="w-full space-y-8 px-2 sm:px-4">
-    <!-- ─── 0. SEARCH (hero) — mobile/tablet only; desktop uses the right-rail search -->
-    <section class="pt-1 lg:hidden">
-      <form class="relative" role="search" @submit.prevent="goSearch">
-        <Icon
-          name="solar:magnifer-linear"
-          size="20"
-          class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-neutral-500"
-        />
-        <input
-          v-model="searchQuery"
-          type="search"
-          enterkeyhint="search"
-          placeholder="Search markets, traders or goods"
-          aria-label="Search markets, traders or goods"
-          class="w-full rounded-full border border-gray-200 bg-white py-3 pl-11 pr-4 text-sm text-gray-900 placeholder-gray-500 shadow-sm transition focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/25 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white dark:placeholder-neutral-500"
-        />
-      </form>
-    </section>
+    <!-- Search lives in the mobile top bar (magnifier → SearchOverLay), which is
+         present on this screen — no separate hero search needed here. -->
 
     <!-- ─── 1. DEALS (flagship) ───────────────────────────────────────────── -->
     <!-- Today's deals — hidden entirely when there are no live (<48h) flash deals -->
@@ -449,14 +433,6 @@ import type { IProduct } from '~~/layers/social/app/types/post.types'
 defineEmits<{ 'sign-in': [] }>()
 
 // ── Hero search — routes to the full search page ────────────────────────────────
-const searchQuery = ref('')
-const goSearch = () =>
-  navigateTo(
-    searchQuery.value.trim()
-      ? `/discover?q=${encodeURIComponent(searchQuery.value.trim())}`
-      : '/discover',
-  )
-
 const {
   selectedProduct,
   detailLoading: productDetailLoading,

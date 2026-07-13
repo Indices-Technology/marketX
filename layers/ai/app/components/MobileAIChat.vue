@@ -73,6 +73,21 @@
                     class="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-brand"
                   />
                 </button>
+                <button
+                  class="relative px-4 py-2 text-sm font-semibold transition-colors"
+                  :class="
+                    activeTab === 'support'
+                      ? 'text-gray-900 dark:text-neutral-100'
+                      : 'text-gray-400 dark:text-neutral-500'
+                  "
+                  @click="activeTab = 'support'"
+                >
+                  Support
+                  <span
+                    v-if="activeTab === 'support'"
+                    class="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-brand"
+                  />
+                </button>
               </div>
               <button
                 class="mb-1 flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 dark:hover:bg-neutral-800"
@@ -170,7 +185,10 @@
           </div>
 
           <!-- ── AI tab ───────────────────────────────────────────────────── -->
-          <div v-else class="flex flex-1 flex-col overflow-hidden">
+          <div
+            v-else-if="activeTab === 'ai'"
+            class="flex flex-1 flex-col overflow-hidden"
+          >
             <DassaChat
               v-if="authStore.accessToken"
               :token="authStore.accessToken"
@@ -186,6 +204,86 @@
               Sign in to use Dasah
             </div>
           </div>
+
+          <!-- ── Support tab ──────────────────────────────────────────────── -->
+          <div v-else class="flex flex-1 flex-col overflow-hidden">
+            <div class="flex shrink-0 items-center justify-between px-4 py-3">
+              <p class="text-xs text-gray-400 dark:text-neutral-500">
+                Your tickets &amp; disputes
+              </p>
+              <button
+                v-if="profileStore.isLoggedIn"
+                class="flex items-center gap-1 rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+                @click="showNewTicket = true"
+              >
+                <Icon name="solar:add-circle-linear" size="16" /> New
+              </button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto">
+              <!-- Signed out -->
+              <div
+                v-if="!profileStore.isLoggedIn"
+                class="flex flex-1 items-center justify-center py-16 text-sm text-gray-400 dark:text-neutral-500"
+              >
+                Sign in to view your support tickets
+              </div>
+              <!-- Loading -->
+              <div
+                v-else-if="ticketsLoading"
+                class="flex items-center justify-center py-16"
+              >
+                <Icon name="eos-icons:loading" size="32" class="text-brand" />
+              </div>
+              <!-- Empty -->
+              <div
+                v-else-if="!tickets.length"
+                class="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-neutral-500"
+              >
+                <Icon name="solar:chat-line-linear" size="48" class="mb-3" />
+                <p class="text-sm">No tickets yet</p>
+                <button
+                  class="mt-2 text-sm text-brand"
+                  @click="showNewTicket = true"
+                >
+                  Contact support
+                </button>
+              </div>
+              <!-- List -->
+              <NuxtLink
+                v-for="t in tickets"
+                :key="t.id"
+                :to="`/support/${t.id}`"
+                class="flex items-start justify-between gap-3 border-b border-gray-200 px-4 py-3 transition-colors active:bg-gray-50 dark:border-neutral-800 dark:active:bg-neutral-900"
+                @click="close"
+              >
+                <div class="min-w-0">
+                  <span class="font-mono text-[11px] font-bold text-gray-400">
+                    {{ ticketRef(t.ticketNumber) }}
+                  </span>
+                  <p
+                    class="mt-0.5 truncate text-sm font-semibold text-gray-900 dark:text-neutral-100"
+                  >
+                    {{ t.subject }}
+                  </p>
+                  <p
+                    class="mt-0.5 truncate text-xs text-gray-400 dark:text-neutral-500"
+                  >
+                    {{ t.category }}
+                  </p>
+                </div>
+                <BaseBadge :variant="statusMeta(t.status).variant" size="sm">
+                  {{ statusMeta(t.status).label }}
+                </BaseBadge>
+              </NuxtLink>
+            </div>
+          </div>
+
+          <!-- New ticket modal -->
+          <SupportNewTicketModal
+            v-model="showNewTicket"
+            @created="onTicketCreated"
+          />
         </div>
       </Transition>
     </Teleport>
@@ -198,10 +296,17 @@ import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import { useAuthStore } from '~~/layers/core/app/stores/auth.store'
 
 import DassaChat from '~~/layers/ai/app/components/dassa/Chat.vue'
+import SupportNewTicketModal from '~~/layers/support/app/components/SupportNewTicketModal.vue'
+import BaseBadge from '~~/layers/ui/app/components/BaseBadge.vue'
 
 import { ref, computed, watch } from 'vue'
 import { useChat } from '~~/layers/profile/app/composables/useChat'
 import { useDassaPanel } from '~~/layers/ai/app/composables/useDassaPanel'
+import {
+  useSupport,
+  SUPPORT_STATUS_META,
+  ticketRef,
+} from '~~/layers/support/app/composables/useSupport'
 
 const props = defineProps<{ isOpen: boolean; bannerVisible?: boolean }>()
 const emit = defineEmits(['open', 'close'])
@@ -211,8 +316,47 @@ const notificationStore = useNotificationStore()
 const authStore = useAuthStore()
 const { fetchConversations, isLoading, conversations } = useChat()
 
-const activeTab = ref<'messages' | 'ai'>('messages')
+const activeTab = ref<'messages' | 'ai' | 'support'>('messages')
 const searchQuery = ref('')
+
+// ── Support tickets ───────────────────────────────────────────────────────────
+const support = useSupport()
+const tickets = ref<any[]>([])
+const ticketsLoading = ref(false)
+const ticketsLoaded = ref(false)
+const showNewTicket = ref(false)
+
+const statusMeta = (s: string) =>
+  SUPPORT_STATUS_META[s] ?? { label: s, variant: 'muted' }
+
+// Lazy-load once, only when the Support tab is first opened (client-only —
+// listMyTickets carries the Bearer token, so SSR would 401).
+const loadTickets = async () => {
+  if (!profileStore.isLoggedIn || ticketsLoaded.value) return
+  ticketsLoading.value = true
+  try {
+    const res: any = await support.listMyTickets()
+    tickets.value = res?.items ?? []
+    ticketsLoaded.value = true
+  } catch {
+    // Non-fatal — empty state is shown.
+  } finally {
+    ticketsLoading.value = false
+  }
+}
+
+watch(activeTab, (t) => {
+  if (t === 'support') loadTickets()
+})
+
+const onTicketCreated = (id: string) => {
+  showNewTicket.value = false
+  ticketsLoaded.value = false // force a refresh next time the tab opens
+  if (id) {
+    close()
+    navigateTo(`/support/${id}`)
+  }
+}
 
 // Count unread message notifications
 const unreadMessages = computed(
