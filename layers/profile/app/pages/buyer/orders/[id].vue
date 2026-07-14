@@ -200,31 +200,6 @@
           </ol>
         </BaseCard>
 
-        <!-- TEST TOOLS (admin only): drive the order through carrier states -->
-        <div
-          v-if="isAdmin && (order.waybill || order.trackingNumber)"
-          class="rounded-2xl border border-dashed border-amber-300 bg-amber-50/50 p-4 dark:border-amber-800/60 dark:bg-amber-950/10"
-        >
-          <p class="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-amber-600 dark:text-amber-400">
-            <Icon name="solar:test-tube-linear" size="14" /> Simulate carrier scan · admin test
-          </p>
-          <p class="mb-3 text-xs text-gray-500 dark:text-neutral-400">
-            Injects a GIG status through the real transition path. “Delivered” releases escrow to the seller.
-          </p>
-          <div class="flex flex-wrap gap-2">
-            <BaseButton
-              v-for="s in SIM_STEPS"
-              :key="s.status"
-              size="sm"
-              variant="secondary"
-              :loading="simulating === s.status"
-              @click="simulate(s.status)"
-            >
-              {{ s.label }}
-            </BaseButton>
-          </div>
-        </div>
-
         <!-- Price breakdown -->
         <BaseCard>
           <div class="space-y-2">
@@ -337,7 +312,6 @@ import BaseBadge from '~~/layers/ui/app/components/BaseBadge.vue'
 import BaseCard from '~~/layers/ui/app/components/BaseCard.vue'
 import BaseSkeleton from '~~/layers/ui/app/components/BaseSkeleton.vue'
 import SupportNewTicketModal from '~~/layers/support/app/components/SupportNewTicketModal.vue'
-import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 
 definePageMeta({ middleware: 'auth' })
 
@@ -345,31 +319,6 @@ useSeo().setOrdersPage()
 
 const route = useRoute()
 const orderApi = useOrderApi()
-const profileStore = useProfileStore()
-const isAdmin = computed(() => (profileStore.me as any)?.role === 'admin')
-
-// Admin test controls — walk an order through the carrier states without a real scan.
-const SIM_STEPS = [
-  { status: 'IN_TRANSIT', label: 'Picked up → Shipped' },
-  { status: 'OUT_FOR_DELIVERY', label: 'Out for delivery' },
-  { status: 'DELIVERED', label: 'Delivered → release funds' },
-  { status: 'RETURNED', label: 'Returned' },
-]
-const simulating = ref('')
-async function simulate(status: string) {
-  simulating.value = status
-  try {
-    await orderApi.simulateScan(orderId.value, status)
-    const res: any = await orderApi.getOrderById(orderId.value)
-    order.value = res?.data
-    await loadTracking()
-    notify({ type: 'success', text: `Simulated ${status} · order is now ${order.value?.status}` })
-  } catch (e: any) {
-    notify({ type: 'error', text: extractErrorMessage(e, 'Simulation failed') })
-  } finally {
-    simulating.value = ''
-  }
-}
 
 const orderId = computed(() => Number(route.params.id))
 const order = ref<any>(null)

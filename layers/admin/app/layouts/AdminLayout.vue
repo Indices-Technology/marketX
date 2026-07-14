@@ -65,6 +65,12 @@
           :admin-only="true"
         />
         <AdminNavItem
+          to="/admin/shipping"
+          icon="solar:test-tube-linear"
+          label="Carrier Sim"
+          :admin-only="true"
+        />
+        <AdminNavItem
           to="/admin/announcements"
           icon="solar:speaker-linear"
           label="Announcements"
@@ -178,6 +184,13 @@
             to="/admin/finance"
             icon="solar:chart-square-linear"
             label="Finance"
+            :admin-only="true"
+            @click="mobileOpen = false"
+          />
+          <AdminNavItem
+            to="/admin/shipping"
+            icon="solar:test-tube-linear"
+            label="Carrier Sim"
             :admin-only="true"
             @click="mobileOpen = false"
           />
