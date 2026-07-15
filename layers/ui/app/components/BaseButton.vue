@@ -131,8 +131,9 @@ const spinnerColor = computed(() => {
 })
 
 const classes = computed(() => [
-  // Base
-  'relative inline-flex items-center justify-center font-semibold',
+  // Base — nowrap: buttons have a fixed height per size, so a wrapped label
+  // gets clipped/squeezed. Keep labels on one line and let the button size to fit.
+  'relative inline-flex items-center justify-center whitespace-nowrap font-semibold',
   'rounded-xl outline-none transition-all duration-150',
   'disabled:cursor-not-allowed disabled:opacity-50',
   // Shape

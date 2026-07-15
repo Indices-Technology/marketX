@@ -16,6 +16,7 @@ import type {
 
 const sellerSummarySelect = {
   id: true,
+  publicId: true,
   store_name: true,
   store_slug: true,
   locationLabel: true,
@@ -38,6 +39,7 @@ const squareSummarySelect = {
 
 const sellerFullSelect = {
   id: true,
+  publicId: true,
   store_name: true,
   store_slug: true,
   store_description: true,
@@ -98,6 +100,7 @@ function mapSellerSummary(
 ): SellerSummary {
   return {
     id: s.id,
+    publicId: s.publicId ?? null,
     storeName: s.store_name ?? '',
     storeSlug: s.store_slug,
     locationLabel: s.locationLabel ?? null,
@@ -166,6 +169,7 @@ function mapSeller(
   return {
     entityType: 'SELLER',
     id: s.id,
+    publicId: s.publicId ?? null,
     storeName: s.store_name ?? '',
     storeSlug: s.store_slug,
     storeDescription: s.store_description ?? null,

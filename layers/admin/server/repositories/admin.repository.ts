@@ -5,6 +5,7 @@ import type {
   ModerationAction,
   ReportReason,
 } from '@prisma/client'
+import { normalizePublicId } from '~~/layers/seller/server/utils/publicSellerId'
 
 const REPORT_SELECT = {
   id: true,
@@ -217,6 +218,12 @@ export const adminRepository = {
       where.OR = [
         { store_name: { contains: opts.search, mode: 'insensitive' } },
         { store_slug: { contains: opts.search, mode: 'insensitive' } },
+        // Public Seller ID — separator/case-insensitive; full id, hyphen-parts,
+        // or bare code. Skipped when normalization leaves <2 chars.
+        ...(() => {
+          const n = normalizePublicId(opts.search)
+          return n.length >= 2 ? [{ publicIdNormalized: { contains: n } }] : []
+        })(),
       ]
     }
     if (opts.status === 'pending') where.verification_status = 'PENDING'
@@ -226,6 +233,7 @@ export const adminRepository = {
       where,
       select: {
         id: true,
+        publicId: true,
         store_name: true,
         store_slug: true,
         store_logo: true,

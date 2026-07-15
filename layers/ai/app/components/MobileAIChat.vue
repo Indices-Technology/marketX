@@ -5,7 +5,7 @@
       v-if="!isOpen"
       class="fixed right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-all duration-300 active:scale-95 md:hidden"
       :class="[
-        bannerVisible ? 'bottom-36' : 'bottom-20',
+        bannerVisible || buyBarVisible ? 'bottom-36' : 'bottom-20',
         unreadMessages > 0
           ? 'bg-brand text-white'
           : 'bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900',
@@ -310,6 +310,10 @@ import {
 
 const props = defineProps<{ isOpen: boolean; bannerVisible?: boolean }>()
 const emit = defineEmits(['open', 'close'])
+
+// Pages with a mobile sticky action bar (e.g. the product buy bar) set this so
+// the floating button lifts above the bar instead of overlapping it.
+const buyBarVisible = useState<boolean>('mobile-buy-bar', () => false)
 
 const profileStore = useProfileStore()
 const notificationStore = useNotificationStore()

@@ -1,5 +1,7 @@
+import { Prisma } from '@prisma/client'
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { optionalAuth } from '~~/server/layers/shared/middleware/requireAuth'
+import { normalizePublicId } from '~~/layers/seller/server/utils/publicSellerId'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -18,6 +20,19 @@ export default defineEventHandler(async (event) => {
     }
 
     const searchFilter = { contains: q, mode: 'insensitive' as const }
+
+    // Public Seller ID lookup: normalize the query the same way the stored
+    // shadow column is, so "MX-PLA-VDKR", "mx pla vdkr", "plavdkr" and the bare
+    // code "vdkr" all match. Skipped when normalization leaves <2 chars (a bare
+    // `contains: ''` would match every store).
+    const qNorm = normalizePublicId(q)
+    const storeOr: Prisma.SellerProfileWhereInput[] = [
+      { store_name: searchFilter },
+      { store_description: searchFilter },
+    ]
+    if (qNorm.length >= 2) {
+      storeOr.push({ publicIdNormalized: { contains: qNorm } })
+    }
 
     const [users, stores, products, posts, tags] = await Promise.all([
       type === 'all' || type === 'users'
@@ -41,14 +56,10 @@ export default defineEventHandler(async (event) => {
 
       type === 'all' || type === 'stores'
         ? prisma.sellerProfile.findMany({
-            where: {
-              OR: [
-                { store_name: searchFilter },
-                { store_description: searchFilter },
-              ],
-            },
+            where: { OR: storeOr },
             select: {
               id: true,
+              publicId: true,
               store_name: true,
               store_slug: true,
               store_description: true,

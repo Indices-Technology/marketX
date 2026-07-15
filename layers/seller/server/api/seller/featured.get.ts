@@ -1,6 +1,7 @@
 // GET /api/seller/featured - Public list of sellers by follower count (paginated)
 
 import { Prisma } from '@prisma/client'
+import { normalizePublicId } from '~~/layers/seller/server/utils/publicSellerId'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -8,6 +9,7 @@ export default defineEventHandler(async (event) => {
     const limit = Math.min(Math.max(Number(query.limit) || 6, 1), 50)
     const offset = Math.max(Number(query.offset) || 0, 0)
     const search = String(query.search || '').trim()
+    const searchNorm = normalizePublicId(search)
     const categorySlug = String(query.categorySlug || '').trim()
     const page = Math.floor(offset / limit)
 
@@ -18,6 +20,11 @@ export default defineEventHandler(async (event) => {
             OR: [
               { store_name: { contains: search, mode: 'insensitive' } },
               { store_slug: { contains: search, mode: 'insensitive' } },
+              // Public Seller ID — separator/case-insensitive; matches full id,
+              // hyphen-parts, or bare code. Skipped when <2 normalized chars.
+              ...(searchNorm.length >= 2
+                ? [{ publicIdNormalized: { contains: searchNorm } }]
+                : []),
             ],
           }
         : {}),
@@ -43,6 +50,7 @@ export default defineEventHandler(async (event) => {
         where,
         select: {
           id: true,
+          publicId: true,
           store_name: true,
           store_slug: true,
           store_logo: true,

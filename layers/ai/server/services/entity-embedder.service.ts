@@ -26,6 +26,7 @@ function buildProductText(p: Record<string, any>): string {
   if (p.description)
     parts.push(p.description.replace(/<[^>]+>/g, '').slice(0, 400))
   if (p.seller?.storeName) parts.push(`Sold by: ${p.seller.storeName}`)
+  if (p.seller?.publicId) parts.push(`Seller ID: ${p.seller.publicId}`)
   if (p.seller?.locationLabel)
     parts.push(`Seller location: ${p.seller.locationLabel}`)
   if (p.seller?.city) parts.push(`City: ${p.seller.city}`)
@@ -51,6 +52,9 @@ function buildProductText(p: Record<string, any>): string {
 
 function buildSellerText(s: Record<string, any>): string {
   const parts: string[] = [`Seller: ${s.storeName}`]
+  // Public Seller ID (e.g. MX-PLA-VDKR) — printed on cards/QR; include it so a
+  // query that names the ID resolves to this store.
+  if (s.publicId) parts.push(`Seller ID: ${s.publicId}`)
   if (s.storeDescription)
     parts.push(s.storeDescription.replace(/<[^>]+>/g, '').slice(0, 400))
   if (s.locationLabel) parts.push(`Location: ${s.locationLabel}`)
@@ -173,6 +177,7 @@ export const entityEmbedder = {
           inStock: c.variants?.some((v: any) => v.stock > 0) ?? true,
           inStockSizes,
           sellerName: c.seller?.storeName,
+          sellerPublicId: c.seller?.publicId ?? null,
         }
 
         await upsertEmbedding('PRODUCT', String(productId), text, metadata)
@@ -197,6 +202,7 @@ export const entityEmbedder = {
         const metadata: Record<string, unknown> = {
           entityType: 'SELLER',
           entityId: sellerId,
+          publicId: (ctx as any).publicId ?? null,
           storeName: (ctx as any).storeName,
           storeSlug: (ctx as any).storeSlug,
           locationLabel: (ctx as any).locationLabel,
