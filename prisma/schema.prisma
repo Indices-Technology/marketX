@@ -112,6 +112,10 @@ model SellerProfile {
   /// Immutable, human-friendly public seller ID, e.g. "MX-LAG-J8KP". Assigned
   /// once at creation and never changed — printed on cards, QR, invoices, receipts.
   publicId              String?                @unique
+  /// Separator/case-insensitive form of publicId (e.g. "MXPLAVDKR"), kept in
+  /// sync at creation. Customers type the ID however they read it off a card —
+  /// with hyphens, spaces, or none — so lookups match this collapsed form.
+  publicIdNormalized    String?
   /// Owner-controlled MarketX Card config: which fields show + the business-card
   /// contact values the seller chooses to make public. Shape (all optional):
   /// { showRating, showFollowers, showProducts, showDescription, showPhone,
@@ -173,6 +177,7 @@ model SellerProfile {
   @@index([profileId])
   @@index([is_active, followers_count(sort: Desc)]) // featured: WHERE is_active=true ORDER BY followers_count DESC
   @@index([created_at(sort: Desc)]) // admin seller list ordering + pagination
+  @@index([publicIdNormalized]) // public-ID lookup (exact/prefix); contains → seq scan, fine at current volume
 }
 
 model Conversation {

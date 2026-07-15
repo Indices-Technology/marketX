@@ -12,7 +12,10 @@
  * User profile operations: user.repository.ts
  */
 
-import { generatePublicSellerId } from '~~/layers/seller/server/utils/publicSellerId'
+import {
+  generatePublicSellerId,
+  normalizePublicId,
+} from '~~/layers/seller/server/utils/publicSellerId'
 import { resolveCardSettings } from '~~/shared/utils/cardSettings'
 
 /**
@@ -77,6 +80,7 @@ export const sellerRepository = {
       data: {
         profileId: userId,
         publicId,
+        publicIdNormalized: normalizePublicId(publicId),
         store_name: data.store_name,
         store_slug: data.store_slug,
         store_description: data.store_description,

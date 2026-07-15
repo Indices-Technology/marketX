@@ -12,7 +12,10 @@
  *   setStorePage({ store_name: 'Kemi Fabrics', ... })
  */
 import { BRAND } from '~~/layers/core/app/utils/brand'
-import { storeCardImage } from '~~/layers/core/app/utils/cardImage'
+import {
+  storeCardImage,
+  productCardImage,
+} from '~~/layers/core/app/utils/cardImage'
 
 export const useSeo = () => {
   const config = useRuntimeConfig()
@@ -214,6 +217,7 @@ export const useSeo = () => {
       slug?: string
       price?: number
       sellerName?: string
+      sellerPublicId?: string | null
     },
   ) => {
     const buildDesc = () => {
@@ -225,17 +229,55 @@ export const useSeo = () => {
         `Buy ${title}${seller} on ${siteName}. Fast delivery across Nigeria and worldwide shipping available.`
       )
     }
+
+    // Rich preview: a Cloudinary-composited product card (photo + price + title)
+    // so pasted links unfurl as a branded image. Falls back to the raw product
+    // photo, then the default OG. Getter keeps it reactive as the product loads.
+    const brandDomain = (config.public.brandDomain as string) || BRAND.domain
+    const cloud = (config.public.cloudinaryCloud as string) || ''
+    const ogImage = () => {
+      const p = getProduct()
+      const priceText =
+        p.price != null ? `₦${Number(p.price).toLocaleString('en-NG')}` : ''
+      return (
+        productCardImage(
+          {
+            title: p.title,
+            imageUrl: p.imageUrl,
+            priceText,
+            sellerName: p.sellerName,
+            sellerPublicId: p.sellerPublicId,
+          },
+          {
+            cloud,
+            displayUrl: p.slug
+              ? `${brandDomain}/product/${p.slug}`
+              : brandDomain,
+            width: 1200,
+            height: 630,
+          },
+        ) ||
+        p.imageUrl ||
+        defaultImage
+      )
+    }
+
     useSeoMeta({
       title: () => getProduct().title || 'Product',
       description: buildDesc,
       ogTitle: () => `${getProduct().title || 'Product'} | ${siteName}`,
       ogDescription: buildDesc,
-      ogImage: () => getProduct().imageUrl || defaultImage,
+      ogImage,
+      ogImageWidth: 1200,
+      ogImageHeight: 630,
+      ogImageAlt: () => `${getProduct().title || 'Product'} on ${siteName}`,
       ogUrl: () => {
         const s = getProduct().slug
         return s ? `${baseURL}/product/${s}` : undefined
       },
       ogType: 'product',
+      twitterCard: 'summary_large_image',
+      twitterImage: ogImage,
     })
   }
 

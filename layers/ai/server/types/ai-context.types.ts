@@ -13,6 +13,7 @@ export interface VariantContext {
 /** Minimal seller info embedded inside a ProductAIContext */
 export interface SellerSummary {
   id: string
+  publicId: string | null
   storeName: string
   storeSlug: string
   locationLabel: string | null
@@ -74,6 +75,7 @@ export interface ProductAIContext {
 export interface SellerAIContext {
   entityType: 'SELLER'
   id: string
+  publicId: string | null
   storeName: string
   storeSlug: string
   storeDescription: string | null

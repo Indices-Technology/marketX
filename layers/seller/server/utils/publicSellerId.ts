@@ -65,6 +65,16 @@ function randomCode(len: number): string {
   return s
 }
 
+/**
+ * Collapse a public seller ID to bare, upper-cased alphanumerics for
+ * separator-insensitive lookup: "mx-pla-vdkr", "MX PLA VDKR" and "mxplavdkr"
+ * all normalize to "MXPLAVDKR". Used for both the stored shadow column and the
+ * incoming search query, so any way a customer types the ID off a card matches.
+ */
+export function normalizePublicId(input?: string | null): string {
+  return (input ?? '').replace(/[^a-z0-9]/gi, '').toUpperCase()
+}
+
 /** 3-letter region code for a Nigerian state (empty string when unknown). */
 export function stateCode(state?: string | null): string {
   if (!state) return ''

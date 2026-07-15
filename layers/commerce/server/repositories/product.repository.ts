@@ -66,6 +66,7 @@ const productInclude = {
   seller: {
     select: {
       id: true,
+      publicId: true, // shareable Seller ID — shown on product share cards + OG
       store_slug: true,
       store_logo: true,
       store_name: true,

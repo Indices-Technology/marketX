@@ -55,7 +55,7 @@
         <div class="min-w-0 flex-1 pb-1">
           <div class="flex items-center gap-1.5">
             <h2
-              class="truncate font-display text-lg font-bold text-gray-900 dark:text-white"
+              class="min-w-0 truncate font-display text-lg font-bold text-gray-900 dark:text-white"
             >
               {{ seller.store_name }}
             </h2>
@@ -79,7 +79,7 @@
       <!-- Seller ID + CAC -->
       <div class="mt-3 flex flex-wrap items-center gap-2">
         <button
-          class="group inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-2.5 py-1 text-[12px] font-bold text-gray-800 transition-colors hover:bg-gray-200 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700"
+          class="group inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-gray-100 px-2.5 py-1 text-[12px] font-bold text-gray-800 transition-colors hover:bg-gray-200 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700"
           :title="`Copy ${seller.publicId}`"
           @click="emit('copy', seller.publicId, 'Seller ID')"
         >
@@ -201,17 +201,17 @@
             Scan or visit
           </p>
           <button
-            class="mt-0.5 flex max-w-full items-center gap-1 text-[13px] font-bold text-brand"
+            class="mt-0.5 flex max-w-full items-start gap-1 text-left text-[13px] font-bold text-brand"
             :title="`Copy ${displayUrl}`"
             @click="emit('copy', shareUrl, 'Link')"
           >
-            <span class="truncate">{{ displayUrl }}</span>
+            <span class="break-all">{{ displayUrl }}</span>
             <Icon
               :name="
                 copied === 'Link' ? 'solar:check-circle-bold' : 'solar:copy-linear'
               "
               size="13"
-              class="shrink-0 capture-hide"
+              class="mt-0.5 shrink-0 capture-hide"
             />
           </button>
           <p class="mt-1 text-[10px] text-gray-400 dark:text-neutral-500">

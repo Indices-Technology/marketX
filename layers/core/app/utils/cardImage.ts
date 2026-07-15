@@ -82,6 +82,61 @@ export function storeCardImage(
   return `https://res.cloudinary.com/${cloud}/image/upload/${canvas}/${layers.join('/')}/${base}.jpg`
 }
 
+export interface CardImageProduct {
+  title?: string | null
+  /** Product cover URL — the Cloudinary photo is used as the base when possible. */
+  imageUrl?: string | null
+  /** Pre-formatted price, e.g. "₦45,000". */
+  priceText?: string | null
+  sellerName?: string | null
+  sellerPublicId?: string | null
+}
+
+/**
+ * Product card image for rich link previews — mirrors storeCardImage but leads
+ * with the product photo, price and title. Same graceful fallback: a Cloudinary
+ * cover is used as the (darkened) base; anything else → a solid brand canvas.
+ */
+export function productCardImage(
+  product: CardImageProduct,
+  opts: CardImageOpts,
+): string {
+  const { cloud, displayUrl, width: w, height: h } = opts
+  if (!cloud) return ''
+
+  const pad = Math.round(w * 0.06)
+  const cpid = bannerPublicId(product?.imageUrl)
+  const base = cpid || 'sample'
+  const canvas = cpid
+    ? `w_${w},h_${h},c_fill,e_brightness:-45,q_auto`
+    : `w_${w},h_${h},c_fill,e_colorize:100,co_rgb:0f172a,q_auto`
+
+  const title = txt(product?.title || 'Product', 60)
+  const price = txt(product?.priceText || '')
+  const seller = txt(
+    [product?.sellerName, product?.sellerPublicId].filter(Boolean).join(' · '),
+    48,
+  )
+  const link = txt(displayUrl)
+
+  const priceSize = Math.round(w * 0.068)
+  const titleSize = Math.round(w * 0.05)
+  const smallSize = Math.round(w * 0.027)
+
+  const layers = [
+    price &&
+      `co_rgb:f43f5e,l_text:Arial_${priceSize}_bold:${price}/fl_layer_apply,g_north_west,x_${pad},y_${Math.round(h * 0.28)}`,
+    `co_white,l_text:Arial_${titleSize}_bold:${title},c_fit,w_${w - 2 * pad}/fl_layer_apply,g_north_west,x_${pad},y_${Math.round(h * 0.42)}`,
+    seller &&
+      `co_white,l_text:Arial_${smallSize}:${seller}/fl_layer_apply,g_north_west,x_${pad},y_${Math.round(h * 0.62)}`,
+    link &&
+      `co_white,l_text:Arial_${smallSize}:${link}/fl_layer_apply,g_south_west,x_${pad},y_${pad}`,
+    `co_rgb:f43f5e,l_text:Arial_${Math.round(w * 0.032)}_bold:MarketX/fl_layer_apply,g_south_east,x_${pad},y_${pad}`,
+  ].filter(Boolean)
+
+  return `https://res.cloudinary.com/${cloud}/image/upload/${canvas}/${layers.join('/')}/${base}.jpg`
+}
+
 /** The share/download templates. */
 export const CARD_TEMPLATES = [
   { id: 'og', label: 'Link preview', width: 1200, height: 630 },

@@ -411,7 +411,8 @@ const showQuickProductModal = ref(false)
 const showSearchOverlay = ref(false)
 const showNotificationOverlay = ref(false)
 const { isOpen: showAI } = useDassaPanel()
-const showCart = ref(false)
+// Shared so pages (e.g. product page "View cart") can open the drawer too.
+const { isOpen: showCart } = useCartDrawer()
 const dismissSellerBanner = ref(false)
 
 const openPostUploader = () => {

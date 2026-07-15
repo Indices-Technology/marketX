@@ -552,23 +552,24 @@
             }}
           </p>
 
-          <!-- Qty + Add to cart -->
-          <div class="flex items-center gap-3">
+          <!-- Qty + Add to Cart + Buy Now + View Cart — one row where it fits,
+               wraps to 2 rows on narrow screens so labels never squish. -->
+          <div class="flex flex-wrap items-stretch gap-2">
             <div
-              class="flex items-center gap-1 rounded-xl border border-gray-200 dark:border-neutral-700"
+              class="flex shrink-0 items-center gap-0.5 rounded-xl border border-gray-200 dark:border-neutral-700"
             >
               <button
-                class="touch-manipulation px-3 py-3 text-lg font-bold text-gray-600 hover:text-brand dark:text-neutral-400"
+                class="touch-manipulation px-2.5 py-3 text-lg font-bold text-gray-600 hover:text-brand dark:text-neutral-400"
                 @click="qty = Math.max(1, qty - 1)"
               >
                 −
               </button>
               <span
-                class="w-8 text-center text-sm font-bold text-gray-900 dark:text-neutral-100"
+                class="w-6 text-center text-sm font-bold text-gray-900 dark:text-neutral-100"
                 >{{ qty }}</span
               >
               <button
-                class="touch-manipulation px-3 py-3 text-lg font-bold text-gray-600 hover:text-brand dark:text-neutral-400"
+                class="touch-manipulation px-2.5 py-3 text-lg font-bold text-gray-600 hover:text-brand dark:text-neutral-400"
                 @click="qty++"
               >
                 +
@@ -576,7 +577,7 @@
             </div>
             <BaseButton
               variant="primary"
-              class="flex-1 touch-manipulation py-3.5"
+              class="flex-1 touch-manipulation"
               :loading="addingToCart"
               :disabled="
                 addingToCart ||
@@ -593,14 +594,42 @@
               />
               {{ addingToCart ? 'Adding…' : 'Add to Cart' }}
             </BaseButton>
+            <BaseButton
+              variant="primary"
+              class="flex-1 touch-manipulation"
+              :loading="buyingNow"
+              :disabled="
+                buyingNow ||
+                addingToCart ||
+                !selectedVariantId ||
+                selectedVariant?.stock === 0
+              "
+              @click="buyNow"
+            >
+              <Icon
+                v-if="!buyingNow"
+                name="solar:bag-check-linear"
+                size="16"
+                class="mr-1"
+              />
+              {{ buyingNow ? 'Starting…' : 'Buy Now' }}
+            </BaseButton>
+            <BaseButton
+              variant="secondary"
+              class="flex-1 touch-manipulation"
+              @click="openCart()"
+            >
+              <Icon name="solar:cart-large-2-linear" size="16" class="mr-1" />
+              View Cart<span v-if="cartCount > 0"> ({{ cartCount }})</span>
+            </BaseButton>
           </div>
 
-          <!-- Share / Copy link / Ask Dasah -->
-          <div class="flex gap-2">
+          <!-- Copy link + Share as card (one row) -->
+          <div class="grid grid-cols-2 gap-2">
             <BaseButton
               variant="secondary"
               size="sm"
-              class="flex-1 touch-manipulation"
+              class="touch-manipulation"
               @click="copyLink"
             >
               <Icon
@@ -613,20 +642,11 @@
             <BaseButton
               variant="secondary"
               size="sm"
-              class="flex-1 touch-manipulation"
-              @click="handleShare"
+              class="touch-manipulation"
+              @click="showCard = true"
             >
-              <Icon name="solar:share-linear" size="15" class="mr-1" />
-              Share
-            </BaseButton>
-            <BaseButton
-              variant="secondary"
-              size="sm"
-              class="touch-manipulation px-3"
-              title="Ask Dasah about this product"
-              @click="askDasah"
-            >
-              <Icon name="solar:programming-linear" size="16" />
+              <Icon name="solar:card-2-linear" size="16" class="mr-1.5" />
+              Share as card
             </BaseButton>
           </div>
 
@@ -933,12 +953,20 @@
           {{ addingToCart ? 'Adding…' : 'Add to Cart' }}
         </BaseButton>
       </div>
+
+      <!-- Shareable product card (affiliate-aware link + QR) -->
+      <ProductShareCardModal
+        v-if="product"
+        :open="showCard"
+        :product="product"
+        @close="showCard = false"
+      />
     </div>
   </HomeLayout>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import DOMPurify from 'dompurify'
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
@@ -946,6 +974,7 @@ import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 import VideoPlayer from '~~/layers/core/app/components/VideoPlayer.vue'
 import ProductReviews from '~~/layers/commerce/app/components/ProductReviews.vue'
 import ProductCardMini from '~~/layers/commerce/app/components/ProductCardMini.vue'
+import ProductShareCardModal from '~~/layers/commerce/app/components/product-card/ProductShareCardModal.vue'
 import { useRecentlyViewed } from '~~/layers/commerce/app/composables/useRecentlyViewed'
 import { useChatApi } from '~~/layers/profile/app/services/chat.api'
 import { useProductApi } from '~~/layers/commerce/app/services/product.api'
@@ -962,8 +991,6 @@ import {
 import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { useViewTracker } from '~~/layers/core/app/composables/useViewTracker'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
-import { useDassaPanel } from '~~/layers/ai/app/composables/useDassaPanel'
-import { useShareModal } from '~~/layers/social/app/composables/useShareModal'
 import { notify } from '@kyvg/vue3-notification'
 import type { Category } from '~~/shared/types/category'
 import type { Tag } from '~~/shared/types/tag'
@@ -977,18 +1004,26 @@ const slug = computed(() => route.params.slug as string)
 const profileStore = useProfileStore()
 const { captureAffiliateRef, affiliateCode, isEnrolled, fetchAffiliateStatus } =
   useAffiliate()
-const { openWith: openDassaWith } = useDassaPanel()
-const { openShare } = useShareModal()
+const { open: openCart } = useCartDrawer()
 const { setProductPage } = useSeo()
 const { trackProduct } = useViewTracker()
 
+// The mobile sticky buy bar lives at the bottom; flag it so the floating AI
+// button lifts above the bar instead of overlapping its Add-to-Cart button.
+const mobileBuyBar = useState('mobile-buy-bar', () => false)
+
 onMounted(() => {
   captureAffiliateRef()
+  mobileBuyBar.value = true
   // 401 for guests — only fetch when logged in
   if (profileStore.isLoggedIn) fetchAffiliateStatus().catch(() => {})
 })
+onBeforeUnmount(() => {
+  mobileBuyBar.value = false
+})
 
 // ── Data fetch ───────────────────────────────────────────────────────────────
+// Interactive page data — client-only for fast paint / SPA nav (unchanged).
 const { data, pending, status } = useLazyAsyncData(
   `product-${slug.value}`,
   () => useProductApi().getProductBySlug(slug.value),
@@ -996,13 +1031,31 @@ const { data, pending, status } = useLazyAsyncData(
 )
 const product = computed(() => data.value?.data ?? null)
 
+// SSR-resolved copy — so social scrapers and search crawlers (no JS) receive the
+// product's OG meta in the server HTML. Mirrors the store page's `store-seo-*`
+// fetch. Prefer the live client product once it has loaded.
+const { data: seoData } = await useAsyncData(
+  `product-seo-${slug.value}`,
+  () =>
+    useProductApi()
+      .getProductBySlug(slug.value)
+      .then((r: any) => r?.data ?? null)
+      .catch(() => null),
+)
+const seoProduct = computed(() => product.value ?? seoData.value ?? null)
+
 // SEO — registered once in setup(); getters keep it reactive as the product loads.
 setProductPage(() => ({
-  title: product.value?.title,
-  description: product.value?.description,
-  imageUrl: product.value?.media?.[0]?.url,
-  slug: product.value?.slug,
-  sellerName: product.value?.seller?.store_name,
+  title: seoProduct.value?.title,
+  description: seoProduct.value?.description,
+  // First non-video frame — a video URL can't seed the Cloudinary card image.
+  imageUrl: (seoProduct.value?.media ?? []).find(
+    (m: any) => m?.type !== 'VIDEO' && !m?.isBgMusic,
+  )?.url,
+  slug: seoProduct.value?.slug,
+  price: seoProduct.value?.price,
+  sellerName: seoProduct.value?.seller?.store_name,
+  sellerPublicId: (seoProduct.value?.seller as any)?.publicId,
 }))
 
 // ── Related discovery: more from this trader / market ────────────────────────
@@ -1197,7 +1250,8 @@ const safeDescription = computed(() => {
 // ── Cart ─────────────────────────────────────────────────────────────────────
 const qty = ref(1)
 const addingToCart = ref(false)
-const { addToCart } = useCart()
+const buyingNow = ref(false)
+const { addToCart, cartCount } = useCart()
 
 const handleAddToCart = async () => {
   if (!selectedVariantId.value) return
@@ -1210,9 +1264,25 @@ const handleAddToCart = async () => {
   }
 }
 
+// Buy Now — add the selection to the cart, then go straight to checkout so the
+// buyer skips the cart drawer. Failures surface via useCart's error handling.
+const buyNow = async () => {
+  if (!selectedVariantId.value) return
+  buyingNow.value = true
+  try {
+    await addToCart(selectedVariantId.value, qty.value)
+    await navigateTo('/checkout')
+  } catch {
+    notify({ type: 'error', text: 'Could not start checkout. Please try again.' })
+  } finally {
+    buyingNow.value = false
+  }
+}
+
 // ── Share ────────────────────────────────────────────────────────────────────
 const copied = ref(false)
 const copiedAffiliate = ref(false)
+const showCard = ref(false) // shareable product-card modal
 
 const baseProductUrl = computed(() =>
   import.meta.client
@@ -1241,18 +1311,6 @@ const copyAffiliateLink = async () => {
   setTimeout(() => {
     copiedAffiliate.value = false
   }, 2000)
-}
-
-// Routes through HomeLayout's ShareModal for consistent UX
-const handleShare = () =>
-  openShare(baseProductUrl.value, product.value?.title ?? '')
-
-// ── Ask Dasah ────────────────────────────────────────────────────────────────
-const askDasah = () => {
-  if (!product.value) return
-  openDassaWith(
-    `I'm looking at "${product.value.title}" priced at ${formatProductPrice(discountedPrice.value, 'NGN')}. Can you tell me about it and is it worth buying?`,
-  )
 }
 
 // ── SEO ──────────────────────────────────────────────────────────────────────
