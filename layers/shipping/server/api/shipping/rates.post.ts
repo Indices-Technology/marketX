@@ -176,14 +176,18 @@ export default defineEventHandler(async (event) => {
             ? `${q.carrierId}-${q.rateRef}`
             : `${q.carrierId}-${q.serviceLevel}`,
           carrier: q.carrierName,
-          service:
-            q.serviceLevel === 'economy'
+          service: q.payOnDelivery
+            ? 'Pay on delivery'
+            : q.serviceLevel === 'economy'
               ? 'Pickup'
               : q.serviceLevel === 'express'
                 ? 'Express'
                 : 'Delivery',
-          amountNGN: q.buyerPriceMinor / 100, // major NGN
+          amountNGN: q.buyerPriceMinor / 100, // major NGN (0 for pay-on-delivery)
           insuranceNGN: q.insuranceMinor ? q.insuranceMinor / 100 : undefined,
+          payOnDelivery: q.payOnDelivery,
+          codAmountNGN:
+            q.codAmountMinor != null ? q.codAmountMinor / 100 : undefined,
           estimatedDays: q.etaText,
           provider: q.carrierId as IShipmentRate['provider'],
         })
@@ -221,6 +225,9 @@ export default defineEventHandler(async (event) => {
         s: body.storeSlug,
         a: Math.round(r.amountNGN * 100),
         c: r.provider,
+        ...(r.codAmountNGN != null
+          ? { d: Math.round(r.codAmountNGN * 100) }
+          : {}),
       })
     }
   }

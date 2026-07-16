@@ -5,6 +5,28 @@ import { buyerWalletRepository } from '../repositories/buyer-wallet.repository'
 import { notificationQueue } from '~~/server/queues/notification.queue'
 import { emailQueue } from '~~/server/queues/email.queue'
 import { buildFundsReleasedEmail } from '~~/server/utils/email/emailService'
+import { verifyShippingQuote } from '~~/layers/shipping/server/utils/quoteToken'
+
+/**
+ * True when this order's shipping is fulfilled by the seller themselves
+ * (self / own-rider delivery or in-person pickup) rather than a real carrier.
+ * For self-delivery the seller IS the courier, so the delivery fee is theirs;
+ * for a carrier (GIG) it is owed to the carrier and must NOT be credited here.
+ *
+ * Detected from the signed quote token's provider claim (tamper-proof), with a
+ * fallback to the persisted carrier name for legacy orders placed before the
+ * token carried the provider id.
+ */
+function isSelfDeliveryOrder(shippingBreakdown: unknown): boolean {
+  const bd = shippingBreakdown as
+    | { token?: string; carrier?: string }
+    | null
+    | undefined
+  if (!bd) return false
+  const claims = verifyShippingQuote(bd.token)
+  if (claims?.c) return claims.c === 'self'
+  return /^(seller delivery|pickup from seller)/i.test(String(bd.carrier ?? ''))
+}
 
 interface BankAccount {
   type?: string
@@ -26,6 +48,11 @@ export const walletService = {
       where: { orderId, type: { in: ['CREDIT_PENDING', 'CREDIT'] } },
     })
     if (existing) return
+
+    const order = await prisma.orders.findUnique({
+      where: { id: orderId },
+      select: { shippingCost: true, shippingBreakdown: true },
+    })
 
     const items = await prisma.orderItem.findMany({
       where: { orderId },
@@ -66,6 +93,27 @@ export const walletService = {
         description: `Order #${orderId} — payment held pending delivery`,
         orderId,
       })
+    }
+
+    // Self-delivery: the seller is the courier, so the delivery fee they set is
+    // theirs — credit it alongside the goods (held pending, released on delivery
+    // with the same rules). For a real carrier the fee is owed to the carrier,
+    // so it is deliberately NOT credited here. Orders are one-seller, so the
+    // whole shippingCost belongs to that single seller.
+    const shippingFee = order?.shippingCost ?? 0
+    if (shippingFee > 0 && isSelfDeliveryOrder(order?.shippingBreakdown)) {
+      const sellerId = items.find((i) => i.variant.product.seller?.id)?.variant
+        .product.seller?.id
+      if (sellerId) {
+        const wallet = await walletRepository.getOrCreateWallet(sellerId)
+        await walletRepository.incrementPendingBalance(wallet.id, shippingFee)
+        await walletRepository.createTransaction(wallet.id, {
+          amount: shippingFee,
+          type: 'CREDIT_PENDING',
+          description: `Order #${orderId} — delivery fee (self-shipping) held pending delivery`,
+          orderId,
+        })
+      }
     }
   },
 

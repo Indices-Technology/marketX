@@ -11,6 +11,9 @@ const schema = z.object({
   status: z.enum(['CONFIRMED', 'SHIPPED', 'DELIVERED', 'CANCELLED']),
   trackingNumber: z.string().optional(),
   shipper: z.string().optional(),
+  // GIG Waybill entered after a drop-off. Unlike trackingNumber (display only)
+  // this drives the carrier poller, so it's persisted to `waybill`.
+  waybill: z.string().optional(),
 })
 
 export default defineEventHandler(async (event) => {
@@ -72,6 +75,7 @@ export default defineEventHandler(async (event) => {
       data: {
         ...(statusChanging ? { status: body.status } : {}),
         ...(body.trackingNumber ? { trackingNumber: body.trackingNumber } : {}),
+        ...(body.waybill ? { waybill: body.waybill } : {}),
         ...(body.shipper ? { shipper: body.shipper } : {}),
         // Record when first shipped so auto-release cron can use it
         ...(body.status === 'SHIPPED' && statusChanging ? { shippedAt: new Date() } : {}),

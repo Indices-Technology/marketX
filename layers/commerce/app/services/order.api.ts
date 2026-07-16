@@ -63,7 +63,7 @@ export class OrderApiClient extends BaseApiClient {
   }
   async updateOrderStatus(
     id: number,
-    body: { status: string; trackingNumber?: string; shipper?: string },
+    body: { status: string; trackingNumber?: string; shipper?: string; waybill?: string },
   ) {
     return this.request(`/api/commerce/orders/${id}/status`, {
       method: 'PATCH',
@@ -143,6 +143,32 @@ export class OrderApiClient extends BaseApiClient {
     return this.request('/api/shipping/book', {
       method: 'POST',
       body: { orderId },
+    })
+  }
+  /** GIG centres the seller can drop this order's parcel at (nearest-first). */
+  async getDropoffCentres(orderId: number): Promise<{
+    success: boolean
+    data: Array<{ id: number; name: string; code: string; address?: string }>
+  }> {
+    return this.request(`/api/shipping/dropoff-centres?orderId=${orderId}`, {
+      method: 'GET',
+    })
+  }
+  /** Seller books a GIG drop-off ("I'll take it to a GIG centre"). Idempotent.
+   *  `dropoffCentreId` is the centre the seller picked (omit → nearest). */
+  async bookDropoff(orderId: number, dropoffCentreId?: number): Promise<{
+    success: boolean
+    data: {
+      ok: boolean
+      tempCode: string
+      centre: { id: number; name: string; code: string; address?: string } | null
+      carrierId: string
+      alreadyBooked: boolean
+    }
+  }> {
+    return this.request('/api/shipping/book-dropoff', {
+      method: 'POST',
+      body: { orderId, ...(dropoffCentreId ? { dropoffCentreId } : {}) },
     })
   }
   /** TEST (admin): inject a carrier status to drive an order through the loop. */

@@ -257,10 +257,15 @@ export const orderService = {
         // client amount (e.g. ₦0) can't stick. Fall back to the client amount
         // only when there's no token yet (legacy clients) — logged as unverified.
         let groupShipping: number
+        // Cash-on-delivery self-shipping: fee the buyer pays the rider in cash
+        // (kobo). Re-derived from the signed token so it's the real amount, not a
+        // client value. NOT added to shippingCost — the platform never collects it.
+        let codAmount = 0
         if (hasBreakdown) {
           const claims = verifyShippingQuote(bd?.token)
           if (claims && claims.s === storeSlug) {
             groupShipping = claims.a
+            codAmount = claims.d ?? 0
           } else {
             groupShipping = bd?.amount ?? 0
             if (bd?.token || groupShipping > 0)
@@ -276,6 +281,12 @@ export const orderService = {
         const shippingZone = bd?.carrier
           ? `${bd.carrier} ${bd.service ?? ''}`.trim()
           : undefined
+        // Record the cash-on-delivery fee alongside the chosen option so buyer &
+        // seller order views can show "₦X due to the rider on delivery".
+        const storedBd =
+          bd && codAmount > 0
+            ? { ...bd, codAmountMinor: codAmount, payOnDelivery: true }
+            : bd
 
         const ord = await tx.orders.create({
           data: {
@@ -293,7 +304,9 @@ export const orderService = {
             shippingCost: groupShipping,
             ...(shippingZone ? { shippingZone } : {}),
             ...(bd?.estimatedDays ? { estimatedDays: bd.estimatedDays } : {}),
-            ...(bd ? { shippingBreakdown: bd as unknown as object } : {}),
+            ...(storedBd
+              ? { shippingBreakdown: storedBd as unknown as object }
+              : {}),
             paymentMethod: paymentMethod || 'card',
             ...(affiliateUserId ? { affiliateUserId } : {}),
             ...(groupCut ? { affiliateCut: groupCut } : {}),

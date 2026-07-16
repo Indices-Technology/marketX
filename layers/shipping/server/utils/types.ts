@@ -74,6 +74,14 @@ export interface SellerShippingConfig {
   /** Offer in-person pickup (free). */
   pickupEnabled?: boolean
   pickupNote?: string
+  /**
+   * Collect the delivery fee as CASH ON DELIVERY — the buyer pays the rider
+   * directly on arrival instead of prepaying online. When true the self-delivery
+   * option is charged ₦0 online and the fee travels as a "cash due to the rider"
+   * amount; the platform never touches it (no wallet credit, no buyer protection
+   * on the fee). The GOODS are still escrowed as normal.
+   */
+  payDriverEnabled?: boolean
   /** Delivery ETA copy, e.g. "2–4 days (seller delivered)". */
   etaText?: string
   /** Optional per-zone flat rates keyed by zone code ('Z1'..'Z4'), minor units. */
@@ -132,6 +140,13 @@ export interface Quote {
   listMinor: number
   /** What the buyer pays after the platform discount dial is applied. */
   buyerPriceMinor: number
+  /**
+   * Cash-on-delivery self-shipping: the buyer pays the rider in cash on arrival.
+   * `buyerPriceMinor` is 0 (nothing charged online); this carries the cash amount
+   * the buyer owes the rider. The platform neither collects nor credits it.
+   */
+  payOnDelivery?: boolean
+  codAmountMinor?: number
   currency: string
   etaText: string
   etaMinHours?: number

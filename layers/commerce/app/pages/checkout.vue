@@ -181,6 +181,19 @@
               >
             </div>
           </div>
+
+          <!-- Pay-on-delivery heads-up: cash the buyer owes the rider on arrival,
+               separate from the online total above. -->
+          <div
+            v-if="codDeliveryMajor > 0"
+            class="flex items-center justify-between rounded-lg bg-amber-50 px-3 py-2 text-[12px] text-amber-700 dark:bg-amber-500/10 dark:text-amber-400"
+          >
+            <span class="flex items-center gap-1.5">
+              <Icon name="solar:wad-of-money-linear" size="14" />
+              Cash for the rider on delivery
+            </span>
+            <span class="font-semibold">+ {{ fmtP(codDeliveryMajor) }}</span>
+          </div>
         </div>
 
         <CheckoutPaymentMethod
@@ -482,6 +495,15 @@ const shippingDisplay = computed(() => {
   const c = shippingCostMajor.value
   return c === 0 ? 'Free' : fmtP(c)
 })
+
+// Total delivery cash the buyer pays riders on arrival (pay-on-delivery
+// self-shipping). Shown as a heads-up — it is NOT part of the online charge.
+const codDeliveryMajor = computed((): number =>
+  sellerGroups.value.reduce((sum, g) => {
+    const sel = shipBySeller[g.slug]?.selected
+    return sum + (sel?.payOnDelivery ? sel.codAmountNGN ?? 0 : 0)
+  }, 0),
+)
 
 /** Per-seller shipping breakdown — sent with the order (Phase 2 splits on this). */
 const shippingBreakdown = computed(() =>
