@@ -41,16 +41,67 @@ function notifyBuyerShipped(
     },
     { dedupeKey: `ship:${orderId}:SHIPPED` },
   )
-  prisma.profile
-    .findUnique({ where: { id: buyerUserId }, select: { email: true } })
-    .then((b) => {
-      if (!b?.email) return
+  // Rich shipped email (line items + totals + ship-to + track button).
+  prisma.orders
+    .findUnique({
+      where: { id: orderId },
+      select: {
+        totalAmount: true,
+        shippingCost: true,
+        name: true,
+        address: true,
+        county: true,
+        shipState: true,
+        country: true,
+        shipPhone: true,
+        user: { select: { email: true } },
+        orderItem: {
+          select: {
+            quantity: true,
+            price: true,
+            variant: {
+              select: {
+                product: {
+                  select: {
+                    title: true,
+                    media: {
+                      take: 1,
+                      where: { isBgMusic: false },
+                      select: { url: true },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    })
+    .then((order) => {
+      const email = order?.user?.email
+      if (!order || !email) return
       const { subject, html, text } = buildOrderStatusEmail(orderId, 'SHIPPED', {
         trackingNumber: waybill ?? undefined,
         shipper: shipper ?? undefined,
+        orderUrl: `${useRuntimeConfig().public.baseURL}/buyer/orders/${orderId}`,
+        items: order.orderItem.map((oi) => ({
+          title: oi.variant?.product?.title ?? 'Item',
+          quantity: oi.quantity,
+          priceKobo: oi.price,
+          image: oi.variant?.product?.media?.[0]?.url,
+        })),
+        itemsTotalKobo: order.totalAmount,
+        shippingKobo: order.shippingCost,
+        shipTo: {
+          name: order.name,
+          address: [order.address, order.county, order.shipState, order.country]
+            .filter(Boolean)
+            .join(', '),
+          phone: order.shipPhone ?? undefined,
+        },
       })
       emailQueue.enqueue(
-        { to: b.email, subject, html, text, type: 'GENERAL' },
+        { to: email, subject, html, text, type: 'GENERAL' },
         { dedupeKey: `ship-email:${orderId}:SHIPPED` },
       )
     })

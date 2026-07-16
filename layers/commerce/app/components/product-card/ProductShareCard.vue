@@ -79,10 +79,12 @@
         </button>
       </div>
 
-      <!-- Affiliate earn strip — only when the viewer's link is attributed. -->
+      <!-- Affiliate earn strip — the sharer's own incentive. Shown in their live
+           preview only; `capture-hide` keeps it OUT of the downloaded/shared card
+           so the public never sees the commission line. -->
       <div
         v-if="affiliateActive && commissionText"
-        class="mt-3 flex items-center gap-2 rounded-xl bg-brand/5 px-3 py-2 dark:bg-brand/10"
+        class="capture-hide mt-3 flex items-center gap-2 rounded-xl bg-brand/5 px-3 py-2 dark:bg-brand/10"
       >
         <Icon name="solar:hand-money-linear" size="16" class="shrink-0 text-brand" />
         <p class="text-[12px] font-semibold text-brand">
@@ -123,6 +125,22 @@
             Powered by MarketX
           </p>
         </div>
+      </div>
+
+      <!-- Public affiliate invite — subtle, appears on the shared card so
+           recipients know they can share & earn too. (Not the owner's private
+           commission line above, which is capture-hidden.) -->
+      <div
+        class="mt-3 flex items-center justify-center gap-1.5 border-t border-gray-100 pt-2.5 dark:border-neutral-800"
+      >
+        <Icon
+          name="solar:hand-money-linear"
+          size="12"
+          class="shrink-0 text-gray-400 dark:text-neutral-500"
+        />
+        <p class="text-[10px] font-medium text-gray-400 dark:text-neutral-500">
+          Share products like this &amp; earn — become a MarketX affiliate
+        </p>
       </div>
     </div>
   </div>

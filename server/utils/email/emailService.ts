@@ -396,62 +396,178 @@ p{font-size:15px;color:#333;line-height:1.6;margin:0 0 12px}
   return { subject, html, text: `Account Update\n\n${detail}` }
 }
 
+export interface OrderEmailItem {
+  title: string
+  quantity: number
+  priceKobo: number
+  /** Absolute image URL (http(s)); anything else is skipped to avoid broken images. */
+  image?: string
+}
+
+export interface OrderStatusEmailOptions {
+  trackingNumber?: string
+  shipper?: string
+  appName?: string
+  /** Link to the buyer's order page — powers the Track / View button. */
+  orderUrl?: string
+  items?: OrderEmailItem[]
+  itemsTotalKobo?: number
+  shippingKobo?: number
+  shipTo?: { name?: string; address?: string; phone?: string }
+}
+
+const ngn = (kobo: number): string =>
+  `₦${(Math.round(kobo) / 100).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+
+function orderItemsHtml(items: OrderEmailItem[]): string {
+  const rows = items
+    .map((it) => {
+      const img =
+        it.image && /^https?:\/\//.test(it.image)
+          ? `<td width="52" style="padding:0 12px 0 0;vertical-align:top"><img src="${it.image}" width="48" height="48" alt="" style="width:48px;height:48px;border-radius:8px;object-fit:cover;background:#f1f1f1;display:block"></td>`
+          : ''
+      return `<tr>
+${img}
+<td style="vertical-align:top;padding:8px 0">
+  <div style="font-size:14px;color:#111;font-weight:600;line-height:1.3">${it.title}</div>
+  <div style="font-size:12px;color:#888;margin-top:2px">Qty ${it.quantity}</div>
+</td>
+<td style="vertical-align:top;padding:8px 0;text-align:right;font-size:14px;color:#111;white-space:nowrap">${ngn(it.priceKobo)}</td>
+</tr>`
+    })
+    .join('')
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #eee;border-bottom:1px solid #eee;margin:8px 0 4px">${rows}</table>`
+}
+
 export function buildOrderStatusEmail(
   orderId: number,
   status: 'CONFIRMED' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED',
-  options: { trackingNumber?: string; shipper?: string; appName?: string } = {},
+  options: OrderStatusEmailOptions = {},
 ): { subject: string; html: string; text: string } {
-  const { trackingNumber, shipper, appName = 'MarketX' } = options
+  const {
+    trackingNumber,
+    shipper,
+    appName = 'MarketX',
+    orderUrl,
+    items,
+    itemsTotalKobo,
+    shippingKobo,
+    shipTo,
+  } = options
+
   const info: Record<
     string,
-    { emoji: string; headline: string; detail: string }
+    { emoji: string; headline: string; detail: string; cta: string }
   > = {
     CONFIRMED: {
       emoji: '✅',
       headline: 'Order confirmed',
       detail:
         'The seller has confirmed your order and is preparing it for shipment.',
+      cta: 'View order',
     },
     SHIPPED: {
       emoji: '📦',
-      headline: 'Order shipped',
-      detail: `Your order has been shipped${trackingNumber ? ` · Tracking: ${trackingNumber}${shipper ? ` via ${shipper}` : ''}` : ''}. Funds release to the seller in 7 days unless you confirm delivery sooner.`,
+      headline: 'Your order is on its way',
+      detail: trackingNumber
+        ? `It's been shipped${shipper ? ` with ${shipper}` : ''}. Track its progress any time — and funds release to the seller in 7 days unless you confirm delivery sooner.`
+        : `It's been shipped. Funds release to the seller in 7 days unless you confirm delivery sooner.`,
+      cta: 'Track order',
     },
     DELIVERED: {
       emoji: '🎉',
-      headline: 'Order delivered',
-      detail: 'Your order has been marked as delivered. We hope you love it!',
+      headline: 'Delivered',
+      detail:
+        'Your order has been marked as delivered. If it arrived safely, confirm receipt to release the seller — we hope you love it!',
+      cta: 'View order',
     },
     CANCELLED: {
       emoji: '❌',
       headline: 'Order cancelled',
       detail:
-        'The seller has cancelled your order. If you were charged, please contact support.',
+        'The seller has cancelled your order. If you were charged, the refund is on its way — contact support if you have questions.',
+      cta: 'View order',
     },
   }
-  const { emoji, headline, detail } = info[status] ?? info.CONFIRMED!
+  const { emoji, headline, detail, cta } = info[status] ?? info.CONFIRMED!
   const subject = `${emoji} Order #${orderId} — ${headline}`
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
-body{font-family:Arial,sans-serif;background:#f4f4f4;margin:0;padding:0}
-.wrap{max-width:480px;margin:40px auto;background:#fff;border-radius:12px;overflow:hidden}
-.hd{background:#e31837;padding:28px 32px;text-align:center}
-.hd h1{color:#fff;margin:0;font-size:20px}
-.bd{padding:32px}
-.badge{display:inline-block;font-size:13px;background:#fef3c7;color:#92400e;padding:4px 10px;border-radius:20px;margin-bottom:16px}
-p{font-size:15px;color:#333;line-height:1.6;margin:0 0 12px}
-.ft{text-align:center;padding:16px;font-size:12px;color:#aaa}
+
+  const trackRow =
+    trackingNumber && status === 'SHIPPED'
+      ? `<p style="font-size:13px;color:#555;margin:0 0 16px"><strong>${shipper || 'Carrier'}</strong> · Tracking ${trackingNumber}</p>`
+      : ''
+
+  const button = orderUrl
+    ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:4px 0 20px"><tr><td style="border-radius:8px;background:#e31837"><a href="${orderUrl}" style="display:inline-block;padding:12px 28px;font-size:15px;font-weight:600;color:#fff;text-decoration:none;border-radius:8px">${cta} →</a></td></tr></table>`
+    : ''
+
+  const itemsBlock = items?.length ? orderItemsHtml(items) : ''
+
+  const totalsBlock = (() => {
+    if (itemsTotalKobo == null && shippingKobo == null) return ''
+    const subtotal = itemsTotalKobo ?? 0
+    const shipping = shippingKobo ?? 0
+    const total = subtotal + shipping
+    const line = (label: string, val: string, bold = false) =>
+      `<tr><td style="padding:2px 0;font-size:13px;color:${bold ? '#111' : '#666'};${bold ? 'font-weight:700' : ''}">${label}</td><td style="padding:2px 0;text-align:right;font-size:13px;color:${bold ? '#111' : '#666'};${bold ? 'font-weight:700' : ''}">${val}</td></tr>`
+    return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:8px 0 4px">
+${itemsTotalKobo != null ? line('Subtotal', ngn(subtotal)) : ''}
+${shippingKobo != null ? line('Shipping', shipping === 0 ? 'Free' : ngn(shipping)) : ''}
+${line('Total', ngn(total), true)}
+</table>`
+  })()
+
+  const shipBlock = shipTo?.address
+    ? `<div style="margin-top:16px;padding-top:16px;border-top:1px solid #eee">
+<div style="font-size:12px;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px">Ship to</div>
+<div style="font-size:14px;color:#111;font-weight:600">${shipTo.name ?? ''}</div>
+<div style="font-size:13px;color:#555;line-height:1.5">${shipTo.address}</div>
+${shipTo.phone ? `<div style="font-size:13px;color:#555">${shipTo.phone}</div>` : ''}
+</div>`
+    : ''
+
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>
+body{font-family:-apple-system,Segoe UI,Arial,sans-serif;background:#f4f4f5;margin:0;padding:0}
+.wrap{max-width:520px;margin:32px auto;background:#fff;border-radius:14px;overflow:hidden;border:1px solid #eee}
+.hd{background:#e31837;padding:22px 32px}
+.hd h1{color:#fff;margin:0;font-size:18px;letter-spacing:.02em}
+.bd{padding:28px 32px}
+.eyebrow{font-size:12px;color:#888;margin:0 0 6px}
+.h2{font-size:20px;color:#111;font-weight:800;margin:0 0 8px}
+.lead{font-size:15px;color:#444;line-height:1.6;margin:0 0 18px}
+.ft{padding:20px 32px;font-size:12px;color:#999;border-top:1px solid #f0f0f0}
+.ft a{color:#999}
 </style></head><body>
-<div class="wrap"><div class="hd"><h1>${appName}</h1></div>
-<div class="bd"><span class="badge">Order #${orderId}</span>
-<p><strong>${emoji} ${headline}.</strong> ${detail}</p>
-<p style="color:#888;font-size:13px">Questions? Reply to this email or visit the app.</p>
-</div><div class="ft">&copy; ${new Date().getFullYear()} ${appName}. All rights reserved.</div></div>
+<div class="wrap">
+<div class="hd"><h1>${appName}</h1></div>
+<div class="bd">
+<p class="eyebrow">Order #${orderId}</p>
+<p class="h2">${emoji} ${headline}</p>
+<p class="lead">${detail}</p>
+${trackRow}
+${button}
+${itemsBlock}
+${totalsBlock}
+${shipBlock}
+</div>
+<div class="ft">Questions about this order? Just reply to this email.<br>&copy; ${new Date().getFullYear()} ${appName}. All rights reserved.</div>
+</div>
 </body></html>`
-  return {
-    subject,
-    html,
-    text: `${emoji} ${headline} — Order #${orderId}\n\n${detail}`,
-  }
+
+  const textLines = [
+    `${emoji} ${headline} — Order #${orderId}`,
+    '',
+    detail,
+    trackingNumber && status === 'SHIPPED'
+      ? `Tracking: ${trackingNumber}${shipper ? ` (${shipper})` : ''}`
+      : '',
+    orderUrl ? `${cta}: ${orderUrl}` : '',
+    itemsTotalKobo != null
+      ? `Total: ${ngn((itemsTotalKobo ?? 0) + (shippingKobo ?? 0))}`
+      : '',
+  ].filter(Boolean)
+
+  return { subject, html, text: textLines.join('\n') }
 }
 
 export function buildOrderCancelledSellerEmail(
