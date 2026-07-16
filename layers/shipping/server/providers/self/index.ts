@@ -66,19 +66,38 @@ export const selfProvider: IShippingProvider = {
     const currency = req.currency ?? 'NGN'
     const quotes: Quote[] = []
 
-    // Seller-delivered option
+    // Seller-delivered option. When the seller collects the fee as cash on
+    // delivery, nothing is charged online (buyerPriceMinor 0) and the fee travels
+    // as codAmountMinor — the buyer hands it to the rider on arrival.
     const amount = deliveryAmountMinor(req)
-    quotes.push({
-      carrierId: 'self',
-      carrierName: 'Seller delivery',
-      serviceLevel: 'standard',
-      costMinor: amount, // seller sets the price; no platform markup
-      listMinor: amount,
-      buyerPriceMinor: amount,
-      currency,
-      etaText: cfg.etaText || 'Delivered by the seller',
-      codEligible: true,
-    })
+    if (cfg.payDriverEnabled) {
+      quotes.push({
+        carrierId: 'self',
+        carrierName: 'Pay the rider on delivery',
+        serviceLevel: 'standard',
+        rateRef: 'cod',
+        costMinor: 0,
+        listMinor: 0,
+        buyerPriceMinor: 0, // nothing charged online — paid in cash on delivery
+        payOnDelivery: true,
+        codAmountMinor: amount,
+        currency,
+        etaText: cfg.etaText || 'Delivered by the seller',
+        codEligible: true,
+      })
+    } else {
+      quotes.push({
+        carrierId: 'self',
+        carrierName: 'Seller delivery',
+        serviceLevel: 'standard',
+        costMinor: amount, // seller sets the price; no platform markup
+        listMinor: amount,
+        buyerPriceMinor: amount,
+        currency,
+        etaText: cfg.etaText || 'Delivered by the seller',
+        codEligible: true,
+      })
+    }
 
     // Pickup option (free), if the seller offers it
     if (cfg.pickupEnabled) {

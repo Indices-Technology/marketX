@@ -252,8 +252,20 @@
                   formatPrice(order.totalAmount + (order.shippingCost || 0))
                 }}</span>
               </div>
+              <!-- Pay-on-delivery self-shipping: cash owed to the rider on
+                   arrival, separate from the online total above. -->
+              <div
+                v-if="codDueKobo > 0"
+                class="flex items-center justify-between rounded-lg bg-amber-50 px-3 py-2 text-[13px] font-medium text-amber-700 dark:bg-amber-500/10 dark:text-amber-400"
+              >
+                <span class="flex items-center gap-1.5">
+                  <Icon name="solar:wad-of-money-linear" size="15" />
+                  Pay the rider on delivery (cash)
+                </span>
+                <span>{{ formatPrice(codDueKobo) }}</span>
+              </div>
               <p class="text-xs text-gray-400 dark:text-neutral-500">
-                Paid via {{ order.paymentMethod }}
+                Paid via {{ order.paymentMethod }}<template v-if="codDueKobo > 0"> · delivery fee paid in cash to the rider</template>
               </p>
             </template>
           </div>
@@ -325,6 +337,12 @@ const order = ref<any>(null)
 const isLoading = ref(true)
 const error = ref('')
 const cancelling = ref(false)
+
+/** Cash owed to the rider on delivery (kobo) — pay-on-delivery self-shipping
+ *  only; 0 for prepaid/carrier orders. */
+const codDueKobo = computed((): number =>
+  Number(order.value?.shippingBreakdown?.codAmountMinor ?? 0),
+)
 
 // Support / dispute — a paid order can be disputed; otherwise it's a plain help ticket.
 const showHelp = ref(false)

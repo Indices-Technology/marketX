@@ -157,6 +157,44 @@ export async function getStations(): Promise<GigStation[]> {
   return stations
 }
 
+// ── service centres (for drop-off DestinationServiceCenterId) ─────────────────
+export interface GigServiceCentre {
+  StationId: number
+  StationName: string
+  ServiceCentreId: number
+  ServiceCentreName: string
+  ServiceCentreCode: string
+  Latitude?: number
+  Longitude?: number
+  Address?: string
+}
+
+// Keyed by StationId — service centres change rarely, cache per station for a day.
+const cachedCentres = new Map<
+  number,
+  { centres: GigServiceCentre[]; expiresAt: number }
+>()
+
+/** Service centres for a station (`/serviceCentresByStation`). Used to resolve the
+ *  DestinationServiceCenterId that /create/dropOff requires, and to show the seller
+ *  which centre to drop at. */
+export async function getServiceCentres(
+  stationId: number,
+): Promise<GigServiceCentre[]> {
+  const hit = cachedCentres.get(stationId)
+  if (hit && hit.expiresAt > Date.now()) return hit.centres
+  const body: any = await gigFetch(
+    `/serviceCentresByStation?StationId=${stationId}`,
+    { method: 'GET' },
+  )
+  const centres: GigServiceCentre[] = body?.data?.data ?? body?.data ?? []
+  cachedCentres.set(stationId, {
+    centres,
+    expiresAt: Date.now() + STATIONS_TTL_MS,
+  })
+  return centres
+}
+
 // ── operations ────────────────────────────────────────────────────────────────
 export interface GigPriceResult {
   GrandTotal?: number
@@ -177,6 +215,23 @@ export async function fetchPrice(
   return (body?.data?.data ?? body?.data ?? {}) as GigPriceResult
 }
 
+/**
+ * Drop-off price — the seller brings the parcel to a GIG service centre (no
+ * pickup charge, but a different delivery-price model). Separate endpoint from
+ * `/price`; the two are priced independently and neither is reliably cheaper, so
+ * callers quote both and charge the higher. Request needs only the station pair
+ * + DeliveryType (0 = standard) + PickUpOptions; no CustomerCode/locations.
+ */
+export async function fetchDropoffPrice(
+  payload: Record<string, unknown>,
+): Promise<GigPriceResult> {
+  const body: any = await gigFetch('/dropOff/price', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+  return (body?.data?.data ?? body?.data ?? {}) as GigPriceResult
+}
+
 export async function capturePreshipment(
   payload: Record<string, unknown>,
 ): Promise<{ Waybill?: string }> {
@@ -185,6 +240,25 @@ export async function capturePreshipment(
     body: JSON.stringify(payload),
   })
   return (body?.data?.data ?? body?.data ?? {}) as { Waybill?: string }
+}
+
+/**
+ * Create a DROP-OFF shipment (`/create/dropOff`) — the seller takes the parcel to
+ * a GIG service centre themselves (no rider pickup). Unlike `/capture/preshipment`
+ * this returns a **TempCode** (e.g. "PRE000568-APH"), NOT a Waybill: the TempCode
+ * becomes a real Waybill only once the seller drops the parcel and GIG accepts it
+ * at the counter. That acceptance is our authoritative "GIG now has the parcel"
+ * signal — see the booking/tracking layer. Note GIG uses `PickupOptions` here
+ * (not `PickUpOptions` as on `/price`).
+ */
+export async function captureDropoff(
+  payload: Record<string, unknown>,
+): Promise<{ TempCode?: string }> {
+  const body: any = await gigFetch('/create/dropOff', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+  return (body?.data?.data ?? body?.data ?? {}) as { TempCode?: string }
 }
 
 export async function trackShipment(waybill: string): Promise<any[]> {

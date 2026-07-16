@@ -17,6 +17,8 @@
  *  - concurrent: `once()` coalesces double-submits within its TTL.
  */
 import { getProvider } from '../providers/registry'
+import { bookGigDropoff, type GigDropoffCentre } from '../providers/gig'
+import { listServiceCentresForState } from '../providers/gig/stations'
 import { once } from '~~/server/utils/cache'
 import type { ShipmentRequest, SettlementMode } from '../utils/types'
 
@@ -33,6 +35,16 @@ export interface BookOrderResult {
   waybill: string
   carrierId: string
   /** true when the order was already booked (idempotent no-op). */
+  alreadyBooked: boolean
+}
+
+export interface BookDropoffResult {
+  ok: boolean
+  /** GIG TempCode the seller quotes at the counter (drop-off has no Waybill yet). */
+  tempCode: string
+  /** Which GIG centre the seller drops the parcel at. */
+  centre: GigDropoffCentre | null
+  carrierId: string
   alreadyBooked: boolean
 }
 
@@ -240,6 +252,246 @@ export const bookingService = {
       })
 
       return { ok: true, waybill: result.trackingNumber, carrierId, alreadyBooked: false }
+    })
+  },
+
+  /**
+   * Book a DROP-OFF shipment for an order — the seller takes the parcel to a GIG
+   * service centre instead of waiting for a pickup rider. Mirrors bookOrder()'s
+   * guards; the difference is /create/dropOff returns a TempCode (not a Waybill),
+   * so we record the TempCode + drop-off centre and leave `waybill` null. The
+   * seller adds the Waybill after dropping off, which starts tracking.
+   *
+   * Idempotency: an order already booked (as pickup → waybill, or drop-off →
+   * dropoffDetails) is never re-booked — a second booking = a second real parcel.
+   */
+  async bookDropoff(
+    orderId: number,
+    actorProfileId?: string,
+    /** The GIG ServiceCentreId the seller chose to drop at (from the picker).
+     *  Omitted → the nearest centre to the seller is used. */
+    dropoffCentreId?: number,
+  ): Promise<BookDropoffResult> {
+    const order = await prisma.orders.findUnique({
+      where: { id: orderId },
+      select: {
+        id: true,
+        status: true,
+        paymentStatus: true,
+        paymentMethod: true,
+        waybill: true,
+        dropoffDetails: true,
+        name: true,
+        address: true,
+        county: true,
+        shipState: true,
+        shipPhone: true,
+        country: true,
+        totalAmount: true,
+        shippingProvider: true,
+        shippingZone: true,
+        shippingBreakdown: true,
+        orderItem: {
+          select: {
+            quantity: true,
+            variant: {
+              select: {
+                product: {
+                  select: {
+                    seller: {
+                      select: {
+                        profileId: true,
+                        store_name: true,
+                        shipFromName: true,
+                        shipFromAddress: true,
+                        shipFromCity: true,
+                        shipFromState: true,
+                        shipFromCountry: true,
+                        shipFromPhone: true,
+                        latitude: true,
+                        longitude: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    })
+
+    if (!order) throw createError({ statusCode: 404, statusMessage: 'Order not found' })
+
+    // Durable idempotency: already booked (pickup or drop-off) → return existing.
+    if (order.dropoffDetails) {
+      const d = order.dropoffDetails as {
+        tempCode?: string
+        centre?: GigDropoffCentre | null
+      }
+      return {
+        ok: true,
+        tempCode: d.tempCode ?? '',
+        centre: d.centre ?? null,
+        carrierId: order.shippingProvider ?? 'gig',
+        alreadyBooked: true,
+      }
+    }
+    if (order.waybill) {
+      throw createError({
+        statusCode: 409,
+        statusMessage: 'This order is already booked for pickup',
+      })
+    }
+
+    const seller = order.orderItem[0]?.variant?.product?.seller
+    if (!seller) {
+      throw createError({ statusCode: 422, statusMessage: 'Order has no seller to ship from' })
+    }
+    if (actorProfileId && actorProfileId !== seller.profileId) {
+      throw createError({ statusCode: 403, statusMessage: 'Not your order to ship' })
+    }
+
+    const paid = order.paymentStatus === 'PAID' || order.paymentStatus === 'SHIPPING_PAID'
+    if (!paid) {
+      throw createError({
+        statusCode: 409,
+        statusMessage: `Cannot ship an unpaid order (payment: ${order.paymentStatus})`,
+      })
+    }
+    if (order.status !== 'CONFIRMED') {
+      throw createError({
+        statusCode: 409,
+        statusMessage: `Order must be CONFIRMED to book shipping (is ${order.status})`,
+      })
+    }
+
+    const carrierId = carrierIdFor(order)
+    if (carrierId !== 'gig') {
+      throw createError({
+        statusCode: 422,
+        statusMessage: 'Drop-off is only available for GIG orders',
+      })
+    }
+    if (!order.shipState) {
+      throw createError({
+        statusCode: 422,
+        statusMessage: 'Order is missing a destination state — cannot resolve a carrier station',
+      })
+    }
+    if (!seller.shipFromState) {
+      throw createError({
+        statusCode: 422,
+        statusMessage: 'Seller has no ship-from state set — cannot resolve a drop-off centre',
+      })
+    }
+
+    const request: ShipmentRequest = {
+      origin: {
+        name: seller.shipFromName || seller.store_name || 'Seller',
+        street1: seller.shipFromAddress || '',
+        city: seller.shipFromCity || '',
+        state: seller.shipFromState,
+        country: seller.shipFromCountry || 'NG',
+        phone: seller.shipFromPhone || undefined,
+        lat: seller.latitude ?? undefined,
+        lng: seller.longitude ?? undefined,
+      },
+      destination: {
+        name: order.name,
+        street1: order.address,
+        city: order.county || '',
+        state: order.shipState,
+        country: order.country || 'NG',
+        phone: order.shipPhone || undefined,
+      },
+      items: order.orderItem.map((i) => ({ qty: i.quantity })),
+      parcel: { weightKg: BOOKING_PARCEL_WEIGHT_KG },
+      declaredValueMinor: order.totalAmount,
+      currency: 'NGN',
+    }
+    const settlementMode: SettlementMode =
+      order.paymentMethod === 'pay_on_delivery' ? 'CARRIER_COD' : 'ESCROW_POD'
+
+    // Resolve the seller's chosen drop-off centre (by id) to full details, so we
+    // store a server-verified name/address rather than trusting the client. An
+    // unknown/omitted id → bookGigDropoff falls back to the nearest centre.
+    let chosenCentre: GigDropoffCentre | null = null
+    if (dropoffCentreId) {
+      const centres = await listServiceCentresForState(
+        seller.shipFromState,
+        seller.latitude ?? undefined,
+        seller.longitude ?? undefined,
+      )
+      const match = centres.find((c) => c.ServiceCentreId === dropoffCentreId)
+      if (match) {
+        chosenCentre = {
+          id: match.ServiceCentreId,
+          name: match.ServiceCentreName,
+          code: match.ServiceCentreCode,
+          address: match.Address,
+        }
+      }
+    }
+
+    return once(`dropoff:order:${orderId}`, 300, async () => {
+      const fresh = await prisma.orders.findUnique({
+        where: { id: orderId },
+        select: { dropoffDetails: true },
+      })
+      if (fresh?.dropoffDetails) {
+        const d = fresh.dropoffDetails as {
+          tempCode?: string
+          centre?: GigDropoffCentre | null
+        }
+        return {
+          ok: true,
+          tempCode: d.tempCode ?? '',
+          centre: d.centre ?? null,
+          carrierId,
+          alreadyBooked: true,
+        }
+      }
+
+      const result = await bookGigDropoff(
+        {
+          request,
+          carrierId,
+          serviceLevel: 'standard',
+          orderRef: String(orderId),
+          settlementMode,
+        },
+        chosenCentre,
+      )
+
+      await prisma.orders.update({
+        where: { id: orderId },
+        data: {
+          bookingMode: 'DROPOFF',
+          dropoffDetails: {
+            tempCode: result.tempCode,
+            centre: result.dropoffCentre,
+          } as object,
+          shippingProvider: carrierId,
+          shipper: 'GIG Logistics',
+          carrierStatus: 'PRE_TRANSIT',
+          carrierStatusAt: new Date(),
+          // No waybill yet — the seller enters it after dropping the parcel off.
+        },
+      })
+
+      logger.info?.('[booking] GIG drop-off booked', {
+        orderId,
+        tempCode: result.tempCode,
+      })
+
+      return {
+        ok: true,
+        tempCode: result.tempCode,
+        centre: result.dropoffCentre,
+        carrierId,
+        alreadyBooked: false,
+      }
     })
   },
 }

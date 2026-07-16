@@ -400,6 +400,11 @@ model Orders {
   waybill           String?
   /// How the parcel reaches the carrier: 'PICKUP' (carrier collects) | 'DROPOFF'
   bookingMode       String?
+  /// Drop-off booking details (bookingMode 'DROPOFF'): the GIG TempCode the seller
+  /// quotes at the counter + the service centre to drop at. Shape:
+  /// { tempCode, centre: { id, name, code, address } }. The Waybill is added later
+  /// (seller enters it after drop-off), so tracking is not driven off this.
+  dropoffDetails    Json?
   /// Last normalized carrier tracking status (TrackingStatus), from scan polling
   carrierStatus     String?
   /// When carrierStatus was last refreshed from the carrier

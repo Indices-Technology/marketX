@@ -715,7 +715,27 @@
                 class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-[13px] text-gray-900 transition focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
               />
             </div>
-            <p class="text-[11px] text-gray-400">Funds are still held by MarketX and released to you when the buyer confirms receipt — buyer protection is unchanged.</p>
+
+            <div class="flex items-center justify-between rounded-xl border border-gray-200 px-3.5 py-3 dark:border-neutral-700">
+              <div class="pr-3">
+                <p class="text-[13px] font-medium text-gray-900 dark:text-neutral-100">Buyer pays the rider on delivery (cash)</p>
+                <p class="text-[11px] text-gray-400">The delivery fee above isn't charged online — the buyer pays your rider in cash on arrival. Only the goods are paid through MarketX.</p>
+              </div>
+              <button
+                type="button"
+                @click="form.byos_payDriver = !form.byos_payDriver"
+                class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors"
+                :class="form.byos_payDriver ? 'bg-brand' : 'bg-gray-200 dark:bg-neutral-700'"
+              >
+                <span class="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform" :class="form.byos_payDriver ? 'translate-x-6' : 'translate-x-1'" />
+              </button>
+            </div>
+            <p v-if="form.byos_payDriver" class="flex items-start gap-1.5 text-[11px] text-amber-600 dark:text-amber-400">
+              <Icon name="solar:info-circle-linear" size="14" class="mt-px shrink-0" />
+              <span>Cash you collect from the rider isn't held by MarketX, so buyer protection doesn't cover the delivery fee — only the goods stay protected.</span>
+            </p>
+
+            <p class="text-[11px] text-gray-400">Funds for the goods are still held by MarketX and released to you when the buyer confirms receipt — buyer protection on the goods is unchanged.</p>
           </template>
         </div>
 
@@ -904,6 +924,7 @@ const form = reactive({
   byos_freeOver: 0,
   byos_pickup: false,
   byos_pickupNote: '',
+  byos_payDriver: false,
   byos_eta: '',
   // Media watermark
   watermark_enabled: false,
@@ -991,6 +1012,7 @@ const prefillForm = (s: any) => {
   form.byos_freeOver = (sc.freeOverMinor ?? 0) / 100
   form.byos_pickup = !!sc.pickupEnabled
   form.byos_pickupNote = sc.pickupNote ?? ''
+  form.byos_payDriver = !!sc.payDriverEnabled
   form.byos_eta = sc.etaText ?? ''
   // Media watermark
   form.watermark_enabled = s.watermark_enabled ?? false
@@ -1095,6 +1117,7 @@ const handleSubmit = async () => {
                   : undefined,
               pickupEnabled: form.byos_pickup,
               pickupNote: form.byos_pickupNote || undefined,
+              payDriverEnabled: form.byos_payDriver,
               etaText: form.byos_eta || undefined,
             }
           : { selfEnabled: false }),

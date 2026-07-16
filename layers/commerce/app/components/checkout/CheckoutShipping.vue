@@ -89,19 +89,37 @@
             <p class="text-xs text-gray-400 dark:text-neutral-500">
               {{ rate.estimatedDays }}
             </p>
+            <p
+              v-if="rate.payOnDelivery"
+              class="mt-0.5 text-[11px] font-medium text-amber-600 dark:text-amber-400"
+            >
+              Paid in cash to the rider — not charged now
+            </p>
           </div>
           <div class="shrink-0 text-right">
-            <p
-              class="text-sm font-semibold text-gray-900 dark:text-neutral-100"
-            >
-              {{ fmtP(rate.amountNGN) }}
-            </p>
-            <p
-              v-if="activeCurrency !== 'NGN'"
-              class="text-[11px] text-gray-400"
-            >
-              {{ fmtPNGN(rate.amountNGN) }}
-            </p>
+            <!-- Pay-on-delivery: show the cash owed to the rider, but nothing is
+                 added to the online total (amountNGN is 0). -->
+            <template v-if="rate.payOnDelivery">
+              <p class="text-sm font-semibold text-gray-900 dark:text-neutral-100">
+                {{ rate.codAmountNGN ? fmtP(rate.codAmountNGN) : 'Free' }}
+              </p>
+              <p class="text-[11px] text-amber-600 dark:text-amber-400">
+                on delivery
+              </p>
+            </template>
+            <template v-else>
+              <p
+                class="text-sm font-semibold text-gray-900 dark:text-neutral-100"
+              >
+                {{ fmtP(rate.amountNGN) }}
+              </p>
+              <p
+                v-if="activeCurrency !== 'NGN'"
+                class="text-[11px] text-gray-400"
+              >
+                {{ fmtPNGN(rate.amountNGN) }}
+              </p>
+            </template>
           </div>
         </button>
       </div>

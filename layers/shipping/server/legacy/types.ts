@@ -47,6 +47,10 @@ export interface IShipmentRate {
   estimatedDays: string
   /** Which provider returned this rate */
   provider: 'sendbox' | 'shippo' | 'self' | 'gig'
+  /** Cash-on-delivery self-shipping: buyer pays the rider on arrival. amountNGN
+   *  is 0 (nothing charged online); codAmountNGN is the cash owed to the rider. */
+  payOnDelivery?: boolean
+  codAmountNGN?: number
   /** Signed quote token (storeSlug + amount). Echoed back at checkout so the
    *  order re-derives the shipping charge from the server, not the client. */
   token?: string

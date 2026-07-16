@@ -219,6 +219,9 @@ export const updateSellerProfileSchema = z
         freeOverMinor: z.number().int().min(0).optional(),
         pickupEnabled: z.boolean().optional(),
         pickupNote: z.string().max(200).optional(),
+        // Collect the delivery fee as cash on delivery (buyer pays the rider on
+        // arrival) instead of prepaying online. See SellerShippingConfig.
+        payDriverEnabled: z.boolean().optional(),
         etaText: z.string().max(120).optional(),
         zoneRates: z.record(z.string(), z.number().int().min(0)).optional(),
       })

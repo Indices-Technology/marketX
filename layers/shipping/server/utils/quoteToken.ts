@@ -13,10 +13,14 @@ import jwt from 'jsonwebtoken'
 export interface ShippingQuoteClaims {
   /** store_slug the quote is for */
   s: string
-  /** amount in minor units (kobo) */
+  /** amount in minor units (kobo) — what the buyer is charged online */
   a: number
   /** carrier id (informational) */
   c?: string
+  /** cash-on-delivery self-shipping fee (kobo) the buyer pays the rider on
+   *  arrival — signed so the order records the real amount, not a client value.
+   *  Present only for the pay-the-rider option; the platform never collects it. */
+  d?: number
 }
 
 function secret(): string {

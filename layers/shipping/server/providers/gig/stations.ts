@@ -6,7 +6,12 @@
  * so we use the address's own coords when present, else a per-state centroid.
  */
 
-import { getStations, type GigStation } from './client'
+import {
+  getStations,
+  getServiceCentres,
+  type GigStation,
+  type GigServiceCentre,
+} from './client'
 import type { Address } from '../../utils/types'
 
 function norm(s: string): string {
@@ -33,6 +38,55 @@ export async function resolveStation(state: string): Promise<GigStation | null> 
   )
   if (!matches.length) return null
   return matches.find((s) => s.IsPublic) ?? matches[0]
+}
+
+/**
+ * Resolve the DestinationServiceCenterId /create/dropOff requires: the service
+ * centre for `stationId` nearest the buyer's coordinates, else the first one.
+ * Returns null when the station has no service centres (caller must handle it —
+ * we never fabricate an id).
+ */
+export async function resolveServiceCentre(
+  stationId: number,
+  lat?: number,
+  lng?: number,
+): Promise<GigServiceCentre | null> {
+  const centres = await getServiceCentres(stationId)
+  if (!centres.length) return null
+  if (typeof lat !== 'number' || typeof lng !== 'number') return centres[0]!
+  // Nearest by squared lat/lng distance — centres are close enough that a planar
+  // approximation ranks them correctly without needing haversine.
+  let best = centres[0]!
+  let bestD = Number.POSITIVE_INFINITY
+  for (const c of centres) {
+    if (typeof c.Latitude !== 'number' || typeof c.Longitude !== 'number') continue
+    const d = (c.Latitude - lat) ** 2 + (c.Longitude - lng) ** 2
+    if (d < bestD) {
+      bestD = d
+      best = c
+    }
+  }
+  return best
+}
+
+/**
+ * All GIG service centres in a state, nearest-first when the seller's coordinates
+ * are known. Powers the seller's drop-off centre picker.
+ */
+export async function listServiceCentresForState(
+  state: string,
+  lat?: number,
+  lng?: number,
+): Promise<GigServiceCentre[]> {
+  const station = await resolveStation(state)
+  if (!station) return []
+  const centres = await getServiceCentres(station.StationId)
+  if (typeof lat !== 'number' || typeof lng !== 'number') return centres
+  const distSq = (c: GigServiceCentre): number =>
+    typeof c.Latitude === 'number' && typeof c.Longitude === 'number'
+      ? (c.Latitude - lat) ** 2 + (c.Longitude - lng) ** 2
+      : Number.POSITIVE_INFINITY // centres without coords sort last
+  return [...centres].sort((a, b) => distSq(a) - distSq(b))
 }
 
 /** Approximate state centroids (lat, lng) — fallback when an address has no coords. */
