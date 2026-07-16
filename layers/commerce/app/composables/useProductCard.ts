@@ -111,8 +111,10 @@ export function useProductCard() {
     const p = product.value
     if (!p) return ''
     const seller = p.seller?.store_name ? `by ${p.seller.store_name}\n` : ''
+    // Public affiliate invite (not the owner's specific commission) — subtle CTA
+    // so recipients know they can share & earn too.
     const earn = commissionText.value
-      ? `\nEarn ${commissionText.value} per sale when you share this link.\n`
+      ? `\n💸 Share products like this and earn — become a MarketX affiliate.\n`
       : ''
     return `🛍 ${p.title} — ${priceText.value}\n${seller}${earn}\n${shareUrl.value}`
   })

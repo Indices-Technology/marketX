@@ -33,7 +33,14 @@ export default defineEventHandler(async (event) => {
             variant: {
               include: {
                 product: {
-                  include: { seller: { select: { profileId: true } } },
+                  include: {
+                    seller: { select: { profileId: true } },
+                    media: {
+                      take: 1,
+                      where: { isBgMusic: false },
+                      select: { url: true },
+                    },
+                  },
                 },
               },
             },
@@ -103,8 +110,25 @@ export default defineEventHandler(async (event) => {
           .then((buyer) => {
             if (!buyer?.email) return
             const { subject, html, text } = buildOrderStatusEmail(id, body.status, {
-              trackingNumber: body.trackingNumber,
+              // GIG drop-off sets `waybill`; self-delivery sets `trackingNumber`.
+              trackingNumber: body.trackingNumber ?? body.waybill,
               shipper: body.shipper,
+              orderUrl: `${useRuntimeConfig().public.baseURL}/buyer/orders/${id}`,
+              items: order.orderItem.map((oi) => ({
+                title: oi.variant?.product?.title ?? 'Item',
+                quantity: oi.quantity,
+                priceKobo: oi.price,
+                image: oi.variant?.product?.media?.[0]?.url,
+              })),
+              itemsTotalKobo: order.totalAmount,
+              shippingKobo: order.shippingCost,
+              shipTo: {
+                name: order.name,
+                address: [order.address, order.county, order.shipState, order.country]
+                  .filter(Boolean)
+                  .join(', '),
+                phone: order.shipPhone ?? undefined,
+              },
             })
             emailQueue.enqueue({ to: buyer.email, subject, html, text, type: 'GENERAL' })
           })

@@ -6,6 +6,18 @@
  */
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
 import { getProvider } from '~~/layers/shipping/server/providers/registry'
+import { RANK } from '~~/layers/shipping/server/utils/trackingTransition'
+import type { TrackingStatus } from '~~/layers/shipping/server/utils/types'
+
+/** Human note for a status surfaced from the order's stored carrierStatus. */
+const STORED_STATUS_NOTE: Record<string, string> = {
+  PRE_TRANSIT: 'Awaiting pickup',
+  IN_TRANSIT: 'In transit with the carrier',
+  OUT_FOR_DELIVERY: 'Out for delivery',
+  DELIVERED: 'Delivered',
+  RETURNED: 'Returned to sender',
+  FAILURE: 'Delivery failed',
+}
 
 export default defineEventHandler(async (event) => {
   const user = await requireAuth(event)
@@ -21,6 +33,7 @@ export default defineEventHandler(async (event) => {
       waybill: true,
       shipper: true,
       carrierStatus: true,
+      carrierStatusAt: true,
       shippingProvider: true,
       orderItem: {
         select: {
@@ -61,9 +74,24 @@ export default defineEventHandler(async (event) => {
 
   try {
     const tracking = await provider.track(order.waybill)
+    const events = [...tracking.events]
+    let current = tracking.currentStatus
+    const stored = order.carrierStatus as TrackingStatus | null
+    // The order's known status (advanced by the poller or the admin simulator) can
+    // sit AHEAD of the carrier's public scan feed — sandbox waybills never move past
+    // "created", and live feeds lag. Surface the known status as the current step so
+    // the timeline matches the order's real state (and the status badge).
+    if (stored && (RANK[stored] ?? 0) > (RANK[current] ?? 0)) {
+      current = stored
+      events.push({
+        timestamp: (order.carrierStatusAt ?? new Date()).toISOString(),
+        status: stored,
+        description: STORED_STATUS_NOTE[stored] ?? '',
+      })
+    }
     return {
       success: true,
-      data: { ...base, carrierStatus: tracking.currentStatus, events: tracking.events },
+      data: { ...base, carrierStatus: current, events },
     }
   } catch (e) {
     // Carrier hiccup — degrade to the last known status rather than error the page.

@@ -5,8 +5,8 @@
         Carrier Simulation
       </h1>
       <p class="mt-0.5 text-[13px] text-gray-400 dark:text-neutral-500">
-        Test tool — inject a GIG scan to walk a booked order through its carrier
-        states without a real parcel.
+        Test tool — inject a GIG scan to walk a booked order (pickup or drop-off)
+        through its carrier states without a real parcel.
       </p>
     </div>
 
@@ -21,9 +21,17 @@
       </p>
       <p class="text-xs text-gray-600 dark:text-neutral-400">
         Each button injects a status through the <strong>real</strong> transition
-        path a live GIG scan takes (booking must already have a waybill).
+        path a live GIG scan takes — the simulator and the live poller share the
+        exact same code, so behaviour here matches production. Works for
+        <strong>pickup and drop-off</strong> orders alike.
         <strong>“Delivered” releases escrow to the seller</strong> — use on test
         orders only. Every call is logged server-side.
+      </p>
+      <p class="mt-2 text-[11px] text-amber-700/80 dark:text-amber-400/80">
+        Live nuance: the poller only tracks an order once it has a Waybill. Pickup
+        gets one at booking; for a <strong>drop-off</strong>, the seller enters it
+        after dropping the parcel. To mirror live end-to-end for a drop-off, add
+        its Waybill first — then inject scans here.
       </p>
     </div>
 
@@ -133,8 +141,10 @@ const orderApi = useOrderApi()
 
 // Walk an order through the carrier states without a real scan. Mirrors the
 // statuses the real poller observes; the server runs the identical transition.
+// IN_TRANSIT is the possession signal for both modes — GIG's MPIK (pickup) and
+// SRFS (drop-off, "received from store to hub") both normalize to it → SHIPPED.
 const SIM_STEPS = [
-  { status: 'IN_TRANSIT', label: 'Picked up → Shipped' },
+  { status: 'IN_TRANSIT', label: 'Collected (pickup/drop-off) → Shipped' },
   { status: 'OUT_FOR_DELIVERY', label: 'Out for delivery' },
   { status: 'DELIVERED', label: 'Delivered → release funds' },
   { status: 'RETURNED', label: 'Returned' },

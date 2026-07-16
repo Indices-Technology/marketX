@@ -271,6 +271,26 @@
           </div>
         </BaseCard>
 
+        <!-- Confirm receipt (buyer releases funds early, only while SHIPPED) -->
+        <BaseButton
+          v-if="order.status === 'SHIPPED' && !received"
+          variant="primary"
+          size="lg"
+          class="w-full"
+          :loading="confirming"
+          :disabled="confirming"
+          @click="confirmReceipt"
+        >
+          {{ confirming ? 'Confirming…' : 'Confirm receipt' }}
+        </BaseButton>
+        <div
+          v-else-if="received || order.status === 'DELIVERED'"
+          class="flex items-center justify-center gap-2 rounded-xl bg-green-50 px-4 py-3 text-sm font-medium text-green-700 dark:bg-green-900/20 dark:text-green-400"
+        >
+          <Icon name="solar:check-circle-linear" size="18" />
+          Delivery confirmed — thank you!
+        </div>
+
         <!-- Cancel button (only if PENDING) -->
         <BaseButton
           v-if="order.status === 'PENDING'"
@@ -337,6 +357,28 @@ const order = ref<any>(null)
 const isLoading = ref(true)
 const error = ref('')
 const cancelling = ref(false)
+const confirming = ref(false)
+const received = ref(false)
+
+const confirmReceipt = async () => {
+  if (
+    !confirm(
+      'Confirm you have received this order? This releases payment to the seller.',
+    )
+  )
+    return
+  confirming.value = true
+  try {
+    await orderApi.confirmReceipt(orderId.value)
+    received.value = true
+    if (order.value) order.value.status = 'DELIVERED'
+    notify({ type: 'success', text: 'Delivery confirmed. Thank you!' })
+  } catch (e: any) {
+    notify({ type: 'error', text: extractErrorMessage(e, 'Failed to confirm receipt') })
+  } finally {
+    confirming.value = false
+  }
+}
 
 /** Cash owed to the rider on delivery (kobo) — pay-on-delivery self-shipping
  *  only; 0 for prepaid/carrier orders. */
