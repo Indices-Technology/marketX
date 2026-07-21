@@ -414,6 +414,9 @@ export interface OrderStatusEmailOptions {
   itemsTotalKobo?: number
   shippingKobo?: number
   shipTo?: { name?: string; address?: string; phone?: string }
+  /** Carrier SMSes the buyer a PIN they must give the courier to collect (GIG).
+   *  Set by the caller when the order ships with a carrier that does this. */
+  deliveryPinNote?: boolean
 }
 
 const ngn = (kobo: number): string =>
@@ -453,6 +456,7 @@ export function buildOrderStatusEmail(
     itemsTotalKobo,
     shippingKobo,
     shipTo,
+    deliveryPinNote,
   } = options
 
   const info: Record<
@@ -501,6 +505,14 @@ export function buildOrderStatusEmail(
     ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:4px 0 20px"><tr><td style="border-radius:8px;background:#e31837"><a href="${orderUrl}" style="display:inline-block;padding:12px 28px;font-size:15px;font-weight:600;color:#fff;text-decoration:none;border-radius:8px">${cta} →</a></td></tr></table>`
     : ''
 
+  // Heads-up so the SMS PIN isn't a surprise at the door.
+  const pinBlock =
+    deliveryPinNote && status === 'SHIPPED'
+      ? `<div style="margin:0 0 18px;padding:11px 13px;border-radius:8px;background:#fff7ed;color:#9a3412;font-size:13px;line-height:1.5">
+🔐 <strong>You'll get a delivery PIN by SMS.</strong> When your parcel reaches the delivery point, ${shipper || 'the carrier'} texts you a PIN — give it to the courier to release your order. Keep it private until then.
+</div>`
+      : ''
+
   const itemsBlock = items?.length ? orderItemsHtml(items) : ''
 
   const totalsBlock = (() => {
@@ -546,6 +558,7 @@ body{font-family:-apple-system,Segoe UI,Arial,sans-serif;background:#f4f4f5;marg
 <p class="lead">${detail}</p>
 ${trackRow}
 ${button}
+${pinBlock}
 ${itemsBlock}
 ${totalsBlock}
 ${shipBlock}
@@ -562,6 +575,9 @@ ${shipBlock}
       ? `Tracking: ${trackingNumber}${shipper ? ` (${shipper})` : ''}`
       : '',
     orderUrl ? `${cta}: ${orderUrl}` : '',
+    deliveryPinNote && status === 'SHIPPED'
+      ? `Delivery PIN: ${shipper || 'the carrier'} will SMS you a PIN on arrival — give it to the courier to release your order.`
+      : '',
     itemsTotalKobo != null
       ? `Total: ${ngn((itemsTotalKobo ?? 0) + (shippingKobo ?? 0))}`
       : '',

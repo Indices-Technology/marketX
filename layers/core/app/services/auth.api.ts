@@ -11,6 +11,7 @@ import type {
   IAuthUser as User,
   IAuthUser,
   IAuthResponse as LoginResponse,
+  IAuthSession,
 } from '~~/shared/types/auth'
 
 export class AuthApiClient extends BaseApiClient {
@@ -133,6 +134,46 @@ export class AuthApiClient extends BaseApiClient {
   async logout(): Promise<{ success: boolean; message: string }> {
     return this.request('/api/auth/logout', {
       method: 'POST',
+    })
+  }
+
+  // ==================== SESSION MANAGEMENT ====================
+
+  /**
+   * List every device the user is currently signed in on. The caller's own
+   * session comes back with `isCurrent: true`.
+   */
+  async getSessions(): Promise<{ success: boolean; sessions: IAuthSession[] }> {
+    return this.request('/api/auth/sessions')
+  }
+
+  /**
+   * Sign out one device. `wasCurrent` is true when the revoked session was this
+   * one — the caller should then clear local tokens and redirect to login.
+   */
+  async revokeSession(
+    sessionId: string,
+  ): Promise<{ success: boolean; message: string; wasCurrent: boolean }> {
+    return this.request(`/api/auth/sessions/${sessionId}`, {
+      method: 'DELETE',
+    })
+  }
+
+  /**
+   * Sign out other devices, keeping this one. Pass `includeCurrent` to sign out
+   * everywhere — `signedOutCurrent` then comes back true.
+   */
+  async revokeOtherSessions(
+    includeCurrent = false,
+  ): Promise<{
+    success: boolean
+    message: string
+    count: number
+    signedOutCurrent: boolean
+  }> {
+    return this.request('/api/auth/sessions/revoke-all', {
+      method: 'POST',
+      body: { includeCurrent },
     })
   }
 

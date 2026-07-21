@@ -174,6 +174,15 @@ export async function verifyCheckoutOtp(
     })
   }
 
+  // 2b. Moderation gate. This flow mints a full session, so it is a sign-in
+  // door and has to honour bans like login does — otherwise a banned user just
+  // checks out with an emailed code instead of a password. The OTP already
+  // proved they own the address, so the reason is safe to return.
+  const restriction = getAccountRestriction(user)
+  if (restriction) {
+    throw createError({ statusCode: 403, statusMessage: restriction })
+  }
+
   // 3. Create session
   const sessionId = crypto.randomUUID()
   const { accessToken, refreshToken } = generateTokens(

@@ -65,6 +65,20 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  // Moderation gate. The code was minted against a live session, but it stays
+  // valid for 10 minutes — long enough for a ban to land in between. Re-check
+  // at redemption so the ban wins that race.
+  const profile = await prisma.profile.findUnique({
+    where: { id: authData.userId },
+    select: { bannedAt: true, suspendedUntil: true, isActive: true },
+  })
+  const restriction = profile
+    ? getAccountRestriction(profile)
+    : 'Account no longer exists.'
+  if (restriction) {
+    throw createError({ statusCode: 403, statusMessage: restriction })
+  }
+
   const { accessToken } = generateTokens(
     authData.userId,
     authData.email,

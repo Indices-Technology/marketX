@@ -244,6 +244,26 @@ export const authService = {
       )
     }
 
+    // 4b. Moderation gate — deliberately AFTER the password check. A banned
+    // account must not be able to mint a fresh session (that would undo the
+    // revocation performed at ban time), but checking before the password is
+    // verified would let anyone probe whether an email belongs to a banned
+    // user. Only the account owner learns their own status.
+    const restriction = getAccountRestriction(user)
+    if (restriction) {
+      await authRepository.createAuditLog({
+        userId: user.id,
+        email: user.email,
+        eventType: 'LOGIN_BLOCKED',
+        reason: restriction,
+        ipAddress,
+        userAgent,
+        success: false,
+      })
+
+      throw new AuthError('ACCOUNT_SUSPENDED', restriction, 403)
+    }
+
     // 5. Success: Clear rate limit and generate tokens
     clearRateLimit(`login:${normalizedEmail}`, RATE_LIMITS.LOGIN.keyPrefix)
 
@@ -332,6 +352,26 @@ export const authService = {
           avatar: oauthProfile.avatar || null,
         },
       })
+    }
+
+    // Moderation gate. Social sign-in is a door into the account like any
+    // other: without this, a banned user signs in with Google and walks away
+    // with a fresh session. Safe to run for the just-created user above too —
+    // a new profile is never restricted. The provider has already proven
+    // identity, so returning the real reason reveals nothing to a stranger.
+    const restriction = getAccountRestriction(user)
+    if (restriction) {
+      await authRepository.createAuditLog({
+        userId: user.id,
+        email: user.email,
+        eventType: 'LOGIN_BLOCKED',
+        reason: restriction,
+        ipAddress,
+        userAgent,
+        success: false,
+      })
+
+      throw new AuthError('ACCOUNT_SUSPENDED', restriction, 403)
     }
 
     const sessionId = crypto.randomUUID()
@@ -426,6 +466,13 @@ export const authService = {
 
     if (!user) {
       throw new AuthError('USER_NOT_FOUND', 'User not found', 401)
+    }
+
+    // 3b. Moderation gate. Without this a banned user with a live refresh token
+    // renews their access token indefinitely and the ban never takes hold.
+    const restriction = getAccountRestriction(user)
+    if (restriction) {
+      throw new AuthError('ACCOUNT_SUSPENDED', restriction, 403)
     }
 
     // 4. Rotate refresh token — generate a new one and update the session.
@@ -662,6 +709,98 @@ export const authService = {
     }
 
     return { message: 'Logged out successfully' }
+  },
+
+  // ==================== SESSION MANAGEMENT ====================
+
+  /**
+   * List the caller's live sessions, newest-used first, with the session that
+   * made this request flagged so the UI can label it "This device" and refuse
+   * to let the user revoke themselves by accident.
+   *
+   * `device` is whatever the client sent in the `device` header at login (often
+   * just "Web"), so we also derive a readable label from the stored user-agent —
+   * that is what actually distinguishes "Chrome on Windows" from "Safari on iOS"
+   * in the list.
+   */
+  async listSessions(userId: string, currentSessionId?: string) {
+    const sessions = await authRepository.getUserSessions(userId)
+
+    return sessions.map((session) => ({
+      id: session.id,
+      device: session.device || parseUserAgent(session.userAgent || ''),
+      browser: parseUserAgent(session.userAgent || '').split(' on ')[0],
+      os: parseUserAgent(session.userAgent || '').split(' on ')[1],
+      deviceType: getDeviceType(session.userAgent || ''),
+      ip: session.ip,
+      country: session.country,
+      isCurrent: Boolean(currentSessionId) && session.id === currentSessionId,
+      createdAt: session.createdAt,
+      lastUsedAt: session.lastUsedAt,
+      expiresAt: session.expiresAt,
+    }))
+  },
+
+  /**
+   * Revoke a single session the caller owns. Revoking the current session is
+   * allowed — it is just a logout — but the caller's cookies are cleared by the
+   * route handler in that case so the client doesn't keep replaying a dead token.
+   */
+  async revokeSession(
+    sessionId: string,
+    userId: string,
+    ipAddress: string,
+    userAgent: string,
+  ) {
+    const revoked = await authRepository.revokeSessionForUser(sessionId, userId)
+
+    if (!revoked) {
+      // Missing, already revoked, or owned by someone else — all reported the
+      // same way, so this endpoint can't be used to probe for valid session ids.
+      throw new AuthError('SESSION_NOT_FOUND', 'Session not found', 404)
+    }
+
+    await authRepository.createAuditLog({
+      userId,
+      email: '',
+      eventType: 'SESSION_REVOKED',
+      reason: `Session ${sessionId} revoked by user`,
+      ipAddress,
+      userAgent,
+      success: true,
+    })
+
+    return { message: 'Session revoked' }
+  },
+
+  /**
+   * Sign out other devices. Keeps the calling session alive unless
+   * `includeCurrent` is set (used by "sign out everywhere", e.g. after a
+   * password change or a suspected compromise).
+   */
+  async revokeOtherSessions(
+    userId: string,
+    currentSessionId: string | undefined,
+    ipAddress: string,
+    userAgent: string,
+    includeCurrent = false,
+  ) {
+    const count = await authRepository.revokeOtherSessions(
+      userId,
+      includeCurrent ? undefined : currentSessionId,
+    )
+
+    await authRepository.createAuditLog({
+      userId,
+      email: '',
+      eventType: includeCurrent ? 'ALL_SESSIONS_REVOKED' : 'OTHER_SESSIONS_REVOKED',
+      reason: `${count} session(s) revoked by user`,
+      ipAddress,
+      userAgent,
+      success: true,
+    })
+
+    return { message: `${count} session(s) revoked`, count }
   },
 
   // ==================== CLEANUP ====================

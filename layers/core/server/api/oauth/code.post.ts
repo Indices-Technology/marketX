@@ -1,5 +1,6 @@
 import { defineEventHandler, readBody, createError } from 'h3'
 import { randomBytes } from 'crypto'
+import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
 import {
   getOAuthClient,
   isRedirectUriAllowed,
@@ -10,20 +11,20 @@ import {
  * POST /api/oauth/code
  *
  * Called by the /oauth/authorize consent page once the user is authenticated
- * and has approved the request. Requires a valid session (auth middleware
- * attaches event.context.user from the accessToken cookie).
+ * and has approved the request.
+ *
+ * Auth goes through requireAuth, NOT the bare event.context.user the global
+ * middleware populates. That context object is only a decoded JWT — it survives
+ * both session revocation and an account ban, so trusting it here would let a
+ * signed-out or banned user mint an authorization code and trade it for a
+ * third-party access token, quietly defeating both. The consent page always
+ * sends the token as a Bearer header, which is what requireAuth reads.
  *
  * Body: { client_id, redirect_uri, state? }
  * Returns: { redirect_url } — the client's redirect_uri with ?code=...&state=...
  */
 export default defineEventHandler(async (event) => {
-  const user = event.context.user
-  if (!user?.id) {
-    throw createError({
-      statusCode: 401,
-      statusMessage: 'You must be logged in to authorize this request',
-    })
-  }
+  const user = await requireAuth(event)
 
   const body = await readBody<{
     client_id: string

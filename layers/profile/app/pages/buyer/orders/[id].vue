@@ -151,6 +151,20 @@
               <Icon name="solar:sale-linear" size="14" />
               <span>{{ order.shipper }} · {{ order.waybill || order.trackingNumber }}</span>
             </div>
+
+            <!-- GIG texts the buyer a PIN they must give the courier to collect. -->
+            <div
+              v-if="showDeliveryPinNote"
+              class="mt-3 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-[12px] leading-relaxed text-amber-800 dark:bg-amber-500/10 dark:text-amber-300"
+            >
+              <Icon name="solar:lock-password-linear" size="15" class="mt-px shrink-0" />
+              <span>
+                <strong>You'll get a delivery PIN by SMS.</strong> When your parcel
+                reaches the delivery point, {{ order.shipper || 'the carrier' }} texts
+                you a PIN — give it to the courier to release your order. Keep it
+                private until then.
+              </span>
+            </div>
           </div>
         </BaseCard>
 
@@ -384,6 +398,15 @@ const confirmReceipt = async () => {
  *  only; 0 for prepaid/carrier orders. */
 const codDueKobo = computed((): number =>
   Number(order.value?.shippingBreakdown?.codAmountMinor ?? 0),
+)
+
+/** GIG SMSes the buyer a delivery PIN on arrival — only worth saying once the
+ *  parcel is actually moving, and only for GIG-carried orders. */
+const showDeliveryPinNote = computed(
+  (): boolean =>
+    order.value?.shippingProvider === 'gig' &&
+    ['SHIPPED', 'CONFIRMED'].includes(order.value?.status) &&
+    !!(order.value?.waybill || order.value?.trackingNumber),
 )
 
 // Support / dispute — a paid order can be disputed; otherwise it's a plain help ticket.

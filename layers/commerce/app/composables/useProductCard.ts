@@ -3,6 +3,7 @@ import QRCode from 'qrcode'
 import { notify } from '@kyvg/vue3-notification'
 import { useRuntimeConfig } from '#imports'
 import { useAffiliate } from './useAffiliate'
+import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import { formatProductPrice } from '~~/shared/utils/currency'
 
 /**
@@ -20,6 +21,7 @@ import { formatProductPrice } from '~~/shared/utils/currency'
 export function useProductCard() {
   const config = useRuntimeConfig()
   const { isEnrolled, affiliateCode, fetchAffiliateStatus } = useAffiliate()
+  const profileStore = useProfileStore()
 
   const product = ref<any>(null)
   const qr = ref('')
@@ -91,8 +93,9 @@ export function useProductCard() {
   /** Point the card at a product (already-loaded object — no refetch). */
   const load = (p: any) => {
     product.value = p
-    // Need the viewer's affiliate status to decide the link; harmless if guest.
-    fetchAffiliateStatus().catch(() => {})
+    // Only a logged-in account has an affiliate identity — the status endpoint
+    // 401s for guests, so don't ask.
+    if (profileStore.isLoggedIn) fetchAffiliateStatus().catch(() => {})
   }
 
   const copy = async (text: string | null | undefined, label: string) => {
