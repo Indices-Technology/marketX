@@ -1,76 +1,72 @@
-<!-- Market home — rendered inside HomeLayout by the auth-aware index.vue -->
+<!-- Market home - rendered inside HomeLayout by the auth-aware index.vue -->
 <template>
-  <!-- Browse sections use the full width (rails show more cards on wider
-       screens); only the community post column is slimmed, left-aligned so its
-       edge still lines up with the section headers above. -->
   <div class="w-full space-y-8 px-2 sm:px-4">
-    <!-- Search lives in the mobile top bar (magnifier → SearchOverLay), which is
-         present on this screen — no separate hero search needed here. -->
-
-    <!-- ─── 1. DEALS (flagship) ───────────────────────────────────────────── -->
-    <!-- Today's deals — hidden entirely when there are no live (<48h) flash deals -->
-    <section v-if="dealsLoading || deals.length">
-      <div class="mb-4 flex items-end justify-between">
-        <div>
-          <p
-            class="mb-1 text-xs font-bold uppercase tracking-widest text-brand"
-          >
-            On sale now
-          </p>
-          <h2
-            class="font-display text-2xl font-bold leading-tight text-gray-900 dark:text-white"
-          >
-            Today's deals
-          </h2>
-        </div>
-        <NuxtLink
-          to="/discover?tab=deals"
-          class="mb-0.5 text-xs font-semibold text-gray-400 hover:text-brand dark:text-neutral-500"
+    <!-- Search is the primary market action: find a place, trader, or good. -->
+    <section
+      class="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm sm:p-4 dark:border-neutral-800 dark:bg-neutral-900"
+    >
+      <form
+        class="flex items-center gap-3"
+        role="search"
+        @submit.prevent="submitSearch"
+      >
+        <div
+          class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand"
         >
-          See all →
+          <Icon name="solar:magnifer-linear" size="20" />
+        </div>
+        <label class="sr-only" for="market-home-search">
+          Search markets, traders or goods
+        </label>
+        <input
+          id="market-home-search"
+          v-model="searchQuery"
+          type="search"
+          autocomplete="off"
+          placeholder="Search markets, traders or goods"
+          class="min-w-0 flex-1 bg-transparent text-[15px] font-medium text-gray-900 placeholder:text-gray-500 focus:outline-none dark:text-neutral-100 dark:placeholder:text-neutral-500"
+        />
+        <button
+          type="submit"
+          class="hidden h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-gray-900 px-4 text-sm font-semibold text-white transition hover:bg-neutral-800 sm:inline-flex dark:bg-neutral-100 dark:text-neutral-950 dark:hover:bg-white"
+        >
+          Search
+          <Icon name="solar:arrow-right-linear" size="16" />
+        </button>
+      </form>
+      <div class="scrollbar-hide mt-3 flex gap-2 overflow-x-auto pb-0.5">
+        <NuxtLink
+          v-for="quick in quickSearches"
+          :key="quick.label"
+          :to="quick.to"
+          class="shrink-0 rounded-full border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 transition hover:border-brand/40 hover:text-brand dark:border-neutral-700 dark:text-neutral-300"
+        >
+          {{ quick.label }}
         </NuxtLink>
       </div>
-
-      <BaseSkeleton
-        v-if="dealsLoading && !deals.length"
-        shape="block"
-        height="208px"
-        rounded="rounded-2xl"
-        class="[contain:strict]"
-      />
-      <FeedProductShelf
-        v-else-if="deals.length"
-        :products="deals"
-        :priority="true"
-        label="Today's deals"
-        hide-header
-        @open-product="openProduct"
-      />
     </section>
 
-    <!-- ─── 2. MARKETS (Squares) ──────────────────────────────────────────── -->
+    <!-- Trust leads when the preview is enabled so trust reads as the product. -->
+    <template v-if="trustSpotlight">
+      <TrustHero />
+      <TrustSpotlightRail />
+    </template>
+
+    <!-- 1. MARKETS (Squares) -->
     <section>
-      <div class="mb-4 flex items-end justify-between">
-        <div>
-          <p
-            class="mb-1 text-xs font-bold uppercase tracking-widest text-brand"
-          >
-            Discover
-          </p>
-          <h2
-            class="font-display text-xl font-bold leading-tight text-gray-900 dark:text-white"
-          >
-            Explore Nigeria's Digital Markets
-          </h2>
-          <p class="mt-0.5 text-[12px] text-gray-500 dark:text-neutral-400">
-            Step into real market squares — meet the traders inside
+      <div class="mb-4 flex items-end justify-between gap-4">
+        <div class="min-w-0">
+          <p class="t-eyebrow mb-1">Discover</p>
+          <h2 class="t-title">Explore Nigeria's Digital Markets</h2>
+          <p class="t-meta mt-0.5">
+            Step into real market squares and meet the traders inside
           </p>
         </div>
         <NuxtLink
           to="/squares"
           class="mb-0.5 shrink-0 text-xs font-semibold text-gray-500 hover:text-brand dark:text-neutral-400"
         >
-          All markets →
+          All markets ->
         </NuxtLink>
       </div>
 
@@ -90,13 +86,24 @@
         />
       </div>
 
-      <!-- Empty / error state — API failed or no squares seeded -->
-      <p
+      <BaseEmptyState
         v-else-if="!squaresLoading && !squares.length"
-        class="text-xs text-gray-500 dark:text-neutral-400"
+        icon="solar:shop-linear"
+        title="The first markets are being set up"
+        description="Check back soon, or start by browsing traders and goods already live."
+        compact
       >
-        No markets open yet — check back soon
-      </p>
+        <template #actions>
+          <BaseButton
+            variant="secondary"
+            size="sm"
+            @click="navigateTo('/discover')"
+          >
+            Browse discover
+            <Icon name="solar:arrow-right-linear" size="13" />
+          </BaseButton>
+        </template>
+      </BaseEmptyState>
 
       <div
         v-else-if="squares.length"
@@ -111,7 +118,7 @@
 
         <NuxtLink
           to="/squares"
-          class="flex w-20 shrink-0 flex-col items-center justify-center gap-1 rounded-2xl border border-dashed border-gray-200 text-gray-400 transition hover:border-brand/40 hover:text-brand dark:border-neutral-700"
+          class="flex w-20 shrink-0 flex-col items-center justify-center gap-1 rounded-2xl border border-dashed border-gray-200 text-gray-500 transition hover:border-brand/40 hover:text-brand dark:border-neutral-700 dark:text-neutral-400"
         >
           <Icon name="solar:add-circle-linear" size="20" />
           <span class="text-[10px] font-semibold">More</span>
@@ -119,25 +126,16 @@
       </div>
     </section>
 
-    <!-- ─── 3. SELLERS ONLINE ─────────────────────────────────────────────── -->
+    <!-- 2. SELLERS ONLINE -->
     <section ref="section3Ref">
-      <div class="mb-4 flex items-end justify-between">
-        <div>
-          <p
-            class="mb-1 text-xs font-bold uppercase tracking-widest text-brand"
-          >
-            Happening now
-          </p>
+      <div class="mb-4 flex items-end justify-between gap-4">
+        <div class="min-w-0">
+          <p class="t-eyebrow mb-1">Happening now</p>
           <div class="flex items-center gap-2">
-            <h2
-              class="font-display text-lg font-bold text-gray-900 dark:text-white"
-            >
-              Traders selling live
-            </h2>
+            <h2 class="t-title">Traders selling live</h2>
             <span
               class="flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-bold text-green-600 dark:bg-green-900/30 dark:text-green-400"
             >
-              <!-- animate-pulse is suppressed by Reduce Motion (settings) and OS prefers-reduced-motion -->
               <span
                 class="block h-1.5 w-1.5 animate-pulse rounded-full bg-green-500"
               />
@@ -147,9 +145,9 @@
         </div>
         <NuxtLink
           to="/map"
-          class="mb-0.5 text-xs font-semibold text-gray-400 hover:text-brand dark:text-neutral-500"
+          class="mb-0.5 text-xs font-semibold text-gray-500 hover:text-brand dark:text-neutral-400"
         >
-          Map →
+          Map ->
         </NuxtLink>
       </div>
 
@@ -223,7 +221,7 @@
 
       <button
         v-else-if="section3Loaded && !sellersLoading"
-        class="flex w-full items-center gap-3 rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-3 text-left hover:border-brand/30 dark:border-neutral-700 dark:bg-neutral-800/40"
+        class="flex w-full items-center gap-3 rounded-xl border border-dashed border-gray-200 bg-white px-4 py-3 text-left hover:border-brand/30 dark:border-neutral-700 dark:bg-neutral-900"
         :disabled="sellersRequesting"
         @click="requestSellerLocation"
       >
@@ -233,45 +231,30 @@
           size="18"
           class="animate-spin text-brand"
         />
-        <Icon
-          v-else
-          name="solar:gps-linear"
-          size="18"
-          class="text-gray-400"
-        />
-        <span class="text-[13px] text-gray-500 dark:text-neutral-400">
+        <Icon v-else name="solar:gps-linear" size="18" class="text-gray-500" />
+        <span class="text-[13px] text-gray-600 dark:text-neutral-400">
           {{
             sellersRequesting
-              ? 'Finding traders near you…'
+              ? 'Finding traders near you...'
               : "See who's trading near you"
           }}
         </span>
       </button>
     </section>
 
-    <!-- ─── 4. FRESH STOCK ────────────────────────────────────────────────── -->
+    <!-- 3. FRESH STOCK -->
     <section ref="section4Ref">
-      <div class="mb-4 flex items-end justify-between">
-        <div>
-          <p
-            class="mb-1 text-xs font-bold uppercase tracking-widest text-brand"
-          >
-            New this week
-          </p>
-          <h2
-            class="font-display text-xl font-bold text-gray-900 dark:text-white"
-          >
-            Fresh from the market
-          </h2>
-          <p class="mt-0.5 text-[12px] text-gray-500 dark:text-neutral-400">
-            New goods from traders this week
-          </p>
+      <div class="mb-4 flex items-end justify-between gap-4">
+        <div class="min-w-0">
+          <p class="t-eyebrow mb-1">New this week</p>
+          <h2 class="t-title">Fresh from the market</h2>
+          <p class="t-meta mt-0.5">New goods from traders this week</p>
         </div>
         <NuxtLink
           to="/discover?tab=fresh"
-          class="mb-0.5 text-xs font-semibold text-gray-400 hover:text-brand dark:text-neutral-500"
+          class="mb-0.5 text-xs font-semibold text-gray-500 hover:text-brand dark:text-neutral-400"
         >
-          See all →
+          See all ->
         </NuxtLink>
       </div>
 
@@ -289,34 +272,93 @@
         hide-header
         @open-product="openProduct"
       />
+      <BaseEmptyState
+        v-else
+        icon="solar:bag-4-linear"
+        title="Fresh goods are being arranged"
+        description="Check the markets now, or come back when traders add new stock."
+        compact
+      >
+        <template #actions>
+          <BaseButton
+            variant="secondary"
+            size="sm"
+            @click="navigateTo('/squares')"
+          >
+            Explore markets
+            <Icon name="solar:arrow-right-linear" size="13" />
+          </BaseButton>
+        </template>
+      </BaseEmptyState>
     </section>
 
-    <!-- ─── 5. MARKET PULSE (community posts) ─────────────────────────────── -->
-    <!-- Slim, left-aligned so portrait media fills the column (no side-blur) and
-         its left edge lines up with the wider browse sections above. -->
+    <!-- 4. DEALS -->
+    <section>
+      <div class="mb-4 flex items-end justify-between gap-4">
+        <div class="min-w-0">
+          <p class="t-eyebrow mb-1">On sale now</p>
+          <h2 class="t-title">Today's deals</h2>
+          <p class="t-meta mt-0.5">Short-lived offers from active traders</p>
+        </div>
+        <NuxtLink
+          to="/discover?tab=deals"
+          class="mb-0.5 text-xs font-semibold text-gray-500 hover:text-brand dark:text-neutral-400"
+        >
+          See all ->
+        </NuxtLink>
+      </div>
+
+      <BaseSkeleton
+        v-if="dealsLoading && !deals.length"
+        shape="block"
+        height="208px"
+        rounded="rounded-2xl"
+        class="[contain:strict]"
+      />
+      <FeedProductShelf
+        v-else-if="deals.length"
+        :products="deals"
+        :priority="true"
+        label="Today's deals"
+        hide-header
+        @open-product="openProduct"
+      />
+      <BaseEmptyState
+        v-else
+        icon="solar:tag-linear"
+        title="No flash deals right now"
+        description="The market is still open. Browse fresh goods from traders instead."
+        compact
+      >
+        <template #actions>
+          <BaseButton
+            variant="secondary"
+            size="sm"
+            @click="navigateTo('/discover?tab=fresh')"
+          >
+            Browse fresh goods
+            <Icon name="solar:arrow-right-linear" size="13" />
+          </BaseButton>
+        </template>
+      </BaseEmptyState>
+    </section>
+
+    <!-- 5. MARKET PULSE (community posts) -->
     <section ref="section5Ref" class="max-w-[512px]">
-      <div class="mb-4 flex items-end justify-between">
-        <div>
-          <p
-            class="mb-1 text-xs font-bold uppercase tracking-widest text-brand"
-          >
-            From the community
-          </p>
-          <h2
-            class="font-display text-lg font-bold text-gray-900 dark:text-white"
-          >
-            Market Pulse
-          </h2>
-          <p class="mt-0.5 text-[12px] text-gray-500 dark:text-neutral-400">
+      <div class="mb-4 flex items-end justify-between gap-4">
+        <div class="min-w-0">
+          <p class="t-eyebrow mb-1">From the community</p>
+          <h2 class="t-title">Market Pulse</h2>
+          <p class="t-meta mt-0.5">
             Latest updates from merchants, creators and communities
           </p>
         </div>
         <NuxtLink
           to="/"
-          class="mb-0.5 shrink-0 text-xs font-semibold text-gray-400 hover:text-brand dark:text-neutral-500"
+          class="mb-0.5 shrink-0 text-xs font-semibold text-gray-500 hover:text-brand dark:text-neutral-400"
           @click.prevent="$emit('sign-in')"
         >
-          Sign in for more →
+          Sign in for more ->
         </NuxtLink>
       </div>
 
@@ -342,7 +384,6 @@
         />
       </div>
 
-      <!-- Empty — encourage exploration instead of a dangling header -->
       <BaseEmptyState
         v-else
         icon="solar:shop-linear"
@@ -363,7 +404,7 @@
       </BaseEmptyState>
     </section>
 
-    <!-- ─── 6. MAP CTA ────────────────────────────────────────────────────── -->
+    <!-- 6. MAP CTA -->
     <section class="pb-4">
       <NuxtLink
         to="/map"
@@ -378,15 +419,18 @@
           <p class="font-display font-bold text-white">
             Explore the market map
           </p>
-          <p class="text-[12px] text-white/50">
-            Stores, pop-ups and deals near you
+          <p class="text-[12px] text-white/70">
+            Traders, pop-ups and deals near you
           </p>
         </div>
-        <Icon name="solar:arrow-right-linear" size="20" class="shrink-0 text-white/40" />
+        <Icon
+          name="solar:arrow-right-linear"
+          size="20"
+          class="shrink-0 text-white/50"
+        />
       </NuxtLink>
     </section>
 
-    <!-- Modals — teleported to body, position in DOM doesn't matter -->
     <ProductDetailModal
       v-if="selectedProduct"
       :product="selectedProduct"
@@ -414,6 +458,8 @@
 
 <script setup lang="ts">
 import FeedProductShelf from '~~/layers/feed/app/components/FeedProductShelf.vue'
+import TrustHero from '~~/layers/reputation/app/components/TrustHero.vue'
+import TrustSpotlightRail from '~~/layers/reputation/app/components/TrustSpotlightRail.vue'
 import PostCard from '~~/layers/social/app/components/PostCard.vue'
 import SquareCard from '~~/layers/square/app/components/SquareCard.vue'
 import BaseSkeleton from '~~/layers/ui/app/components/BaseSkeleton.vue'
@@ -423,6 +469,7 @@ import ProductDetailModal from '~~/layers/commerce/app/components/modals/Product
 import PostDetailModal from '~~/layers/social/app/components/modals/PostDetailModal.vue'
 import ProductCommentModal from '~~/layers/commerce/app/components/modals/ProductCommentModal.vue'
 
+import { navigateTo } from '#imports'
 import { ref } from 'vue'
 import { imgAvatar } from '~~/layers/core/app/utils/cloudinary'
 import { useProductDetail } from '~~/layers/commerce/app/composables/useProductDetail'
@@ -431,8 +478,24 @@ import type { IFeedItem } from '~~/layers/feed/app/types/feed.types'
 import type { IProduct } from '~~/layers/social/app/types/post.types'
 
 defineEmits<{ 'sign-in': [] }>()
+withDefaults(defineProps<{ trustSpotlight?: boolean }>(), {
+  trustSpotlight: false,
+})
 
-// ── Hero search — routes to the full search page ────────────────────────────────
+const searchQuery = ref('')
+const quickSearches = [
+  { label: 'Markets near me', to: '/map' },
+  { label: 'Fresh goods', to: '/discover?tab=fresh' },
+  { label: 'Trusted traders', to: '/discover?tab=sellers' },
+  { label: 'Deals today', to: '/discover?tab=deals' },
+]
+
+const submitSearch = () => {
+  const q = searchQuery.value.trim()
+  if (!q) return navigateTo('/discover')
+  return navigateTo(`/discover?q=${encodeURIComponent(q)}`)
+}
+
 const {
   selectedProduct,
   detailLoading: productDetailLoading,

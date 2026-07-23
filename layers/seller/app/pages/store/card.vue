@@ -7,7 +7,9 @@
           <p class="text-[11px] font-bold uppercase tracking-widest text-brand">
             Your MarketX Card
           </p>
-          <h1 class="font-display text-xl font-bold text-gray-900 dark:text-white">
+          <h1
+            class="font-display text-xl font-bold text-gray-900 dark:text-white"
+          >
             Share your store
           </h1>
         </div>
@@ -32,7 +34,10 @@
         description="Create a store to get your shareable MarketX Card."
       >
         <template #actions>
-          <BaseButton variant="primary" @click="$router.push('/sellers/create')">
+          <BaseButton
+            variant="primary"
+            @click="$router.push('/sellers/create')"
+          >
             Start selling
           </BaseButton>
         </template>
@@ -44,6 +49,7 @@
           :seller="seller"
           :product-count="productCount"
           :qr="qr"
+          :trust="trust"
           :share-url="shareUrl"
           :display-url="displayUrl"
           :copied="copied"
@@ -91,6 +97,7 @@ const {
   seller,
   productCount,
   qr,
+  trust,
   copied,
   loading,
   displayUrl,
@@ -106,9 +113,16 @@ const {
 const cardRef = ref<{ rootEl: HTMLElement | null } | null>(null)
 const { capture, captureTemplate, shareImage, capturing } = useCardCapture()
 const downloadCardImage = () =>
-  capture(cardRef.value?.rootEl, `${seller.value?.store_slug || 'store'}-card.png`)
+  capture(
+    cardRef.value?.rootEl,
+    `${seller.value?.store_slug || 'store'}-card.png`,
+  )
 const downloadTemplateImage = (tpl: ShareTemplate) =>
-  captureTemplate(cardRef.value?.rootEl, tpl, seller.value?.store_slug || 'store')
+  captureTemplate(
+    cardRef.value?.rootEl,
+    tpl,
+    seller.value?.store_slug || 'store',
+  )
 const onShareTarget = (t: { tpl?: ShareTemplate; href?: string }) =>
   shareImage(cardRef.value?.rootEl, {
     tpl: t.tpl,

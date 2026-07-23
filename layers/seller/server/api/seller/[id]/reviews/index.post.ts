@@ -4,6 +4,8 @@ import { prisma } from '~~/server/utils/db'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
 import { notificationQueue } from '~~/server/queues/notification.queue'
 import { emailQueue } from '~~/server/queues/email.queue'
+import { reputationQueue } from '~~/server/queues/reputation.queue'
+import { reviewSignal } from '~~/layers/reputation/server/utils/signals'
 import { buildReviewReceivedEmail } from '~~/server/utils/email/emailService'
 
 const reviewSchema = z.object({
@@ -82,6 +84,18 @@ export default defineEventHandler(async (event) => {
       totalReviews: agg._count,
     },
   })
+
+  // Reputation ledger: a verified review (gated on a completed order above) →
+  // Gold commerce signal. Idempotent on the review id, so re-reviews don't dup.
+  reputationQueue.enqueue(
+    reviewSignal({
+      sellerId: seller.id,
+      reviewId: review.id,
+      rating: body.rating,
+      orderId: deliveredOrder.id,
+      observedAt: new Date().toISOString(),
+    }),
+  )
 
   // Notify + email seller (non-blocking, skip self-review)
   if (seller.profileId && seller.profileId !== user.id) {

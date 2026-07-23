@@ -1168,6 +1168,106 @@ model SellerReview {
   @@index([authorId])
 }
 
+/// Trust Card QR scan — the top of the trust funnel (framework §3). Records
+/// which surface the QR lived on and, if the scan later led to a protected
+/// payment, the converting order. Append-only; the pilot's kill/scale metric
+/// (scans per card, scan→payment conversion) is computed from these rows.
+model TrustScanEvent {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sellerId   String   @db.Uuid
+  /// Where the QR lived: CARD | PLAQUE | IG_BIO | PARCEL
+  surface    String?
+  /// Set if the scan converted to a protected payment (funnel conversion)
+  orderId    Int?
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([sellerId, created_at(sort: Desc)])
+}
+
+/// Cached engine output — the versioned reputation snapshot (framework §3/§4).
+/// Rebuilt by the engine, never hand-edited; one row per computation so
+/// "profile as of date X, engine vN" stays answerable for banks. The latest
+/// isCurrent row is the live profile.
+model ReputationProfile {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sellerId      String   @db.Uuid
+  engineVersion String
+  /// Headline facts { enoughEvidence, tier, facts: { sales, disputeRate, … } }
+  facts         Json
+  /// Per-dimension bands: [{ key, label, band, score, fact }]
+  dimensions    Json
+  computedAt    DateTime @default(now()) @db.Timestamptz(6)
+  isCurrent     Boolean  @default(true)
+
+  @@index([sellerId, isCurrent])
+  @@index([sellerId, computedAt(sort: Desc)])
+}
+
+/// Append-only evidence ledger (framework §3) — the durable "asset". One row =
+/// one provenance-stamped observation. Rows are NEVER updated except lifecycle
+/// stamps (supersededById, revokedAt); corrections supersede, never edit. The
+/// engine reads these to build ReputationProfile snapshots.
+model ReputationSignal {
+  id             String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sellerId       String              @db.Uuid
+  /// Key into reputation.registry.ts, e.g. "commerce.order_completed"
+  signalKey      String
+  dimension      ReputationDimension
+  tier           SignalTier
+  /// Signal payload — shape defined per signalKey in the registry
+  value          Json
+  /// 0–1: confidence in THIS observation (distinct from registry weight)
+  confidence     Float               @default(1)
+  // ── Provenance (the point of the model) ──────────────────────────────────
+  sourceType     SignalSource
+  /// Originating record: "Orders:1234", "SellerReview:uuid", "SupportTicket:uuid"
+  sourceRef      String?
+  /// How it was verified: "ORDER_DELIVERED_PAID", "VERIFIED_REVIEW", …
+  method         String
+  /// Who verified (profileId / "system" / provider name)
+  verifierId     String?
+  // ── Lifecycle ────────────────────────────────────────────────────────────
+  observedAt     DateTime            @db.Timestamptz(6)
+  expiresAt      DateTime?           @db.Timestamptz(6)
+  supersededById String?             @db.Uuid
+  revokedAt      DateTime?           @db.Timestamptz(6)
+  revokedReason  String?
+  created_at     DateTime            @default(now()) @db.Timestamptz(6)
+
+  @@index([sellerId, dimension, observedAt(sort: Desc)])
+  @@index([signalKey])
+  @@index([sourceRef]) // idempotency: one signal per source event
+}
+
+enum ReputationDimension {
+  IDENTITY
+  HISTORY
+  COMMERCE
+  FINANCIAL
+  COMMUNITY
+  SOCIAL
+}
+
+enum SignalTier {
+  GOLD
+  SILVER
+  BRONZE
+}
+
+enum SignalSource {
+  ESCROW_TRANSACTION
+  MANUAL_ESCROW
+  POD_DELIVERY
+  KYC_PROVIDER
+  CAC_REGISTRY
+  OPEN_BANKING
+  ASSOCIATION_ATTESTATION
+  FIELD_VERIFICATION
+  SOCIAL_IMPORT
+  PLATFORM_OBSERVED
+  SELF_REPORTED
+}
+
 // ==================== SQUARES ====================
 
 /// A Square is a named community of sellers — either anchored to a real

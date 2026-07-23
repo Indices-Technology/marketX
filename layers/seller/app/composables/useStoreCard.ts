@@ -3,6 +3,7 @@ import QRCode from 'qrcode'
 import { notify } from '@kyvg/vue3-notification'
 import { useRuntimeConfig } from '#imports'
 import { useSellerApi } from '../services/seller.services'
+import { useReputationApi } from '~~/layers/reputation/app/services/reputation.api'
 import { useProduct } from '~~/layers/commerce/app/composables/useProduct'
 import {
   storeDisplayUrl,
@@ -25,6 +26,7 @@ export function useStoreCard() {
   const seller = ref<any>(null)
   const productCount = ref(0)
   const qr = ref('')
+  const trust = ref<any>(null)
   const copied = ref<string | null>(null)
   const loading = ref(true)
 
@@ -42,7 +44,15 @@ export function useStoreCard() {
       : '',
   )
 
-  watch(shareUrl, async (url) => {
+  // The card is a Trust Card: its QR opens the seller's Trust tab (scan → verify),
+  // not the plain storefront.
+  const qrTarget = computed(() => {
+    if (!seller.value) return ''
+    const base = String(config.public.baseURL || '').replace(/\/+$/, '')
+    return `${base}/sellers/profile/${seller.value.store_slug}?tab=trust&mx_scan=card`
+  })
+
+  watch(qrTarget, async (url) => {
     if (!url) {
       qr.value = ''
       return
@@ -67,8 +77,17 @@ export function useStoreCard() {
     try {
       const res = await api.getSellerBySlug(slug)
       seller.value = res?.data ?? res
+      // Load real trust facts before revealing the card, so the downloadable
+      // image includes them.
+      trust.value = seller.value
+        ? await useReputationApi()
+            .getProfile(slug)
+            .then((r: any) => r?.data ?? null)
+            .catch(() => null)
+        : null
     } catch {
       seller.value = null
+      trust.value = null
     } finally {
       loading.value = false
     }
@@ -127,7 +146,6 @@ export function useStoreCard() {
     a.click()
   }
 
-
   // One row of platform buttons. Each shares the card IMAGE (sized for that
   // platform) together with the link/caption — `tpl` picks the size, `href` is
   // the desktop fallback composer. See useCardCapture.shareImage.
@@ -182,6 +200,7 @@ export function useStoreCard() {
     seller,
     productCount,
     qr,
+    trust,
     copied,
     loading,
     displayUrl,

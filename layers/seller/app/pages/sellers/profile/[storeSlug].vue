@@ -195,7 +195,7 @@
                 @click="showCard = true"
               >
                 <Icon name="solar:card-linear" size="16" />
-                Biz Card
+                Trust Card
               </button>
               <button
                 class="rounded-xl border border-gray-200 bg-white p-2.5 text-gray-600 transition-colors hover:bg-gray-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
@@ -476,6 +476,11 @@
               <Icon :name="tab.icon" size="13" />
               {{ tab.label }}
             </button>
+          </div>
+
+          <!-- TRUST ─────────────────────────────────────────────────────────── -->
+          <div v-show="activeTab === 'trust'" class="max-w-2xl">
+            <TrustProfile :slug="storeSlug" />
           </div>
 
           <!-- WALL (default) ───────────────────────────────────────────────── -->
@@ -925,6 +930,8 @@ import { useProduct } from '~~/layers/commerce/app/composables/useProduct'
 import { useAffiliate } from '~~/layers/commerce/app/composables/useAffiliate'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import SellerReviews from '~~/layers/seller/app/components/SellerReviews.vue'
+import TrustProfile from '~~/layers/reputation/app/components/TrustProfile.vue'
+import { useReputationApi } from '~~/layers/reputation/app/services/reputation.api'
 import { useCart } from '~~/layers/commerce/app/composables/useCart'
 import { notify } from '@kyvg/vue3-notification'
 import type { IProduct } from '~~/layers/commerce/app/types/commerce.types'
@@ -963,7 +970,13 @@ const { addToCart } = useCart()
 
 const pageLoading = ref(true)
 const loadError = ref(false)
-const activeTab = ref('wall')
+// Deep-link a tab via ?tab= (e.g. the Trust Card QR opens ?tab=trust).
+const VALID_TABS = ['wall', 'trust', 'products', 'reviews', 'about']
+const activeTab = ref(
+  typeof route.query.tab === 'string' && VALID_TABS.includes(route.query.tab)
+    ? route.query.tab
+    : 'wall',
+)
 const seller = computed(() => currentSeller.value)
 // Render-time guard — neutralizes any javascript:/data: URL persisted before
 // input validation was tightened (stored-XSS defense-in-depth)
@@ -1015,6 +1028,7 @@ let observer: IntersectionObserver | null = null
 
 const tabs = [
   { key: 'wall', label: 'All', icon: 'solar:widget-5-linear' },
+  { key: 'trust', label: 'Trust', icon: 'solar:shield-check-linear' },
   { key: 'products', label: 'Products', icon: 'solar:widget-2-linear' },
   { key: 'reviews', label: 'Reviews', icon: 'solar:star-linear' },
   { key: 'about', label: 'About', icon: 'solar:info-circle-linear' },
@@ -1186,6 +1200,12 @@ const { captureAffiliateRef } = useAffiliate()
 
 onMounted(async () => {
   captureAffiliateRef()
+  // Log a Trust Card scan when arriving via a QR (?mx_scan=…) — the funnel top.
+  if (route.query.mx_scan) {
+    useReputationApi()
+      .logScan({ slug: storeSlug, surface: String(route.query.mx_scan) })
+      .catch(() => {})
+  }
   try {
     await loadPublicSeller(storeSlug)
   } catch {

@@ -1,6 +1,6 @@
 # MarketX Business Reputation Framework — Structuring Proposal
 
-**Status:** Proposed · **Depends on:** Trust Card initiative · **Last updated:** 2026-07-19
+**Status:** Proposed · **Depends on:** Trust Card initiative · **Last updated:** 2026-07-22
 
 The reputation layer that backs the Trust Card, the `/t/{publicId}` trust profile, and —
 eventually — the institutional risk report banks/lenders consume. Companion strategy context:
@@ -370,6 +370,49 @@ authorities (the platform's survival depends on this stance being structural, no
 **Internal / Dasah** — the agent reads the current snapshot to answer "can I trust this
 seller?" in chat, and to gate platform capabilities (escrow limits, release speed by tier).
 
+### 5.4 Discovery projection — the Trust Card in the feed
+
+Not a fourth view — a **teaser projection of the buyer view**, pulled into discovery surfaces
+so reputation itself becomes the reason to tap. Same ledger, same bands, same facts; fewer of
+them, and *ranked*. It reads `ReputationProfile.facts` — no per-render computation.
+
+The in-feed card is **facts-first and chrome-light** — the dimension bars stay on
+`/t/{publicId}`; the card carries only the five-second read:
+
+```
+Chinedu Phones  ✓          MX-PL-04KT   [ GOLD ]
+214 protected sales · 1.4% disputes · 38% repeat buyers
+Chairman-attested — Hamaz Phone Dealers Assoc.
+[ View trust profile → ]                  🔒 Protected
+```
+
+- Identity + the shareable **public ID** — the same `MX-STATE-code` printed on the QR card,
+  plaque and parcel, so the feed card is visibly *the same seller* across every surface.
+- Three **Gold** headline facts (money that actually moved), never a composite number.
+- One community/identity line — attestation or verification, the revocable Nigerian advantage.
+- Tier as a capped chip; the whole card is the entry point into the full buyer view.
+
+**Ranking contract — this is the point of the surface:**
+
+| Rule | Why |
+| --- | --- |
+| Gold COMMERCE band + min-evidence to appear at all | Below threshold → *no card*. "Not enough data yet" beats a fake-precise slot (§1.6) |
+| Recency-weighted via registry half-lives | Rewards sellers trading cleanly *now*, not coasting on banked volume (§6 "burst then coast") |
+| Bronze/social excluded from ranking | The rail literally cannot be bought — 100k followers never outrank 500 clean orders (§1.4) |
+
+The rail is an argument for the framework's core rule made visible: the most prominent thing on
+the home feed is the thing you can least fake.
+
+**Surfaces (reuse existing feed patterns — no new feed engine):**
+
+- **Logged-in feed** — interleaved every ~2 chunks, exactly like `FeedProductShelf` in
+  `SocialFeed.vue`.
+- **Market home (logged-out)** — the trust-bearing upgrade to the flat "Traders selling live"
+  avatar row.
+- **`/discover` → Sellers** — the grid graduates from banner + follower count to this surface.
+
+Component: `TrustSpotlightRail` + `TrustCard` in the new `layers/reputation` layer (§8 Q6).
+
 ---
 
 ## 6. Anti-gaming (structural, not aspirational)
@@ -384,6 +427,7 @@ seller?" in chat, and to gate platform capabilities (escrow limits, release spee
 | Burst then coast | Decay half-lives in registry — reputation must be maintained, not banked |
 | Identity resale | KYC expiry (`expiresAt`) + re-verification windows |
 | Score-shopping ("recompute until good") | Append-only ledger + snapshot history — there is no deleting bad evidence |
+| Buying feed prominence (Trust Spotlight) | Rail eligibility keys on the Gold COMMERCE band only; social/paid signals are excluded — a slot is earned per settled sale, never purchased (§5.4) |
 
 ---
 
@@ -392,7 +436,7 @@ seller?" in chat, and to gate platform capabilities (escrow limits, release spee
 | Phase | Ships | New surface |
 | --- | --- | --- |
 | **0 — with Trust Card pilot** | `ReputationSignal` + `TrustScanEvent` migrations; identity signals (KYC via provider, phone, CAC); `/t/{publicId}` page reads IDENTITY + facts; **manual escrow deals recorded as `MANUAL_ESCROW` signals from day one** — the 20-seller pilot's data is never lost | Trust profile page |
-| **1** | Backfill job (orders/reviews/memberships → ledger); COMMERCE dimension live; engine v1 + registry | Dimension bars appear |
+| **1** | Backfill job (orders/reviews/memberships → ledger); COMMERCE dimension live; engine v1 + registry; **Trust Spotlight rail** (facts-only card) reads `ReputationProfile.facts` into the feed | Dimension bars appear · Trust Card rail in feed (§5.4) |
 | **2** | `Attestation` flow for Square chairmen; COMMUNITY dimension; plaque rollout (Hamaz) | Attestation UI |
 | **3** | Mono link (`ExternalAccountLink`); FINANCIAL dimension; IG import (SOCIAL) | Reputation import |
 | **4** | `ReputationConsentGrant` + institutional API; first partner-lender pilot | The credit door opens |

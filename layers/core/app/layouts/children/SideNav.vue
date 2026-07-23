@@ -1,13 +1,21 @@
 <!-- ~~/layers/core/app/layouts/children/SideNav.vue -->
 <template>
-  <div class="flex h-full flex-col p-3 xl:p-4">
-    <!-- Logo -->
+  <div class="flex h-full flex-col p-3" :class="{ expanded }">
+    <!-- Logo — MX mark when collapsed, full wordmark when expanded -->
     <NuxtLink
       to="/"
-      class="mb-6 flex shrink-0 items-center justify-center xl:justify-start"
+      class="mb-6 flex h-9 shrink-0 items-center"
+      :class="expanded ? 'justify-start px-1' : 'justify-center'"
+      aria-label="MarketX"
     >
-      <span class="brand-wordmark hidden xl:inline-flex" aria-label="MarketX">
+      <span v-if="expanded" class="brand-wordmark inline-flex">
         <span>Market</span><span class="brand-x">X</span>
+      </span>
+      <span
+        v-else
+        class="flex h-9 w-9 items-center justify-center rounded-xl bg-brand text-sm font-black italic text-white shadow-sm shadow-brand/25"
+      >
+        MX
       </span>
     </NuxtLink>
 
@@ -90,7 +98,8 @@
             <span class="nav-text">Seller Hub</span>
             <span
               v-if="isSellerRoute"
-              class="ml-auto hidden rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700 xl:inline dark:bg-emerald-900/30 dark:text-emerald-400"
+              class="ml-auto rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+              :class="expanded ? 'inline' : 'hidden'"
               >Active</span
             >
           </NuxtLink>
@@ -113,7 +122,8 @@
             </div>
             <span class="nav-text">Seller Hub</span>
             <span
-              class="ml-auto hidden rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] font-bold text-gray-500 xl:inline dark:bg-neutral-800 dark:text-neutral-400"
+              class="ml-auto rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] font-bold text-gray-500 dark:bg-neutral-800 dark:text-neutral-400"
+              :class="expanded ? 'inline' : 'hidden'"
             >
               {{ sellerStore.sellers.length }}
             </span>
@@ -184,7 +194,7 @@
                   @click="storePickerOpen = false"
                 >
                   <Icon name="solar:add-circle-linear" size="16" />
-                  <span class="nav-text">Add new store</span>
+                  <span>Add new store</span>
                 </NuxtLink>
               </div>
             </div>
@@ -285,7 +295,8 @@
               class="ring-2 ring-gray-200 dark:ring-neutral-700"
             />
             <span
-              class="hidden max-w-[140px] truncate font-medium text-gray-900 xl:inline dark:text-white"
+              v-show="expanded"
+              class="max-w-[140px] truncate font-medium text-gray-900 dark:text-white"
             >
               {{ profileStore.me?.username || 'Profile' }}
             </span>
@@ -293,8 +304,8 @@
           <Icon
             name="solar:alt-arrow-up-linear"
             size="20"
-            class="hidden text-gray-500 transition-transform xl:block"
-            :class="{ 'rotate-180': menuOpen }"
+            class="text-gray-500 transition-transform"
+            :class="{ 'rotate-180': menuOpen, hidden: !expanded }"
           />
         </button>
 
@@ -398,7 +409,10 @@ import { useChat } from '~~/layers/profile/app/composables/useChat'
 import Avatar from '~~/layers/profile/app/components/Avatar.vue'
 import AppIcon from '~~/layers/ui/app/components/AppIcon.vue'
 
-const emit = defineEmits(['create', 'open-notifications', 'open-cart'])
+defineEmits(['create', 'open-notifications', 'open-cart'])
+
+// Driven by the layout: true while the rail is hovered/focused → show labels.
+defineProps<{ expanded?: boolean }>()
 
 const route = useRoute()
 const { logout } = useAuth()
@@ -460,12 +474,37 @@ onUnmounted(() => document.removeEventListener('click', onClickOutside, true))
   @apply bg-emerald-50 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300;
 }
 
+/* On the collapsed icon rail the labels are visually hidden but kept in the
+   accessibility tree (sr-only), so every nav link still has an accessible name
+   for screen-reader and keyboard users. Expanding (hover/focus) reveals them. */
 .nav-text {
-  @apply hidden text-[15px] xl:inline;
+  @apply text-[15px];
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.expanded .nav-text {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
 }
 
 .nav-group-label {
-  @apply hidden px-3 pb-1 pt-1 text-[11px] font-bold uppercase tracking-widest text-gray-500 xl:block dark:text-neutral-500;
+  @apply px-3 pb-1 pt-1 text-[11px] font-bold uppercase tracking-widest text-gray-500 dark:text-neutral-500;
+  display: none;
+}
+.expanded .nav-group-label {
+  display: block;
 }
 
 .menu-item {

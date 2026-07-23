@@ -377,6 +377,10 @@
           :products="shelfSlice(ci)"
           @open-product="openProduct"
         />
+
+        <!-- Trust Spotlight — top-seller trust cards, once near the top of the
+             feed (framework §5.4). Opt-in via prop so the live feed is unchanged. -->
+        <TrustSpotlightRail v-if="trustSpotlight && ci === 0" />
       </template>
     </section>
 
@@ -489,6 +493,7 @@ import FeedProductShelf from '~~/layers/feed/app/components/FeedProductShelf.vue
 import FeedSortBar from '~~/layers/feed/app/components/FeedSortBar.vue'
 import PostCard from '~~/layers/social/app/components/PostCard.vue'
 import PostListCard from '~~/layers/social/app/components/PostListCard.vue'
+import TrustSpotlightRail from '~~/layers/reputation/app/components/TrustSpotlightRail.vue'
 
 import { getCachedLocation } from '~~/layers/map/app/composables/useMapSellers'
 import type { IMapSeller } from '~~/layers/map/app/types/map.types'
@@ -503,6 +508,10 @@ import { useFollow } from '~~/layers/profile/app/composables/useFollow'
 import { useAffiliate } from '~~/layers/commerce/app/composables/useAffiliate'
 import type { IFeedItem } from '~~/layers/feed/app/types/feed.types'
 import type { IProduct } from '~~/layers/social/app/types/post.types'
+
+withDefaults(defineProps<{ trustSpotlight?: boolean }>(), {
+  trustSpotlight: false,
+})
 
 const router = useRouter()
 const feedStore = useFeedStore()

@@ -8,6 +8,8 @@ import type { Prisma } from '@prisma/client'
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { notificationQueue } from '~~/server/queues/notification.queue'
 import { emailQueue } from '~~/server/queues/email.queue'
+import { reputationQueue } from '~~/server/queues/reputation.queue'
+import { disputeSignal } from '~~/layers/reputation/server/utils/signals'
 import {
   buildSupportTicketCreatedEmail,
   buildSupportReplyEmail,
@@ -471,6 +473,19 @@ export const supportService = {
         ? {}
         : { assignedAgent: { connect: { id: input.agent.id } } }),
     })
+
+    // Reputation ledger: a resolved dispute → Gold commerce signal (the engine
+    // weights the outcome; REFUND_BUYER hits hardest). Idempotent on the ticket.
+    if (ticket.type === 'DISPUTE' && ticket.sellerId && input.disputeOutcome) {
+      reputationQueue.enqueue(
+        disputeSignal({
+          sellerId: ticket.sellerId,
+          ticketId: ticket.id,
+          outcome: input.disputeOutcome,
+          observedAt: new Date().toISOString(),
+        }),
+      )
+    }
 
     // Record the resolution in the thread + notify both parties.
     await supportRepository.createMessage({
