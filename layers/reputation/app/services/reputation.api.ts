@@ -31,6 +31,14 @@ class ReputationApiClient extends BaseApiClient {
       skipAuth: true,
     })
   }
+
+  /** The seller's own Trust Card funnel metrics (owner-gated). */
+  async getScanStats(slug: string): Promise<unknown> {
+    return this.request('/api/reputation/scan-stats', {
+      method: 'GET',
+      params: { slug },
+    })
+  }
 }
 
 export const useReputationApi = () => new ReputationApiClient()

@@ -69,6 +69,10 @@
         </div>
 
         <div v-if="isOwner" class="mt-4">
+          <ScanFunnelPanel :slug="seller.store_slug" />
+        </div>
+
+        <div v-if="isOwner" class="mt-4">
           <CardSettingsPanel :seller="seller" @saved="onSaved" />
         </div>
       </template>
@@ -85,6 +89,7 @@ import BaseEmptyState from '~~/layers/ui/app/components/BaseEmptyState.vue'
 import MarketXCard from '~~/layers/seller/app/components/MarketXCard.vue'
 import CardSettingsPanel from '~~/layers/seller/app/components/CardSettingsPanel.vue'
 import CardShareActions from '~~/layers/seller/app/components/CardShareActions.vue'
+import ScanFunnelPanel from '~~/layers/reputation/app/components/ScanFunnelPanel.vue'
 import { useStoreCard } from '~~/layers/seller/app/composables/useStoreCard'
 import { useCardCapture } from '~~/layers/seller/app/composables/useCardCapture'
 import { useSellerStore } from '~~/layers/seller/app/store/seller.store'

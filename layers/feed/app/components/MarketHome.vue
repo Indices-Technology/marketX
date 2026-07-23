@@ -1,49 +1,183 @@
 <!-- Market home - rendered inside HomeLayout by the auth-aware index.vue -->
 <template>
   <div class="w-full space-y-8 px-2 sm:px-4">
-    <!-- Search is the primary market action: find a place, trader, or good. -->
-    <section
-      class="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm sm:p-4 dark:border-neutral-800 dark:bg-neutral-900"
-    >
-      <form
-        class="flex items-center gap-3"
-        role="search"
-        @submit.prevent="submitSearch"
+    <!-- Search is the primary market action: find a place, trader, or good.
+         Desktop only — on mobile the top-bar search button opens the full
+         SearchOverlay, so an inline bar here would duplicate it. -->
+    <section ref="searchRoot" class="relative hidden md:block" role="search">
+      <div
+        class="flex items-center gap-3 rounded-2xl border bg-white px-3 py-2.5 shadow-sm transition-colors sm:px-4 dark:bg-neutral-900"
+        :class="
+          searchFocused
+            ? 'border-brand/40 ring-2 ring-brand/10'
+            : 'border-gray-200 dark:border-neutral-800'
+        "
       >
-        <div
-          class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand"
-        >
-          <Icon name="solar:magnifer-linear" size="20" />
-        </div>
+        <Icon
+          name="solar:magnifer-linear"
+          size="20"
+          class="shrink-0 text-gray-400 dark:text-neutral-500"
+        />
         <label class="sr-only" for="market-home-search">
           Search markets, traders or goods
         </label>
         <input
           id="market-home-search"
           v-model="searchQuery"
-          type="search"
+          type="text"
           autocomplete="off"
           placeholder="Search markets, traders or goods"
-          class="min-w-0 flex-1 bg-transparent text-[15px] font-medium text-gray-900 placeholder:text-gray-500 focus:outline-none dark:text-neutral-100 dark:placeholder:text-neutral-500"
+          class="min-w-0 flex-1 bg-transparent text-[15px] font-medium text-gray-900 placeholder:text-gray-400 focus:outline-none dark:text-neutral-100 dark:placeholder:text-neutral-500"
+          @focus="searchFocused = true"
+          @keydown.enter="submitSearch"
+          @keydown.escape="closeSearch"
         />
         <button
-          type="submit"
-          class="hidden h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-gray-900 px-4 text-sm font-semibold text-white transition hover:bg-neutral-800 sm:inline-flex dark:bg-neutral-100 dark:text-neutral-950 dark:hover:bg-white"
+          v-if="searchQuery"
+          type="button"
+          aria-label="Clear search"
+          class="shrink-0 rounded-full p-0.5 text-gray-400 transition hover:text-gray-700 dark:hover:text-neutral-200"
+          @click="clearSearch"
         >
-          Search
-          <Icon name="solar:arrow-right-linear" size="16" />
+          <Icon name="solar:close-circle-linear" size="16" />
         </button>
-      </form>
-      <div class="scrollbar-hide mt-3 flex gap-2 overflow-x-auto pb-0.5">
-        <NuxtLink
-          v-for="quick in quickSearches"
-          :key="quick.label"
-          :to="quick.to"
-          class="shrink-0 rounded-full border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 transition hover:border-brand/40 hover:text-brand dark:border-neutral-700 dark:text-neutral-300"
-        >
-          {{ quick.label }}
-        </NuxtLink>
+        <Icon
+          v-else-if="searchLoading"
+          name="solar:refresh-linear"
+          size="16"
+          class="shrink-0 animate-spin text-gray-400"
+        />
       </div>
+
+      <!-- Dropdown: suggestions/history when empty, live results while typing -->
+      <Transition name="search-drop">
+        <div
+          v-if="searchFocused && !searchQuery.trim()"
+          class="absolute left-0 right-0 top-[calc(100%+8px)] z-40"
+        >
+          <SearchSuggestions @search="onSuggestion" @close="closeSearch" />
+        </div>
+
+        <div
+          v-else-if="showLiveResults"
+          class="absolute left-0 right-0 top-[calc(100%+8px)] z-40 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-neutral-700 dark:bg-neutral-900"
+        >
+          <div
+            v-if="searchLoading && !liveHasHits"
+            class="flex items-center justify-center py-6"
+          >
+            <Icon
+              name="solar:refresh-linear"
+              size="20"
+              class="animate-spin text-gray-300 dark:text-neutral-600"
+            />
+          </div>
+
+          <div
+            v-else-if="!liveHasHits"
+            class="px-4 py-6 text-center text-[13px] text-gray-400 dark:text-neutral-500"
+          >
+            No results for "{{ searchQuery }}"
+          </div>
+
+          <div v-else class="max-h-[420px] overflow-y-auto py-1">
+            <!-- Traders -->
+            <template v-if="liveResults.stores.length">
+              <p class="search-group-label">Traders</p>
+              <NuxtLink
+                v-for="s in liveResults.stores.slice(0, 3)"
+                :key="`s-${s.id}`"
+                :to="`/sellers/profile/${s.store_slug}`"
+                class="search-row"
+                @click="onResultClick"
+              >
+                <StoreAvatar
+                  :store-name="s.store_name ?? undefined"
+                  :logo="s.store_logo ?? undefined"
+                  size="sm"
+                />
+                <span class="ink-strong truncate text-[13px] font-medium">{{
+                  s.store_name
+                }}</span>
+              </NuxtLink>
+            </template>
+
+            <!-- Goods -->
+            <template v-if="liveResults.products.length">
+              <p class="search-group-label">Goods</p>
+              <NuxtLink
+                v-for="p in liveResults.products.slice(0, 4)"
+                :key="`p-${p.id}`"
+                :to="`/product/${p.slug}`"
+                class="search-row"
+                @click="onResultClick"
+              >
+                <div
+                  class="h-9 w-9 shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-neutral-800"
+                >
+                  <img
+                    v-if="p.media?.[0]?.url"
+                    :src="imgThumb(p.media[0].url) ?? p.media[0].url"
+                    :alt="p.title"
+                    class="h-full w-full object-cover"
+                    loading="lazy"
+                  />
+                  <div
+                    v-else
+                    class="flex h-full w-full items-center justify-center"
+                  >
+                    <Icon
+                      name="solar:bag-4-linear"
+                      size="14"
+                      class="text-gray-400"
+                    />
+                  </div>
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p class="ink-strong truncate text-[13px] font-medium">
+                    {{ p.title }}
+                  </p>
+                  <p class="t-price text-[13px]">
+                    {{ formatPrice(p.price ?? 0) }}
+                  </p>
+                </div>
+              </NuxtLink>
+            </template>
+
+            <!-- People -->
+            <template v-if="liveResults.users.length">
+              <p class="search-group-label">People</p>
+              <NuxtLink
+                v-for="u in liveResults.users.slice(0, 3)"
+                :key="`u-${u.id}`"
+                :to="`/profile/${u.username}`"
+                class="search-row"
+                @click="onResultClick"
+              >
+                <Avatar
+                  :username="u.username"
+                  :avatar="u.avatar ?? undefined"
+                  size="sm"
+                />
+                <span class="ink-strong truncate text-[13px] font-medium"
+                  >@{{ u.username }}</span
+                >
+              </NuxtLink>
+            </template>
+
+            <div class="border-t border-gray-100 p-2 dark:border-neutral-800">
+              <button
+                type="button"
+                class="flex w-full items-center justify-center gap-1.5 rounded-xl py-2 text-[13px] font-semibold text-brand transition hover:bg-brand/5"
+                @click="submitSearch"
+              >
+                See all results
+                <Icon name="solar:arrow-right-linear" size="14" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
     </section>
 
     <!-- Trust leads when the preview is enabled so trust reads as the product. -->
@@ -470,31 +604,120 @@ import PostDetailModal from '~~/layers/social/app/components/modals/PostDetailMo
 import ProductCommentModal from '~~/layers/commerce/app/components/modals/ProductCommentModal.vue'
 
 import { navigateTo } from '#imports'
-import { ref } from 'vue'
-import { imgAvatar } from '~~/layers/core/app/utils/cloudinary'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { imgAvatar, imgThumb } from '~~/layers/core/app/utils/cloudinary'
 import { useProductDetail } from '~~/layers/commerce/app/composables/useProductDetail'
 import { useMarketHome } from '../composables/useMarketHome'
+import { useSearchApi } from '~~/layers/core/app/services/search.api'
+import { useRecentSearches } from '~~/layers/commerce/app/composables/useRecentSearches'
+import SearchSuggestions from '~~/layers/commerce/app/components/discover/SearchSuggestions.vue'
+import Avatar from '~~/layers/profile/app/components/Avatar.vue'
+import StoreAvatar from '~~/layers/profile/app/components/StoreAvatar.vue'
 import type { IFeedItem } from '~~/layers/feed/app/types/feed.types'
 import type { IProduct } from '~~/layers/social/app/types/post.types'
+import type { User } from '~~/layers/core/app/types/user'
+import type { Product } from '~~/shared/types/product'
 
 defineEmits<{ 'sign-in': [] }>()
 withDefaults(defineProps<{ trustSpotlight?: boolean }>(), {
   trustSpotlight: false,
 })
 
+// ── Search: professional typeahead with history + suggestions ────────────────
+const { formatPrice } = useCurrency()
+const searchApi = useSearchApi()
+const recentSearches = useRecentSearches()
+
+const searchRoot = ref<HTMLElement | null>(null)
 const searchQuery = ref('')
-const quickSearches = [
-  { label: 'Markets near me', to: '/map' },
-  { label: 'Fresh goods', to: '/discover?tab=fresh' },
-  { label: 'Trusted traders', to: '/discover?tab=sellers' },
-  { label: 'Deals today', to: '/discover?tab=deals' },
-]
+const searchFocused = ref(false)
+const searchLoading = ref(false)
+
+interface LiveResults {
+  products: Product[]
+  stores: User[]
+  users: User[]
+}
+const empty: LiveResults = { products: [], stores: [], users: [] }
+const liveResults = ref<LiveResults>({ ...empty })
+
+const liveHasHits = computed(
+  () =>
+    liveResults.value.products.length > 0 ||
+    liveResults.value.stores.length > 0 ||
+    liveResults.value.users.length > 0,
+)
+const showLiveResults = computed(
+  () => searchFocused.value && searchQuery.value.trim().length >= 2,
+)
+
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
+watch(searchQuery, (val) => {
+  if (debounceTimer) clearTimeout(debounceTimer)
+  const q = val.trim()
+  if (q.length < 2) {
+    liveResults.value = { ...empty }
+    searchLoading.value = false
+    return
+  }
+  searchLoading.value = true
+  debounceTimer = setTimeout(async () => {
+    try {
+      const res = await searchApi.search(q, 'all', 6)
+      if (res?.success && res.data) {
+        liveResults.value = {
+          products: res.data.products ?? [],
+          stores: res.data.stores ?? [],
+          users: res.data.users ?? [],
+        }
+      }
+    } catch {
+      liveResults.value = { ...empty }
+    } finally {
+      searchLoading.value = false
+    }
+  }, 300)
+})
+
+// Pick a suggestion/history chip → run it as a live search and remember it.
+const onSuggestion = (term: string) => {
+  searchQuery.value = term
+  recentSearches.add(term)
+}
+
+const clearSearch = () => {
+  searchQuery.value = ''
+  liveResults.value = { ...empty }
+}
+
+const closeSearch = () => {
+  searchFocused.value = false
+}
+
+// Remember the query that led to a chosen result (not per-keystroke).
+const onResultClick = () => {
+  const q = searchQuery.value.trim()
+  if (q) recentSearches.add(q)
+  closeSearch()
+}
 
 const submitSearch = () => {
   const q = searchQuery.value.trim()
   if (!q) return navigateTo('/discover')
+  recentSearches.add(q)
+  closeSearch()
   return navigateTo(`/discover?q=${encodeURIComponent(q)}`)
 }
+
+const onOutsideClick = (e: MouseEvent) => {
+  if (searchRoot.value && !searchRoot.value.contains(e.target as Node))
+    searchFocused.value = false
+}
+onMounted(() => document.addEventListener('click', onOutsideClick))
+onUnmounted(() => {
+  document.removeEventListener('click', onOutsideClick)
+  if (debounceTimer) clearTimeout(debounceTimer)
+})
 
 const {
   selectedProduct,
@@ -533,5 +756,24 @@ const {
 }
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+/* Search dropdown */
+.search-group-label {
+  @apply px-3 pb-1 pt-2.5 text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-neutral-500;
+}
+.search-row {
+  @apply flex items-center gap-2.5 px-3 py-2 transition-colors hover:bg-gray-50 dark:hover:bg-neutral-800;
+}
+.search-drop-enter-active,
+.search-drop-leave-active {
+  transition:
+    opacity 0.15s,
+    transform 0.15s;
+}
+.search-drop-enter-from,
+.search-drop-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
 }
 </style>

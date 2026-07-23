@@ -12,9 +12,6 @@
     <div class="grid items-center gap-8 lg:grid-cols-[1fr_1.12fr] lg:gap-12">
       <!-- ── vision ─────────────────────────────────────────────────────── -->
       <div class="space-y-5">
-        <p class="text-xs font-bold uppercase tracking-widest text-brand">
-          Trust infrastructure · MarketX
-        </p>
         <h1
           class="font-display text-[1.75rem] font-bold leading-[1.1] tracking-tight text-gray-900 sm:text-4xl dark:text-white"
         >
@@ -30,20 +27,41 @@
           >
         </p>
 
+        <!-- Two clear paths: buyers see a real verified seller; sellers get
+             their own card. Primary opens the live trust-profile demo. -->
         <div class="flex flex-col gap-3 sm:flex-row">
-          <NuxtLink
-            to="/discover?tab=sellers"
+          <button
+            type="button"
             class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-6 py-3 text-sm font-semibold text-white shadow-brand-sm transition-all hover:bg-brand-dark"
+            @click="openTrust"
           >
-            <Icon name="solar:qr-code-linear" size="18" />
-            Scan a Trust Card
-          </NuxtLink>
+            <Icon name="solar:shield-check-bold" size="18" />
+            See a Verified Seller
+          </button>
           <NuxtLink
-            to="/squares"
+            to="/sellers/create"
             class="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 px-6 py-3 text-sm font-semibold text-gray-700 transition-all hover:border-brand/40 hover:text-brand dark:border-neutral-700 dark:text-neutral-200"
           >
-            Discover markets
+            Get Your Trust Card
           </NuxtLink>
+        </div>
+
+        <!-- The core MarketX promise — the reason a buyer trusts a stranger
+             here more than on Instagram or WhatsApp. Stated loud, right under
+             the CTA, not buried in the card. -->
+        <div
+          class="flex items-start gap-2.5 rounded-xl border border-mint/30 bg-mint/5 px-4 py-3 dark:border-mint/20 dark:bg-mint/10"
+        >
+          <Icon
+            name="solar:shield-check-bold"
+            size="22"
+            class="mt-0.5 shrink-0 text-mint-dark dark:text-mint"
+          />
+          <p
+            class="text-[15px] font-bold leading-snug text-gray-900 dark:text-neutral-100"
+          >
+            If it's not delivered as described, your money is not released.
+          </p>
         </div>
 
         <p class="text-xs text-gray-400 dark:text-neutral-500">
@@ -51,30 +69,31 @@
         </p>
       </div>
 
-      <!-- ── hero Trust Card (the object everything revolves around) ─────── -->
+      <!-- ── hero Trust Card (the object everything revolves around) ───────
+           Light elevated surface, not a dark slab: it sits inside the light
+           home and reads like a real scannable card. Brand is reserved for the
+           single "Pay protected" action; everything else stays neutral. -->
       <div
         v-if="featured"
-        class="relative overflow-hidden rounded-2xl bg-gray-900 p-5 text-white shadow-2xl shadow-black/30 ring-1 ring-white/10 sm:p-6 dark:bg-neutral-900"
+        class="group relative cursor-pointer overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-xl shadow-gray-900/[0.06] transition-all hover:-translate-y-0.5 hover:border-brand/30 hover:shadow-2xl sm:p-6 dark:border-neutral-800 dark:bg-neutral-900 dark:shadow-black/30 dark:hover:border-brand/30"
+        @click="openTrust"
       >
-        <div
-          class="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-brand/20 blur-2xl"
-        />
         <div class="relative">
           <div class="flex items-center justify-between">
             <span
-              class="rounded-md bg-white/10 px-2 py-0.5 text-3xs font-bold uppercase tracking-[0.2em] text-white/60"
+              class="rounded-md bg-gray-100 px-2 py-0.5 text-3xs font-bold uppercase tracking-[0.2em] text-gray-500 dark:bg-neutral-800 dark:text-neutral-400"
               >Trust Card</span
             >
             <span
               v-if="featured.publicId"
-              class="font-mono text-xs font-semibold tracking-wide text-brand-light"
+              class="font-mono text-xs font-semibold tracking-wide text-gray-400 dark:text-neutral-500"
               >{{ featured.publicId }}</span
             >
           </div>
 
           <div class="mt-3 flex items-center gap-3">
             <div
-              class="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-brand text-lg font-black italic"
+              class="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gray-900 text-lg font-black italic text-white dark:bg-neutral-800"
             >
               <img
                 v-if="featured.store_logo"
@@ -85,21 +104,25 @@
               <template v-else>{{ featuredInitials }}</template>
             </div>
             <div class="min-w-0 flex-1">
-              <p class="flex items-center gap-1 font-display text-lg font-bold">
+              <p
+                class="flex items-center gap-1 font-display text-lg font-bold text-gray-900 dark:text-neutral-100"
+              >
                 <span class="truncate">{{ featuredName }}</span>
                 <Icon
                   v-if="featured.is_verified"
                   name="solar:verified-check-bold"
                   size="14"
-                  class="shrink-0 text-blue-400"
+                  class="shrink-0 text-blue-500"
                 />
               </p>
-              <p class="mt-0.5 truncate text-xs text-white/50">
+              <p
+                class="mt-0.5 truncate text-xs text-gray-400 dark:text-neutral-500"
+              >
                 {{ featuredAttestation }}
               </p>
             </div>
             <span
-              class="shrink-0 self-start rounded-md bg-white/10 px-1.5 py-0.5 text-3xs font-extrabold uppercase tracking-wider text-white/70"
+              class="shrink-0 self-start rounded-md bg-gray-100 px-1.5 py-0.5 text-3xs font-extrabold uppercase tracking-wider text-gray-600 dark:bg-neutral-800 dark:text-neutral-400"
               >{{ tierLabel }}</span
             >
           </div>
@@ -107,7 +130,7 @@
           <div class="mt-5 flex gap-4">
             <div class="shrink-0 text-center">
               <div
-                class="qr-tile relative h-28 w-28 cursor-pointer rounded-xl bg-white p-1.5"
+                class="qr-tile relative h-28 w-28 cursor-pointer rounded-xl border border-gray-200 bg-white p-1.5 dark:border-neutral-700"
               >
                 <img
                   v-if="qr"
@@ -123,7 +146,7 @@
                 />
               </div>
               <p
-                class="mt-1.5 flex items-center justify-center gap-1 text-2xs font-semibold text-brand-light"
+                class="mt-1.5 flex items-center justify-center gap-1 text-2xs font-semibold text-gray-500 dark:text-neutral-400"
               >
                 <Icon name="solar:qr-code-linear" size="11" />
                 Scan to verify
@@ -133,12 +156,12 @@
               <span
                 v-for="part in statsParts"
                 :key="part"
-                class="flex items-center gap-1.5 text-xs font-medium text-white/85"
+                class="flex items-center gap-1.5 text-xs font-medium text-gray-700 dark:text-neutral-300"
               >
                 <Icon
                   name="solar:check-circle-bold"
                   size="14"
-                  class="shrink-0 text-mint-light"
+                  class="shrink-0 text-mint"
                 />
                 {{ part }}
               </span>
@@ -147,33 +170,30 @@
 
           <!-- the human line — makes the numbers feel like people -->
           <p
-            class="mt-3 flex items-center gap-1.5 rounded-lg bg-white/[0.06] px-2.5 py-1.5 text-xs font-medium text-white/75"
+            class="mt-3 flex items-center gap-1.5 rounded-lg bg-gray-50 px-2.5 py-1.5 text-xs font-medium text-gray-600 dark:bg-neutral-800/60 dark:text-neutral-300"
           >
             <Icon
               name="solar:refresh-circle-bold"
               size="14"
-              class="shrink-0 text-mint-light"
+              class="shrink-0 text-mint"
             />
             {{ featured.loyalty }}
           </p>
 
           <button
             type="button"
-            class="mt-4 flex w-full items-center justify-center gap-1.5 rounded-xl bg-brand py-2.5 text-[13px] font-semibold shadow-brand-sm transition hover:bg-brand-dark"
+            class="mt-4 flex w-full items-center justify-center gap-1.5 rounded-xl bg-brand py-2.5 text-[13px] font-semibold text-white shadow-brand-sm transition hover:bg-brand-dark"
+            @click.stop="openTrust"
           >
             <Icon name="solar:lock-keyhole-minimalistic-bold" size="15" />
             Pay this seller protected
           </button>
-          <!-- the buyer-protection promise, stated as a benefit not a mechanism -->
+          <!-- affordance: the whole card opens the seller's full trust profile -->
           <p
-            class="mt-2.5 flex items-start justify-center gap-1.5 text-center text-xs font-semibold leading-snug text-white/75"
+            class="mt-2.5 flex items-center justify-center gap-1 text-center text-2xs font-semibold text-gray-400 transition-colors group-hover:text-brand dark:text-neutral-500"
           >
-            <Icon
-              name="solar:shield-check-bold"
-              size="14"
-              class="mt-px shrink-0 text-mint-light"
-            />
-            If it's not delivered as described, your money is not released.
+            View full trust profile
+            <Icon name="solar:arrow-right-linear" size="12" />
           </p>
         </div>
       </div>
@@ -192,13 +212,20 @@
       >
         One card. The whole trust loop.
       </p>
-      <div class="scrollbar-hide flex items-stretch gap-2 overflow-x-auto pb-1">
+      <!-- tabindex + role: the row scrolls horizontally, so keyboard users need
+           to be able to focus it and scroll with the arrow keys (axe: scrollable-region-focusable) -->
+      <div
+        class="scrollbar-hide flex items-stretch gap-2 overflow-x-auto pb-1"
+        tabindex="0"
+        role="group"
+        aria-label="How the Trust Card works"
+      >
         <template v-for="(step, i) in FLOW" :key="step.title">
           <div
             class="flex min-w-[140px] flex-1 shrink-0 flex-col gap-2 rounded-xl border border-gray-100 bg-white p-3 dark:border-neutral-800 dark:bg-neutral-900"
           >
             <span
-              class="flex h-9 w-9 items-center justify-center rounded-lg bg-brand/10 text-brand"
+              class="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 text-gray-500 dark:bg-neutral-800 dark:text-neutral-400"
             >
               <Icon :name="step.icon" size="18" />
             </span>
@@ -222,28 +249,49 @@
         </template>
       </div>
     </div>
+
+    <!-- Full trust profile, opened from the primary CTA or by tapping the card.
+         Keeps the "verified seller" demo on the landing page instead of
+         bouncing the buyer to a generic profile route. -->
+    <BaseModal
+      :model-value="showTrustModal"
+      max-width="lg"
+      height="screen"
+      @update:model-value="showTrustModal = $event"
+    >
+      <template #header>
+        <div class="flex items-center gap-2">
+          <Icon
+            name="solar:shield-check-bold"
+            size="18"
+            class="text-mint-dark dark:text-mint"
+          />
+          <h2 class="t-heading text-base">Verified Seller</h2>
+        </div>
+      </template>
+      <TrustProfile v-if="featured" :slug="featured.store_slug" />
+    </BaseModal>
   </section>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch, onMounted } from 'vue'
 import QRCode from 'qrcode'
-import { useRuntimeConfig } from '#imports'
+import { useRuntimeConfig, navigateTo } from '#imports'
 import { imgAvatar } from '~~/layers/core/app/utils/cloudinary'
 import { useTrustSpotlight } from '~~/layers/reputation/app/composables/useTrustSpotlight'
+import BaseModal from '~~/layers/ui/app/components/BaseModal.vue'
+import TrustProfile from './TrustProfile.vue'
 
 const TIER_LABELS = { TIER_1: 'Tier 1', TIER_2: 'Tier 2', TIER_3: 'Tier 3' }
 
+// Four beats, not six: scanning and verifying happen in one action, and
+// building reputation is what unlocks credit — so each is a single step.
 const FLOW = [
   {
     icon: 'solar:qr-code-linear',
-    title: 'Scan Trust Card',
-    desc: 'On a card, plaque, parcel or bio',
-  },
-  {
-    icon: 'solar:shield-check-linear',
-    title: 'Verify seller',
-    desc: 'Identity, CAC & community, at a glance',
+    title: 'Scan & verify',
+    desc: 'Identity, CAC and reputation, at a glance',
   },
   {
     icon: 'solar:lock-keyhole-minimalistic-linear',
@@ -253,17 +301,12 @@ const FLOW = [
   {
     icon: 'solar:check-circle-linear',
     title: 'Confirm delivery',
-    desc: 'Seller is paid only when you confirm',
+    desc: 'The seller is paid only when you confirm',
   },
   {
     icon: 'solar:graph-up-linear',
-    title: 'Build reputation',
-    desc: 'Every clean sale is recorded for good',
-  },
-  {
-    icon: 'solar:money-bag-linear',
-    title: 'Unlock credit',
-    desc: 'A track record lenders can read',
+    title: 'Build credit',
+    desc: 'Every clean sale becomes a record lenders can read',
   },
 ]
 
@@ -272,6 +315,15 @@ onMounted(load)
 
 const config = useRuntimeConfig()
 const featured = computed(() => sellers.value[0] ?? null)
+
+// The buyer demo: open the featured seller's full trust profile in a modal.
+// If the spotlight hasn't loaded yet, fall back to the sellers directory so
+// the CTA is never a dead end.
+const showTrustModal = ref(false)
+const openTrust = () => {
+  if (featured.value) showTrustModal.value = true
+  else navigateTo('/discover?tab=sellers')
+}
 
 const featuredName = computed(
   () => featured.value?.store_name || featured.value?.store_slug || 'Store',
@@ -327,18 +379,19 @@ watch(
   display: none;
 }
 
-/* QR: a soft brand glow that invites a scan, intensifying on hover. */
+/* QR: a soft neutral lift that invites a scan, deepening on hover. Kept
+   brand-free — the card's only accent is the "Pay protected" button. */
 .qr-tile {
   transition:
     transform 0.25s ease,
     box-shadow 0.25s ease;
-  box-shadow: 0 0 0 1px rgba(244, 63, 94, 0.25);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1);
 }
 .qr-tile:hover {
   transform: scale(1.04);
   box-shadow:
-    0 0 0 3px rgba(244, 63, 94, 0.45),
-    0 10px 30px -6px rgba(244, 63, 94, 0.5);
+    0 0 0 2px rgba(15, 23, 42, 0.12),
+    0 10px 30px -6px rgba(15, 23, 42, 0.25);
 }
 @media (prefers-reduced-motion: no-preference) {
   .qr-tile {
@@ -351,10 +404,10 @@ watch(
 @keyframes qr-breathe {
   0%,
   100% {
-    box-shadow: 0 0 0 1px rgba(244, 63, 94, 0.2);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
   }
   50% {
-    box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.35);
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.16);
   }
 }
 </style>

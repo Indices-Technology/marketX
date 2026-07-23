@@ -27,10 +27,6 @@
         />
       </template>
     </ClientOnly>
-
-    <template v-if="profileStore.isLoggedIn" #right-sidebar>
-      <RightSideNav />
-    </template>
   </HomeLayout>
 </template>
 
@@ -40,7 +36,6 @@ import { useRouter, useRuntimeConfig } from '#imports'
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import SocialFeed from '~~/layers/feed/app/components/SocialFeed.vue'
 import MarketHome from '~~/layers/feed/app/components/MarketHome.vue'
-import RightSideNav from '~~/layers/core/app/layouts/children/RightSideNav.vue'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import { useSeo } from '~~/layers/core/app/composables/useSeo'
 

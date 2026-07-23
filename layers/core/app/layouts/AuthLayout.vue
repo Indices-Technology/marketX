@@ -89,7 +89,10 @@
                 <div
                   class="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm transition-all group-hover:scale-110 group-hover:bg-white/30"
                 >
-                  <Icon name="solar:users-group-rounded-bold" class="h-5 w-5 text-white" />
+                  <Icon
+                    name="solar:users-group-rounded-bold"
+                    class="h-5 w-5 text-white"
+                  />
                 </div>
                 <p class="mt-1 text-xs text-white/80">Community</p>
               </div>
@@ -97,7 +100,10 @@
                 <div
                   class="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm transition-all group-hover:scale-110 group-hover:bg-white/30"
                 >
-                  <Icon name="solar:cart-large-2-bold" class="h-5 w-5 text-white" />
+                  <Icon
+                    name="solar:cart-large-2-bold"
+                    class="h-5 w-5 text-white"
+                  />
                 </div>
                 <p class="mt-1 text-xs text-white/80">Seamless</p>
               </div>
@@ -144,7 +150,7 @@ defineProps({
 .brand-wordmark {
   display: inline-flex;
   align-items: baseline;
-  font-family: Sora, Manrope, system-ui, sans-serif;
+  font-family: Archivo, Manrope, system-ui, sans-serif;
   font-size: 1.18rem;
   font-weight: 900;
   letter-spacing: 0;
@@ -168,7 +174,7 @@ defineProps({
   display: inline-flex;
   align-items: baseline;
   justify-content: center;
-  font-family: Sora, Manrope, system-ui, sans-serif;
+  font-family: Archivo, Manrope, system-ui, sans-serif;
   font-size: 0.95rem;
   font-weight: 900;
   letter-spacing: 0.18em;

@@ -50,165 +50,163 @@
         </NuxtLink>
       </nav>
 
-      <!-- Sell -->
+      <!-- Sell — one ClientOnly wrapper for the whole auth-dependent group so
+           the rail hydrates in a single step instead of popping in per item. -->
       <ClientOnly>
-        <p v-if="profileStore.isLoggedIn" class="nav-group-label mt-4">Sell</p>
-      </ClientOnly>
+        <template v-if="profileStore.isLoggedIn">
+          <p class="nav-group-label mt-4">Sell</p>
 
-      <!-- Seller entry point: Start Selling (users without a store) -->
-      <ClientOnly>
-        <NuxtLink
-          v-if="profileStore.isLoggedIn && !sellerStore.hasSellers"
-          to="/sellers/create"
-          class="mt-2 flex items-center gap-4 rounded-xl border border-dashed border-brand/30 px-3 py-2.5 text-brand/80 transition-all hover:border-brand/60 hover:bg-brand/5 hover:text-brand"
-        >
-          <Icon name="solar:shop-2-linear" size="24" />
-          <span class="nav-text font-semibold">Start Selling</span>
-        </NuxtLink>
-      </ClientOnly>
-
-      <!-- Seller Hub (only for users who have stores) -->
-      <ClientOnly>
-        <div
-          v-if="profileStore.isLoggedIn && sellerStore.hasSellers"
-          class="relative mt-2"
-        >
-          <!-- Single store → direct link -->
+          <!-- Seller entry point: Start Selling (users without a store) -->
           <NuxtLink
-            v-if="sellerStore.sellers.length === 1"
-            :to="`/seller/${sellerStore.sellers[0].store_slug}/dashboard`"
-            class="seller-hub-btn group"
-            :class="{ active: isSellerRoute }"
+            v-if="!sellerStore.hasSellers"
+            to="/sellers/create"
+            class="mt-2 flex items-center gap-4 rounded-xl border border-dashed border-brand/30 px-3 py-2.5 text-brand/80 transition-all hover:border-brand/60 hover:bg-brand/5 hover:text-brand"
           >
-            <div
-              class="relative flex h-6 w-6 shrink-0 items-center justify-center"
-            >
-              <img
-                v-if="sellerStore.sellers[0].store_logo"
-                :src="sellerStore.sellers[0].store_logo"
-                :alt="sellerStore.sellers[0].store_name || 'Store'"
-                class="h-6 w-6 rounded-md object-cover"
-              />
-              <Icon v-else name="solar:shop-2-linear" size="24" />
-              <span
-                v-if="isSellerRoute"
-                class="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-500 dark:border-neutral-900"
-              />
-            </div>
-            <span class="nav-text">Seller Hub</span>
-            <span
-              v-if="isSellerRoute"
-              class="ml-auto rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-              :class="expanded ? 'inline' : 'hidden'"
-              >Active</span
-            >
+            <Icon name="solar:shop-2-linear" size="24" />
+            <span class="nav-text font-semibold">Start Selling</span>
           </NuxtLink>
 
-          <!-- Multiple stores → picker trigger -->
-          <button
-            v-else
-            class="seller-hub-btn group w-full"
-            :class="{ active: isSellerRoute }"
-            @click="storePickerOpen = !storePickerOpen"
-          >
-            <div
-              class="relative flex h-6 w-6 shrink-0 items-center justify-center"
+          <!-- Seller Hub (only for users who have stores) -->
+          <div v-else class="relative mt-2">
+            <!-- Single store → direct link -->
+            <NuxtLink
+              v-if="sellerStore.sellers.length === 1"
+              :to="`/seller/${sellerStore.sellers[0].store_slug}/dashboard`"
+              class="seller-hub-btn group"
+              :class="{ active: isSellerRoute }"
             >
-              <Icon name="solar:shop-2-linear" size="24" />
+              <div
+                class="relative flex h-6 w-6 shrink-0 items-center justify-center"
+              >
+                <img
+                  v-if="sellerStore.sellers[0].store_logo"
+                  :src="sellerStore.sellers[0].store_logo"
+                  :alt="sellerStore.sellers[0].store_name || 'Store'"
+                  class="h-6 w-6 rounded-md object-cover"
+                />
+                <Icon v-else name="solar:shop-2-linear" size="24" />
+                <span
+                  v-if="isSellerRoute"
+                  class="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-500 dark:border-neutral-900"
+                />
+              </div>
+              <span class="nav-text">Seller Hub</span>
               <span
                 v-if="isSellerRoute"
-                class="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-500 dark:border-neutral-900"
-              />
-            </div>
-            <span class="nav-text">Seller Hub</span>
-            <span
-              class="ml-auto rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] font-bold text-gray-500 dark:bg-neutral-800 dark:text-neutral-400"
-              :class="expanded ? 'inline' : 'hidden'"
-            >
-              {{ sellerStore.sellers.length }}
-            </span>
-          </button>
+                class="ml-auto rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                :class="expanded ? 'inline' : 'hidden'"
+                >Active</span
+              >
+            </NuxtLink>
 
-          <!-- Store picker panel (multi-store) -->
-          <Transition name="menu-pop">
-            <div
-              v-if="storePickerOpen"
-              class="absolute bottom-full left-0 z-50 mb-2 w-64 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-neutral-700 dark:bg-neutral-900"
+            <!-- Multiple stores → picker trigger -->
+            <button
+              v-else
+              class="seller-hub-btn group w-full"
+              :class="{ active: isSellerRoute }"
+              @click="storePickerOpen = !storePickerOpen"
             >
-              <p
-                class="px-4 pb-2 pt-3 text-[11px] font-bold uppercase tracking-widest text-gray-400 dark:text-neutral-500"
+              <div
+                class="relative flex h-6 w-6 shrink-0 items-center justify-center"
               >
-                Switch Store
-              </p>
-              <NuxtLink
-                v-for="store in sellerStore.sellers"
-                :key="store.id"
-                :to="`/seller/${store.store_slug}/dashboard`"
-                class="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-gray-50 dark:hover:bg-neutral-800"
-                @click="storePickerOpen = false"
-              >
-                <div
-                  class="h-9 w-9 shrink-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-100 dark:border-neutral-700 dark:bg-neutral-800"
-                >
-                  <img
-                    v-if="store.store_logo"
-                    :src="store.store_logo"
-                    :alt="store.store_name || 'Store'"
-                    class="h-full w-full object-cover"
-                  />
-                  <div
-                    v-else
-                    class="flex h-full w-full items-center justify-center"
-                  >
-                    <Icon
-                      name="solar:shop-2-bold"
-                      size="18"
-                      class="text-gray-400 dark:text-neutral-500"
-                    />
-                  </div>
-                </div>
-                <div class="min-w-0 flex-1">
-                  <p
-                    class="truncate text-sm font-semibold text-gray-900 dark:text-white"
-                  >
-                    {{ store.store_name || 'Unnamed Store' }}
-                  </p>
-                  <p class="text-[11px] text-gray-400 dark:text-neutral-500">
-                    @{{ store.store_slug }}
-                  </p>
-                </div>
+                <Icon name="solar:shop-2-linear" size="24" />
                 <span
-                  class="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold"
-                  :class="
-                    store.is_active
-                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                      : 'bg-gray-100 text-gray-500 dark:bg-neutral-800 dark:text-neutral-400'
-                  "
-                  >{{ store.is_active ? 'Live' : 'Off' }}</span
+                  v-if="isSellerRoute"
+                  class="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-500 dark:border-neutral-900"
+                />
+              </div>
+              <span class="nav-text">Seller Hub</span>
+              <span
+                class="ml-auto rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] font-bold text-gray-500 dark:bg-neutral-800 dark:text-neutral-400"
+                :class="expanded ? 'inline' : 'hidden'"
+              >
+                {{ sellerStore.sellers.length }}
+              </span>
+            </button>
+
+            <!-- Store picker panel (multi-store) -->
+            <Transition name="menu-pop">
+              <div
+                v-if="storePickerOpen"
+                class="absolute bottom-full left-0 z-50 mb-2 w-64 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-neutral-700 dark:bg-neutral-900"
+              >
+                <p
+                  class="px-4 pb-2 pt-3 text-[11px] font-bold uppercase tracking-widest text-gray-400 dark:text-neutral-500"
                 >
-              </NuxtLink>
-              <div class="border-t border-gray-200 p-2 dark:border-neutral-700">
+                  Switch Store
+                </p>
                 <NuxtLink
-                  to="/sellers/create"
-                  class="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-brand transition-colors hover:bg-brand/5"
+                  v-for="store in sellerStore.sellers"
+                  :key="store.id"
+                  :to="`/seller/${store.store_slug}/dashboard`"
+                  class="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-gray-50 dark:hover:bg-neutral-800"
                   @click="storePickerOpen = false"
                 >
-                  <Icon name="solar:add-circle-linear" size="16" />
-                  <span>Add new store</span>
+                  <div
+                    class="h-9 w-9 shrink-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-100 dark:border-neutral-700 dark:bg-neutral-800"
+                  >
+                    <img
+                      v-if="store.store_logo"
+                      :src="store.store_logo"
+                      :alt="store.store_name || 'Store'"
+                      class="h-full w-full object-cover"
+                    />
+                    <div
+                      v-else
+                      class="flex h-full w-full items-center justify-center"
+                    >
+                      <Icon
+                        name="solar:shop-2-bold"
+                        size="18"
+                        class="text-gray-400 dark:text-neutral-500"
+                      />
+                    </div>
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <p
+                      class="truncate text-sm font-semibold text-gray-900 dark:text-white"
+                    >
+                      {{ store.store_name || 'Unnamed Store' }}
+                    </p>
+                    <p class="text-[11px] text-gray-400 dark:text-neutral-500">
+                      @{{ store.store_slug }}
+                    </p>
+                  </div>
+                  <span
+                    class="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold"
+                    :class="
+                      store.is_active
+                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                        : 'bg-gray-100 text-gray-500 dark:bg-neutral-800 dark:text-neutral-400'
+                    "
+                    >{{ store.is_active ? 'Live' : 'Off' }}</span
+                  >
                 </NuxtLink>
+                <div
+                  class="border-t border-gray-200 p-2 dark:border-neutral-700"
+                >
+                  <NuxtLink
+                    to="/sellers/create"
+                    class="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-brand transition-colors hover:bg-brand/5"
+                    @click="storePickerOpen = false"
+                  >
+                    <Icon name="solar:add-circle-linear" size="16" />
+                    <span>Add new store</span>
+                  </NuxtLink>
+                </div>
               </div>
-            </div>
-          </Transition>
-        </div>
+            </Transition>
+          </div>
+        </template>
       </ClientOnly>
 
       <!-- You -->
       <p class="nav-group-label mt-4">You</p>
 
-      <!-- User actions -->
+      <!-- User actions — auth-dependent rows hydrate together -->
       <nav class="flex flex-col space-y-1">
-        <!-- Sell / Create -->
         <ClientOnly>
+          <!-- Create -->
           <button
             v-if="profileStore.isLoggedIn"
             class="sell-button group"
@@ -221,10 +219,8 @@
             <AppIcon name="create" size="24" />
             <span class="nav-text">Create</span>
           </NuxtLink>
-        </ClientOnly>
 
-        <!-- Notifications -->
-        <ClientOnly>
+          <!-- Notifications -->
           <button
             v-if="profileStore.isLoggedIn"
             class="nav-button group relative"
@@ -240,10 +236,8 @@
             </div>
             <span class="nav-text">Notifications</span>
           </button>
-        </ClientOnly>
 
-        <!-- Inbox / Messages -->
-        <ClientOnly>
+          <!-- Inbox / Messages -->
           <NuxtLink
             v-if="profileStore.isLoggedIn"
             to="/messages"
@@ -260,6 +254,11 @@
             </div>
             <span class="nav-text">Inbox</span>
           </NuxtLink>
+
+          <template #fallback>
+            <!-- Reserve the Create row so the rail doesn't jump on hydration -->
+            <div class="h-[44px]" />
+          </template>
         </ClientOnly>
 
         <!-- Cart -->
@@ -309,90 +308,30 @@
           />
         </button>
 
-        <NuxtLink v-else to="/user-login" class="nav-button group">
+        <!-- Guest: sign-in is the primary action down here, so it carries
+             brand emphasis rather than reading as another muted nav row. -->
+        <NuxtLink
+          v-else
+          to="/user-login"
+          class="nav-button group border border-brand/30 text-brand hover:border-brand/60 hover:bg-brand/5 hover:text-brand dark:text-brand dark:hover:bg-brand/10 dark:hover:text-brand"
+        >
           <AppIcon name="signin" size="24" />
-          <span class="nav-text">{{ $t('nav.signIn') }}</span>
+          <span class="nav-text font-semibold">{{ $t('nav.signIn') }}</span>
         </NuxtLink>
+
+        <template #fallback>
+          <div class="h-[52px]" />
+        </template>
       </ClientOnly>
 
-      <!-- Profile popup menu -->
+      <!-- Account popup — shared with the mobile bar (AccountMenu.vue) -->
       <Transition name="menu-pop">
-        <div
+        <AccountMenu
           v-if="menuOpen && profileStore.isLoggedIn"
-          class="absolute bottom-full left-0 z-50 mb-3 w-64 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-neutral-700 dark:bg-neutral-900"
-        >
-          <NuxtLink
-            :to="`/profile/${profileStore.me?.username}`"
-            class="menu-item group"
-            @click="menuOpen = false"
-          >
-            <Icon name="solar:user-circle-linear" size="20" />
-            <span>View Profile</span>
-          </NuxtLink>
-
-          <NuxtLink
-            to="/buyer/orders"
-            class="menu-item group"
-            @click="menuOpen = false"
-          >
-            <Icon name="solar:box-linear" size="20" />
-            <span>My Orders</span>
-          </NuxtLink>
-
-          <!-- Seller Hub in profile popup -->
-          <NuxtLink
-            v-if="sellerStore.hasSellers && !isSellerRoute"
-            to="/seller/dashboard"
-            class="menu-item group text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/30"
-            @click="menuOpen = false"
-          >
-            <Icon name="solar:shop-2-linear" size="20" />
-            <span>Switch to Seller Mode</span>
-          </NuxtLink>
-          <NuxtLink
-            v-else-if="sellerStore.hasSellers && isSellerRoute"
-            to="/"
-            class="menu-item group"
-            @click="menuOpen = false"
-          >
-            <Icon name="solar:bag-4-linear" size="20" />
-            <span>Switch to Buyer Mode</span>
-          </NuxtLink>
-
-          <div class="mx-4 my-1.5 h-px bg-gray-100 dark:bg-neutral-800" />
-
-          <NuxtLink
-            to="/settings"
-            class="menu-item group"
-            @click="menuOpen = false"
-          >
-            <Icon name="solar:settings-linear" size="20" />
-            <span>Settings</span>
-          </NuxtLink>
-
-          <NuxtLink
-            v-if="
-              profileStore.me?.role === 'admin' ||
-              profileStore.me?.role === 'moderator'
-            "
-            to="/admin"
-            class="menu-item group text-rose-600 hover:bg-rose-50/80 dark:text-rose-400 dark:hover:bg-rose-950/30"
-            @click="menuOpen = false"
-          >
-            <Icon name="solar:shield-star-linear" size="20" />
-            <span>Admin Panel</span>
-          </NuxtLink>
-
-          <div class="mx-4 my-1.5 h-px bg-gray-100 dark:bg-neutral-800" />
-
-          <button
-            class="menu-item group w-full text-left text-red-600 hover:bg-red-50/80 dark:text-red-400 dark:hover:bg-red-950/30"
-            @click="logout"
-          >
-            <Icon name="solar:logout-3-linear" size="20" />
-            <span>Log Out</span>
-          </button>
-        </div>
+          class="absolute bottom-full left-0 z-50 mb-3"
+          @close="menuOpen = false"
+          @logout="logout"
+        />
       </Transition>
     </div>
   </div>
@@ -408,6 +347,7 @@ import { useChatStore } from '~~/layers/profile/app/stores/chat.store'
 import { useChat } from '~~/layers/profile/app/composables/useChat'
 import Avatar from '~~/layers/profile/app/components/Avatar.vue'
 import AppIcon from '~~/layers/ui/app/components/AppIcon.vue'
+import AccountMenu from './AccountMenu.vue'
 
 defineEmits(['create', 'open-notifications', 'open-cart'])
 
@@ -507,10 +447,6 @@ onUnmounted(() => document.removeEventListener('click', onClickOutside, true))
   display: block;
 }
 
-.menu-item {
-  @apply flex items-center gap-3 px-5 py-3.5 text-sm text-gray-800 transition-colors hover:bg-gray-50 dark:text-neutral-200 dark:hover:bg-neutral-800;
-}
-
 .menu-pop-enter-active,
 .menu-pop-leave-active {
   transition: all 0.18s ease;
@@ -532,7 +468,7 @@ onUnmounted(() => document.removeEventListener('click', onClickOutside, true))
 
 .brand-wordmark {
   align-items: baseline;
-  font-family: Sora, Manrope, system-ui, sans-serif;
+  font-family: Archivo, Manrope, system-ui, sans-serif;
   font-size: 1.24rem;
   font-weight: 900;
   letter-spacing: 0;
