@@ -1,6 +1,6 @@
 <!-- Social feed — rendered inside HomeLayout by the auth-aware index.vue -->
 <template>
-  <div class="mx-auto w-full max-w-[512px] space-y-4 px-2 sm:px-4">
+  <div class="w-full space-y-5 px-2 sm:px-0">
     <!-- Initial Splash Screen -->
     <Transition name="splash" mode="out-in">
       <SplashScreen
@@ -42,11 +42,10 @@
         v-if="profileStore.isLoggedIn && settings.showStories"
         class="pb-1"
       >
-        <h2
-          class="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-neutral-500"
-        >
-          {{ $t('feed.todayInspo') }}
-        </h2>
+        <div class="mb-4">
+          <p class="t-eyebrow mb-1">Happening now</p>
+          <h2 class="t-title">{{ $t('feed.todayInspo') }}</h2>
+        </div>
 
         <div class="relative">
           <button
@@ -90,7 +89,11 @@
                 <div
                   class="flex h-full w-full items-center justify-center rounded-full bg-white dark:bg-neutral-900"
                 >
-                  <Icon name="solar:add-circle-linear" size="28" class="text-brand" />
+                  <Icon
+                    name="solar:add-circle-linear"
+                    size="28"
+                    class="text-brand"
+                  />
                 </div>
               </button>
               <span
@@ -132,7 +135,7 @@
       <section v-if="profileStore.isLoggedIn && !isEnrolled">
         <NuxtLink
           :to="`/profile/${profileStore.me?.username}?tab=affiliate`"
-          class="group flex items-center gap-4 overflow-hidden rounded-2xl bg-gradient-to-r from-brand to-[#c41230] p-4 shadow-md transition-all hover:shadow-lg hover:brightness-105 active:scale-[0.99]"
+          class="group flex items-center gap-4 overflow-hidden rounded-2xl bg-brand p-4 shadow-sm transition-all hover:brightness-105 active:scale-[0.99]"
         >
           <div
             class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/20"
@@ -151,7 +154,11 @@
             class="shrink-0 rounded-xl bg-white/20 px-3 py-1.5 text-[12px] font-bold text-white transition-colors group-hover:bg-white/30"
           >
             {{ $t('affiliate.enrollNow') }}
-            <Icon name="solar:arrow-right-linear" size="14" class="ml-0.5 inline" />
+            <Icon
+              name="solar:arrow-right-linear"
+              size="14"
+              class="ml-0.5 inline"
+            />
           </div>
         </NuxtLink>
       </section>
@@ -159,27 +166,18 @@
 
     <!-- Near Me -->
     <section v-if="settings.showNearMe">
-      <div class="mb-3 flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <div
-            class="flex h-6 w-6 items-center justify-center rounded-full bg-brand/10"
-          >
-            <Icon
-              name="solar:map-point-wave-linear"
-              size="14"
-              class="text-gray-500 dark:text-neutral-400"
-            />
-          </div>
-          <h2 class="text-sm font-bold text-gray-800 dark:text-neutral-100">
-            Near Me
-          </h2>
+      <div class="mb-4 flex items-end justify-between gap-4">
+        <div class="min-w-0">
+          <p class="t-eyebrow mb-1">Around you</p>
+          <h2 class="t-title">Near Me</h2>
+          <p class="t-meta mt-0.5">Stores trading close to where you are</p>
         </div>
         <NuxtLink
           v-if="nearbyStores.length"
           to="/map"
-          class="flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-gray-700 dark:text-neutral-500 dark:hover:text-neutral-300"
+          class="mb-0.5 shrink-0 text-xs font-semibold text-gray-500 hover:text-brand dark:text-neutral-400"
         >
-          See all <Icon name="solar:alt-arrow-right-linear" size="14" />
+          Map ->
         </NuxtLink>
       </div>
 
@@ -192,12 +190,8 @@
           :key="i"
           class="flex shrink-0 flex-col items-center gap-2"
         >
-          <div
-            class="h-[60px] w-[60px] animate-pulse rounded-full bg-gray-200 dark:bg-neutral-800"
-          />
-          <div
-            class="h-2.5 w-12 animate-pulse rounded bg-gray-200 dark:bg-neutral-800"
-          />
+          <BaseSkeleton shape="circle" width="60px" height="60px" />
+          <BaseSkeleton shape="line" width="48px" height="10px" />
         </div>
       </div>
 
@@ -270,12 +264,7 @@
               size="18"
               class="animate-spin text-brand"
             />
-            <Icon
-              v-else
-              name="solar:gps-linear"
-              size="18"
-              class="text-brand"
-            />
+            <Icon v-else name="solar:gps-linear" size="18" class="text-brand" />
           </div>
           <div class="min-w-0">
             <p
@@ -307,40 +296,14 @@
         :products="shopTodayItems"
         @open-product="openProduct"
       />
-      <div
+      <BaseSkeleton
         v-else
-        class="h-52 animate-pulse rounded-2xl bg-gray-100 dark:bg-neutral-800"
+        shape="block"
+        height="208px"
+        rounded="rounded-2xl"
+        class="[contain:strict]"
       />
     </section>
-
-    <!-- Feed tabs (desktop only) -->
-    <div
-      class="-mx-2 mb-4 mt-4 hidden items-center gap-1 border-b border-gray-200 px-2 pb-3 md:flex dark:border-neutral-800"
-    >
-      <button
-        v-for="tab in FEED_TABS"
-        :key="tab.id"
-        class="inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-[13px] font-semibold transition-colors"
-        :class="
-          activeTab === tab.id
-            ? 'bg-gray-100 text-gray-900 dark:bg-neutral-800 dark:text-white'
-            : 'text-gray-500 hover:text-gray-800 dark:text-neutral-400 dark:hover:text-neutral-100'
-        "
-        @click="setTab(tab.id)"
-      >
-        <Icon :name="tab.icon" size="14" />
-        {{ tab.label }}
-      </button>
-    </div>
-
-    <!-- Sort + layout controls -->
-    <FeedSortBar
-      :sort="sortMode"
-      :layout="viewMode"
-      class="mb-2"
-      @update:sort="sortMode = $event"
-      @update:layout="viewMode = $event"
-    />
 
     <!-- Main Feed -->
     <section :class="viewMode === 'list' ? 'space-y-2' : 'space-y-6'">
@@ -377,38 +340,37 @@
           :products="shelfSlice(ci)"
           @open-product="openProduct"
         />
+
+        <!-- Trust Spotlight — top-seller trust cards, once near the top of the
+             feed (framework §5.4). Opt-in via prop so the live feed is unchanged. -->
+        <TrustSpotlightRail v-if="trustSpotlight && ci === 0" />
       </template>
     </section>
 
     <!-- Empty following feed — shown only when user has no follows yet -->
-    <div
+    <BaseEmptyState
       v-if="
         activeTab === 'following' &&
         !feedStore.isLoading &&
         mainFeed.length === 0
       "
-      class="flex flex-col items-center gap-4 py-16 text-center"
+      icon="solar:users-group-rounded-linear"
+      title="Your following feed is empty"
+      description="Follow traders and stores to see their latest posts here."
     >
-      <Icon
-        name="solar:users-group-rounded-linear"
-        size="48"
-        class="text-gray-300 dark:text-neutral-600"
-      />
-      <div>
-        <p class="text-base font-semibold text-gray-700 dark:text-neutral-200">
-          Your following feed is empty
-        </p>
-        <p class="mt-1 text-sm text-gray-400 dark:text-neutral-500">
-          Follow users or stores to see their posts here
-        </p>
-      </div>
-      <button
-        class="mt-2 rounded-full bg-brand px-6 py-2 text-sm font-semibold text-white transition hover:opacity-90"
-        @click="setTab('for-you')"
-      >
-        Explore For You
-      </button>
-    </div>
+      <template #actions>
+        <BaseButton variant="primary" size="sm" @click="setTab('for-you')">
+          Explore For You
+        </BaseButton>
+        <BaseButton
+          variant="secondary"
+          size="sm"
+          @click="router.push('/squares')"
+        >
+          Browse markets
+        </BaseButton>
+      </template>
+    </BaseEmptyState>
 
     <!-- Infinite Scroll Trigger -->
     <div ref="loadMoreTrigger" class="h-16" />
@@ -477,7 +439,6 @@ import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from '#imports'
 
 import SplashScreen from '~~/layers/feed/app/components/SplashScreen.vue'
-import CategoryListMobile from '~~/layers/core/app/layouts/children/TopMobileCategory.vue'
 import StoryUploadModal from '~~/layers/feed/app/components/modals/StoryUploadModal.vue'
 import ProductDetailModal from '~~/layers/commerce/app/components/modals/ProductDetailModal.vue'
 import PostDetailModal from '~~/layers/social/app/components/modals/PostDetailModal.vue'
@@ -485,10 +446,12 @@ import ProductMarketModal from '~~/layers/commerce/app/components/modals/Product
 import ProductCommentModal from '~~/layers/commerce/app/components/modals/ProductCommentModal.vue'
 import ShopProductCard from '~~/layers/commerce/app/components/ShopProductCard.vue'
 import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
+import BaseSkeleton from '~~/layers/ui/app/components/BaseSkeleton.vue'
+import BaseEmptyState from '~~/layers/ui/app/components/BaseEmptyState.vue'
 import FeedProductShelf from '~~/layers/feed/app/components/FeedProductShelf.vue'
-import FeedSortBar from '~~/layers/feed/app/components/FeedSortBar.vue'
 import PostCard from '~~/layers/social/app/components/PostCard.vue'
 import PostListCard from '~~/layers/social/app/components/PostListCard.vue'
+import TrustSpotlightRail from '~~/layers/reputation/app/components/TrustSpotlightRail.vue'
 
 import { getCachedLocation } from '~~/layers/map/app/composables/useMapSellers'
 import type { IMapSeller } from '~~/layers/map/app/types/map.types'
@@ -504,13 +467,19 @@ import { useAffiliate } from '~~/layers/commerce/app/composables/useAffiliate'
 import type { IFeedItem } from '~~/layers/feed/app/types/feed.types'
 import type { IProduct } from '~~/layers/social/app/types/post.types'
 
+defineOptions({ name: 'SocialFeed' })
+
+withDefaults(defineProps<{ trustSpotlight?: boolean }>(), {
+  trustSpotlight: false,
+})
+
 const router = useRouter()
 const feedStore = useFeedStore()
 const profileStore = useProfileStore()
 const { settings } = useSettings()
 const { checkFollowingBatch } = useFollow()
 const { stories, fetchStories } = useStory()
-const { activeTab, setTab, FEED_TABS } = useFeedTab()
+const { activeTab, setTab } = useFeedTab()
 const { isEnrolled, fetchAffiliateStatus: fetchAffiliate } = useAffiliate()
 
 // States
@@ -635,7 +604,8 @@ const sortedFeed = computed(() => {
     case 'best':
       return items.sort(
         (a, b) =>
-          ((b.likeCount || 0) + (b.commentCount || 0)) -
+          (b.likeCount || 0) +
+          (b.commentCount || 0) -
           ((a.likeCount || 0) + (a.commentCount || 0)),
       )
     case 'hot': {
@@ -661,7 +631,8 @@ const sortedFeed = computed(() => {
       )
       recent.sort(
         (a, b) =>
-          ((b.likeCount || 0) + (b.commentCount || 0)) -
+          (b.likeCount || 0) +
+          (b.commentCount || 0) -
           ((a.likeCount || 0) + (a.commentCount || 0)),
       )
       return [...recent, ...old]
@@ -712,7 +683,12 @@ const nearbyRequesting = ref(false)
 const fetchNearbyWithCoords = async (lat: number, lng: number) => {
   nearbyLoading.value = true
   try {
-    const data: any = await useMapApi().getSellers({ lat, lng, radius: 20000, limit: 12 })
+    const data: any = await useMapApi().getSellers({
+      lat,
+      lng,
+      radius: 20000,
+      limit: 12,
+    })
     nearbyStores.value = data.data ?? []
   } catch {
   } finally {
@@ -852,7 +828,7 @@ watch(loadMoreTrigger, (el) => {
 onUnmounted(() => observer.value?.disconnect())
 
 const openPostCommentsModal = (post: IFeedItem) => {
-  selectedPost.value = post  // opens PostDetailModal which has full comments
+  selectedPost.value = post // opens PostDetailModal which has full comments
 }
 const openPostModal = (post: IFeedItem) => {
   selectedPost.value = post
@@ -867,8 +843,10 @@ const handleStoryPosted = async () => {
 </script>
 
 <style scoped>
+/* Story ring — brand coral into warm amber. Deliberately not the purple/pink
+   AI-signature gradient; it stays inside the MarketX palette. */
 .story-ring {
-  background: linear-gradient(135deg, #f02c56, #ff9a3c, #a855f7, #9333ea);
+  background: linear-gradient(135deg, #f43f5e, #fb7185, #f59e0b);
   padding: 3px;
 }
 .near-me-ring-open {

@@ -1,5 +1,6 @@
 import type { ContentType, ModerationAction, ModerationStatus, ReportReason, ReportStatus } from '@prisma/client'
 import { adminRepository } from '~~/layers/admin/server/repositories/admin.repository'
+import { authRepository } from '~~/layers/core/server/repositories/auth.repository'
 import { bust } from '~~/server/utils/cache'
 import { notificationQueue } from '~~/server/queues/notification.queue'
 import { emailQueue } from '~~/server/queues/email.queue'
@@ -180,6 +181,14 @@ export const adminService = {
       reason,
       expiresAt,
     )
+
+    // Kick them off every device *now*. Writing the moderation flags alone only
+    // stops future logins — a suspended user sitting on a live session would
+    // otherwise keep full access until their token expired. Awaited, not
+    // fire-and-forget: a ban that silently failed to revoke is worse than a
+    // slow one, so let the error surface to the moderator.
+    await authRepository.revokeAllSessions(userId)
+
     bust('admin:stats').catch(() => {})
 
     // Notify user — fire-and-forget
@@ -271,6 +280,13 @@ export const adminService = {
 
   async toggleUserActive(userId: string, isActive: boolean) {
     const result = await adminRepository.setUserActive(userId, isActive)
+
+    // Disabling tells the user their account is gone, so make that true on the
+    // spot rather than waiting for their token to lapse. Re-enabling leaves the
+    // revoked sessions alone — they simply log in again.
+    if (!isActive) {
+      await authRepository.revokeAllSessions(userId)
+    }
 
     // Notify user — fire-and-forget
     const action = isActive ? 'ENABLED' : 'DISABLED'

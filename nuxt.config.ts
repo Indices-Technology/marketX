@@ -56,11 +56,11 @@ export default defineNuxtConfig({
         {
           rel: 'preload',
           as: 'style',
-          href: 'https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Sora:wght@700;800&display=swap',
+          href: 'https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..900&family=Manrope:wght@500;600;700;800&display=swap',
         },
         {
           rel: 'stylesheet',
-          href: 'https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Sora:wght@700;800&display=swap',
+          href: 'https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..900&family=Manrope:wght@500;600;700;800&display=swap',
           media: 'print',
           onload: "this.media='all'",
         },
@@ -82,6 +82,7 @@ export default defineNuxtConfig({
     './layers/square',
     './layers/admin',
     './layers/support',
+    './layers/reputation',
   ],
 
   icon: {
@@ -318,8 +319,12 @@ export default defineNuxtConfig({
       // app-wide CSP above blocks that, so relax it ONLY on these doc routes —
       // the rest of the app keeps the strict policy. The spec itself is fetched
       // same-origin (connect-src 'self').
-      '/api/scalar': { headers: { 'Content-Security-Policy': OPENAPI_DOC_CSP } },
-      '/api/swagger': { headers: { 'Content-Security-Policy': OPENAPI_DOC_CSP } },
+      '/api/scalar': {
+        headers: { 'Content-Security-Policy': OPENAPI_DOC_CSP },
+      },
+      '/api/swagger': {
+        headers: { 'Content-Security-Policy': OPENAPI_DOC_CSP },
+      },
     },
   },
 
@@ -335,6 +340,14 @@ export default defineNuxtConfig({
         },
       },
     },
+  },
+
+  // ── Tailwind ─────────────────────────────────────────────────────────────────
+  // main.css is the Tailwind entry AND the typography system (ink-* / t-* roles).
+  // Without this the module injects its own bare tailwind.css and every .t-*
+  // class silently renders as unstyled text.
+  tailwindcss: {
+    cssPath: '~~/layers/core/app/assets/css/main.css',
   },
 
   // ── Color mode ───────────────────────────────────────────────────────────────
@@ -392,6 +405,11 @@ export default defineNuxtConfig({
       paystackPk: process.env.PAYSTACK_PUBLIC_KEY,
       // Pay on Delivery — off by default (paused); set NUXT_PUBLIC_POD_ENABLED=true to re-enable.
       podEnabled: process.env.NUXT_PUBLIC_POD_ENABLED === 'true',
+      // Trust homepage (hero Trust Card + spotlight rail). The reputation engine
+      // isn't live yet, so its numbers are seeded placeholders — NEVER show them
+      // to real production visitors. On in dev automatically (demos); in prod only
+      // when NUXT_PUBLIC_TRUST_PREVIEW=true (e.g. a gated staging/demo build).
+      trustPreview: process.env.NUXT_PUBLIC_TRUST_PREVIEW === 'true',
       // Cloudinary
       CloudinaryApiKey: process.env.CLOUDINARY_API_KEY,
       cloudName: process.env.CLOUDINARY_CLOUD_NAME,

@@ -30,7 +30,7 @@
           @click="$emit('open-cart')"
         >
           <div class="relative">
-            <Icon name="solar:bag-4-linear" size="24" />
+            <AppIcon name="cart" size="24" />
             <span
               v-if="cartCount > 0"
               class="absolute -right-1 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-brand px-0.5 text-[9px] font-bold text-white"
@@ -39,6 +39,8 @@
           </div>
         </button>
 
+        <!-- Notifications when signed in, Sign in when not — the slot is never
+             empty, so the header keeps the same shape either way. -->
         <ClientOnly>
           <button
             v-if="profileStore.isLoggedIn"
@@ -46,12 +48,23 @@
             class="header-button relative"
             @click="$emit('open-notifications')"
           >
-            <Icon name="solar:bell-linear" size="24" />
+            <AppIcon name="notifications" size="24" />
             <span
               v-if="unreadCount > 0"
               class="absolute right-0 top-0 block h-2 w-2 rounded-full bg-brand"
             ></span>
           </button>
+          <NuxtLink
+            v-else
+            to="/user-login"
+            class="ml-1 rounded-full bg-brand px-3.5 py-1.5 text-xs font-bold text-white transition-colors hover:bg-brand/90"
+          >
+            {{ $t('nav.signIn') }}
+          </NuxtLink>
+
+          <template #fallback>
+            <div class="h-9 w-9" />
+          </template>
         </ClientOnly>
       </div>
     </div>
@@ -63,6 +76,7 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import { useNotificationStore } from '~~/layers/profile/app/stores/notification.store'
+import AppIcon from '~~/layers/ui/app/components/AppIcon.vue'
 
 defineEmits(['open-notifications', 'open-cart', 'open-search'])
 
@@ -94,7 +108,7 @@ const unreadCount = computed(() => notificationStore.unreadCount)
 .brand-wordmark {
   display: inline-flex;
   align-items: baseline;
-  font-family: Sora, Manrope, system-ui, sans-serif;
+  font-family: Archivo, Manrope, system-ui, sans-serif;
   font-size: 1.12rem;
   font-weight: 900;
   letter-spacing: 0;

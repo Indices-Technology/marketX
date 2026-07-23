@@ -17,6 +17,7 @@
           :seller="seller"
           :product-count="productCount"
           :qr="qr"
+          :trust="trust"
           :share-url="shareUrl"
           :display-url="displayUrl"
           :copied="copied"
@@ -69,6 +70,7 @@ const {
   seller,
   productCount,
   qr,
+  trust,
   copied,
   loading,
   displayUrl,
@@ -84,9 +86,16 @@ const {
 const cardRef = ref<{ rootEl: HTMLElement | null } | null>(null)
 const { capture, captureTemplate, shareImage, capturing } = useCardCapture()
 const downloadCardImage = () =>
-  capture(cardRef.value?.rootEl, `${seller.value?.store_slug || 'store'}-card.png`)
+  capture(
+    cardRef.value?.rootEl,
+    `${seller.value?.store_slug || 'store'}-card.png`,
+  )
 const downloadTemplateImage = (tpl: ShareTemplate) =>
-  captureTemplate(cardRef.value?.rootEl, tpl, seller.value?.store_slug || 'store')
+  captureTemplate(
+    cardRef.value?.rootEl,
+    tpl,
+    seller.value?.store_slug || 'store',
+  )
 const onShareTarget = (t: { tpl?: ShareTemplate; href?: string }) =>
   shareImage(cardRef.value?.rootEl, {
     tpl: t.tpl,
@@ -105,7 +114,10 @@ watch(
 )
 
 // Reflect saved settings on the local card immediately.
-const onSaved = (patch: { cardSettings: CardSettings; store_email: string }) => {
+const onSaved = (patch: {
+  cardSettings: CardSettings
+  store_email: string
+}) => {
   if (!seller.value) return
   seller.value.cardSettings = patch.cardSettings
   seller.value.store_email = patch.store_email

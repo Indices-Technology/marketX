@@ -6,7 +6,10 @@ export const gigPolicy: CarrierPolicy = {
   liabilityCap: 'declared', // §10.2 — limited to declared value
   returnTariffApplies: true, // §1.10, §9
   settlementModels: ['ESCROW_POD', 'CARRIER_COD'],
-  codRemittanceDays: 7, // §4.6 — weekly remittance
+  // GIG (Jul 2026, confirmed by GIGL): COD is reconciled DAILY and paid out
+  // "at least twice weekly" — i.e. ~every 3–4 days, not the weekly cadence the
+  // SLA §4.6 implies. Budget the slower end so payout expectations never overrun.
+  codRemittanceDays: 4,
   maxWeightKg: 200, // Annexure 2 tops out at 200kg
   prohibitedItems: [
     'cash',

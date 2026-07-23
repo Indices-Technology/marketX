@@ -1,5 +1,6 @@
 import { useAffiliateApi } from '../services/affiliate.api'
 import { useAffiliateStore } from '../stores/affiliate.store'
+import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import { extractErrorMessage } from '~~/layers/core/app/utils/errors'
 import type {
   AffiliateStatus,
@@ -13,11 +14,17 @@ export const isValidAffiliateRef = (ref: string): boolean =>
 export const useAffiliate = () => {
   const api = useAffiliateApi()
   const store = useAffiliateStore()
+  const profileStore = useProfileStore()
 
   const isLoading = computed(() => store.isLoading)
   const error = computed(() => store.error)
-  const isEnrolled = computed(() => store.isEnrolled)
-  const affiliateCode = computed(() => store.affiliateCode)
+  // Affiliate identity is per-account: never expose it to a logged-out viewer,
+  // even if the store still holds a previous session's value. Without this a
+  // guest can be shown (and share) someone else's referral link.
+  const isEnrolled = computed(() => profileStore.isLoggedIn && store.isEnrolled)
+  const affiliateCode = computed(() =>
+    profileStore.isLoggedIn ? store.affiliateCode : null,
+  )
   const stats = computed(() => store.stats)
   const referrals = computed(() => store.referrals)
 

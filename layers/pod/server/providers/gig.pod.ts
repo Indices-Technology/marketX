@@ -32,9 +32,18 @@ const toAddress = (a: PodBookingRequest['origin']): Address => ({
 export const gigPodProvider: IPodProvider = {
   id: 'gig',
   name: 'GIG Logistics (COD)',
-  // DISABLED (July 2026): GIG's live API doesn't expose a COD endpoint yet, so we
-  // can't register the cash collection. Flip to true once GIG ships COD.
-  enabled: false,
+  /**
+   * COD is NOT missing from GIG's API — GIGL confirmed it is registered via
+   * `IsCashOnDelivery`/`CashOnDeliveryAmount` on the create endpoints. It is gated
+   * on GIG's **Class plan** (₦4,500/month); a Basic account cannot facilitate COD.
+   *
+   * Off by default. Set `GIG_COD_ENABLED=true` once the Class plan is active on
+   * the live account — no code change needed. Read per-call (registry filters on
+   * `.enabled`), so it can be flipped without a redeploy of this module.
+   */
+  get enabled(): boolean {
+    return process.env.GIG_COD_ENABLED === 'true'
+  },
   capabilities: { collectsCash: true, remits: true, trustedAttestation: true },
 
   canHandle(ctx: PodRouteContext): boolean {
@@ -72,7 +81,9 @@ export const gigPodProvider: IPodProvider = {
   },
 
   parseRemittance(): PodRemittance | null {
-    // TODO: map GIG's COD remittance feed (policy codRemittanceDays: 7).
+    // TODO: map GIG's COD remittance feed. GIGL: collections are reconciled daily
+    // and paid at least twice weekly (see gigPolicy.codRemittanceDays). Needs a
+    // real remittance payload captured on a Class-plan account before we trust it.
     return null
   },
 }

@@ -36,33 +36,62 @@
   /* Sensible defaults so raw/unclassed text already lands in the system.
      Explicit utility classes always win over these element defaults. */
   body {
-    font-family: 'Manrope', system-ui, -apple-system, sans-serif;
+    font-family:
+      'Manrope',
+      system-ui,
+      -apple-system,
+      sans-serif;
     @apply text-gray-700 dark:text-neutral-300;
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Sora', system-ui, -apple-system, sans-serif;
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family:
+      'Archivo',
+      system-ui,
+      -apple-system,
+      sans-serif;
     @apply font-bold text-gray-900 dark:text-neutral-100;
   }
 }
 
 @layer components {
   /* ── INK — color hierarchy ────────────────────────────────────────────── */
-  .ink-strong { @apply text-gray-900 dark:text-neutral-100; }
-  .ink        { @apply text-gray-700 dark:text-neutral-300; }
-  .ink-soft   { @apply text-gray-500 dark:text-neutral-400; }
-  .ink-faint  { @apply text-gray-400 dark:text-neutral-500; }
+  .ink-strong {
+    @apply text-gray-900 dark:text-neutral-100;
+  }
+  .ink {
+    @apply text-gray-700 dark:text-neutral-300;
+  }
+  .ink-soft {
+    @apply text-gray-500 dark:text-neutral-400;
+  }
+  .ink-faint {
+    @apply text-gray-400 dark:text-neutral-500;
+  }
 
   /* ── TYPE ROLES — family + size + weight (+ default ink) ───────────────── */
 
-  /* Page titles / hero numbers */
+  /* Page titles / hero numbers.
+     Archivo is a variable font with a width axis — the big display roles run
+     EXPANDED (market-signage energy), everything smaller stays normal width so
+     dense UI keeps its rhythm. Browsers without variable-font support just get
+     normal width, which is a fine fallback. */
   .t-display {
     @apply font-display text-3xl font-bold leading-tight tracking-tight text-gray-900 dark:text-neutral-100;
+    font-stretch: 115%;
+    font-variation-settings: 'wdth' 115;
   }
 
   /* Section titles */
   .t-title {
     @apply font-display text-xl font-bold leading-snug text-gray-900 dark:text-neutral-100;
+    font-stretch: 110%;
+    font-variation-settings: 'wdth' 110;
   }
 
   /* Card titles / subsection headings (display) */
@@ -106,11 +135,14 @@
     @apply font-sans text-xs font-bold uppercase tracking-widest text-brand;
   }
 
-  /* Prices — a product's face */
+  /* Prices — a product's face. Tabular figures so columns of prices in a grid
+     line up digit-for-digit instead of shimmering. */
   .t-price {
     @apply font-display text-lg font-bold text-gray-900 dark:text-neutral-100;
+    font-variant-numeric: tabular-nums;
   }
   .t-price-lg {
     @apply font-display text-2xl font-bold text-gray-900 dark:text-neutral-100;
+    font-variant-numeric: tabular-nums;
   }
 }

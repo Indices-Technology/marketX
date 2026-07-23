@@ -1,5 +1,12 @@
 import { test, expect } from '@playwright/test'
-import { pageLogin, TEST_USER, apiLogin, clearCart, getFirstVariantId, getFirstProductSlug } from '../helpers/auth'
+import {
+  pageLogin,
+  TEST_USER,
+  apiLogin,
+  clearCart,
+  getFirstVariantId,
+  getFirstProductSlug,
+} from '../helpers/auth'
 
 let PRODUCT_SLUG = 'adire-tie-dye-maxi-dress'
 
@@ -10,8 +17,12 @@ test.describe('smoke — critical user journey', () => {
 
   test('guest sees market home', async ({ page }) => {
     await page.goto('/')
-    await expect(page.getByText("Today's deals")).toBeVisible({ timeout: 15000 })
-    await expect(page.getByText('Browse by market')).toBeVisible()
+    await expect(page.getByText("Today's deals")).toBeVisible({
+      timeout: 15000,
+    })
+    await expect(
+      page.getByRole('heading', { name: "Explore Nigeria's Digital Markets" }),
+    ).toBeVisible()
   })
 
   // Verifies the login form calls the auth API correctly.
@@ -35,11 +46,18 @@ test.describe('smoke — critical user journey', () => {
 
   test('product page renders title and add-to-cart', async ({ page }) => {
     await page.goto(`/product/${PRODUCT_SLUG}`)
-    await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 15000 })
-    await expect(page.getByRole('button', { name: /add to cart/i })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible({
+      timeout: 15000,
+    })
+    await expect(
+      page.getByRole('button', { name: /add to cart/i }),
+    ).toBeVisible()
   })
 
-  test('authenticated user can add product to cart', async ({ page, request }) => {
+  test('authenticated user can add product to cart', async ({
+    page,
+    request,
+  }) => {
     const { token } = await apiLogin(request)
     await clearCart(request, token)
 
@@ -57,7 +75,10 @@ test.describe('smoke — critical user journey', () => {
     await expect(page.locator('body')).not.toContainText('Something went wrong')
   })
 
-  test('checkout page is accessible when logged in', async ({ page, request }) => {
+  test('checkout page is accessible when logged in', async ({
+    page,
+    request,
+  }) => {
     // Seed the cart via API so checkout has something to render
     const { token } = await apiLogin(request)
     await clearCart(request, token)
@@ -70,7 +91,9 @@ test.describe('smoke — critical user journey', () => {
     await pageLogin(page, request)
     await page.goto('/checkout')
 
-    await expect(page.getByRole('heading', { name: /checkout/i })).toBeVisible({ timeout: 15000 })
+    await expect(page.getByRole('heading', { name: /checkout/i })).toBeVisible({
+      timeout: 15000,
+    })
     await expect(page).toHaveURL('/checkout')
   })
 })

@@ -306,9 +306,17 @@ export const authRepository = {
     })
   },
 
+  /**
+   * Live sessions for a user — not revoked AND not past expiry.
+   *
+   * The expiry filter matters: requireAuth rejects a token whose session is
+   * past expiresAt, so an expired row is already dead. Listing it would show
+   * the user a "device" they cannot actually be signed in on, and invite them
+   * to revoke something that is not a threat.
+   */
   async getUserSessions(userId: string) {
     return prisma.session.findMany({
-      where: { userId, revokedAt: null },
+      where: { userId, revokedAt: null, expiresAt: { gt: new Date() } },
       select: {
         id: true,
         device: true,
@@ -330,9 +338,41 @@ export const authRepository = {
     })
   },
 
+  /**
+   * Revoke one session, but only if it belongs to `userId`.
+   *
+   * Ownership is enforced in the WHERE clause rather than by a read-then-write
+   * check, so a caller cannot revoke another account's session by guessing its
+   * id. Returns false when the session is missing, already revoked, or owned by
+   * someone else — all three are indistinguishable to the caller by design.
+   */
+  async revokeSessionForUser(sessionId: string, userId: string) {
+    const result = await prisma.session.updateMany({
+      where: { id: sessionId, userId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    })
+    return result.count > 0
+  },
+
   async revokeAllSessions(userId: string) {
     const result = await prisma.session.updateMany({
       where: { userId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    })
+    return result.count
+  },
+
+  /**
+   * Revoke every live session for a user except one — the "sign out everywhere
+   * else" action. Passing no `exceptSessionId` signs out every device.
+   */
+  async revokeOtherSessions(userId: string, exceptSessionId?: string) {
+    const result = await prisma.session.updateMany({
+      where: {
+        userId,
+        revokedAt: null,
+        ...(exceptSessionId ? { id: { not: exceptSessionId } } : {}),
+      },
       data: { revokedAt: new Date() },
     })
     return result.count

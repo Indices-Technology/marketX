@@ -1,3 +1,10 @@
+<!--
+  BottomNavMobile — mobile primary navigation.
+
+  Destinations mirror the desktop rail (SideNav) so the app has ONE navigation
+  model: Home · Near Me · Create · Squares · Account. Icons come from AppIcon
+  (the semantic icon map) so a glyph change lands on both surfaces at once.
+-->
 <template>
   <nav
     v-bind="$attrs"
@@ -11,28 +18,28 @@
         :class="{ active: isHome }"
         aria-label="Home"
       >
-        <Icon :name="isHome ? 'solar:home-2-bold' : 'solar:home-2-linear'" size="26" />
+        <AppIcon name="home" :active="isHome" size="26" />
       </NuxtLink>
 
       <!-- Near Me -->
       <NuxtLink
-        to="/squares"
+        to="/map"
         class="nav-item"
-        active-class="active"
+        :class="{ active: isNearby }"
         aria-label="Near Me"
       >
-        <Icon name="solar:shop-bold" size="26" />
+        <AppIcon name="nearby" :active="isNearby" size="26" />
       </NuxtLink>
 
-      <!-- Create (centre CTA) — logged in: open create modal; guest: go to register -->
+      <!-- Create (centre CTA) — logged in: open create modal; guest: register -->
       <ClientOnly>
         <button
           v-if="profileStore.isLoggedIn"
           class="sell-btn"
-          aria-label="Sell"
+          aria-label="Create a post or listing"
           @click="$emit('create')"
         >
-          <Icon name="solar:add-circle-linear" size="20" class="text-white" />
+          <AppIcon name="create" size="20" class="text-white" />
           <span class="text-[11px] font-bold leading-none text-white"
             >Create</span
           >
@@ -43,7 +50,7 @@
           class="sell-btn"
           aria-label="Start selling"
         >
-          <Icon name="solar:add-circle-linear" size="20" class="text-white" />
+          <AppIcon name="create" size="20" class="text-white" />
           <span class="text-[11px] font-bold leading-none text-white"
             >Create</span
           >
@@ -53,25 +60,25 @@
         </template>
       </ClientOnly>
 
-      <!-- Discover -->
+      <!-- Squares (markets) -->
       <NuxtLink
-        to="/discover"
+        to="/squares"
         class="nav-item"
-        :class="{ active: isDiscover }"
-        aria-label="Discover"
+        :class="{ active: isSquares }"
+        aria-label="Squares"
       >
-        <Icon
-          :name="isDiscover ? 'solar:shop-linear' : 'solar:shop-linear'"
-          size="26"
-        />
+        <AppIcon name="squares" :active="isSquares" size="26" />
       </NuxtLink>
 
-      <!-- Profile -->
+      <!-- Account — avatar when signed in, sign-in icon when not.
+           Same slot either way, so the bar keeps its shape for guests. -->
       <ClientOnly>
         <div v-if="profileStore.isLoggedIn" ref="menuRef" class="relative">
           <button
             class="nav-item"
-            :aria-label="`${profileStore.me?.username ?? 'User'} profile menu`"
+            :aria-label="`${profileStore.me?.username ?? 'User'} account menu`"
+            :aria-expanded="menuOpen"
+            aria-haspopup="menu"
             @click="menuOpen = !menuOpen"
           >
             <Avatar
@@ -83,72 +90,23 @@
             />
           </button>
 
-          <!-- Profile popup -->
           <Transition name="menu-pop">
-            <div
+            <AccountMenu
               v-if="menuOpen"
-              class="absolute bottom-full right-0 z-50 mb-3 w-56 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl dark:border-neutral-700 dark:bg-neutral-900"
-            >
-              <NuxtLink
-                :to="'/profile/' + profileStore.me?.username"
-                class="menu-item"
-                @click="menuOpen = false"
-              >
-                <Icon name="solar:user-circle-linear" size="18" />
-                <span>View Profile</span>
-              </NuxtLink>
-              <NuxtLink
-                to="/buyer/orders"
-                class="menu-item"
-                @click="menuOpen = false"
-              >
-                <Icon name="solar:box-linear" size="18" />
-                <span>My Orders</span>
-              </NuxtLink>
-              <NuxtLink
-                v-if="sellerStore.hasSellers"
-                to="/seller/dashboard"
-                class="menu-item"
-                @click="menuOpen = false"
-              >
-                <Icon name="solar:shop-2-linear" size="18" />
-                <span>My Stores</span>
-              </NuxtLink>
-              <NuxtLink
-                v-if="
-                  profileStore.me?.role === 'admin' ||
-                  profileStore.me?.role === 'moderator'
-                "
-                to="/admin"
-                class="menu-item text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-900/20"
-                @click="menuOpen = false"
-              >
-                <Icon name="solar:shield-star-linear" size="18" />
-                <span>Admin Panel</span>
-              </NuxtLink>
-              <NuxtLink
-                to="/settings"
-                class="menu-item"
-                @click="menuOpen = false"
-              >
-                <Icon name="solar:settings-linear" size="18" />
-                <span>Settings</span>
-              </NuxtLink>
-              <div class="mx-3 h-px bg-gray-100 dark:bg-neutral-800" />
-              <button
-                class="menu-item w-full text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
-                @click="handleLogout"
-              >
-                <Icon name="solar:logout-3-linear" size="18" />
-                <span>Log Out</span>
-              </button>
-            </div>
+              class="absolute bottom-full right-0 z-50 mb-3"
+              @close="menuOpen = false"
+              @logout="handleLogout"
+            />
           </Transition>
         </div>
 
         <NuxtLink v-else to="/user-login" class="nav-item" aria-label="Sign in">
-          <Icon name="solar:user-circle-linear" size="26" />
+          <AppIcon name="signin" size="26" />
         </NuxtLink>
+
+        <template #fallback>
+          <div class="nav-item" />
+        </template>
       </ClientOnly>
     </div>
   </nav>
@@ -163,35 +121,25 @@
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
-import { useSellerStore } from '~~/layers/seller/app/store/seller.store'
-import { useChatStore } from '~~/layers/profile/app/stores/chat.store'
 import Avatar from '~~/layers/profile/app/components/Avatar.vue'
+import AppIcon from '~~/layers/ui/app/components/AppIcon.vue'
+import AccountMenu from './AccountMenu.vue'
 
 defineEmits(['create'])
 defineOptions({ inheritAttrs: false })
 
 const route = useRoute()
 const profileStore = useProfileStore()
-const sellerStore = useSellerStore()
-const chatStore = useChatStore()
 const { logout } = useAuth()
 
 const menuOpen = ref(false)
 const menuRef = ref<HTMLElement | null>(null)
 
 const isHome = computed(() => route.path === '/')
-const isDiscover = computed(
-  () => route.path === '/discover' || route.path.startsWith('/discover'),
-)
+const isNearby = computed(() => route.path.startsWith('/map'))
 const isSquares = computed(() => route.path.startsWith('/squares'))
 const isProfileActive = computed(
   () => route.path.startsWith('/profile') || route.path.startsWith('/seller'),
-)
-const messageCount = computed(() =>
-  chatStore.conversations.reduce(
-    (sum, c: any) => sum + (c.unreadCount ?? c.unread_count ?? 0),
-    0,
-  ),
 )
 
 const handleLogout = async () => {
@@ -230,13 +178,9 @@ onUnmounted(() => document.removeEventListener('click', onClickOutside, true))
   @apply text-brand dark:text-brand;
 }
 
-/* Sell button — taller pill, gradient brand */
+/* Create button — the one brand-filled element in the bar */
 .sell-btn {
   @apply flex h-12 w-14 flex-col items-center justify-center gap-0.5 rounded-2xl bg-brand shadow-lg shadow-brand/30 transition-transform active:scale-95;
-}
-
-.menu-item {
-  @apply flex cursor-pointer items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:text-neutral-200 dark:hover:bg-neutral-800;
 }
 
 .menu-pop-enter-active,

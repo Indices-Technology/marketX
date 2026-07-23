@@ -13,51 +13,53 @@
     />
   </div>
 
-  <!-- ─── FEED / REELS TAB — only for logged-in users on / and /reels ───────
-       ClientOnly: showFeedReelsTabs depends on auth state which differs between
-       SSR (always guest) and client (real session) — prevents hydration mismatch -->
-  <ClientOnly>
+  <!-- ─── FEED / REELS TAB — shown to everyone on /, since both destinations
+       are public. Keeping it auth-independent means the header block (and the
+       content padding below it) is identical signed in or out. -->
+  <div
+    v-if="showFeedReelsTabs"
+    class="fixed left-0 right-0 z-[29] flex h-10 items-center justify-center border-b border-gray-200/60 bg-white/90 backdrop-blur-md md:hidden dark:border-neutral-800/60 dark:bg-neutral-900/90"
+    :style="{
+      top: mobileNavVisible
+        ? 'calc(3.5rem + env(safe-area-inset-top, 0px))'
+        : 'env(safe-area-inset-top, 0px)',
+      transition: 'top 300ms ease-in-out',
+    }"
+  >
     <div
-      v-if="showFeedReelsTabs"
-      class="fixed left-0 right-0 z-[29] flex h-10 items-center justify-center border-b border-gray-200/60 bg-white/90 backdrop-blur-md md:hidden dark:border-neutral-800/60 dark:bg-neutral-900/90"
-      :style="{
-        top: mobileNavVisible
-          ? 'calc(3.5rem + env(safe-area-inset-top, 0px))'
-          : 'env(safe-area-inset-top, 0px)',
-        transition: 'top 300ms ease-in-out',
-      }"
+      class="flex overflow-hidden rounded-full border border-gray-200 dark:border-neutral-700"
     >
-      <div
-        class="flex overflow-hidden rounded-full border border-gray-200 dark:border-neutral-700"
+      <NuxtLink
+        to="/"
+        class="px-6 py-1 text-sm font-semibold transition-colors"
+        :class="
+          route.name === 'index'
+            ? 'bg-brand/10 text-brand'
+            : 'text-gray-500 hover:text-gray-900 dark:text-neutral-400 dark:hover:text-neutral-100'
+        "
       >
-        <NuxtLink
-          to="/"
-          class="px-6 py-1 text-sm font-semibold transition-colors"
-          :class="
-            route.name === 'index'
-              ? 'bg-brand/10 text-brand'
-              : 'text-gray-500 hover:text-gray-900 dark:text-neutral-400 dark:hover:text-neutral-100'
-          "
-        >
-          Feed
-        </NuxtLink>
-        <NuxtLink
-          to="/reels"
-          class="px-6 py-1 text-sm font-semibold transition-colors"
-          :class="
-            route.name === 'reels'
-              ? 'bg-brand/10 text-brand'
-              : 'text-gray-500 hover:text-gray-900 dark:text-neutral-400 dark:hover:text-neutral-100'
-          "
-        >
-          Reels
-        </NuxtLink>
+        Feed
+      </NuxtLink>
+      <NuxtLink
+        to="/reels"
+        class="px-6 py-1 text-sm font-semibold transition-colors"
+        :class="
+          route.name === 'reels'
+            ? 'bg-brand/10 text-brand'
+            : 'text-gray-500 hover:text-gray-900 dark:text-neutral-400 dark:hover:text-neutral-100'
+        "
+      >
+        Reels
+      </NuxtLink>
+      <ClientOnly>
         <NuxtLink
           v-if="sellerStore.hasSellers"
-          :to="sellerStore.sellers.length === 1
-            ? `/seller/${sellerStore.sellers[0].store_slug}/dashboard`
-            : '/seller/dashboard'"
-          class="px-6 py-1 text-sm font-semibold transition-colors border-l border-gray-200 dark:border-neutral-700"
+          :to="
+            sellerStore.sellers.length === 1
+              ? `/seller/${sellerStore.sellers[0].store_slug}/dashboard`
+              : '/seller/dashboard'
+          "
+          class="border-l border-gray-200 px-6 py-1 text-sm font-semibold transition-colors dark:border-neutral-700"
           :class="
             isSellerRoute
               ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300'
@@ -66,18 +68,30 @@
         >
           Sell
         </NuxtLink>
-      </div>
+      </ClientOnly>
     </div>
-  </ClientOnly>
+  </div>
 
   <div
     class="min-h-screen bg-gray-50 text-gray-900 dark:bg-neutral-950 dark:text-neutral-100"
   >
-    <!-- ─── DESKTOP LEFT SIDEBAR ─────────────────────────────────────────────── -->
+    <!-- ─── DESKTOP LEFT SIDEBAR ──────────────────────────────────────────────
+         Collapsed to an 80px icon rail by default; expands to 220px on hover as
+         an overlay (content margin stays 80px, so the hero keeps its width). -->
     <aside
-      class="scrollbar-hide fixed left-0 top-0 z-20 hidden h-full w-20 bg-white md:block xl:w-72 dark:bg-neutral-900"
+      class="scrollbar-hide fixed left-0 top-0 z-30 hidden h-full bg-white transition-[width] duration-200 ease-out md:block dark:bg-neutral-900"
+      :class="
+        sidebarExpanded
+          ? 'w-[220px] shadow-2xl shadow-black/10 dark:shadow-black/40'
+          : 'w-20'
+      "
+      @mouseenter="sidebarExpanded = true"
+      @mouseleave="sidebarExpanded = false"
+      @focusin="sidebarExpanded = true"
+      @focusout="sidebarExpanded = false"
     >
       <SideNav
+        :expanded="sidebarExpanded"
         @create="showCreateModal = true"
         @open-notifications="showNotificationOverlay = true"
         @open-cart="showCart = true"
@@ -85,7 +99,7 @@
     </aside>
 
     <!-- ─── MAIN CONTENT AREA ────────────────────────────────────────────────── -->
-    <main class="md:ml-20 xl:ml-72">
+    <main class="md:ml-20">
       <div class="mx-auto flex max-w-[1500px]">
         <!-- Main feed / page content -->
         <div
@@ -99,10 +113,7 @@
           ]"
           @scroll.passive="onMainScroll"
         >
-          <div
-            class="w-full pb-20 md:pb-0"
-            :class="isNarrowFeed ? 'mx-auto max-w-[560px]' : ''"
-          >
+          <div class="w-full pb-20 md:pb-0" :class="contentWidthClass">
             <slot />
           </div>
         </div>
@@ -111,7 +122,7 @@
         <aside
           v-if="showRightSidebar"
           class="scrollbar-hide hidden h-[100dvh] shrink-0 overflow-y-auto p-4 lg:block"
-          :class="narrowSidebar ? 'w-64' : 'w-[420px]'"
+          :class="narrowSidebar ? 'w-64' : 'w-96'"
         >
           <slot name="right-sidebar">
             <RightSideNav @open-ai="showAI = true" />
@@ -155,11 +166,7 @@
             <div
               class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/20"
             >
-              <Icon
-                name="solar:shop-2-linear"
-                size="16"
-                class="text-white"
-              />
+              <Icon name="solar:shop-2-linear" size="16" class="text-white" />
             </div>
             <div class="min-w-0 flex-1">
               <p class="text-[12px] font-bold leading-tight text-white">
@@ -240,6 +247,7 @@ import {
   watch,
   defineAsyncComponent,
 } from 'vue'
+import { refreshNuxtData } from '#imports'
 import { useRoute } from 'vue-router'
 
 // ─── Always-visible layout components (eager) ───────────────────────────────
@@ -284,6 +292,7 @@ import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import { useSellerStore } from '~~/layers/seller/app/store/seller.store'
 import { useShareModal } from '~~/layers/social/app/composables/useShareModal'
 import { useDassaPanel } from '~~/layers/ai/app/composables/useDassaPanel'
+import { useCartDrawer } from '~~/layers/commerce/app/composables/useCartDrawer'
 
 // ─── Stores & Composables ───────────────────────────────────────────────────
 const route = useRoute()
@@ -295,6 +304,7 @@ const { refresh } = useLayoutData()
 // ─── Props ──────────────────────────────────────────────────────────────────
 const props = defineProps<{
   narrowFeed?: boolean
+  mode?: 'feed' | 'market' | 'wide'
   hideRightSidebar?: boolean
   customPadding?: boolean
   narrowSidebar?: boolean
@@ -302,36 +312,38 @@ const props = defineProps<{
 
 const isSellerRoute = computed(() => route.path.startsWith('/seller'))
 
+// Left rail: collapsed to icons, expands to labels while hovered.
+const sidebarExpanded = ref(false)
+
 // ─── Layout Detection ───────────────────────────────────────────────────────
-const isNarrowFeed = computed(() => {
-  if (props.narrowFeed !== undefined) return props.narrowFeed
+const layoutMode = computed(() => {
+  if (props.mode) return props.mode
+  if (props.narrowFeed !== undefined) return props.narrowFeed ? 'feed' : 'wide'
   return ['index', 'reels', 'profile-username', 'post-id'].includes(
     route.name as string,
   )
+    ? 'feed'
+    : 'wide'
 })
 
-const showFeedReelsTabs = computed(
-  () => route.name === 'index' && profileStore.isLoggedIn,
-)
+const contentWidthClass = computed(() => {
+  if (layoutMode.value === 'feed') return 'mx-auto max-w-[560px]'
+  if (layoutMode.value === 'market') return 'mx-auto max-w-[980px]'
+  return ''
+})
+
+const showFeedReelsTabs = computed(() => route.name === 'index')
 
 const showRightSidebar = computed(() => {
   if (props.hideRightSidebar) return false
   return true
 })
 
-// hasMounted gates any auth-dependent class bindings so SSR always produces
-// the same markup as the initial client render before hydration completes.
-const hasMounted = ref(false)
-onMounted(() => {
-  hasMounted.value = true
-})
-
 const mainContentClasses = computed(() => {
   if (props.customPadding) return 'py-0'
-  // After mount, add extra top padding when the Feed/Reels tab bar is visible
+  // Extra top padding when the Feed/Reels tab bar is visible
   // (header 3.5rem + tab bar 2.5rem = 6rem → pt-24).
-  if (hasMounted.value && showFeedReelsTabs.value)
-    return 'pb-6 pt-24 md:pt-6 lg:px-4'
+  if (showFeedReelsTabs.value) return 'pb-6 pt-24 md:pt-6 lg:px-4'
   return 'pb-6 pt-16 md:pt-6 lg:px-4'
 })
 
@@ -344,6 +356,10 @@ const _bottomNavVisible = ref(true)
 // Always hide bottom nav on reels page (full-screen TikTok-style scroll)
 const bottomNavVisible = computed(
   () => route.name !== 'reels' && _bottomNavVisible.value,
+)
+
+const shouldAutoHideNav = computed(
+  () => layoutMode.value === 'feed' || route.name === 'reels',
 )
 
 let pauseTimer: ReturnType<typeof setTimeout> | null = null
@@ -371,6 +387,10 @@ const onMainScroll = () => {
   hasScrolled.value = y > 20
   const delta = y - lastDivScrollY
   lastDivScrollY = y
+  if (!shouldAutoHideNav.value) {
+    revealNav()
+    return
+  }
   if (Math.abs(delta) < 4) return
   delta > 0 && y > 60 ? hideNav() : revealNav()
   scheduleReveal()
@@ -383,6 +403,10 @@ const onWindowScroll = () => {
   hasScrolled.value = y > 20
   const delta = y - lastWinScrollY
   lastWinScrollY = y
+  if (!shouldAutoHideNav.value) {
+    revealNav()
+    return
+  }
   if (Math.abs(delta) < 4) return
   delta > 0 && y > 60 ? hideNav() : revealNav()
   scheduleReveal()
@@ -396,6 +420,10 @@ const onTouchStart = (e: TouchEvent) => {
 }
 const onTouchMove = (e: TouchEvent) => {
   const diff = touchStartY - e.touches[0].clientY // positive = scrolling down
+  if (!shouldAutoHideNav.value) {
+    revealNav()
+    return
+  }
   if (Math.abs(diff) < 15) return // ignore tiny movements
   diff > 0 ? hideNav() : revealNav()
 }

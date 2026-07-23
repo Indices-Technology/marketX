@@ -111,7 +111,27 @@ export async function requireAuth(event: H3Event) {
       })
     }
 
-    // 5. Set user in event context for downstream handlers
+    // 4b. Moderation gate. Banning revokes the user's sessions, so a session-
+    //     bound token is normally already stopped by the revocation check above.
+    //     This is the safety net for tokens minted before sessionId existed —
+    //     those skip that check entirely and would otherwise keep working for a
+    //     banned user until they expire. 403 (not 401) because the credentials
+    //     are valid; retrying or refreshing them will not help.
+    const restriction = getAccountRestriction(user)
+    if (restriction) {
+      throw createError({
+        statusCode: 403,
+        statusMessage: restriction,
+      })
+    }
+
+    // 5. Expose the session this request authenticated with. The session
+    //    management endpoints need it to flag the caller's own row as "current"
+    //    and to keep it alive when revoking every other device. Undefined for
+    //    legacy tokens minted before sessionId was added to the payload.
+    event.context.sessionId = payload.sessionId
+
+    // 6. Set user in event context for downstream handlers
     event.context.user = {
       id: user.id,
       email: user.email,

@@ -34,17 +34,50 @@ function txt(s: string, max = 42): string {
     .replace(/%2C/g, '%252C')
 }
 
-/** Extract a Cloudinary public_id (folder/name, no version/ext) from a URL. */
-function bannerPublicId(url?: string | null): string | null {
-  if (!url || !url.includes('cloudinary.com')) return null
-  const i = url.indexOf('/upload/')
-  if (i === -1) return null
-  let after = url.slice(i + '/upload/'.length)
+/** A plain folder/name id — no separators Cloudinary would read as transforms. */
+const SAFE_PUBLIC_ID = /^[A-Za-z0-9_\-/]+$/
+
+/**
+ * Extract a Cloudinary public_id (folder/name, no version/ext) from a URL.
+ *
+ * Hardened, because the source is attacker-controlled: `store_banner` accepts
+ * ANY url (seller.schema → `z.string().url()`), and this id is interpolated
+ * straight into the composed transformation path.
+ *   - Real host check. A substring test like `includes('cloudinary.com')` would
+ *     happily accept `https://evil.com/cloudinary.com/upload/x.jpg`.
+ *   - Our cloud + image/upload only, so a crafted URL can't point the base at
+ *     another delivery type.
+ *   - Strict charset. Without it a banner could smuggle `,`/`:` segments into
+ *     the URL and bolt extra (expensive) transforms onto every render.
+ * Anything suspicious returns null, and callers fall back to the brand canvas.
+ */
+function bannerPublicId(
+  url: string | null | undefined,
+  cloud: string,
+): string | null {
+  if (!url || !cloud) return null
+
+  let path: string
+  try {
+    const u = new URL(url)
+    if (u.protocol !== 'https:' || u.hostname !== 'res.cloudinary.com') return null
+    path = u.pathname
+  } catch {
+    return null // not a parseable absolute URL
+  }
+
+  const marker = `/${cloud}/image/upload/`
+  if (!path.startsWith(marker)) return null
+  let after = path.slice(marker.length)
+
   // Drop a leading transform segment (has commas or known prefixes) then version.
   if (/^[a-z0-9_,:.%-]+\//i.test(after) && /[,_]/.test(after.split('/')[0]))
     after = after.replace(/^[^/]+\//, '')
   after = after.replace(/^v\d+\//, '')
-  return after.replace(/\.[a-z0-9]+$/i, '') || null
+  after = after.replace(/\.[a-z0-9]+$/i, '')
+
+  if (!after || after.includes('..') || !SAFE_PUBLIC_ID.test(after)) return null
+  return after
 }
 
 /** Build the composite Cloudinary URL. Returns '' when no cloud is configured. */
@@ -56,7 +89,7 @@ export function storeCardImage(
   if (!cloud) return ''
 
   const pad = Math.round(w * 0.06)
-  const bpid = bannerPublicId(seller?.store_banner)
+  const bpid = bannerPublicId(seller?.store_banner, cloud)
   const base = bpid || 'sample'
   const canvas = bpid
     ? `w_${w},h_${h},c_fill,e_brightness:-48,q_auto`
@@ -105,7 +138,7 @@ export function productCardImage(
   if (!cloud) return ''
 
   const pad = Math.round(w * 0.06)
-  const cpid = bannerPublicId(product?.imageUrl)
+  const cpid = bannerPublicId(product?.imageUrl, cloud)
   const base = cpid || 'sample'
   const canvas = cpid
     ? `w_${w},h_${h},c_fill,e_brightness:-45,q_auto`

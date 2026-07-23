@@ -36,6 +36,19 @@ export const useAffiliateStore = defineStore('affiliate', () => {
     setReferrals: (r: AffiliateReferral[]) => {
       referrals.value = r
     },
+    /**
+     * Wipe every user-scoped value. MUST run on logout — otherwise the previous
+     * user's affiliateCode survives in memory and a guest (or the next account)
+     * gets shown someone else's referral link.
+     */
+    clearStore: () => {
+      isEnrolled.value = false
+      affiliateCode.value = null
+      stats.value = { totalEarnings: 0, pendingEarnings: 0, totalConversions: 0 }
+      referrals.value = []
+      isLoading.value = false
+      error.value = null
+    },
     setLoading: (val: boolean) => {
       isLoading.value = val
     },

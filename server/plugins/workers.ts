@@ -12,6 +12,7 @@ import { startAuditWorker } from '../queues/audit.queue'
 import { startNotificationWorker } from '../queues/notification.queue'
 import { startEmailWorker } from '../queues/email.queue'
 import { startPodReminderCron } from '../queues/pod-reminder.queue'
+import { startReputationWorker } from '../queues/reputation.queue'
 
 // Guard against double-start. In dev, Nitro HMR can re-evaluate this plugin
 // module and re-run the bootstrap, stacking duplicate Workers on the SHARED
@@ -26,15 +27,20 @@ export default defineNitroPlugin(() => {
   const audit = startAuditWorker()
   const notification = startNotificationWorker()
   const email = startEmailWorker()
+  const reputation = startReputationWorker()
 
-  if (audit || notification || email) {
-    console.log('[workers] BullMQ workers started:', [
-      audit && 'audit',
-      notification && 'notification',
-      email && 'email',
-    ]
-      .filter(Boolean)
-      .join(', '))
+  if (audit || notification || email || reputation) {
+    console.log(
+      '[workers] BullMQ workers started:',
+      [
+        audit && 'audit',
+        notification && 'notification',
+        email && 'email',
+        reputation && 'reputation',
+      ]
+        .filter(Boolean)
+        .join(', '),
+    )
   } else {
     console.log(
       '[workers] QUEUE_REDIS_URL not set — workers disabled, jobs run inline',

@@ -23,3 +23,22 @@ export interface IAuthResponse {
   refreshToken: string
   user: IAuthUser
 }
+
+/**
+ * One live sign-in on one device, as returned by GET /api/auth/sessions.
+ * Dates arrive as ISO strings over the wire.
+ */
+export interface IAuthSession {
+  id: string
+  device: string
+  browser: string
+  os: string
+  deviceType: 'mobile' | 'tablet' | 'desktop'
+  ip: string | null
+  country: string | null
+  /** True for the session that made the request — label it "This device". */
+  isCurrent: boolean
+  createdAt: string
+  lastUsedAt: string
+  expiresAt: string
+}

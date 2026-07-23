@@ -65,6 +65,12 @@
               size="18"
               class="shrink-0 text-blue-500"
             />
+            <span
+              v-if="trust?.tier"
+              class="shrink-0 rounded-md px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wider"
+              :class="tierChip"
+              >{{ tierLabel }}</span
+            >
           </div>
           <p
             v-if="seller.store_location"
@@ -112,39 +118,54 @@
         {{ seller.store_description }}
       </p>
 
-      <!-- Stats (each toggleable) -->
+      <!-- Trust facts — earned on the escrow rail, not follower vanity -->
       <div
-        v-if="cfg.showRating || cfg.showFollowers || cfg.showProducts"
+        v-if="trust?.enoughEvidence"
         class="mt-4 flex divide-x divide-gray-100 rounded-2xl bg-gray-50 py-3 text-center dark:divide-neutral-800 dark:bg-neutral-800/50"
       >
-        <div v-if="cfg.showRating" class="flex-1">
+        <div class="flex-1">
           <p
             class="font-display text-base font-bold text-gray-900 dark:text-white"
           >
-            {{ ratingText }}
+            {{ trust.facts.sales }}
           </p>
           <p class="text-[10px] text-gray-400 dark:text-neutral-500">
-            {{ reviewCount }} reviews
+            protected orders
           </p>
         </div>
-        <div v-if="cfg.showFollowers" class="flex-1">
+        <div class="flex-1">
           <p
             class="font-display text-base font-bold text-gray-900 dark:text-white"
           >
-            {{ formatNum(seller.followers_count || 0) }}
+            {{ trust.facts.disputeRate }}%
           </p>
           <p class="text-[10px] text-gray-400 dark:text-neutral-500">
-            followers
+            disputes
           </p>
         </div>
-        <div v-if="cfg.showProducts" class="flex-1">
+        <div v-if="trust.facts.rating != null" class="flex-1">
           <p
             class="font-display text-base font-bold text-gray-900 dark:text-white"
           >
-            {{ formatNum(productCount) }}
+            {{ trust.facts.rating }}★
           </p>
-          <p class="text-[10px] text-gray-400 dark:text-neutral-500">products</p>
+          <p class="text-[10px] text-gray-400 dark:text-neutral-500">
+            {{ trust.facts.reviewCount }} reviews
+          </p>
         </div>
+      </div>
+      <div
+        v-else
+        class="mt-4 rounded-2xl bg-gray-50 px-4 py-3 text-center dark:bg-neutral-800/50"
+      >
+        <p
+          class="text-[12px] font-semibold text-gray-700 dark:text-neutral-200"
+        >
+          Building trust on MarketX
+        </p>
+        <p class="mt-0.5 text-[10px] text-gray-400 dark:text-neutral-500">
+          Escrow-protected from the very first sale
+        </p>
       </div>
 
       <!-- Business-card contact (opt-in; values from the store's own fields) -->
@@ -198,7 +219,7 @@
           <p
             class="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-neutral-500"
           >
-            Scan or visit
+            Scan to verify
           </p>
           <button
             class="mt-0.5 flex max-w-full items-start gap-1 text-left text-[13px] font-bold text-brand"
@@ -208,10 +229,12 @@
             <span class="break-all">{{ displayUrl }}</span>
             <Icon
               :name="
-                copied === 'Link' ? 'solar:check-circle-bold' : 'solar:copy-linear'
+                copied === 'Link'
+                  ? 'solar:check-circle-bold'
+                  : 'solar:copy-linear'
               "
               size="13"
-              class="mt-0.5 shrink-0 capture-hide"
+              class="capture-hide mt-0.5 shrink-0"
             />
           </button>
           <p class="mt-1 text-[10px] text-gray-400 dark:text-neutral-500">
@@ -236,6 +259,8 @@ const props = defineProps<{
   seller: any
   productCount?: number
   qr?: string
+  /** Real trust facts from /api/reputation/profile — turns this into a Trust Card. */
+  trust?: any
   shareUrl: string
   displayUrl: string
   copied?: string | null
@@ -253,16 +278,20 @@ const hasContact = computed(
     (cfg.value.showAddress && props.seller?.store_location),
 )
 
-const ratingText = computed(() =>
-  props.seller?.averageRating
-    ? Number(props.seller.averageRating).toFixed(1)
-    : '—',
-)
-const reviewCount = computed(() => props.seller?.totalReviews ?? 0)
-
-const formatNum = (n = 0) => {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`
-  return String(n)
+const TIER_LABELS: Record<string, string> = {
+  TIER_1: 'Tier 1',
+  TIER_2: 'Tier 2',
+  TIER_3: 'Tier 3',
 }
+const tierLabel = computed(() => TIER_LABELS[props.trust?.tier] ?? '')
+const tierChip = computed(() => {
+  switch (props.trust?.tier) {
+    case 'TIER_1':
+      return 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400'
+    case 'TIER_2':
+      return 'bg-slate-100 text-slate-600 dark:bg-neutral-800 dark:text-neutral-300'
+    default:
+      return 'bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400'
+  }
+})
 </script>

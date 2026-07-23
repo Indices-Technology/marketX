@@ -45,10 +45,13 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./tests/setup-vitest.ts'],
-    // Vue component tests (app layer) + pure server utility unit tests
+    // Vue component tests (app layer) + pure server utility unit tests.
+    // Playwright's api project only matches layers/**/server/**/__tests__, so
+    // root-level server/utils specs run here and nowhere else.
     include: [
       'layers/**/app/**/__tests__/**/*.spec.ts',
       'layers/**/server/utils/__tests__/**/*.spec.ts',
+      'server/utils/__tests__/**/*.spec.ts',
       'shared/**/__tests__/**/*.spec.ts',
     ],
   },

@@ -54,6 +54,7 @@ function notifyBuyerShipped(
         shipState: true,
         country: true,
         shipPhone: true,
+        shippingProvider: true,
         user: { select: { email: true } },
         orderItem: {
           select: {
@@ -92,6 +93,8 @@ function notifyBuyerShipped(
         })),
         itemsTotalKobo: order.totalAmount,
         shippingKobo: order.shippingCost,
+        // GIG SMSes the buyer a PIN they must give the courier to collect.
+        deliveryPinNote: order.shippingProvider === 'gig',
         shipTo: {
           name: order.name,
           address: [order.address, order.county, order.shipState, order.country]
