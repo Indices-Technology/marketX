@@ -220,11 +220,19 @@ const requiredVars: RequiredEnvVar[] = [
   },
 
   // ─── Platform ────────────────────────────────────────────────────────────────
+  // Single source of truth for the platform commission. Charged at withdrawal
+  // (server/utils/fees.ts) and POD settlement (pod.service.settleFromCod).
   {
-    name: 'PLATFORM_COMMISSION_RATE',
+    name: 'PLATFORM_FEE_PERCENT',
     required: false,
-    default: '0.10',
-    description: 'Platform commission rate (0.10 = 10%)',
+    default: '3',
+    description: 'Platform commission percent taken at payout/settlement (3 = 3%)',
+  },
+  {
+    name: 'PAYSTACK_TRANSFER_FEE_KOBO',
+    required: false,
+    default: '5000',
+    description: 'Flat transfer fee per payout, in kobo (5000 = ₦50)',
   },
 
   // ─── Rate Limiting ───────────────────────────────────────────────────────────
@@ -348,23 +356,36 @@ export function validateEnvironment(): void {
   }
 
   if (process.env.NODE_ENV === 'production') {
-    if (
-      jwtSecret ===
-      'your-super-secret-jwt-key-min-32-chars-change-in-production'
-    ) {
-      console.error(
-        '❌ SECURITY ERROR: Using default JWT_SECRET in production!',
-      )
+    // Known placeholder / dev values that must never reach production.
+    // Includes the historical defaults AND the current .env.example placeholders.
+    const PLACEHOLDER_SECRETS = new Set([
+      'your-super-secret-jwt-key-min-32-chars-change-in-production',
+      'your-super-secret-refresh-key-min-32-chars-change-in-production',
+      'your_jwt_secret_base64',
+      'your_jwt_refresh_secret_base64',
+    ])
+
+    const failProd = (msg: string) => {
+      console.error(`❌ SECURITY ERROR: ${msg}`)
       process.exit(1)
     }
-    if (
-      refreshSecret ===
-      'your-super-secret-refresh-key-min-32-chars-change-in-production'
-    ) {
-      console.error(
-        '❌ SECURITY ERROR: Using default JWT_REFRESH_SECRET in production!',
-      )
-      process.exit(1)
+
+    if (!jwtSecret || PLACEHOLDER_SECRETS.has(jwtSecret)) {
+      failProd('JWT_SECRET is a placeholder/default value in production!')
+    }
+    if (!refreshSecret || PLACEHOLDER_SECRETS.has(refreshSecret)) {
+      failProd('JWT_REFRESH_SECRET is a placeholder/default value in production!')
+    }
+    // In production, a short secret is a hard failure, not a warning.
+    if (jwtSecret && jwtSecret.length < 32) {
+      failProd('JWT_SECRET must be at least 32 characters in production!')
+    }
+    if (refreshSecret && refreshSecret.length < 32) {
+      failProd('JWT_REFRESH_SECRET must be at least 32 characters in production!')
+    }
+    // Access and refresh secrets sharing a value defeats refresh-token isolation.
+    if (jwtSecret && refreshSecret && jwtSecret === refreshSecret) {
+      failProd('JWT_SECRET and JWT_REFRESH_SECRET must be different in production!')
     }
   }
 

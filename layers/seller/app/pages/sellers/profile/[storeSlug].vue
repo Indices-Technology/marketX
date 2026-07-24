@@ -480,7 +480,7 @@
 
           <!-- TRUST ─────────────────────────────────────────────────────────── -->
           <div v-show="activeTab === 'trust'" class="max-w-2xl">
-            <TrustProfile :slug="storeSlug" />
+            <TrustProfile v-if="visitedTabs.has('trust')" :slug="storeSlug" />
           </div>
 
           <!-- WALL (default) ───────────────────────────────────────────────── -->
@@ -883,7 +883,11 @@
 
           <!-- REVIEWS ────────────────────────────────────────────────────── -->
           <div v-show="activeTab === 'reviews'" class="max-w-2xl">
-            <SellerReviews :store-slug="storeSlug" :is-own-store="isOwnStore" />
+            <SellerReviews
+              v-if="visitedTabs.has('reviews')"
+              :store-slug="storeSlug"
+              :is-own-store="isOwnStore"
+            />
           </div>
         </div>
       </div>
@@ -909,7 +913,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { useRoute } from 'vue-router'
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
@@ -977,6 +981,14 @@ const activeTab = ref(
     ? route.query.tab
     : 'wall',
 )
+
+// Lazy-mount the heavier tabs. The tab panels use v-show (kept, so switching
+// back is instant and preserves state), but the Trust and Reviews panels each
+// fetch on mount — with v-show alone that meant a visitor sitting on the
+// default "wall" tab still fired /reputation/profile and /reviews immediately.
+// We only mount a tab once it's first opened; a deep-link (?tab=trust) seeds it.
+const visitedTabs = reactive(new Set<string>([activeTab.value]))
+watch(activeTab, (t) => visitedTabs.add(t))
 const seller = computed(() => currentSeller.value)
 // Render-time guard — neutralizes any javascript:/data: URL persisted before
 // input validation was tightened (stored-XSS defense-in-depth)

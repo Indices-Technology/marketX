@@ -1,8 +1,24 @@
 // POST /api/ai/enhance-description
 // Takes a raw product description (plain text or HTML) and returns
 // a beautifully formatted HTML description. Uses GPT-4o-mini (text-only, ~$0.0003/call).
+import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
+
+interface OpenAIChatResponse {
+  choices?: Array<{ message?: { content?: string } }>
+}
+
+interface UpstreamError {
+  status?: number
+  statusCode?: number
+  data?: { error?: { message?: string }; message?: string }
+  message?: string
+}
 
 export default defineEventHandler(async (event) => {
+  // Auth-gated: this endpoint spends real OpenAI credits. Only signed-in users
+  // (sellers composing a listing) may call it — otherwise it's a free GPT proxy.
+  await requireAuth(event)
+
   const config = useRuntimeConfig()
   const apiKey = config.openaiApiKey
 
@@ -47,7 +63,7 @@ Rules:
   const userPrompt = `Enhance this product description:\n\n${plainText}`
 
   try {
-    const response: any = await $fetch(
+    const response = await $fetch<OpenAIChatResponse>(
       'https://api.openai.com/v1/chat/completions',
       {
         method: 'POST',
@@ -83,12 +99,13 @@ Rules:
       .trim()
 
     return { success: true, html: cleanHtml }
-  } catch (err: any) {
-    const status = err?.status || err?.statusCode || 500
+  } catch (err) {
+    const e = err as UpstreamError
+    const status = e?.status || e?.statusCode || 500
     const detail =
-      err?.data?.error?.message ||
-      err?.data?.message ||
-      err?.message ||
+      e?.data?.error?.message ||
+      e?.data?.message ||
+      e?.message ||
       'Unknown error'
     logger.logError('[POST /api/ai/enhance-description]', err, {
       requestId: event.context?.requestId,

@@ -52,21 +52,6 @@ export const useWallet = () => {
     }
   }
 
-  const addFunds = async (amount: number) => {
-    store.setLoading(true)
-    store.setError(null)
-    try {
-      const result = await api.addFunds(amount)
-      await fetchWallet()
-      return result
-    } catch (e: unknown) {
-      store.setError(extractErrorMessage(e, 'Failed to add funds'))
-      throw e
-    } finally {
-      store.setLoading(false)
-    }
-  }
-
   const withdraw = async (
     amount: number,
     bankAccount: BankAccount,
@@ -96,7 +81,6 @@ export const useWallet = () => {
     transactions,
     fetchWallet,
     fetchTransactions,
-    addFunds,
     withdraw,
   }
 }

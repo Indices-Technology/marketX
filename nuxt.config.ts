@@ -376,7 +376,6 @@ export default defineNuxtConfig({
     paystackSecretKey: process.env.PAYSTACK_SECRET_KEY,
     upstashRedisUrl: process.env.UPSTASH_REDIS_REST_URL,
     upstashRedisToken: process.env.UPSTASH_REDIS_REST_TOKEN,
-    platformCommissionRate: process.env.PLATFORM_COMMISSION_RATE,
     resendApiKey: process.env.RESEND_API_KEY,
     shippoApiKey: process.env.SHIPPO_API_KEY,
     shippoWebhookSecret: process.env.SHIPPO_WEBHOOK_SECRET,

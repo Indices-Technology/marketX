@@ -192,9 +192,90 @@ export async function resolveProfile(
     // Table not migrated yet → compute live below.
   }
 
-  const computed = await computeProfileFor(seller)
-  void persistSnapshot(seller.id, computed)
-  return computed
+  try {
+    const computed = await computeProfileFor(seller)
+    void persistSnapshot(seller.id, computed)
+    return computed
+  } catch (error) {
+    // The engine already swallows ledger/snapshot faults; the live fallback
+    // (sellerTrustFacts → Orders/Review/SupportTicket) was the one path that
+    // could still throw and 500 the whole public trust tab — e.g. if the DB is
+    // mid-migration and a column the aggregation reads doesn't exist yet. Log it
+    // and degrade to an insufficient-evidence profile rather than crash: a
+    // seller reading "just getting started" is far better than a broken page.
+    logger.logError(
+      '[reputationEngine.resolveProfile] live compute failed',
+      error,
+      {
+        sellerId: seller.id,
+      },
+    )
+    return emptyProfile(seller)
+  }
+}
+
+/** A safe, no-evidence profile used when live computation can't run. */
+function emptyProfile(seller: SellerBasic): ReputationComputed {
+  const iBand = identityBand(seller)
+  return {
+    engineVersion: ENGINE_VERSION,
+    source: 'live',
+    enoughEvidence: false,
+    tier: null,
+    facts: {
+      sales: 0,
+      delivered: 0,
+      disputeRate: 0,
+      reviewCount: 0,
+      rating: null,
+      tenureYears: 0,
+      lastPlace: null,
+      lastAt: null,
+    },
+    dimensions: [
+      {
+        key: 'COMMERCE',
+        label: 'Commerce',
+        band: 'INSUFFICIENT',
+        score: BAND_SCORE.INSUFFICIENT,
+        fact: 'Not enough sales yet',
+      },
+      {
+        key: 'IDENTITY',
+        label: 'Identity',
+        band: iBand,
+        score: BAND_SCORE[iBand],
+        fact:
+          [
+            seller.is_verified ? 'Verified' : null,
+            seller.cac_verified ? 'CAC registered' : null,
+          ]
+            .filter(Boolean)
+            .join(' · ') || 'Not yet verified',
+      },
+      {
+        key: 'COMMUNITY',
+        label: 'Community',
+        band: 'NOT_PROVIDED',
+        score: null,
+        fact: 'Not provided',
+      },
+      {
+        key: 'FINANCIAL',
+        label: 'Financial',
+        band: 'NOT_PROVIDED',
+        score: null,
+        fact: 'Not provided',
+      },
+      {
+        key: 'SOCIAL',
+        label: 'Social',
+        band: 'NOT_PROVIDED',
+        score: null,
+        fact: 'Not provided',
+      },
+    ],
+  }
 }
 
 /** Best-effort snapshot write; keeps history (isCurrent flips on the old row). */

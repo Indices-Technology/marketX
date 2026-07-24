@@ -5,7 +5,6 @@ const WALLET = '/api/commerce/wallet'
 const TRANSACTIONS = '/api/commerce/wallet/transactions'
 const FEE_CONFIG = '/api/commerce/wallet/fee-config'
 const PAYOUT_PREVIEW = '/api/commerce/wallet/payout-preview'
-const ADD_FUNDS = '/api/commerce/wallet/add-funds'
 const WITHDRAW = '/api/commerce/wallet/withdraw'
 const STORE_WALLET = (slug: string) => `/api/commerce/wallet/store/${slug}`
 
@@ -24,11 +23,6 @@ test.describe('wallet — auth guards', () => {
 
   test('GET /api/commerce/wallet/payout-preview requires auth', async ({ request }) => {
     const res = await request.get(`${PAYOUT_PREVIEW}?amount=10000`)
-    expect(res.status()).toBe(401)
-  })
-
-  test('POST /api/commerce/wallet/add-funds requires auth', async ({ request }) => {
-    const res = await request.post(ADD_FUNDS, { data: { amount: 1000 } })
     expect(res.status()).toBe(401)
   })
 
@@ -80,16 +74,6 @@ test.describe('wallet — buyer (non-seller)', () => {
     expect(body.data.transactions).toBeInstanceOf(Array)
   })
 
-  test('POST /api/commerce/wallet/add-funds returns non-401 for seller', async ({ request }) => {
-    const { token } = await apiLogin(request, TEST_SELLER)
-    const res = await request.post(ADD_FUNDS, {
-      data: { amount: 5000 },
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    // Seller can call add-funds — Paystack may not be configured but auth passes
-    expect(res.status()).not.toBe(401)
-    expect(res.status()).not.toBe(403)
-  })
 })
 
 // ─── Authenticated: seller ────────────────────────────────────────────────────

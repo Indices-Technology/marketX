@@ -8,6 +8,7 @@ import { auditService } from '~~/server/layers/shared/audit/audit.service'
 import { emitProductReview } from '~~/layers/reputation/server/utils/emitReviewSignal'
 import { productRepository } from '../repositories/product.repository'
 import { prisma } from '~~/server/utils/db'
+import DOMPurify from 'isomorphic-dompurify'
 import { remember, bust } from '~~/server/utils/cache'
 import { entityEmbedder } from '~~/layers/ai/server/services/entity-embedder.service'
 import {
@@ -61,6 +62,20 @@ function productListCacheKey(
   return `products:list:${parts.join('&')}`
 }
 
+/**
+ * Sanitize seller-authored description HTML at write time. Defense-in-depth: the
+ * render path also sanitizes, but cleaning on the way in means the stored value
+ * is never a live XSS payload (protects any consumer that renders it raw).
+ */
+function sanitizeDescription<T extends { description?: string | null }>(
+  data: T,
+): T {
+  if (typeof data.description === 'string' && data.description) {
+    data.description = DOMPurify.sanitize(data.description)
+  }
+  return data
+}
+
 async function generateUniqueSlug(title: string): Promise<string> {
   const base = title
     .toLowerCase()
@@ -86,7 +101,7 @@ export const productService = {
     userAgent: string,
     authorId?: string,
   ) {
-    const validated = createProductSchema.parse(data)
+    const validated = sanitizeDescription(createProductSchema.parse(data))
     const slug = await generateUniqueSlug(validated.title)
     const product = await productRepository.createProduct(
       sellerId,
@@ -248,7 +263,7 @@ export const productService = {
         403,
       )
 
-    const validated = updateProductSchema.parse(data)
+    const validated = sanitizeDescription(updateProductSchema.parse(data))
 
     // Snapshot the current status/seller so we can detect a draft → published
     // transition and notify followers once (the create path only fires when a

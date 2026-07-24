@@ -13,7 +13,11 @@ export const cartService = {
     let podAvailable = allPodEnabled
 
     if (allPodEnabled) {
-      // Group items by seller and compute each seller's 5% platform fee
+      // Group items by seller and compute each seller's platform fee. Uses the
+      // same PLATFORM_FEE_PERCENT knob as POD settlement (pod.service.settleFromCod)
+      // so this affordability gate can't drift from the fee actually charged.
+      const feePercent =
+        parseFloat(process.env.PLATFORM_FEE_PERCENT ?? '3') / 100
       const feesBySeller = new Map<string, number>()
       for (const item of items) {
         const seller = item.variant?.product?.seller
@@ -22,7 +26,7 @@ export const cartService = {
         const discount = item.variant?.product?.discount ?? 0
         const unitPrice = Math.round(basePrice * (1 - discount / 100))
         const lineTotal = unitPrice * item.quantity
-        feesBySeller.set(seller.id, (feesBySeller.get(seller.id) ?? 0) + lineTotal * 0.05)
+        feesBySeller.set(seller.id, (feesBySeller.get(seller.id) ?? 0) + lineTotal * feePercent)
       }
 
       if (feesBySeller.size > 0) {

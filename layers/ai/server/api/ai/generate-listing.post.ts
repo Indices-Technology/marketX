@@ -1,8 +1,24 @@
 // POST /api/ai/generate-listing
 // Accepts a base64 product image and returns AI-generated listing data + social captions
 // Uses OpenAI GPT-4o vision
+import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
+
+interface OpenAIChatResponse {
+  choices?: Array<{ message?: { content?: string } }>
+}
+
+interface UpstreamError {
+  status?: number
+  statusCode?: number
+  data?: { error?: { message?: string }; message?: string }
+  message?: string
+}
 
 export default defineEventHandler(async (event) => {
+  // Auth-gated: GPT-4o vision calls are expensive. Restrict to signed-in users
+  // (sellers generating a listing) so this can't be abused as a free vision API.
+  await requireAuth(event)
+
   const config = useRuntimeConfig()
   const apiKey = config.openaiApiKey
 
@@ -46,7 +62,7 @@ Return ONLY this JSON structure:
 }`
 
   try {
-    const response: any = await $fetch(
+    const response = await $fetch<OpenAIChatResponse>(
       'https://api.openai.com/v1/chat/completions',
       {
         method: 'POST',
@@ -84,12 +100,13 @@ Return ONLY this JSON structure:
 
     const data = JSON.parse(jsonText)
     return { success: true, data }
-  } catch (err: any) {
-    const status = err?.status || err?.statusCode || 500
+  } catch (err) {
+    const e = err as UpstreamError
+    const status = e?.status || e?.statusCode || 500
     const detail =
-      err?.data?.error?.message ||
-      err?.data?.message ||
-      err?.message ||
+      e?.data?.error?.message ||
+      e?.data?.message ||
+      e?.message ||
       'Unknown error'
     logger.logError('[POST /api/ai/generate-listing]', err, {
       requestId: event.context?.requestId,

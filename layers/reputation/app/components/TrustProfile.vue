@@ -175,7 +175,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import BaseSkeleton from '~~/layers/ui/app/components/BaseSkeleton.vue'
 import BaseEmptyState from '~~/layers/ui/app/components/BaseEmptyState.vue'
 import { useReputationApi } from '~~/layers/reputation/app/services/reputation.api'
@@ -201,8 +201,11 @@ const load = async () => {
   }
 }
 
-onMounted(load)
-watch(() => props.slug, load)
+// One trigger, not two: `onMounted` + a plain `watch` both fired `load`, so the
+// profile was fetched twice on first render (the watch trips again once the
+// route-derived slug prop settles). An immediate watch loads once now and still
+// refetches if the slug genuinely changes.
+watch(() => props.slug, load, { immediate: true })
 
 const TIER_LABELS: Record<string, string> = {
   TIER_1: 'Tier 1',

@@ -318,40 +318,12 @@ export const walletService = {
     return { transactions, total, limit, offset }
   },
 
-  async addFunds(
-    sellerId: string,
-    amount: number,
-    ipAddress: string,
-    userAgent: string,
-  ) {
-    if (amount <= 0)
-      throw new UserError(
-        'INVALID_AMOUNT',
-        'Amount must be greater than 0',
-        400,
-      )
-
-    const wallet = await walletRepository.getOrCreateWallet(sellerId)
-    await walletRepository.incrementBalance(wallet.id, amount)
-    await walletRepository.createTransaction(wallet.id, {
-      amount,
-      type: 'CREDIT',
-      description: 'Funds added to wallet',
-    })
-
-    auditQueue.enqueue({
-      userId: sellerId,
-      action: 'WALLET_FUNDED',
-      resource: 'SellerWallet',
-      resourceId: wallet.id,
-      reason: 'Added funds',
-      changes: { amount },
-      ipAddress,
-      userAgent,
-    })
-
-    return walletRepository.getWalletBySellerId(sellerId)
-  },
+  // NOTE: `addFunds` (seller wallet top-up) was REMOVED before launch — it credited
+  // the withdrawable balance directly from a client-supplied amount with NO payment,
+  // a free-money exploit. Its only purpose was POD pre-funding, and POD is paused at
+  // launch. To re-introduce it for POD, see docs/PAYMENTS.md ("Seller wallet top-up
+  // (removed)"): it MUST initialize a Paystack transaction and credit the wallet
+  // exactly once from a signature-verified webhook keyed on the payment reference.
 
   async withdraw(
     sellerId: string,

@@ -50,13 +50,6 @@ export class WalletApiClient extends BaseApiClient {
     })
   }
 
-  async addFunds(amount: number) {
-    return this.request('/api/commerce/wallet/add-funds', {
-      method: 'POST',
-      body: { amount },
-    })
-  }
-
   // storeSlug scopes the withdrawal to a specific store's wallet (per-store
   // finance page). Omitted on the legacy profile path.
   async withdraw(amount: number, bankAccount: BankAccount, storeSlug?: string) {

@@ -24,7 +24,7 @@
 ## 2. Payments & Money 🔴
 
 - [ ] Paystack **LIVE** keys (secret + public); PayPal **live** credentials
-- [ ] `PLATFORM_COMMISSION_RATE` set to the correct production value
+- [ ] `PLATFORM_FEE_PERCENT` set to the correct production value (**3** = 3%, the single commission knob — charged at payout & POD settlement; taken via `server/utils/fees.ts` / `pod.service.settleFromCod`). `PAYSTACK_TRANSFER_FEE_KOBO` = flat per-payout fee. *(The old `PLATFORM_COMMISSION_RATE` was dead config and has been removed.)*
 - [ ] Full purchase tested with a **real** card (small amount) → order created, paid, seller credited
 - [ ] Payment idempotency verified (double-submit / webhook replay does not double-charge or double-credit)
 - [ ] Seller payout flow end-to-end: `SellerWallet` → `Payout` → bank (`BankAccount`), with commission deducted
