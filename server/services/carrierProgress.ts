@@ -11,6 +11,7 @@ import { walletService } from '~~/layers/commerce/server/services/wallet.service
 import { notificationQueue } from '~~/server/queues/notification.queue'
 import { emailQueue } from '~~/server/queues/email.queue'
 import { buildOrderStatusEmail } from '~~/server/utils/email/emailService'
+import { emitOrderCompleted } from '~~/layers/reputation/server/utils/emitOrderSignal'
 import type { TrackingStatus } from '~~/layers/shipping/server/utils/types'
 import { planCarrierTransition } from '~~/layers/shipping/server/utils/trackingTransition'
 
@@ -185,6 +186,11 @@ export async function applyCarrierStatus(
       where: { id: orderId },
       data: { status: 'DELIVERED', deliveredAt: new Date() },
     })
+
+    // Reputation ledger — a carrier-scan-confirmed delivery (the strongest
+    // commerce evidence: this one counts as a *verified* delivery).
+    emitOrderCompleted(orderId)
+
     const disputed = await hasOpenDispute(orderId)
     if (!disputed && order.paymentStatus === 'PAID') {
       await walletService

@@ -1,13 +1,16 @@
 ﻿// POST /api/commerce/wallet/add-funds
 import { UserError } from '~~/layers/profile/server/types/user.types'
-import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
+import {
+  requireAuth,
+  getAuthSellerProfile,
+} from '~~/server/layers/shared/middleware/requireAuth'
 import { walletService } from '../../../services/wallet.service'
 import { getClientIP } from '~~/server/layers/shared/utils/security'
 
 export default defineEventHandler(async (event) => {
   try {
-    const user = await requireAuth(event)
-    const sellerProfile = user.sellerProfile
+    await requireAuth(event)
+    const sellerProfile = await getAuthSellerProfile(event)
     if (!sellerProfile)
       throw new UserError(
         'SELLER_REQUIRED',
@@ -31,8 +34,16 @@ export default defineEventHandler(async (event) => {
   } catch (error: unknown) {
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
     if (error instanceof UserError)
-      throw createError({ statusCode: error.status, statusMessage: error.message })
-    logger.logError('[POST /api/commerce/wallet/add-funds]', error, { requestId: event.context?.requestId })
-    throw createError({ statusCode: 500, statusMessage: 'Internal server error' })
+      throw createError({
+        statusCode: error.status,
+        statusMessage: error.message,
+      })
+    logger.logError('[POST /api/commerce/wallet/add-funds]', error, {
+      requestId: event.context?.requestId,
+    })
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Internal server error',
+    })
   }
 })

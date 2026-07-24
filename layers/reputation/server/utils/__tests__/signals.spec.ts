@@ -18,18 +18,19 @@ describe('reputation signal builders', () => {
     expect(s.observedAt).toBe('2026-07-22T00:00:00.000Z')
   })
 
-  it('reviewSignal carries the rating, dedupes on the review id', () => {
+  it('reviewSignal carries the rating and dedupes on the product review id', () => {
     const s = reviewSignal({
       sellerId: 's',
-      reviewId: 'rev-9',
-      rating: 5,
-      orderId: 7,
+      reviewId: 'prod-rev-1',
+      rating: 4,
+      orderId: 203,
       observedAt: 'x',
     })
     expect(s.signalKey).toBe('commerce.review')
     expect(s.tier).toBe('GOLD')
-    expect(s.sourceRef).toBe('SellerReview:rev-9')
-    expect(s.value).toEqual({ rating: 5, orderId: 7 })
+    expect(s.sourceRef).toBe('Review:prod-rev-1')
+    expect(s.method).toBe('VERIFIED_PRODUCT_REVIEW')
+    expect(s.value).toEqual({ rating: 4, orderId: 203 })
   })
 
   it('reviewSignal tolerates a missing order', () => {

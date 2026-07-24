@@ -52,15 +52,22 @@ export async function composeCardTemplate(
   }
 
   const img = await loadImage(cardPng)
-  const pad = Math.round(width * 0.07)
-  const footer = Math.round(height * 0.05)
-  const availW = width - pad * 2
+
+  // The card is portrait. On a landscape template (Facebook 1200×630) fitting
+  // it to the full width shrank it to an unreadable thumbnail, so it takes a
+  // left column at near-full height and the brand line sits beside it.
+  const isLandscape = width > height
+  // Pad off the SHORT side — 7% of 1200 on a 630-tall canvas ate the card.
+  const pad = Math.round(Math.min(width, height) * 0.07)
+  const footer = isLandscape ? 0 : Math.round(height * 0.05)
+  const colW = isLandscape ? Math.round(width * 0.44) : width
+  const availW = colW - pad * 2
   const availH = height - pad * 2 - footer
   const scale = Math.min(availW / img.width, availH / img.height)
-  const cw = img.width * scale
-  const ch = img.height * scale
-  const x = (width - cw) / 2
-  const y = (height - ch - footer) / 2
+  const cw = Math.round(img.width * scale)
+  const ch = Math.round(img.height * scale)
+  const x = Math.round((colW - cw) / 2)
+  const y = Math.round((height - ch - footer) / 2)
 
   // Soft shadow under the card.
   ctx.save()
@@ -70,11 +77,25 @@ export async function composeCardTemplate(
   ctx.drawImage(img, x, y, cw, ch)
   ctx.restore()
 
-  // Footer line.
+  // Brand line — beneath the card on portrait, beside it on landscape.
+  const type = Math.round(Math.min(width, height) * 0.032)
   ctx.fillStyle = isPrint ? '#0f172a' : '#ffffff'
-  ctx.textAlign = 'center'
-  ctx.font = `600 ${Math.round(width * 0.026)}px system-ui, sans-serif`
-  ctx.fillText('Discover more on MarketX', width / 2, height - Math.round(pad * 0.9))
+  if (isLandscape) {
+    ctx.textAlign = 'left'
+    const tx = colW + pad
+    ctx.font = `700 ${Math.round(type * 1.25)}px system-ui, sans-serif`
+    ctx.fillText('Scan to verify this seller', tx, height / 2 - type * 0.4)
+    ctx.font = `500 ${type}px system-ui, sans-serif`
+    ctx.fillText('Discover more on MarketX', tx, height / 2 + type * 1.2)
+  } else {
+    ctx.textAlign = 'center'
+    ctx.font = `600 ${type}px system-ui, sans-serif`
+    ctx.fillText(
+      'Discover more on MarketX',
+      width / 2,
+      height - Math.round(pad * 0.9),
+    )
+  }
 
   return canvas.toDataURL('image/png')
 }

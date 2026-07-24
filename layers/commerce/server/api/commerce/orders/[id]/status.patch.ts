@@ -5,8 +5,7 @@ import { UserError } from '~~/layers/profile/server/types/user.types'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
 import { notificationQueue } from '~~/server/queues/notification.queue'
 import { emailQueue } from '~~/server/queues/email.queue'
-import { reputationQueue } from '~~/server/queues/reputation.queue'
-import { orderCompletedSignal } from '~~/layers/reputation/server/utils/signals'
+import { emitOrderCompleted } from '~~/layers/reputation/server/utils/emitOrderSignal'
 import { buildOrderStatusEmail } from '~~/server/utils/email/emailService'
 
 const schema = z.object({
@@ -146,19 +145,8 @@ export default defineEventHandler(async (event) => {
           .catch((e) => logger.logError('[wallet release]', e))
 
         // Reputation ledger: a clean, fee-paid sale settled → Gold commerce
-        // signal (framework §2.3). Fire-and-forget, idempotent on the order.
-        const sellerId = order.orderItem[0]?.variant?.product?.sellerId
-        if (sellerId) {
-          reputationQueue.enqueue(
-            orderCompletedSignal({
-              sellerId,
-              orderId: id,
-              delivered: order.deliveredAt != null,
-              place: order.shipState ?? order.county ?? null,
-              observedAt: new Date().toISOString(),
-            }),
-          )
-        }
+        // signal (framework §2.3). Self-guarding + idempotent on the order.
+        emitOrderCompleted(id)
       }
     }
 

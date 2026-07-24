@@ -2,7 +2,10 @@
 
 import { productService } from '~~/layers/commerce/server/services/product.service'
 import { UserError } from '~~/layers/profile/server/types/user.types'
-import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
+import {
+  requireAuth,
+  getAuthSellerProfile,
+} from '~~/server/layers/shared/middleware/requireAuth'
 import { getClientIP } from '~~/server/layers/shared/utils/security'
 
 export default defineEventHandler(async (event) => {
@@ -19,7 +22,7 @@ export default defineEventHandler(async (event) => {
       getHeader(event, 'x-forwarded-for') || getClientIP(event) || 'unknown'
     const userAgent = getHeader(event, 'user-agent') || 'unknown'
 
-    const sellerProfile = user.sellerProfile
+    const sellerProfile = await getAuthSellerProfile(event)
     if (!sellerProfile)
       throw new UserError(
         'SELLER_REQUIRED',
@@ -36,9 +39,17 @@ export default defineEventHandler(async (event) => {
     return { success: true, data: result }
   } catch (error: unknown) {
     if (error instanceof UserError)
-      throw createError({ statusCode: error.status, statusMessage: error.message })
+      throw createError({
+        statusCode: error.status,
+        statusMessage: error.message,
+      })
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
-    logger.logError('[DELETE /api/commerce/products/:id]', error, { requestId: event.context?.requestId })
-    throw createError({ statusCode: 500, statusMessage: 'Internal server error' })
+    logger.logError('[DELETE /api/commerce/products/:id]', error, {
+      requestId: event.context?.requestId,
+    })
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Internal server error',
+    })
   }
 })

@@ -82,7 +82,11 @@ export function orderCompletedSignal(p: {
   }
 }
 
-/** A verified review (gated on a completed order upstream). */
+/**
+ * A verified product review (`Review`), gated on a delivered order upstream.
+ * Product reviews are the platform's ONE review system — a seller's rating is
+ * the aggregate of reviews across the products they've sold.
+ */
 export function reviewSignal(p: {
   sellerId: string
   reviewId: string
@@ -95,8 +99,8 @@ export function reviewSignal(p: {
     sellerId: p.sellerId,
     value: { rating: p.rating, orderId: p.orderId ?? null },
     sourceType: 'PLATFORM_OBSERVED',
-    sourceRef: `SellerReview:${p.reviewId}`,
-    method: 'VERIFIED_REVIEW',
+    sourceRef: `Review:${p.reviewId}`,
+    method: 'VERIFIED_PRODUCT_REVIEW',
     observedAt: p.observedAt,
   }
 }

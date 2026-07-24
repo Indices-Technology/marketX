@@ -7,7 +7,7 @@ import {
 
 /**
  * Real per-seller trust facts, computed live from existing tables (Orders,
- * SellerReview, SupportTicket) — the honest, pre-engine version of the
+ * Review, SupportTicket) — the honest, pre-engine version of the
  * reputation framework's COMMERCE signals (§2.3). No seeded/placeholder data.
  *
  * This is intentionally query-per-seller and cached at the endpoint; the durable
@@ -58,8 +58,10 @@ export async function sellerTrustFacts(
         disputeOutcome: DisputeOutcome.REFUND_BUYER,
       },
     }),
-    prisma.sellerReview.aggregate({
-      where: { sellerId },
+    // A seller's rating is the aggregate of reviews across the products they
+    // sold — product reviews are the platform's one review system.
+    prisma.review.aggregate({
+      where: { product: { sellerId } },
       _avg: { rating: true },
       _count: true,
     }),

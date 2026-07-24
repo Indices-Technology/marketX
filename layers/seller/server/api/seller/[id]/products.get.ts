@@ -2,7 +2,10 @@
 
 import { productService } from '~~/layers/commerce/server/services/product.service'
 import { UserError } from '~~/layers/profile/server/types/user.types'
-import { optionalAuth } from '~~/server/layers/shared/middleware/requireAuth'
+import {
+  optionalAuth,
+  getAuthSellerProfile,
+} from '~~/server/layers/shared/middleware/requireAuth'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -13,7 +16,8 @@ export default defineEventHandler(async (event) => {
     const offset = Number(query.offset) || 0
 
     // Only the owning seller sees non-PUBLISHED products
-    const isOwner = currentUser?.sellerProfile?.store_slug === storeSlug
+    const ownStore = currentUser ? await getAuthSellerProfile(event) : null
+    const isOwner = ownStore?.store_slug === storeSlug
     const status = isOwner ? (query.status as string | undefined) : 'PUBLISHED'
 
     const search = (query.search as string | undefined)?.trim() || undefined

@@ -5,10 +5,7 @@
     class="w-full overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-950"
   >
     <!-- Header (hidden when the parent already renders a section header) -->
-    <div
-      v-if="!hideHeader"
-      class="flex items-center justify-between px-4 py-3"
-    >
+    <div v-if="!hideHeader" class="flex items-center justify-between px-4 py-3">
       <div class="flex items-center gap-2">
         <div
           class="flex h-7 w-7 items-center justify-center rounded-lg bg-brand/10"
@@ -20,13 +17,13 @@
           />
         </div>
         <span
-          class="font-display text-[13px] font-bold tracking-wide ink-strong"
+          class="ink-strong font-display text-[13px] font-bold tracking-wide"
           >{{ label || 'Shop Today' }}</span
         >
       </div>
       <NuxtLink
         to="/fresh-drops"
-        class="flex items-center gap-0.5 text-[12px] font-medium ink-faint transition hover:text-gray-700 dark:hover:text-neutral-300"
+        class="ink-faint flex items-center gap-0.5 text-[12px] font-medium transition hover:text-gray-700 dark:hover:text-neutral-300"
       >
         See all
         <Icon name="solar:arrow-right-linear" size="14" />
@@ -56,7 +53,7 @@
         <button
           v-for="product in products"
           :key="product.id"
-          class="group flex w-[130px] flex-none flex-col overflow-hidden rounded-xl border border-gray-200 bg-white transition hover:border-brand/30 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-brand/30"
+          class="group flex w-[112px] flex-none flex-col overflow-hidden rounded-xl border border-gray-200 bg-white transition hover:border-brand/30 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-brand/30"
           :class="
             product.isDeal || product.discount
               ? 'border-t-2 border-t-brand'
@@ -77,8 +74,8 @@
               "
               :alt="product.title"
               loading="lazy"
-              width="130"
-              height="130"
+              width="112"
+              height="112"
               class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
             <div v-else class="flex h-full w-full items-center justify-center">
@@ -103,20 +100,16 @@
 
           <!-- Info -->
           <div class="flex flex-1 flex-col p-2.5">
-            <p
-              class="line-clamp-2 text-[11px] leading-tight ink"
-            >
+            <p class="ink line-clamp-2 text-[11px] leading-tight">
               {{ product.title }}
             </p>
             <div class="mt-auto flex items-center gap-1.5 pt-1.5">
-              <span
-                class="font-display text-[13px] font-bold ink-strong"
-              >
+              <span class="ink-strong font-display text-[13px] font-bold">
                 {{ formatPrice(effectivePrice(product)) }}
               </span>
               <span
                 v-if="product.discount"
-                class="text-[10px] ink-faint line-through"
+                class="ink-faint text-[10px] line-through"
                 >{{ formatPrice(product.price) }}</span
               >
             </div>

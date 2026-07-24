@@ -6,6 +6,7 @@ import { walletService } from '~~/layers/commerce/server/services/wallet.service
 import { notificationQueue } from '~~/server/queues/notification.queue'
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
+import { emitOrderCompleted } from '~~/layers/reputation/server/utils/emitOrderSignal'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -70,6 +71,9 @@ export default defineEventHandler(async (event) => {
       .creditSellersOnPayment(id)
       .then(() => walletService.releaseFundsOnDelivery(id))
       .catch((e) => logger.logError('[confirm-cash wallet]', e))
+
+    // Reputation ledger — pay-on-delivery settled is a completed sale.
+    emitOrderCompleted(id)
 
     // Notify buyer
     notificationQueue.enqueue({

@@ -62,7 +62,8 @@ export class ReviewApiClient extends BaseApiClient {
     })
   }
 
-  // ── Seller reviews ────────────────────────────────────────────────────────
+  // ── Seller reviews (read-only rollup of the store's product reviews) ──────
+  // Reviews are written on the product, never on the store — one review system.
 
   async getSellerReviews(
     storeSlug: string,
@@ -73,24 +74,6 @@ export class ReviewApiClient extends BaseApiClient {
       `/api/seller/${storeSlug}/reviews?limit=${limit}&offset=${offset}`,
       { method: 'GET', skipAuth: true },
     )
-  }
-
-  async getSellerReviewEligibility(
-    storeSlug: string,
-  ): Promise<EligibilityResponse> {
-    return this.request(`/api/seller/${storeSlug}/reviews/eligibility`, {
-      method: 'GET',
-    })
-  }
-
-  async submitSellerReview(
-    storeSlug: string,
-    data: { rating: number; title?: string; body?: string },
-  ): Promise<ReviewSubmitResponse> {
-    return this.request(`/api/seller/${storeSlug}/reviews`, {
-      method: 'POST',
-      body: data,
-    })
   }
 }
 

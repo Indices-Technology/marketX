@@ -6,6 +6,7 @@ import { initialsAvatar } from '~~/shared/utils/avatar'
  * Transforms applied:
  *  - w_<width>        resize to target width (proportional)
  *  - c_fill           crop mode so images fill the requested dimensions
+ *  - g_<gravity>      which part of the image survives the crop (opt-in)
  *  - f_auto           serve WebP/AVIF automatically based on browser support
  *  - q_auto:good      Cloudinary picks quality; "good" is best for mobile bandwidth
  *
@@ -20,6 +21,7 @@ export function cloudinaryUrl(
     crop?: 'fill' | 'fit' | 'scale' | 'thumb' | 'pad' | 'limit'
     quality?: 'auto' | 'auto:good' | 'auto:eco' | 'auto:low' | number
     format?: 'auto' | 'webp' | 'avif'
+    gravity?: 'auto' | 'face' | 'faces' | 'center'
   } = {},
 ): string {
   if (!url) return ''
@@ -35,12 +37,14 @@ export function cloudinaryUrl(
     crop = 'fill',
     quality = 'auto:good',
     format = 'auto',
+    gravity,
   } = opts
 
   const parts: string[] = []
   if (width) parts.push(`w_${width}`)
   if (height) parts.push(`h_${height}`)
   if (width || height) parts.push(`c_${crop}`)
+  if (gravity) parts.push(`g_${gravity}`)
   parts.push(`f_${format}`)
   parts.push(`q_${quality}`)
 
@@ -71,6 +75,26 @@ export const imgFeed = (url: string | null | undefined) =>
 /** Preset: small avatar */
 export const imgAvatar = (url: string | null | undefined) =>
   cloudinaryUrl(url, { width: 96, height: 96, crop: 'fill' })
+
+/**
+ * Preset: a logo/avatar that gets rasterised into a downloadable or printed
+ * image. 96 px is fine on screen but goes soft at the 3–4× pixel ratio the card
+ * capture uses, so ask for the real pixels once.
+ */
+export const imgAvatarHiDpi = (url: string | null | undefined) =>
+  cloudinaryUrl(url, { width: 288, height: 288, crop: 'fill', gravity: 'auto' })
+
+/**
+ * Preset: a banner cropped to the exact box it is rendered in. Pass the box's
+ * aspect ratio — asking for one ratio and then letting `object-cover` crop to a
+ * different one crops the image twice, which is what makes a banner look zoomed
+ * in and cut off. `g_auto` keeps the salient part instead of the dead centre.
+ */
+export const imgBanner = (
+  url: string | null | undefined,
+  width: number,
+  height: number,
+) => cloudinaryUrl(url, { width, height, crop: 'fill', gravity: 'auto' })
 
 /**
  * Canonical avatar source: an optimised real avatar, or a LOCAL initials avatar
@@ -242,9 +266,18 @@ export function productThumb(
   },
   size = 400,
 ): string {
-  if (product?.bannerImageUrl) return cloudinaryUrl(product.bannerImageUrl, { width: size, height: size, crop: 'fill' })
+  if (product?.bannerImageUrl)
+    return cloudinaryUrl(product.bannerImageUrl, {
+      width: size,
+      height: size,
+      crop: 'fill',
+    })
   const m = product?.media?.[0]
   if (!m?.url) return ''
-  const isVideo = (m.type ?? '').toUpperCase() === 'VIDEO' || /\.(mp4|webm|mov|m4v|ogg)(\?|$)/i.test(m.url)
-  return isVideo ? videoThumb(m.url, { width: size, height: size }) : cloudinaryUrl(m.url, { width: size, height: size, crop: 'fill' })
+  const isVideo =
+    (m.type ?? '').toUpperCase() === 'VIDEO' ||
+    /\.(mp4|webm|mov|m4v|ogg)(\?|$)/i.test(m.url)
+  return isVideo
+    ? videoThumb(m.url, { width: size, height: size })
+    : cloudinaryUrl(m.url, { width: size, height: size, crop: 'fill' })
 }

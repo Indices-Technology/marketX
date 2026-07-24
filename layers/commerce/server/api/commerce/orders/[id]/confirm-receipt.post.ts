@@ -5,6 +5,7 @@ import { walletService } from '~~/layers/commerce/server/services/wallet.service
 import { notificationService } from '~~/layers/profile/server/services/notification.service'
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
+import { emitOrderCompleted } from '~~/layers/reputation/server/utils/emitOrderSignal'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -59,6 +60,9 @@ export default defineEventHandler(async (event) => {
         .releaseFundsOnDelivery(id)
         .catch((e) => logger.logError('[confirm-receipt wallet release]', e))
     }
+
+    // Reputation ledger — buyer-confirmed delivery is a completed sale.
+    emitOrderCompleted(id)
 
     // Notify each unique seller (non-blocking)
     const seen = new Set<string>()

@@ -33,6 +33,50 @@
       </div>
     </Transition>
 
+    <!-- Feed filter (For You · Following · Trending · Deals) + card/list toggle.
+         Filter drives which feed loads; toggle switches post layout. -->
+    <div class="mb-3 flex items-center justify-between gap-3">
+      <BaseTabs
+        :model-value="activeTab"
+        :tabs="feedTabs"
+        variant="underline"
+        aria-label="Feed filter"
+        class="min-w-0 flex-1"
+        @update:model-value="(v) => setTab(v as FeedTab)"
+      />
+
+      <div
+        class="flex shrink-0 items-center gap-0.5 rounded-lg border border-gray-200 bg-white p-0.5 dark:border-neutral-700 dark:bg-neutral-900"
+      >
+        <button
+          title="Card view"
+          aria-label="Card view"
+          class="rounded-md p-1.5 transition-colors"
+          :class="
+            viewMode === 'card'
+              ? 'bg-gray-100 text-gray-900 dark:bg-neutral-700 dark:text-white'
+              : 'text-gray-400 hover:text-gray-700 dark:text-neutral-500 dark:hover:text-neutral-300'
+          "
+          @click="viewMode = 'card'"
+        >
+          <Icon name="solar:posts-carousel-vertical-linear" size="16" />
+        </button>
+        <button
+          title="List view"
+          aria-label="List view"
+          class="rounded-md p-1.5 transition-colors"
+          :class="
+            viewMode === 'list'
+              ? 'bg-gray-100 text-gray-900 dark:bg-neutral-700 dark:text-white'
+              : 'text-gray-400 hover:text-gray-700 dark:text-neutral-500 dark:hover:text-neutral-300'
+          "
+          @click="viewMode = 'list'"
+        >
+          <Icon name="solar:list-linear" size="16" />
+        </button>
+      </div>
+    </div>
+
     <!-- Category tabs — inline on mobile, desktop uses SideNav -->
     <CategoryListMobile class="-mx-2 mb-3 sm:-mx-4" />
 
@@ -448,6 +492,7 @@ import ShopProductCard from '~~/layers/commerce/app/components/ShopProductCard.v
 import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 import BaseSkeleton from '~~/layers/ui/app/components/BaseSkeleton.vue'
 import BaseEmptyState from '~~/layers/ui/app/components/BaseEmptyState.vue'
+import BaseTabs from '~~/layers/ui/app/components/BaseTabs.vue'
 import FeedProductShelf from '~~/layers/feed/app/components/FeedProductShelf.vue'
 import PostCard from '~~/layers/social/app/components/PostCard.vue'
 import PostListCard from '~~/layers/social/app/components/PostListCard.vue'
@@ -455,7 +500,10 @@ import TrustSpotlightRail from '~~/layers/reputation/app/components/TrustSpotlig
 
 import { getCachedLocation } from '~~/layers/map/app/composables/useMapSellers'
 import type { IMapSeller } from '~~/layers/map/app/types/map.types'
-import { useFeedTab } from '~~/layers/feed/app/composables/useFeedTab'
+import {
+  useFeedTab,
+  type FeedTab,
+} from '~~/layers/feed/app/composables/useFeedTab'
 import { useSettings } from '~~/layers/profile/app/composables/useSettings'
 import { useFeedApi } from '~~/layers/feed/app/services/feed.api'
 import { useMapApi } from '~~/layers/map/app/services/map.api'
@@ -479,7 +527,12 @@ const profileStore = useProfileStore()
 const { settings } = useSettings()
 const { checkFollowingBatch } = useFollow()
 const { stories, fetchStories } = useStory()
-const { activeTab, setTab } = useFeedTab()
+const { activeTab, setTab, FEED_TABS } = useFeedTab()
+const feedTabs = FEED_TABS.map((t) => ({
+  label: t.label,
+  value: t.id,
+  icon: t.icon,
+}))
 const { isEnrolled, fetchAffiliateStatus: fetchAffiliate } = useAffiliate()
 
 // States

@@ -327,7 +327,7 @@ const layoutMode = computed(() => {
 })
 
 const contentWidthClass = computed(() => {
-  if (layoutMode.value === 'feed') return 'mx-auto max-w-[560px]'
+  if (layoutMode.value === 'feed') return 'mx-auto max-w-[640px]'
   if (layoutMode.value === 'market') return 'mx-auto max-w-[980px]'
   return ''
 })

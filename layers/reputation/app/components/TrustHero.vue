@@ -9,7 +9,12 @@
 -->
 <template>
   <section class="space-y-8">
-    <div class="grid items-center gap-8 lg:grid-cols-[1fr_1.12fr] lg:gap-12">
+    <!-- Single column once we know there's no seller with enough real evidence:
+         we show the vision + promise only, never an invented card. -->
+    <div
+      class="grid items-center gap-8 lg:gap-12"
+      :class="showCardSlot ? 'lg:grid-cols-[1fr_1.12fr]' : 'lg:grid-cols-1'"
+    >
       <!-- ── vision ─────────────────────────────────────────────────────── -->
       <div class="space-y-5">
         <h1
@@ -127,10 +132,13 @@
             >
           </div>
 
-          <div class="mt-5 flex gap-4">
+          <!-- QR + earned stats. The QR steps down on narrow phones so the
+               stats beside it keep a readable column instead of being squeezed
+               into one word per line. -->
+          <div class="mt-5 flex flex-wrap gap-4">
             <div class="shrink-0 text-center">
               <div
-                class="qr-tile relative h-28 w-28 cursor-pointer rounded-xl border border-gray-200 bg-white p-1.5 dark:border-neutral-700"
+                class="qr-tile relative h-24 w-24 cursor-pointer rounded-xl border border-gray-200 bg-white p-1.5 sm:h-28 sm:w-28 dark:border-neutral-700"
               >
                 <img
                   v-if="qr"
@@ -152,7 +160,7 @@
                 Scan to verify
               </p>
             </div>
-            <div class="flex min-w-0 flex-col justify-center gap-2">
+            <div class="flex min-w-[8rem] flex-1 flex-col justify-center gap-2">
               <span
                 v-for="part in statsParts"
                 :key="part"
@@ -198,9 +206,10 @@
         </div>
       </div>
 
-      <!-- loading placeholder for the hero card -->
+      <!-- Loading only. Once settled with no qualifying seller we render
+           nothing here (see showCardSlot) rather than pulsing forever. -->
       <div
-        v-else
+        v-else-if="!hasLoaded"
         class="h-72 animate-pulse rounded-2xl bg-gray-100 dark:bg-neutral-800"
       />
     </div>
@@ -311,10 +320,21 @@ const FLOW = [
 ]
 
 const { sellers, load } = useTrustSpotlight()
-onMounted(load)
+
+// `load()` swallows its own errors, so this settles on success AND failure.
+// Until it settles we show a skeleton; after it settles with no qualifying
+// seller we drop the card entirely instead of pulsing forever.
+const hasLoaded = ref(false)
+onMounted(async () => {
+  await load()
+  hasLoaded.value = true
+})
 
 const config = useRuntimeConfig()
 const featured = computed(() => sellers.value[0] ?? null)
+
+// Reserve the card column while loading, or when we have a real seller.
+const showCardSlot = computed(() => !!featured.value || !hasLoaded.value)
 
 // The buyer demo: open the featured seller's full trust profile in a modal.
 // If the spotlight hasn't loaded yet, fall back to the sellers directory so

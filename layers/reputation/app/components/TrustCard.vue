@@ -4,8 +4,9 @@
   grounded by a real recent moment and small proof chips — not a stat grid.
   Colour system: BLUE = verified identity (matches the rest of the app); MINT =
   delivery success. Type snaps to the scale (font-display for the name + claim,
-  Manrope for detail). Identity is real; the story is placeholder until the
-  engine lands (see useTrustSpotlight).
+  Manrope for detail). Identity AND story are real — headline/loyalty/recent/
+  stats are computed from actual orders, reviews and disputes in
+  /api/reputation/spotlight; sellers under MIN_EVIDENCE are excluded entirely.
 -->
 <template>
   <NuxtLink
