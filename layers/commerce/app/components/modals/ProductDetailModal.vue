@@ -737,7 +737,9 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import VideoPlayer from '~~/layers/core/app/components/VideoPlayer.vue'
-import DOMPurify from 'dompurify'
+// isomorphic so a sanitized render is produced on the server too, matching the
+// product page and avoiding a raw-HTML window during any SSR/hydration.
+import DOMPurify from 'isomorphic-dompurify'
 import type {
   IProduct,
   IProductVariant,

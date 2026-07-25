@@ -101,6 +101,37 @@ sandbox**:
 | 8 | Fail a payment (sandbox decline) → `/verify` | variant stock incremented back, order `CANCELLED`/`FAILED`; POD → `PodDelivery.state=CANCELLED` |
 | 9 | `quantity:2.5`; open POD at checkout | 400; POD 2-step visual renders with correct ₦ amounts |
 
+## 6b. Seller wallet top-up (removed before launch)
+
+`POST /api/commerce/wallet/add-funds` and its UI (`AddFundsModal.vue`) were
+**removed before launch**, along with `walletService.addFunds`, the client
+`WalletApiClient.addFunds`, and the `useWallet().addFunds` composable method.
+
+**Why:** the handler credited the seller's *withdrawable* `SellerWallet.balance`
+directly from a client-supplied `amount` with **no payment and no gateway
+verification**. Any authenticated seller could `POST { amount }`, watch their
+balance rise, and withdraw it to their bank — a direct free-money exploit. Its
+only real purpose was **POD pre-funding** (letting the platform debit its POD
+commission from a seller-held balance, since with cash-on-delivery the platform
+never touches the buyer's money). **POD is paused at launch**
+(`NUXT_PUBLIC_POD_ENABLED` defaults to `false`), so nothing depended on it.
+
+**Remedy — when we turn POD on**, reintroduce top-up as a *real* Paystack charge,
+never a direct credit. Required shape:
+
+1. `add-funds` **initializes** a Paystack transaction for `amount` (reference like
+   `topup:<sellerId>:<uuid>`) and returns the authorization URL — it must **not**
+   touch the wallet.
+2. The Paystack **webhook** (same signature-verified handler pattern as
+   `payments/webhook.post.ts`) recognises `topup:*` references, re-checks the
+   charged amount against the reference, and credits `SellerWallet.balance`
+   **exactly once**, keyed on the payment reference for idempotency (mirror
+   `paymentConfirmationService.confirmPaidCardOrder`'s atomic conditional flip).
+3. Only then create the `CREDIT` transaction + audit log.
+
+Until that exists, there is **no** server path that increments a withdrawable
+balance without a verified inbound payment — keep it that way.
+
 ## 7. Known gaps / next
 
 - **Init idempotency key** (bug #5 remainder) — needs a migration.

@@ -54,20 +54,26 @@ export async function runReputationBackfill(): Promise<BackfillCounts> {
     counts.orders++
   }
 
-  // ── Verified reviews → commerce.review ─────────────────────────────────────
-  const reviews = await prisma.sellerReview.findMany({
+  // ── Verified product reviews → commerce.review ─────────────────────────────
+  // The platform's ONE review system: a seller's rating is the aggregate of
+  // reviews across the products they've sold. Purchase-gated, so reviews can't
+  // be farmed into reputation.
+  const productReviews = await prisma.review.findMany({
+    where: { OR: [{ verified: true }, { orderId: { not: null } }] },
     select: {
       id: true,
-      sellerId: true,
       rating: true,
       orderId: true,
       created_at: true,
+      product: { select: { sellerId: true } },
     },
   })
-  for (const r of reviews) {
+  for (const r of productReviews) {
+    const sellerId = r.product?.sellerId
+    if (!sellerId) continue
     reputationQueue.enqueue(
       reviewSignal({
-        sellerId: r.sellerId,
+        sellerId,
         reviewId: r.id,
         rating: r.rating,
         orderId: r.orderId,

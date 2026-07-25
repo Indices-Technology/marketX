@@ -4,17 +4,15 @@
     class="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-xl shadow-gray-200/60 dark:border-neutral-800 dark:bg-neutral-900 dark:shadow-black/40"
   >
     <!-- Cover — kept docile (muted + faded into the card) so the logo and text
-         lead, not the banner. -->
-    <div class="relative h-24 w-full overflow-hidden">
+         lead, not the banner. The box holds a FIXED 4:1 ratio at every card
+         width and Cloudinary is asked for that same ratio, so the banner is
+         cropped once (by Cloudinary, gravity-aware) instead of twice. A fixed
+         `h-24` meant the box ratio drifted with the card width and object-cover
+         re-cropped on top of Cloudinary's crop — the "zoomed in, cut off" look. -->
+    <div class="relative aspect-[4/1] w-full overflow-hidden">
       <img
         v-if="seller.store_banner"
-        :src="
-          cloudinaryUrl(seller.store_banner, {
-            width: 880,
-            height: 224,
-            crop: 'fill',
-          })
-        "
+        :src="imgBanner(seller.store_banner, 1280, 320)"
         :alt="`${seller.store_name} cover`"
         crossorigin="anonymous"
         class="h-full w-full object-cover"
@@ -23,10 +21,11 @@
         v-else
         class="h-full w-full bg-gradient-to-br from-brand/15 to-brand/5 dark:from-brand/20 dark:to-brand/5"
       />
-      <!-- Mute the image and fade its lower edge to the card surface. -->
+      <!-- Mute the image and fade its lower edge to the card surface. Sized as a
+           fraction of the banner so the fade doesn't swallow it on small cards. -->
       <div class="absolute inset-0 bg-white/25 dark:bg-black/30" />
       <div
-        class="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-white via-white/70 to-transparent dark:from-neutral-900 dark:via-neutral-900/70"
+        class="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-white via-white/70 to-transparent dark:from-neutral-900 dark:via-neutral-900/70"
       />
     </div>
 
@@ -38,9 +37,11 @@
         <div
           class="h-[72px] w-[72px] shrink-0 overflow-hidden rounded-2xl border-4 border-white bg-white shadow-md dark:border-neutral-900 dark:bg-neutral-900"
         >
+          <!-- hi-dpi: this card is captured at 3–4× for download/print, where a
+               96 px logo turns to mush. -->
           <img
             v-if="seller.store_logo"
-            :src="imgAvatar(seller.store_logo)"
+            :src="imgAvatarHiDpi(seller.store_logo)"
             :alt="seller.store_name"
             crossorigin="anonymous"
             class="h-full w-full object-cover"
@@ -52,10 +53,13 @@
             <Icon name="solar:shop-2-bold" size="30" class="text-white" />
           </div>
         </div>
+        <!-- The name and location WRAP rather than truncate: this card gets
+             printed and posted, so a clipped store name or address is lost
+             information, not a tidy ellipsis. -->
         <div class="min-w-0 flex-1 pb-1">
-          <div class="flex items-center gap-1.5">
+          <div class="flex flex-wrap items-center gap-x-1.5 gap-y-1">
             <h2
-              class="min-w-0 truncate font-display text-lg font-bold text-gray-900 dark:text-white"
+              class="min-w-0 break-words font-display text-lg font-bold leading-tight text-gray-900 dark:text-white"
             >
               {{ seller.store_name }}
             </h2>
@@ -74,10 +78,14 @@
           </div>
           <p
             v-if="seller.store_location"
-            class="flex items-center gap-1 truncate text-[12px] text-gray-500 dark:text-neutral-400"
+            class="mt-0.5 flex items-start gap-1 text-[12px] leading-snug text-gray-500 dark:text-neutral-400"
           >
-            <Icon name="solar:map-point-linear" size="12" />
-            {{ seller.store_location }}
+            <Icon
+              name="solar:map-point-linear"
+              size="12"
+              class="mt-0.5 shrink-0"
+            />
+            <span class="min-w-0 break-words">{{ seller.store_location }}</span>
           </p>
         </div>
       </div>
@@ -113,7 +121,7 @@
       <!-- Description -->
       <p
         v-if="cfg.showDescription && seller.store_description"
-        class="mt-3 line-clamp-2 text-[13px] leading-relaxed text-gray-600 dark:text-neutral-400"
+        class="mt-3 line-clamp-3 text-[13px] leading-relaxed text-gray-600 dark:text-neutral-400"
       >
         {{ seller.store_description }}
       </p>
@@ -248,7 +256,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { imgAvatar, cloudinaryUrl } from '~~/layers/core/app/utils/cloudinary'
+import { imgAvatarHiDpi, imgBanner } from '~~/layers/core/app/utils/cloudinary'
 import { resolveCardSettings } from '~~/shared/utils/cardSettings'
 
 // Exposed so parents can snapshot the card to an image (business-card download).

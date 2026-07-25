@@ -58,11 +58,11 @@ export const podService = {
 
   /**
    * Seller settlement from the product cash the courier collected + remitted.
-   * PLATFORM_FEE_PERCENT (percent, default 5).
+   * PLATFORM_FEE_PERCENT (percent, default 3 — the single platform-commission knob).
    */
   settleFromCod(grossMinor: number): SettlementSplit {
     const platformFeeMinor = Math.round(
-      (grossMinor * pct('PLATFORM_FEE_PERCENT', 5)) / 100,
+      (grossMinor * pct('PLATFORM_FEE_PERCENT', 3)) / 100,
     )
     return {
       grossMinor,

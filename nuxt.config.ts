@@ -285,6 +285,11 @@ export default defineNuxtConfig({
       '*/15 * * * *': ['releaseExpiredOrders'],
       // Pull-only carrier tracking (GIG has no webhook): advance shipped orders.
       '*/30 * * * *': ['pollCarrierTracking'],
+      // Reputation reconciliation. Live emission is best-effort (fire-and-forget
+      // from each completion path); this replay guarantees eventual correctness
+      // so a missed signal can never hold a seller below min-evidence. Idempotent
+      // on (sourceRef, signalKey), so re-running is free.
+      '*/20 * * * *': ['reputationBackfill'],
     },
     routeRules: {
       '/**': {
@@ -371,7 +376,6 @@ export default defineNuxtConfig({
     paystackSecretKey: process.env.PAYSTACK_SECRET_KEY,
     upstashRedisUrl: process.env.UPSTASH_REDIS_REST_URL,
     upstashRedisToken: process.env.UPSTASH_REDIS_REST_TOKEN,
-    platformCommissionRate: process.env.PLATFORM_COMMISSION_RATE,
     resendApiKey: process.env.RESEND_API_KEY,
     shippoApiKey: process.env.SHIPPO_API_KEY,
     shippoWebhookSecret: process.env.SHIPPO_WEBHOOK_SECRET,
@@ -406,9 +410,11 @@ export default defineNuxtConfig({
       // Pay on Delivery — off by default (paused); set NUXT_PUBLIC_POD_ENABLED=true to re-enable.
       podEnabled: process.env.NUXT_PUBLIC_POD_ENABLED === 'true',
       // Trust homepage (hero Trust Card + spotlight rail). The reputation engine
-      // isn't live yet, so its numbers are seeded placeholders — NEVER show them
-      // to real production visitors. On in dev automatically (demos); in prod only
-      // when NUXT_PUBLIC_TRUST_PREVIEW=true (e.g. a gated staging/demo build).
+      // is live and every figure is computed from real rows (orders / reviews /
+      // dispute tickets — see server/utils/trustFacts.ts); nothing is seeded.
+      // Sellers below MIN_EVIDENCE never appear, so an empty rail is a true
+      // state. Still flag-gated so the surface is switched on deliberately:
+      // on in dev automatically, in prod when NUXT_PUBLIC_TRUST_PREVIEW=true.
       trustPreview: process.env.NUXT_PUBLIC_TRUST_PREVIEW === 'true',
       // Cloudinary
       CloudinaryApiKey: process.env.CLOUDINARY_API_KEY,

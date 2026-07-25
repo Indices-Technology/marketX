@@ -91,7 +91,7 @@ seller `{id}` slug-vs-UUID convention so the storefront vs management screens do
 | Shipping quotes | `/shipping/rates`, `/shipping/quote`, `/shipping/calculate`, `/shipping/zones` | ✅ |
 | Buyer / seller wallet views | `/commerce/buyer-wallet`, `/commerce/wallet`, `…/store/{storeSlug}` | ✅ |
 | Transactions | `/commerce/wallet/transactions`, `/commerce/buyer-wallet/transactions` | ✅ |
-| Withdrawals / payouts | `/commerce/wallet/withdraw`, `…/payout-preview`, `…/add-funds` | ✅ |
+| Withdrawals / payouts | `/commerce/wallet/withdraw`, `…/payout-preview` | ✅ |
 | Bank accounts | `/seller/bank-accounts` (+ set-default, delete) | ✅ |
 | Affiliate (enroll/referrals/commissions/promote) | `/commerce/affiliate` (+ enroll, referrals, promoters, seller-products, available-products) | ✅ |
 

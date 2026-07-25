@@ -150,7 +150,15 @@ export const orderService = {
 
       let itemAffiliateCut = 0
       if (affiliateUserId && variant.product.affiliateCommission) {
-        itemAffiliateCut = Math.round(variant.product.affiliateCommission * item.quantity * 100)
+        // Clamp to the line total the buyer actually paid. affiliateCommission is
+        // seller-set and uncapped (schema allows any >= 0), so without this a
+        // commission above the unit price would credit the affiliate MORE than was
+        // collected — the seller is skipped (net <= 0) but the affiliate is still
+        // paid, a direct platform loss and a seller+affiliate collusion vector.
+        itemAffiliateCut = Math.min(
+          Math.round(variant.product.affiliateCommission * item.quantity * 100),
+          lineTotalKobo,
+        )
         totalAffiliateCut += itemAffiliateCut
       }
 

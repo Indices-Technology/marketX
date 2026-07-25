@@ -968,7 +968,10 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
-import DOMPurify from 'dompurify'
+// isomorphic-dompurify runs on both server and client, so the SSR-rendered
+// description is sanitized too — a raw <img onerror> in a seller description
+// executes on parse, before client hydration, so SSR must not ship it raw.
+import DOMPurify from 'isomorphic-dompurify'
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 import VideoPlayer from '~~/layers/core/app/components/VideoPlayer.vue'
@@ -1240,10 +1243,11 @@ const productTags = computed(() =>
 )
 
 // ── Description ──────────────────────────────────────────────────────────────
-// Raw on SSR (no script execution risk in static HTML), sanitized on client.
+// Sanitized on both SSR and client (isomorphic-dompurify). Rendering raw on SSR
+// was a stored-XSS hole: inline handlers (<img onerror>) execute on browser parse
+// of the server HTML, before client hydration could sanitize.
 const safeDescription = computed(() => {
   if (!product.value?.description) return ''
-  if (!import.meta.client) return product.value.description
   return DOMPurify.sanitize(product.value.description)
 })
 

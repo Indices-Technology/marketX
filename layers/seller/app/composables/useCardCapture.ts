@@ -7,6 +7,39 @@ import {
 } from '~~/layers/core/app/utils/cardTemplate'
 
 /**
+ * Every export is rendered at this width, whatever the device. The live card is
+ * fluid (≈330 px on a small phone, ≈420 px in the modal), and snapshotting it
+ * as-is meant the PNG's size, aspect ratio and line breaks all changed with the
+ * viewport — then the template scaled that varying image up or down to fit,
+ * which is what made the same card look zoomed on one phone and shrunken on
+ * another.
+ */
+const CAPTURE_WIDTH = 420
+
+/** Templates pad by 7% of their short side; size the raster to that box. */
+const pixelRatioFor = (tpl?: ShareTemplate) => {
+  if (!tpl) return 3
+  const availW =
+    tpl.width - Math.round(Math.min(tpl.width, tpl.height) * 0.07) * 2
+  return Math.min(4, Math.max(2, Math.ceil(availW / CAPTURE_WIDTH)))
+}
+
+/** Resolve once every <img> in the tree has settled (or given up). */
+const imagesSettled = (root: HTMLElement) =>
+  Promise.all(
+    Array.from(root.querySelectorAll('img')).map(
+      (img) =>
+        new Promise<void>((resolve) => {
+          if (img.complete && img.naturalWidth > 0) return resolve()
+          const done = () => resolve()
+          img.addEventListener('load', done, { once: true })
+          img.addEventListener('error', done, { once: true })
+          setTimeout(done, 3000) // never hang the download on a slow asset
+        }),
+    ),
+  )
+
+/**
  * Capture the rendered MarketX Card (logo + contact + QR) to a PNG. Cloudinary
  * can't generate a QR, so we snapshot the real card. `captureTemplate` frames
  * that snapshot on a branded canvas for a share size (story / post / print).
@@ -14,15 +47,37 @@ import {
 export function useCardCapture() {
   const capturing = ref(false)
 
-  // Interactive-only bits (copy icons) are marked .capture-hide and excluded.
-  const cardToPng = (el: HTMLElement) =>
-    toPng(el, {
-      pixelRatio: 3,
-      cacheBust: true,
-      skipFonts: true,
-      filter: (node) =>
-        !(node instanceof Element && node.classList.contains('capture-hide')),
-    })
+  /**
+   * Snapshot an offscreen clone laid out at CAPTURE_WIDTH instead of the live
+   * node, so the output is identical on every screen and the card on screen
+   * never flickers mid-capture.
+   */
+  const cardToPng = async (el: HTMLElement, pixelRatio = 3) => {
+    const holder = document.createElement('div')
+    holder.setAttribute('aria-hidden', 'true')
+    holder.style.cssText = `position:fixed;top:0;left:-10000px;width:${CAPTURE_WIDTH}px;pointer-events:none;z-index:-1;`
+
+    const clone = el.cloneNode(true) as HTMLElement
+    clone.style.width = '100%'
+    clone.style.maxWidth = 'none'
+    holder.appendChild(clone)
+    document.body.appendChild(holder)
+
+    try {
+      await imagesSettled(clone)
+      await new Promise(requestAnimationFrame) // let the relayout settle
+      // Interactive-only bits (copy icons) are marked .capture-hide and excluded.
+      return await toPng(clone, {
+        pixelRatio,
+        cacheBust: true,
+        skipFonts: true,
+        filter: (node) =>
+          !(node instanceof Element && node.classList.contains('capture-hide')),
+      })
+    } finally {
+      holder.remove()
+    }
+  }
 
   const save = (dataUrl: string, filename: string) => {
     const a = document.createElement('a')
@@ -68,7 +123,7 @@ export function useCardCapture() {
     if (!el) return
     capturing.value = true
     try {
-      const card = await cardToPng(el)
+      const card = await cardToPng(el, pixelRatioFor(tpl))
       const out = await composeCardTemplate(card, tpl)
       save(out, `${slug || 'store'}-${tpl.id}.png`)
       notify({ type: 'success', text: `${tpl.label} downloaded` })
@@ -98,7 +153,7 @@ export function useCardCapture() {
     if (!el) return
     capturing.value = true
     try {
-      const card = await cardToPng(el)
+      const card = await cardToPng(el, pixelRatioFor(opts.tpl))
       const png = opts.tpl ? await composeCardTemplate(card, opts.tpl) : card
       const file = dataUrlToFile(
         png,
@@ -110,12 +165,19 @@ export function useCardCapture() {
         navigator.canShare({ files: [file] })
 
       if (canShareFiles) {
-        await navigator.share({ files: [file], text: opts.text, title: opts.title })
+        await navigator.share({
+          files: [file],
+          text: opts.text,
+          title: opts.title,
+        })
       } else {
         save(png, file.name)
         if (opts.fallbackHref)
           window.open(opts.fallbackHref, '_blank', 'noopener')
-        notify({ type: 'success', text: 'Image saved — attach it to your post' })
+        notify({
+          type: 'success',
+          text: 'Image saved — attach it to your post',
+        })
       }
     } catch (e) {
       // AbortError = user dismissed the native sheet; that isn't a failure.

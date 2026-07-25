@@ -325,7 +325,6 @@ All feed endpoints are read-only and return `{ items[], meta }` unless noted.
 | GET  | `/commerce/wallet/transactions` | Transaction history |
 | GET  | `/commerce/wallet/fee-config` | Platform fee configuration |
 | GET  | `/commerce/wallet/payout-preview` | Preview payout amount after fees |
-| POST | `/commerce/wallet/add-funds` | Top up wallet |
 | POST | `/commerce/wallet/withdraw` | Request a withdrawal / payout |
 
 ---

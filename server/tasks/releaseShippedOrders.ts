@@ -9,6 +9,7 @@
 import { notificationService } from '~~/layers/profile/server/services/notification.service'
 import { prisma } from '../utils/db'
 import { walletService } from '~~/layers/commerce/server/services/wallet.service'
+import { emitOrderCompleted } from '~~/layers/reputation/server/utils/emitOrderSignal'
 
 const AUTO_RELEASE_DAYS = 7
 
@@ -64,6 +65,9 @@ export default defineTask({
 
         // Release funds
         await walletService.releaseFundsOnDelivery(order.id)
+
+        // Reputation ledger — auto-released delivery is a completed sale.
+        emitOrderCompleted(order.id)
 
         // Notify buyer
         notificationService

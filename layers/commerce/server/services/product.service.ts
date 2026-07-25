@@ -5,8 +5,10 @@ import { notificationQueue } from '~~/server/queues/notification.queue'
 import { emailQueue } from '~~/server/queues/email.queue'
 import { buildReviewReceivedEmail } from '~~/server/utils/email/emailService'
 import { auditService } from '~~/server/layers/shared/audit/audit.service'
+import { emitProductReview } from '~~/layers/reputation/server/utils/emitReviewSignal'
 import { productRepository } from '../repositories/product.repository'
 import { prisma } from '~~/server/utils/db'
+import DOMPurify from 'isomorphic-dompurify'
 import { remember, bust } from '~~/server/utils/cache'
 import { entityEmbedder } from '~~/layers/ai/server/services/entity-embedder.service'
 import {
@@ -60,6 +62,20 @@ function productListCacheKey(
   return `products:list:${parts.join('&')}`
 }
 
+/**
+ * Sanitize seller-authored description HTML at write time. Defense-in-depth: the
+ * render path also sanitizes, but cleaning on the way in means the stored value
+ * is never a live XSS payload (protects any consumer that renders it raw).
+ */
+function sanitizeDescription<T extends { description?: string | null }>(
+  data: T,
+): T {
+  if (typeof data.description === 'string' && data.description) {
+    data.description = DOMPurify.sanitize(data.description)
+  }
+  return data
+}
+
 async function generateUniqueSlug(title: string): Promise<string> {
   const base = title
     .toLowerCase()
@@ -85,7 +101,7 @@ export const productService = {
     userAgent: string,
     authorId?: string,
   ) {
-    const validated = createProductSchema.parse(data)
+    const validated = sanitizeDescription(createProductSchema.parse(data))
     const slug = await generateUniqueSlug(validated.title)
     const product = await productRepository.createProduct(
       sellerId,
@@ -247,7 +263,7 @@ export const productService = {
         403,
       )
 
-    const validated = updateProductSchema.parse(data)
+    const validated = sanitizeDescription(updateProductSchema.parse(data))
 
     // Snapshot the current status/seller so we can detect a draft → published
     // transition and notify followers once (the create path only fires when a
@@ -494,6 +510,31 @@ export const productService = {
       agg._avg.rating ?? 0,
       agg._count,
     )
+
+    // Roll the same reviews up to the SELLER. The store page reads these
+    // denormalized counters, and product reviews are the review flow actually
+    // in use — without this they stay at 0 no matter how many reviews land.
+    const prod = await prisma.products.findUnique({
+      where: { id: productId },
+      select: { sellerId: true },
+    })
+    if (prod?.sellerId) {
+      const sellerAgg = await prisma.review.aggregate({
+        where: { product: { sellerId: prod.sellerId } },
+        _avg: { rating: true },
+        _count: true,
+      })
+      await prisma.sellerProfile.update({
+        where: { id: prod.sellerId },
+        data: {
+          averageRating: sellerAgg._avg.rating ?? 0,
+          totalReviews: sellerAgg._count,
+        },
+      })
+    }
+
+    // Reputation ledger — a purchase-gated review is Gold commerce evidence.
+    emitProductReview(review.id)
 
     // Notify + email the seller (non-blocking, skip self-reviews)
     prisma.products.findUnique({

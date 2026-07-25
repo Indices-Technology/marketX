@@ -29,11 +29,9 @@ export async function requireAuth(event: H3Event) {
     //    Only reuse a FULLY-resolved profile (one this function loaded). The global
     //    auth middleware (server/middleware/auth.global.ts) pre-populates
     //    event.context.user with a lightweight { id, email, role } straight from
-    //    the JWT — that object has no sellerProfile, so trusting it here would make
-    //    every seller-only handler see sellerProfile === undefined and 403. The
-    //    `sellerProfile` key is always present (possibly null) once we've done the
-    //    full load below, so its presence marks a resolved user.
-    if (event.context.user && 'sellerProfile' in event.context.user) {
+    //    the JWT, which must NOT be trusted as resolved. `authResolved` is set
+    //    only after the full load below, so it marks a resolved user.
+    if (event.context.authResolved && event.context.user) {
       return event.context.user as IProfile
     }
 
@@ -84,14 +82,12 @@ export async function requireAuth(event: H3Event) {
             select: { revokedAt: true, expiresAt: true },
           })
         : Promise.resolve(null),
+      // sellerProfile is a to-many relation, so including it here forced a
+      // SECOND query on EVERY authenticated request — even though only a
+      // handful of seller endpoints read it. It's now loaded on demand via
+      // getAuthSellerProfile(event).
       prisma.profile.findUnique({
         where: { id: payload.userId },
-        include: {
-          sellerProfile: {
-            where: { is_active: true },
-            take: 1,
-          },
-        },
       }),
     ])
 
@@ -131,7 +127,8 @@ export async function requireAuth(event: H3Event) {
     //    legacy tokens minted before sessionId was added to the payload.
     event.context.sessionId = payload.sessionId
 
-    // 6. Set user in event context for downstream handlers
+    // 6. Set user in event context for downstream handlers.
+    //    Seller endpoints read the store via getAuthSellerProfile(event).
     event.context.user = {
       id: user.id,
       email: user.email,
@@ -139,8 +136,8 @@ export async function requireAuth(event: H3Event) {
       avatar: user.avatar,
       role: user.role,
       emailVerified: user.email_verified,
-      sellerProfile: user.sellerProfile?.[0] || null,
     }
+    event.context.authResolved = true
 
     return event.context.user as IProfile
   } catch (error: any) {
@@ -158,6 +155,36 @@ export async function requireAuth(event: H3Event) {
       statusMessage: 'Authentication failed',
     })
   }
+}
+
+/**
+ * The signed-in user's active seller profile, loaded on demand.
+ *
+ * `sellerProfile` is a to-many relation (a profile can own several stores), so
+ * Prisma always issues a separate query for it — it cannot be joined into the
+ * profile load. Eagerly including it charged every authenticated request an
+ * extra round-trip, while only a handful of seller endpoints actually read it.
+ *
+ * Memoized per request, so handlers can call this freely. Returns null when the
+ * caller is unauthenticated or has no active store.
+ *
+ * Call AFTER requireAuth/optionalAuth (they populate event.context.user).
+ */
+export async function getAuthSellerProfile(event: H3Event) {
+  if (event.context.sellerProfileLoaded) {
+    return event.context.sellerProfile ?? null
+  }
+
+  const userId = event.context.user?.id
+  if (!userId) return null
+
+  const seller = await prisma.sellerProfile.findFirst({
+    where: { profileId: userId, is_active: true },
+  })
+
+  event.context.sellerProfile = seller
+  event.context.sellerProfileLoaded = true
+  return seller
 }
 
 /**

@@ -179,6 +179,21 @@ async function main() {
   )
   console.log('✅ Categories (12)')
 
+  // ── PRODUCTION GUARD ──────────────────────────────────────────────────────
+  // Everything below section 0 is TEST DATA (fake profiles, sellers, products,
+  // posts, stories, squares). Seeding it into production would pollute the live
+  // marketplace and is the exact thing docs/DB_CLEANUP.md exists to undo. The
+  // real category taxonomy above is prod-safe (idempotent upsert), so in
+  // production we seed categories and stop here. Manage prod categories
+  // afterwards via the admin categories API, not this file.
+  if (process.env.NODE_ENV === 'production' && process.env.ALLOW_TEST_SEED !== 'true') {
+    console.log(
+      '\n⏹  NODE_ENV=production — seeded categories only, skipping all test data.',
+    )
+    console.log('   (set ALLOW_TEST_SEED=true to override — you almost never want this.)\n')
+    return
+  }
+
   // ── 1. Profiles ───────────────────────────────────────────────────────────
   const pwHash = await argon2.hash('test1234')
 

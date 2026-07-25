@@ -115,8 +115,15 @@ test.describe('home — authenticated (SocialFeed)', () => {
     // After SplashScreen clears, the page should not show a fatal error
     const splash = page.locator('.fixed.inset-0.z-\\[100\\]')
     await expect(splash).not.toBeVisible({ timeout: 30000 })
-    // "Today's deals" is the guest/MarketHome heading — should NOT be visible when logged in
-    // (SocialFeed is shown instead)
+    // Wait for SocialFeed to actually mount (the feed filter tabs are
+    // SocialFeed-only). Until the profile store hydrates, index.vue's
+    // ClientOnly fallback shows the guest MarketHome, so asserting before
+    // this races auth hydration.
+    await expect(page.getByRole('tab', { name: /for you/i })).toBeVisible({
+      timeout: 30000,
+    })
+    // "Today's deals" is the guest/MarketHome heading — should NOT be visible
+    // once SocialFeed is shown.
     await expect(page.getByText("Today's deals")).not.toBeVisible()
   })
 })

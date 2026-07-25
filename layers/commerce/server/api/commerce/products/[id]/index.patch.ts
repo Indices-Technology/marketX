@@ -1,7 +1,10 @@
 ﻿import { ZodError } from 'zod'
 import { productService } from '~~/layers/commerce/server/services/product.service'
 import { UserError } from '~~/layers/profile/server/types/user.types'
-import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
+import {
+  requireAuth,
+  getAuthSellerProfile,
+} from '~~/server/layers/shared/middleware/requireAuth'
 import { getClientIP } from '~~/server/layers/shared/utils/security'
 
 export default defineEventHandler(async (event) => {
@@ -19,7 +22,7 @@ export default defineEventHandler(async (event) => {
       getHeader(event, 'x-forwarded-for') || getClientIP(event) || 'unknown'
     const userAgent = getHeader(event, 'user-agent') || 'unknown'
 
-    const sellerProfile = user.sellerProfile
+    const sellerProfile = await getAuthSellerProfile(event)
     if (!sellerProfile)
       throw new UserError(
         'SELLER_REQUIRED',

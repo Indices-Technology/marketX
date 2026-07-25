@@ -2,9 +2,11 @@
 import { ZodError } from 'zod'
 import { productService } from '~~/layers/commerce/server/services/product.service'
 import { UserError } from '~~/layers/profile/server/types/user.types'
-import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
+import {
+  requireAuth,
+  getAuthSellerProfile,
+} from '~~/server/layers/shared/middleware/requireAuth'
 import { getClientIP } from '~~/server/layers/shared/utils/security'
-
 
 export default defineEventHandler(async (event) => {
   try {
@@ -15,7 +17,7 @@ export default defineEventHandler(async (event) => {
     const userAgent = getHeader(event, 'user-agent') || 'unknown'
 
     // If storeSlug is provided, resolve that specific seller profile
-    let sellerProfile = user.sellerProfile
+    let sellerProfile = await getAuthSellerProfile(event)
     if (body.storeSlug && body.storeSlug !== sellerProfile?.store_slug) {
       const match = await prisma.sellerProfile.findFirst({
         where: {
@@ -62,7 +64,10 @@ export default defineEventHandler(async (event) => {
     return { success: true, data: result }
   } catch (error: unknown) {
     if (error instanceof UserError)
-      throw createError({ statusCode: error.status, statusMessage: error.message })
+      throw createError({
+        statusCode: error.status,
+        statusMessage: error.message,
+      })
     if (error instanceof ZodError) {
       const issue = error.errors[0]
       const field = issue?.path?.join('.')
@@ -74,7 +79,12 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 422, statusMessage: msg })
     }
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
-    logger.logError('[POST /api/commerce/products]', error, { requestId: event.context?.requestId })
-    throw createError({ statusCode: 500, statusMessage: 'Internal server error' })
+    logger.logError('[POST /api/commerce/products]', error, {
+      requestId: event.context?.requestId,
+    })
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Internal server error',
+    })
   }
 })
