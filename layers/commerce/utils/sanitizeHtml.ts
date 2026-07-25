@@ -1,47 +1,37 @@
-import sanitizeHtmlLib from 'sanitize-html'
+import { FilterXSS } from 'xss'
 
 /**
  * Shared HTML sanitizer for seller-authored product descriptions.
  *
- * Replaces the previous DOMPurify/isomorphic-dompurify implementation, which
- * spun up jsdom on the server and crashed the serverless bundle on Node <20.19
- * (jsdom@28's ESM-only deps couldn't be require()'d). sanitize-html is pure JS
- * (htmlparser2) with no DOM dependency, so it runs identically on the server
- * (write path + SSR) and in the browser — SSR output matches client output, so
- * v-html stays sanitized with no hydration mismatch.
+ * Uses xss (js-xss) — a pure-CommonJS sanitizer with an all-CJS dependency tree
+ * (commander, cssfilter). This matters because the Netlify Functions runtime
+ * runs an older Node that cannot require() ES modules: DOMPurify pulled in jsdom
+ * and sanitize-html pulled in htmlparser2, both ESM-only, and both crashed the
+ * serverless bundle with ERR_REQUIRE_ESM. xss has no ESM (or DOM) dependency, so
+ * it runs identically on the server (write path + SSR) and in the browser — SSR
+ * output matches client output, so v-html stays sanitized with no hydration
+ * mismatch and no runtime require(esm).
  *
- * The allowlist mirrors the rich-but-safe subset DOMPurify permitted for
- * descriptions, minus anything that can execute script (no <script>, <style>,
- * <iframe>, event handlers, or javascript:/data: URLs).
+ * The allowlist mirrors the rich-but-safe subset the previous sanitizers allowed
+ * for descriptions, minus anything that can execute script. Non-whitelisted tags
+ * are dropped (their text is kept); <script>/<style> are removed with their
+ * contents. xss's default safeAttrValue neutralizes javascript:/vbscript: URLs.
  */
-const OPTIONS: sanitizeHtmlLib.IOptions = {
-  allowedTags: [
-    'p', 'br', 'hr', 'span', 'div',
-    'b', 'strong', 'i', 'em', 'u', 's', 'small', 'mark', 'sub', 'sup',
-    'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-    'ul', 'ol', 'li', 'blockquote', 'pre', 'code',
-    'a', 'img',
-    'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td',
-  ],
-  allowedAttributes: {
-    a: ['href', 'name', 'target', 'rel'],
+const filter = new FilterXSS({
+  whiteList: {
+    p: [], br: [], hr: [], span: ['class'], div: ['class'],
+    b: [], strong: [], i: [], em: [], u: [], s: [], small: [], mark: [], sub: [], sup: [],
+    h1: [], h2: [], h3: [], h4: [], h5: [], h6: [],
+    ul: [], ol: [], li: [], blockquote: [], pre: [], code: [],
+    a: ['href', 'title', 'target', 'rel'],
     img: ['src', 'alt', 'title', 'width', 'height'],
-    '*': ['class'],
+    table: [], thead: [], tbody: [], tfoot: [], tr: [], th: [], td: [],
   },
-  // Links: http(s)/mailto/tel only. Images: http(s) only (blocks data: SVG XSS).
-  allowedSchemes: ['http', 'https', 'mailto', 'tel'],
-  allowedSchemesByTag: { img: ['http', 'https'] },
-  // Harden any new-tab links against reverse-tabnabbing / referrer leakage.
-  transformTags: {
-    a: sanitizeHtmlLib.simpleTransform(
-      'a',
-      { rel: 'noopener noreferrer nofollow' },
-      true,
-    ),
-  },
-}
+  stripIgnoreTag: true, // drop tags not in the allowlist, keeping their text
+  stripIgnoreTagBody: ['script', 'style'], // and delete their contents entirely
+})
 
 export function sanitizeHtml(dirty: string | null | undefined): string {
   if (!dirty) return ''
-  return sanitizeHtmlLib(dirty, OPTIONS)
+  return filter.process(dirty)
 }

@@ -737,9 +737,9 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import VideoPlayer from '~~/layers/core/app/components/VideoPlayer.vue'
-// sanitize-html runs on server and client alike, so a sanitized render is
-// produced on the server too, matching the product page and avoiding a raw-HTML
-// window during any SSR/hydration. No jsdom (safe in the serverless bundle).
+// xss runs on server and client alike, so a sanitized render is produced on the
+// server too, matching the product page and avoiding a raw-HTML window during
+// any SSR/hydration. Pure CJS, no jsdom/htmlparser2 (safe in the serverless bundle).
 import { sanitizeHtml } from '~~/layers/commerce/utils/sanitizeHtml'
 import type {
   IProduct,
