@@ -3,6 +3,12 @@
   publish = "dist"
 
 [build.environment]
+  # Node 22 (LTS) — required for require(esm) support. Transitive deps
+  # html-encoding-sniffer@6 / @exodus/bytes are ESM-only and are require()'d
+  # by jsdom; on Node <20.19 the Functions runtime throws ERR_REQUIRE_ESM.
+  # Controls both the build and the Netlify Functions runtime.
+  NODE_VERSION = "22"
+
   # These are public/non-secret values that appear in source code by design.
   # NUXT_PUBLIC_* vars are intentionally embedded in client-side bundles.
   # RATE_LIMIT_* are plain numeric config values, not credentials.
