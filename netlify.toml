@@ -3,6 +3,16 @@
   publish = "dist"
 
 [build.environment]
+  # Node 22 (LTS) — required for require(esm) support. jsdom@28 and its deps
+  # (@exodus/bytes, whatwg-url, html-encoding-sniffer) are ESM-only and get
+  # require()'d; on Node <20.19 the runtime throws ERR_REQUIRE_ESM.
+  #
+  # NODE_VERSION controls the BUILD only. The Functions/SSR runtime is pinned
+  # SEPARATELY — without AWS_LAMBDA_JS_RUNTIME the server function keeps running
+  # on Netlify's older default Lambda runtime and still crashes.
+  NODE_VERSION = "22"
+  AWS_LAMBDA_JS_RUNTIME = "nodejs22.x"
+
   # These are public/non-secret values that appear in source code by design.
   # NUXT_PUBLIC_* vars are intentionally embedded in client-side bundles.
   # RATE_LIMIT_* are plain numeric config values, not credentials.

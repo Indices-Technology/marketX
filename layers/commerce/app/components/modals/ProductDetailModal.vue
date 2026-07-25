@@ -737,9 +737,10 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import VideoPlayer from '~~/layers/core/app/components/VideoPlayer.vue'
-// isomorphic so a sanitized render is produced on the server too, matching the
-// product page and avoiding a raw-HTML window during any SSR/hydration.
-import DOMPurify from 'isomorphic-dompurify'
+// xss runs on server and client alike, so a sanitized render is produced on the
+// server too, matching the product page and avoiding a raw-HTML window during
+// any SSR/hydration. Pure CJS, no jsdom/htmlparser2 (safe in the serverless bundle).
+import { sanitizeHtml } from '~~/layers/commerce/utils/sanitizeHtml'
 import type {
   IProduct,
   IProductVariant,
@@ -780,7 +781,7 @@ const descTextLength = computed(
 )
 // Sanitize HTML to prevent XSS attacks
 const sanitizedDescription = computed(() =>
-  DOMPurify.sanitize(props.product?.description || ''),
+  sanitizeHtml(props.product?.description),
 )
 const showPostModal = ref(false)
 const showStoryModal = ref(false)

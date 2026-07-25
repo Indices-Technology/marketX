@@ -735,7 +735,7 @@
                 <Icon name="solar:alt-arrow-down-linear" size="18" class="acc-chev" />
               </summary>
               <div class="px-4 pb-4">
-                <!-- eslint-disable-next-line vue/no-v-html — sanitized by DOMPurify -->
+                <!-- eslint-disable-next-line vue/no-v-html — sanitized by xss (sanitizeHtml) -->
                 <div
                   class="product-desc t-body"
                   v-html="safeDescription"
@@ -968,10 +968,11 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
-// isomorphic-dompurify runs on both server and client, so the SSR-rendered
+// sanitizeHtml (xss) runs identically on server and client, so the SSR-rendered
 // description is sanitized too — a raw <img onerror> in a seller description
-// executes on parse, before client hydration, so SSR must not ship it raw.
-import DOMPurify from 'isomorphic-dompurify'
+// executes on parse, before client hydration, so SSR must not ship it raw. xss
+// is pure CJS (no jsdom/htmlparser2), so it's safe in the serverless bundle.
+import { sanitizeHtml } from '~~/layers/commerce/utils/sanitizeHtml'
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 import VideoPlayer from '~~/layers/core/app/components/VideoPlayer.vue'
@@ -1243,13 +1244,10 @@ const productTags = computed(() =>
 )
 
 // ── Description ──────────────────────────────────────────────────────────────
-// Sanitized on both SSR and client (isomorphic-dompurify). Rendering raw on SSR
+// Sanitized on both SSR and client (xss). Rendering raw on SSR
 // was a stored-XSS hole: inline handlers (<img onerror>) execute on browser parse
 // of the server HTML, before client hydration could sanitize.
-const safeDescription = computed(() => {
-  if (!product.value?.description) return ''
-  return DOMPurify.sanitize(product.value.description)
-})
+const safeDescription = computed(() => sanitizeHtml(product.value?.description))
 
 // ── Cart ─────────────────────────────────────────────────────────────────────
 const qty = ref(1)
