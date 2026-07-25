@@ -8,7 +8,7 @@ import { auditService } from '~~/server/layers/shared/audit/audit.service'
 import { emitProductReview } from '~~/layers/reputation/server/utils/emitReviewSignal'
 import { productRepository } from '../repositories/product.repository'
 import { prisma } from '~~/server/utils/db'
-import DOMPurify from 'isomorphic-dompurify'
+import { sanitizeHtml } from '~~/layers/commerce/utils/sanitizeHtml'
 import { remember, bust } from '~~/server/utils/cache'
 import { entityEmbedder } from '~~/layers/ai/server/services/entity-embedder.service'
 import {
@@ -71,7 +71,7 @@ function sanitizeDescription<T extends { description?: string | null }>(
   data: T,
 ): T {
   if (typeof data.description === 'string' && data.description) {
-    data.description = DOMPurify.sanitize(data.description)
+    data.description = sanitizeHtml(data.description)
   }
   return data
 }
