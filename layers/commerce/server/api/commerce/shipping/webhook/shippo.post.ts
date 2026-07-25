@@ -10,7 +10,27 @@
 import { createHmac, timingSafeEqual } from 'crypto'
 import { prisma } from '~~/server/utils/db'
 import { sseConnections } from '~~/server/utils/connections'
-import { walletService } from '~~/layers/commerce/server/services/wallet.service'
+import { applyCarrierStatus } from '~~/server/services/carrierProgress'
+import type { TrackingStatus } from '~~/layers/shipping/server/utils/types'
+
+// Shippo tracking_status.status → our normalized TrackingStatus. Interim/unknown
+// values (UNKNOWN, PRE_TRANSIT) return null so no transition is applied.
+function mapShippoStatus(raw: string): TrackingStatus | null {
+  switch (raw) {
+    case 'DELIVERED':
+      return 'DELIVERED'
+    case 'TRANSIT':
+      return 'IN_TRANSIT'
+    case 'OUT_FOR_DELIVERY':
+      return 'OUT_FOR_DELIVERY'
+    case 'RETURNED':
+      return 'RETURNED'
+    case 'FAILURE':
+      return 'FAILURE'
+    default:
+      return null
+  }
+}
 
 function verify(rawBody: string, signature: string): boolean {
   const secret = useRuntimeConfig().shippoWebhookSecret
@@ -38,19 +58,25 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 401, message: 'Invalid signature' })
   }
 
-  let payload: Record<string, any>
+  // Shippo webhook shape:
+  // { event: "track_updated", data: { tracking_number, carrier, tracking_status: { status } } }
+  interface ShippoWebhookPayload {
+    data?: {
+      tracking_number?: string
+      carrier?: string
+      tracking_status?: { status?: string; status_details?: string }
+    }
+  }
+  let payload: ShippoWebhookPayload
   try {
-    payload = JSON.parse(rawBody)
+    payload = JSON.parse(rawBody) as ShippoWebhookPayload
   } catch {
     throw createError({ statusCode: 400, message: 'Invalid JSON payload' })
   }
 
-  // Shippo webhook shape:
-  // { event: "track_updated", data: { tracking_number, carrier, tracking_status: { status } } }
-  const trackingNumber: string = payload?.data?.tracking_number
-  const carrier: string = payload?.data?.carrier
-  const rawStatus: string | undefined =
-    payload?.data?.tracking_status?.status?.toUpperCase()
+  const trackingNumber = payload?.data?.tracking_number
+  const carrier = payload?.data?.carrier ?? ''
+  const rawStatus = payload?.data?.tracking_status?.status?.toUpperCase()
   const description: string =
     payload?.data?.tracking_status?.status_details ?? rawStatus ?? 'Update'
 
@@ -60,30 +86,26 @@ export default defineEventHandler(async (event) => {
 
   const order = await prisma.orders.findFirst({
     where: { trackingNumber },
-    select: { id: true, userId: true, status: true, paymentStatus: true },
+    select: { id: true, userId: true },
   })
 
   if (order) {
-    const orderStatus = rawStatus === 'DELIVERED' ? 'DELIVERED' : 'SHIPPED'
-
-    // Never downgrade a terminal state — late/duplicate SHIPPED events must not
-    // pull a DELIVERED/CANCELLED/RETURNED order backward
-    const terminal = ['DELIVERED', 'CANCELLED', 'RETURNED']
-    if (!terminal.includes(order.status)) {
-      await prisma.orders.update({
-        where: { id: order.id },
-        data: { status: orderStatus as 'DELIVERED' | 'SHIPPED' },
-      })
-
-      // Release held funds — same as the seller status PATCH path
-      if (orderStatus === 'DELIVERED' && order.paymentStatus === 'PAID') {
-        walletService
-          .releaseFundsOnDelivery(order.id)
-          .catch((e) => logger.logError('[webhook/shippo wallet release]', e))
-      }
+    // Route through the shared carrier-progress service — the SAME path GIG's
+    // poller and the scan simulator use. It applies monotonic transitions,
+    // dispute-aware fund release, buyer/seller notifications + emails, and the
+    // reputation signal. (The old inline logic released funds even during an open
+    // dispute and mislabelled RETURNED/FAILURE scans as SHIPPED.)
+    const mapped = mapShippoStatus(rawStatus)
+    if (mapped) {
+      await applyCarrierStatus(order.id, mapped).catch((e) =>
+        logger.logError('[webhook/shippo applyCarrierStatus]', e, {
+          orderId: order.id,
+        }),
+      )
     }
 
-    // Push real-time notification to buyer via SSE
+    // Ephemeral live update for an open buyer tab, on top of the persisted
+    // notification/email applyCarrierStatus emits.
     sseConnections.send(order.userId, 'shipping_update', {
       orderId: order.id,
       trackingNumber,

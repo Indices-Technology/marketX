@@ -100,13 +100,19 @@ export default defineEventHandler(async (event) => {
       }
       const buyerMsg = buyerMessages[body.status]
       if (buyerMsg) {
-        notificationQueue.enqueue({
-          userId: order.userId,
-          type: 'ORDER',
-          actorId: user.id,
-          orderId: id,
-          message: buyerMsg,
-        })
+        notificationQueue.enqueue(
+          {
+            userId: order.userId,
+            type: 'ORDER',
+            actorId: user.id,
+            orderId: id,
+            message: buyerMsg,
+          },
+          // Shared key with the carrier-progress path (applyCarrierStatus, used by
+          // GIG poll + shippo/sendbox webhooks + scan simulator) so a seller mark
+          // and a carrier event for the same transition don't double-notify.
+          { dedupeKey: `ship:${id}:${body.status}` },
+        )
         prisma.profile.findUnique({ where: { id: order.userId }, select: { email: true } })
           .then((buyer) => {
             if (!buyer?.email) return

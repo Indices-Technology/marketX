@@ -10,7 +10,29 @@
 import { createHmac, timingSafeEqual } from 'crypto'
 import { prisma } from '~~/server/utils/db'
 import { sseConnections } from '~~/server/utils/connections'
-import { walletService } from '~~/layers/commerce/server/services/wallet.service'
+import { applyCarrierStatus } from '~~/server/services/carrierProgress'
+import type { TrackingStatus } from '~~/layers/shipping/server/utils/types'
+
+// Sendbox status → our normalized TrackingStatus. Unknown values return null so
+// no transition is applied.
+function mapSendboxStatus(raw: string): TrackingStatus | null {
+  switch (raw) {
+    case 'DELIVERED':
+      return 'DELIVERED'
+    case 'IN_TRANSIT':
+    case 'PICKED_UP':
+      return 'IN_TRANSIT'
+    case 'OUT_FOR_DELIVERY':
+      return 'OUT_FOR_DELIVERY'
+    case 'RETURNED':
+      return 'RETURNED'
+    case 'FAILED':
+    case 'CANCELLED':
+      return 'FAILURE'
+    default:
+      return null
+  }
+}
 
 function verify(rawBody: string, signature: string): boolean {
   const secret = useRuntimeConfig().sendboxWebhookSecret
@@ -38,16 +60,19 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 401, message: 'Invalid signature' })
   }
 
-  let payload: Record<string, any>
+  // Sendbox event shape: { event, data: { tracking_number, status, ... } }
+  interface SendboxWebhookPayload {
+    data?: { tracking_number?: string; status?: string; description?: string }
+  }
+  let payload: SendboxWebhookPayload
   try {
-    payload = JSON.parse(rawBody)
+    payload = JSON.parse(rawBody) as SendboxWebhookPayload
   } catch {
     throw createError({ statusCode: 400, message: 'Invalid JSON payload' })
   }
 
-  // Sendbox event shape: { event, data: { tracking_number, status, ... } }
-  const trackingNumber: string = payload?.data?.tracking_number
-  const newStatus: string | undefined = payload?.data?.status?.toUpperCase()
+  const trackingNumber = payload?.data?.tracking_number
+  const newStatus = payload?.data?.status?.toUpperCase()
 
   if (!trackingNumber || !newStatus) {
     return { received: true }
@@ -55,30 +80,26 @@ export default defineEventHandler(async (event) => {
 
   const order = await prisma.orders.findFirst({
     where: { trackingNumber },
-    select: { id: true, userId: true, status: true, paymentStatus: true },
+    select: { id: true, userId: true },
   })
 
   if (order) {
-    const orderStatus = newStatus === 'DELIVERED' ? 'DELIVERED' : 'SHIPPED'
-
-    // Never downgrade a terminal state — late/duplicate SHIPPED events must not
-    // pull a DELIVERED/CANCELLED/RETURNED order backward
-    const terminal = ['DELIVERED', 'CANCELLED', 'RETURNED']
-    if (!terminal.includes(order.status)) {
-      await prisma.orders.update({
-        where: { id: order.id },
-        data: { status: orderStatus as 'DELIVERED' | 'SHIPPED' },
-      })
-
-      // Release held funds — same as the seller status PATCH path
-      if (orderStatus === 'DELIVERED' && order.paymentStatus === 'PAID') {
-        walletService
-          .releaseFundsOnDelivery(order.id)
-          .catch((e) => logger.logError('[webhook/sendbox wallet release]', e))
-      }
+    // Route through the shared carrier-progress service — the SAME path GIG's
+    // poller and the scan simulator use (monotonic transitions, dispute-aware
+    // fund release, notifications + emails, reputation signal). The old inline
+    // logic released funds even during an open dispute and mislabelled
+    // RETURNED/FAILED scans as SHIPPED.
+    const mapped = mapSendboxStatus(newStatus)
+    if (mapped) {
+      await applyCarrierStatus(order.id, mapped).catch((e) =>
+        logger.logError('[webhook/sendbox applyCarrierStatus]', e, {
+          orderId: order.id,
+        }),
+      )
     }
 
-    // Push real-time notification to buyer via SSE
+    // Ephemeral live update for an open buyer tab, on top of the persisted
+    // notification/email applyCarrierStatus emits.
     sseConnections.send(order.userId, 'shipping_update', {
       orderId: order.id,
       trackingNumber,

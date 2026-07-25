@@ -43,10 +43,18 @@ export async function sendEmail(
   const resend = getResendClient()
   const config = useRuntimeConfig()
   const senderEmail = config.public.senderEmail as string
+  const siteName = (config.public.siteName as string) || 'MarketX'
+
+  // Give the sender a friendly display name so recipients (and spam filters) see
+  // "MarketX <noreply@…>" rather than a bare address. If SENDER_EMAIL already
+  // includes a display name (contains "<"), respect it as-is.
+  const from = senderEmail.includes('<')
+    ? senderEmail
+    : `${siteName} <${senderEmail}>`
 
   try {
     const response = await resend.emails.send({
-      from: senderEmail,
+      from,
       to: options.to,
       subject: options.subject,
       html: options.html,
@@ -59,8 +67,11 @@ export async function sendEmail(
     }
 
     return { id: response.data?.id || '' }
-  } catch (error: any) {
-    console.error('Failed to send email:', error.message)
+  } catch (error) {
+    console.error(
+      'Failed to send email:',
+      error instanceof Error ? error.message : String(error),
+    )
     throw error
   }
 }
