@@ -464,6 +464,9 @@ export const productRepository = {
       updateData.affiliateCommission = data.affiliateCommission
     if (data.socialCaptions !== undefined)
       updateData.socialCaptions = data.socialCaptions
+    if (data.showInFeed !== undefined) updateData.showInFeed = data.showInFeed
+    if (data.showInReels !== undefined)
+      updateData.showInReels = data.showInReels
     if (data.isDeal !== undefined) updateData.isDeal = data.isDeal
     if (data.dealEndsAt !== undefined) updateData.dealEndsAt = data.dealEndsAt
     if (data.condition !== undefined) updateData.condition = data.condition

@@ -13,9 +13,7 @@
         <!-- Brand -->
         <div class="mb-8 flex items-center gap-3">
           <NuxtLink to="/" class="flex items-center">
-            <span class="brand-wordmark" aria-label="MarketX">
-              <span>Market</span><span class="brand-x">X</span>
-            </span>
+            <BrandLogo variant="full" class="h-10 w-auto" />
           </NuxtLink>
         </div>
 
@@ -134,6 +132,8 @@
 </template>
 
 <script setup lang="ts">
+import BrandLogo from '~~/layers/ui/app/components/BrandLogo.vue'
+
 defineProps({
   title: {
     type: String,
@@ -147,29 +147,6 @@ defineProps({
 </script>
 
 <style scoped>
-.brand-wordmark {
-  display: inline-flex;
-  align-items: baseline;
-  font-family: Archivo, Manrope, system-ui, sans-serif;
-  font-size: 1.18rem;
-  font-weight: 900;
-  letter-spacing: 0;
-  line-height: 1;
-  color: rgb(17 24 39);
-}
-
-:global(.dark) .brand-wordmark,
-:global(.theme-dark-mode) .brand-wordmark {
-  color: white;
-}
-
-.brand-x {
-  margin-left: 1px;
-  color: #f43f5e;
-  font-style: italic;
-  transform: translateY(-0.03em) skewX(-8deg);
-}
-
 .auth-wordmark {
   display: inline-flex;
   align-items: baseline;

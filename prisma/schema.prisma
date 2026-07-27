@@ -1687,6 +1687,97 @@ model UserSuspension {
   @@index([expiresAt])
 }
 
+// ── Growth Engine ────────────────────────────────────────────────────────────
+// Extractable layer (see docs/GROWTH_ENGINE.md §5). Cross-boundary references to
+// seller/product are SCALAR ids only — NO Prisma relations to SellerProfile/Product
+// — so the whole growth surface lifts out cleanly. Relations exist only WITHIN the
+// growth unit (asset → distribution → event).
+
+enum GrowthIntent {
+  SELL // v1 — drive to a product/transaction
+  PROMOTE
+  ANNOUNCE
+}
+
+enum GrowthAssetStatus {
+  DRAFT
+  APPROVED
+  ARCHIVED
+}
+
+enum GrowthChannel {
+  ORGANIC_SHARE // seller shares it themselves (share-sheet/download) — no API, no gate
+  META_FB
+  META_IG
+  WHATSAPP
+  EMAIL
+}
+
+enum AttributionEventType {
+  VIEW
+  SCAN // QR scanned — coarse "came from a card" bucket
+  CLICK
+  LEAD // identity attached (DM/contact) — a Lead
+  ORDER
+}
+
+/// The reusable, channel-agnostic template. Created once, approved, reused for months.
+model GrowthAsset {
+  id         String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sellerId   String              @db.Uuid // scalar ref — no relation (extractable)
+  productId  Int? // scalar ref — no relation (extractable)
+  intent     GrowthIntent        @default(SELL)
+  status     GrowthAssetStatus   @default(DRAFT)
+  /// { cardImageUrl, cardPublicId, captions: { default, "organic-share", "meta-fb", ... } }
+  content    Json
+  /// { productRef, sellerPublicId, canonicalUrl, qrPublicId }
+  commerce   Json
+  created_at DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at DateTime            @updatedAt @db.Timestamptz(6)
+
+  distributions AssetDistribution[]
+
+  @@index([sellerId, status])
+}
+
+/// One row per (asset × channel) share. Mints the per-distribution short code —
+/// the unit of attribution. This is what lets one asset produce many funnels.
+model AssetDistribution {
+  id           String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  assetId      String        @db.Uuid
+  channel      GrowthChannel
+  /// Per-distribution trackable short code (e.g. "g7Kp2Q"). Unique — every scan/click resolves here.
+  shortCode    String        @unique
+  /// Set once the channel confirms delivery (remote post id for API channels; null for organic).
+  remotePostId String?
+  scheduledAt  DateTime?     @db.Timestamptz(6)
+  sharedAt     DateTime?     @db.Timestamptz(6)
+  created_at   DateTime      @default(now()) @db.Timestamptz(6)
+
+  asset  GrowthAsset        @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  events AttributionEvent[]
+
+  @@index([assetId])
+  @@index([channel])
+}
+
+/// A single measured interaction, keyed to a distribution's short code. Rolls up
+/// to channel and asset for the seller funnel dashboard.
+model AttributionEvent {
+  id             String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  distributionId String               @db.Uuid
+  type           AttributionEventType
+  /// Identity once known (lead capture): { name?, phone?, handle? }
+  identity       Json?
+  /// Request context: { ip?, ua?, referrer? }
+  meta           Json?
+  occurred_at    DateTime             @default(now()) @db.Timestamptz(6)
+
+  distribution AssetDistribution @relation(fields: [distributionId], references: [id], onDelete: Cascade)
+
+  @@index([distributionId, type])
+}
+
 // ── AI Model Configuration (BYOM — Bring Your Own Model) ─────────────────────
 
 model UserAIConfig {

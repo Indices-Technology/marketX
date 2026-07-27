@@ -150,14 +150,25 @@
       </div>
 
       <!-- how reputation works -->
-      <p
-        class="rounded-xl bg-gray-50 px-3.5 py-2.5 text-2xs leading-relaxed text-gray-500 dark:bg-neutral-800/50 dark:text-neutral-400"
+      <div
+        class="rounded-xl bg-gray-50 px-3.5 py-2.5 dark:bg-neutral-800/50"
       >
-        Every number here is computed from real, completed sales on MarketX —
-        earned, not bought. Dimensions a seller hasn't shared read
-        <span class="font-semibold">not provided</span>, never counted against
-        them.
-      </p>
+        <p
+          class="text-2xs leading-relaxed text-gray-500 dark:text-neutral-400"
+        >
+          Every number here is computed from real, completed sales on MarketX —
+          earned, not bought. Dimensions a seller hasn't shared read
+          <span class="font-semibold">not provided</span>, never counted against
+          them.
+        </p>
+        <NuxtLink
+          to="/trust/how-it-works"
+          class="mt-1.5 inline-flex items-center gap-1 text-2xs font-semibold text-brand hover:text-brand-dark"
+        >
+          How ratings work
+          <Icon name="solar:arrow-right-linear" size="12" />
+        </NuxtLink>
+      </div>
 
       <!-- protected CTA -->
       <NuxtLink

@@ -239,10 +239,7 @@
         </template>
       </BaseEmptyState>
 
-      <div
-        v-else-if="squares.length"
-        class="scrollbar-hide -mx-1 flex gap-3 overflow-x-auto px-1 pb-1"
-      >
+      <CarouselRail v-else-if="squares.length" :gap="12">
         <SquareCard
           v-for="sq in squares"
           :key="sq.id"
@@ -257,7 +254,7 @@
           <Icon name="solar:add-circle-linear" size="20" />
           <span class="text-[10px] font-semibold">More</span>
         </NuxtLink>
-      </div>
+      </CarouselRail>
     </section>
 
     <!-- 2. SELLERS ONLINE -->
@@ -300,10 +297,7 @@
         </div>
       </div>
 
-      <div
-        v-else-if="onlineSellers.length"
-        class="scrollbar-hide flex gap-4 overflow-x-auto pb-1"
-      >
+      <CarouselRail v-else-if="onlineSellers.length" :gap="16" pad="16px">
         <NuxtLink
           v-for="store in onlineSellers"
           :key="store.store_slug"
@@ -351,7 +345,7 @@
             {{ store.store_name || store.store_slug }}
           </p>
         </NuxtLink>
-      </div>
+      </CarouselRail>
 
       <button
         v-else-if="section3Loaded && !sellersLoading"
@@ -598,6 +592,7 @@ import PostCard from '~~/layers/social/app/components/PostCard.vue'
 import SquareCard from '~~/layers/square/app/components/SquareCard.vue'
 import BaseSkeleton from '~~/layers/ui/app/components/BaseSkeleton.vue'
 import BaseEmptyState from '~~/layers/ui/app/components/BaseEmptyState.vue'
+import CarouselRail from '~~/layers/ui/app/components/CarouselRail.vue'
 import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 import ProductDetailModal from '~~/layers/commerce/app/components/modals/ProductDetailModal.vue'
 import PostDetailModal from '~~/layers/social/app/components/modals/PostDetailModal.vue'

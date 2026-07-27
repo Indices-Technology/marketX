@@ -33,7 +33,7 @@ const ICONS: Record<string, IconPair> = {
     default: 'solar:map-point-wave-linear',
     active: 'solar:map-point-wave-bold',
   },
-  squares: { default: 'solar:shop-2-linear', active: 'solar:shop-2-bold' },
+  squares: { default: 'solar:bag-3-linear', active: 'solar:bag-3-bold' },
   // ── Actions ─────────────────────────────────────────────────────────
   create: { default: 'solar:add-circle-linear', active: 'solar:add-circle-bold' },
   notifications: { default: 'solar:bell-linear', active: 'solar:bell-bold' },

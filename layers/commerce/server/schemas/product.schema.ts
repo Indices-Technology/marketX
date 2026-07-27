@@ -89,6 +89,7 @@ export const updateProductSchema = z.object({
   tagNames: z.array(z.string().max(50)).max(10).optional(),
   socialCaptions: z
     .object({
+      feedCaption: z.string().max(2200).optional(),
       instagram: z.string().optional(),
       facebook: z.string().optional(),
       pinterest: z.string().optional(),

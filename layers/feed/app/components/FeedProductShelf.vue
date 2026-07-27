@@ -2,7 +2,7 @@
 <!-- Horizontally scrollable shoppable product shelf injected between feed posts -->
 <template>
   <div
-    class="w-full overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-950"
+    class="w-full overflow-hidden rounded-2xl border border-gray-100 bg-white dark:border-neutral-800 dark:bg-neutral-950"
   >
     <!-- Header (hidden when the parent already renders a section header) -->
     <div v-if="!hideHeader" class="flex items-center justify-between px-4 py-3">
@@ -42,6 +42,26 @@
         class="pointer-events-none absolute right-0 top-0 z-10 h-full w-8 bg-gradient-to-l from-white to-transparent dark:from-neutral-950"
         :class="{ 'opacity-0': scrolledToEnd }"
       />
+
+      <!-- Desktop arrows -->
+      <button
+        v-show="!scrolledToStart"
+        type="button"
+        class="shelf-arrow left-2"
+        aria-label="Scroll back"
+        @click="page(-1)"
+      >
+        <Icon name="solar:alt-arrow-left-linear" size="18" />
+      </button>
+      <button
+        v-show="!scrolledToEnd"
+        type="button"
+        class="shelf-arrow right-2"
+        aria-label="Scroll forward"
+        @click="page(1)"
+      >
+        <Icon name="solar:alt-arrow-right-linear" size="18" />
+      </button>
 
       <!-- Scroll track -->
       <div
@@ -193,6 +213,12 @@ function onScroll(e: Event) {
   clientWidth.value = el.clientWidth
 }
 
+function page(dir: number) {
+  const el = trackRef.value
+  if (!el) return
+  el.scrollBy({ left: dir * el.clientWidth * 0.8, behavior: 'smooth' })
+}
+
 function updateDimensions() {
   const el = trackRef.value
   if (!el) return
@@ -215,5 +241,40 @@ onUnmounted(() => {
 /* Hide scrollbar cross-browser */
 div[style*='scrollbar-width']::-webkit-scrollbar {
   display: none;
+}
+
+/* Desktop carousel arrows — hidden on touch/mobile, shown from md up */
+.shelf-arrow {
+  display: none;
+  position: absolute;
+  top: 50%;
+  z-index: 20;
+  height: 2rem;
+  width: 2rem;
+  transform: translateY(-50%);
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 1px solid rgb(243 244 246);
+  background: #fff;
+  color: rgb(31 41 55);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.15);
+  transition: background 0.15s;
+}
+.shelf-arrow:hover {
+  background: rgb(249 250 251);
+}
+:global(.dark) .shelf-arrow {
+  border-color: rgb(38 38 38);
+  background: rgb(23 23 23);
+  color: rgb(229 229 229);
+}
+:global(.dark) .shelf-arrow:hover {
+  background: rgb(38 38 38);
+}
+@media (min-width: 768px) {
+  .shelf-arrow {
+    display: flex;
+  }
 }
 </style>

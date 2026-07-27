@@ -12,6 +12,10 @@ import { sanitizeHtml } from '~~/layers/commerce/utils/sanitizeHtml'
 import { remember, bust } from '~~/server/utils/cache'
 import { entityEmbedder } from '~~/layers/ai/server/services/entity-embedder.service'
 import {
+  assignUniqueSlugs,
+  detectSkuCollisions,
+} from '../utils/bulkImport'
+import {
   createProductSchema,
   updateProductSchema,
   listProductsSchema,
@@ -151,6 +155,128 @@ export const productService = {
     if (validated.status === 'PUBLISHED') await bust(PRODUCT_LIST_CACHE_PATTERN)
 
     return product
+  },
+
+  /**
+   * Bulk-create products from staged import rows (offline gallery import). This
+   * is a distinct path from createProduct precisely because the single-create
+   * side-effects detonate at N=200 — every one of the §3 footguns is neutralised
+   * here rather than run per-row:
+   *
+   *   #1 follower fan-out  → rows import as DRAFT, so no per-product PUBLISHED
+   *      notification fires at all (drafts aren't announced).
+   *   #2 cache bust        → drafts aren't in any public listing, so ZERO busts.
+   *   #3 slug DB-probe loop → one prefetch + assignUniqueSlugs (in-memory, batch).
+   *   #4 inline embedding  → skipped; drafts aren't searchable, embed on publish.
+   *   #5 global SKU unique  → pre-flight collision check rejects only bad rows.
+   *
+   * Partial success: a bad row becomes an error entry, never aborting the rest.
+   * Returns `{ summary, created[], errors[] }`.
+   */
+  async createProductsBulk(
+    sellerId: string,
+    storeSlug: string,
+    rows: unknown[],
+    authorId: string,
+    ipAddress: string,
+    userAgent: string,
+  ) {
+    const errors: Array<{ index: number; error: string }> = []
+    const parsed: Array<{ index: number; data: CreateProductInput }> = []
+
+    // 1. Validate each row independently; force DRAFT (footgun #1).
+    rows.forEach((raw, index) => {
+      const res = createProductSchema.safeParse({
+        ...(raw as Record<string, unknown>),
+        status: 'DRAFT',
+      })
+      if (res.success) {
+        parsed.push({ index, data: sanitizeDescription(res.data) })
+      } else {
+        const issue = res.error.errors[0]
+        const field = issue?.path?.join('.')
+        errors.push({
+          index,
+          error: issue
+            ? field
+              ? `${field}: ${issue.message}`
+              : issue.message
+            : 'Invalid row',
+        })
+      }
+    })
+
+    if (parsed.length === 0) {
+      return { summary: { total: rows.length, created: 0, failed: errors.length }, created: [], errors }
+    }
+
+    // 2. SKU collision pre-check — one query (footgun #5).
+    const skus = parsed.map((p) => p.data.SKU ?? null)
+    const providedSkus = skus.filter((s): s is string => !!s)
+    const existingSku = providedSkus.length
+      ? new Set(
+          (
+            await prisma.products.findMany({
+              where: { SKU: { in: providedSkus } },
+              select: { SKU: true },
+            })
+          )
+            .map((r) => r.SKU)
+            .filter((s): s is string => !!s),
+        )
+      : new Set<string>()
+    const skuCollisions = detectSkuCollisions(skus, existingSku)
+
+    // 3. Batch slug pre-resolution — one query for all colliding bases (footgun #3).
+    const titles = parsed.map((p) => p.data.title)
+    const bases = [...new Set(titles.map((t) => t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'product'))]
+    const existingSlugRows = await prisma.products.findMany({
+      where: { OR: bases.map((b) => ({ slug: { startsWith: b } })) },
+      select: { slug: true },
+    })
+    const slugs = assignUniqueSlugs(titles, new Set(existingSlugRows.map((r) => r.slug)))
+
+    // 4. Create sequentially (safe on the Neon pooler); isolate per-row failures.
+    const created: Array<{ index: number; id: number; slug: string; title: string }> = []
+    for (let i = 0; i < parsed.length; i++) {
+      const { index, data } = parsed[i]!
+      if (skuCollisions.has(i)) {
+        errors.push({ index, error: `SKU "${data.SKU}" already exists` })
+        continue
+      }
+      try {
+        const product = await productRepository.createProduct(
+          sellerId,
+          storeSlug,
+          { ...data, slug: slugs[i]! },
+          authorId,
+        )
+        created.push({ index, id: product.id, slug: product.slug, title: product.title })
+      } catch (e) {
+        errors.push({ index, error: e instanceof Error ? e.message : 'Create failed' })
+      }
+    }
+
+    // 5. One audit summary — not N rows (footgun-adjacent). No cache bust (all
+    //    DRAFT). No embedding (drafts aren't searchable; embed happens on publish).
+    if (created.length) {
+      auditQueue.enqueue({
+        userId: authorId,
+        action: 'PRODUCT_BULK_IMPORTED',
+        resource: 'Products',
+        resourceId: `${created.length} products`,
+        reason: `Bulk imported ${created.length} draft product(s)`,
+        changes: { count: created.length, storeSlug },
+        ipAddress,
+        userAgent,
+      })
+    }
+
+    return {
+      summary: { total: rows.length, created: created.length, failed: errors.length },
+      created,
+      errors,
+    }
   },
 
   async getProducts(
