@@ -1,9 +1,7 @@
 <!-- pages/index.vue — auth-aware entry point -->
-<!-- Authenticated  → personalised social feed  (SocialFeed) -->
-<!-- Unauthenticated → commerce-first market home (MarketHome) -->
+<!-- Authenticated  → personalised social feed   (SocialFeed) -->
+<!-- Unauthenticated → safe-commerce trust home  (TrustMarketHome) -->
 <template>
-  <!-- Trust homepage is full-width so the hero breathes; when the trust surface
-       is gated off (prod, no real data yet) it falls back to the original home. -->
   <HomeLayout :mode="profileStore.isLoggedIn ? 'feed' : 'market'">
     <ClientOnly>
       <Transition name="feed-swap" mode="out-in">
@@ -12,19 +10,15 @@
           key="social"
           :trust-spotlight="showTrust"
         />
-        <MarketHome
+        <TrustMarketHome
           v-else
           key="market"
-          :trust-spotlight="showTrust"
           @sign-in="router.push('/user-login')"
         />
       </Transition>
-      <!-- Fallback shown during SSR/hydration — render MarketHome so page isn't blank on first paint -->
+      <!-- Fallback during SSR/hydration so the page isn't blank on first paint -->
       <template #fallback>
-        <MarketHome
-          :trust-spotlight="showTrust"
-          @sign-in="router.push('/user-login')"
-        />
+        <TrustMarketHome @sign-in="router.push('/user-login')" />
       </template>
     </ClientOnly>
   </HomeLayout>
@@ -35,7 +29,7 @@ import { useRouter, useRuntimeConfig } from '#imports'
 
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import SocialFeed from '~~/layers/feed/app/components/SocialFeed.vue'
-import MarketHome from '~~/layers/feed/app/components/MarketHome.vue'
+import TrustMarketHome from '~~/layers/feed/app/components/TrustMarketHome.vue'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import { useSeo } from '~~/layers/core/app/composables/useSeo'
 
@@ -44,9 +38,10 @@ defineOptions({ name: 'FeedIndexPage' })
 const router = useRouter()
 const profileStore = useProfileStore()
 
-// Trust surface shows only where its (currently placeholder) data is acceptable:
-// always in dev, and in prod only when explicitly enabled for a demo build.
-// Keeps seeded reputation numbers away from real production visitors.
+// SocialFeed's trust-spotlight interleave stays gated to dev / demo builds so
+// seeded reputation numbers never reach real production visitors. The logged-out
+// home (TrustMarketHome) shows only real, self-hiding trust surfaces, so it
+// needs no such gate.
 const showTrust = import.meta.dev || useRuntimeConfig().public.trustPreview
 
 useSeo().setHomePage()

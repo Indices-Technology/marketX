@@ -23,7 +23,7 @@
          COMPACT VARIANT  (w-36, rail chips)
          ═══════════════════════════════════════════════════════════════ -->
     <template v-if="variant === 'compact'">
-      <div class="relative">
+      <div class="pointer-events-none relative">
         <!-- Banner -->
         <div class="h-14 overflow-hidden">
           <template v-if="!loading">
@@ -102,7 +102,7 @@
          ═══════════════════════════════════════════════════════════════ -->
     <template v-else-if="variant === 'spotlight'">
       <!-- Banner -->
-      <div class="relative h-28 overflow-hidden">
+      <div class="pointer-events-none relative h-28 overflow-hidden">
         <template v-if="!loading">
           <img
             v-if="bannerSrc && !bannerError"
@@ -132,7 +132,7 @@
       </div>
 
       <!-- Overlapping icon chip -->
-      <div v-if="!loading" class="relative px-3">
+      <div v-if="!loading" class="pointer-events-none relative px-3">
         <div
           class="absolute -top-5 left-3 flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border-2 border-white bg-white shadow dark:border-neutral-900 dark:bg-neutral-900"
         >
@@ -209,7 +209,7 @@
          ═══════════════════════════════════════════════════════════════ -->
     <template v-else>
       <!-- Banner -->
-      <div class="relative h-24 overflow-hidden">
+      <div class="pointer-events-none relative h-24 overflow-hidden">
         <template v-if="!loading">
           <img
             v-if="bannerSrc && !bannerError"

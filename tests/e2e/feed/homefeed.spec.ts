@@ -1,7 +1,8 @@
 /**
- * Home feed tests — covers both the guest (MarketHome) and auth (SocialFeed) views.
+ * Home feed tests — covers both the guest (TrustMarketHome) and auth (SocialFeed) views.
  *
- * Guest view:  markets rail + traders live + "Fresh from the market" + "Today's deals"
+ * Guest view:  safe-commerce hero + Find/Verify dock → "How protected buying
+ *              works" → trusted sellers → markets → products
  * Auth view:   personalised social feed rendered inside the same HomeLayout
  *
  * Locators are scoped to the scrolling content column (.main-scroll); the right
@@ -17,20 +18,28 @@ const feed = (page: any) => page.locator('.main-scroll')
 
 // ── GUEST / UNAUTHENTICATED ──────────────────────────────────────────────────
 
-test.describe('home — guest (MarketHome)', () => {
+test.describe('home — guest (TrustMarketHome)', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/', { waitUntil: 'networkidle' })
   })
 
-  test('renders "Today\'s deals" section heading', async ({ page }) => {
-    await expect(page.getByText("Today's deals")).toBeVisible(T)
+  test('renders the safe-commerce hero', async ({ page }) => {
+    await expect(
+      feed(page).getByRole('heading', { name: /buy safely from trusted/i }),
+    ).toBeVisible(T)
+  })
+
+  test('renders "How protected buying works"', async ({ page }) => {
+    await expect(
+      feed(page).getByRole('heading', {
+        name: /how protected buying works/i,
+      }),
+    ).toBeVisible(T)
   })
 
   test('renders the markets section heading', async ({ page }) => {
     await expect(
-      feed(page).getByRole('heading', {
-        name: "Explore Nigeria's Digital Markets",
-      }),
+      feed(page).getByRole('heading', { name: /nigeria's markets, online/i }),
     ).toBeVisible(T)
   })
 
@@ -50,7 +59,7 @@ test.describe('home — guest (MarketHome)', () => {
     await expect(page).toHaveURL('/squares', T)
   })
 
-  test('deals section shows products or empty fallback — not stuck loading', async ({
+  test('products section shows products or empty fallback — not stuck loading', async ({
     page,
   }) => {
     // Either products rendered OR the empty-state fallback — never blank
@@ -58,8 +67,21 @@ test.describe('home — guest (MarketHome)', () => {
       feed(page)
         .locator('a[href^="/product/"]')
         .first()
-        .or(feed(page).getByText(/no flash deals right now/i)),
+        .or(feed(page).getByText(/fresh goods are being arranged/i)),
     ).toBeVisible(T)
+  })
+
+  test('Verify tab routes to /verify', async ({ page }) => {
+    await feed(page)
+      .getByRole('tab', { name: /verify any seller/i })
+      .click()
+    await feed(page)
+      .getByPlaceholder(/instagram_handle/i)
+      .fill('swankyshoes')
+    await feed(page)
+      .getByRole('button', { name: /^verify seller$/i })
+      .click()
+    await expect(page).toHaveURL(/\/verify\?q=/, T)
   })
 
   test('squares section shows square cards or empty fallback — not stuck loading', async ({
@@ -122,9 +144,11 @@ test.describe('home — authenticated (SocialFeed)', () => {
     await expect(page.getByRole('tab', { name: /for you/i })).toBeVisible({
       timeout: 30000,
     })
-    // "Today's deals" is the guest/MarketHome heading — should NOT be visible
-    // once SocialFeed is shown.
-    await expect(page.getByText("Today's deals")).not.toBeVisible()
+    // The safe-commerce hero is the guest/TrustMarketHome heading — should NOT
+    // be visible once SocialFeed is shown.
+    await expect(
+      page.getByRole('heading', { name: /buy safely from trusted/i }),
+    ).not.toBeVisible()
   })
 })
 
@@ -132,7 +156,11 @@ test.describe('home — authenticated (SocialFeed)', () => {
 
 test('guest home — visual snapshot', async ({ page }) => {
   await page.goto('/', { waitUntil: 'networkidle' })
-  await expect(page.getByText("Today's deals")).toBeVisible(T)
+  // NOTE: after the TrustMarketHome graduation the baseline home-guest.png must
+  // be regenerated — run this spec once with --update-snapshots.
+  await expect(
+    page.getByRole('heading', { name: /buy safely from trusted/i }),
+  ).toBeVisible(T)
   // Hide images + animate elements so layout is stable across runs with dynamic content
   await page.addStyleTag({
     content: `

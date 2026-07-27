@@ -41,15 +41,16 @@ export const useSeo = () => {
   // ── Public pages ─────────────────────────────────────────────────────────
 
   const setHomePage = () => {
-    const desc = `${siteName} — Discover stores near you, buy local, and sell to the world. The all-in-one platform for everyday business in Africa.`
+    const desc = `Buy safely from trusted Nigerian businesses on ${siteName}. Verify any seller, pay protected with escrow, and release funds only when your order arrives.`
+    const title = `${siteName} — Buy safely from trusted Nigerian businesses`
     useSeoMeta({
       title: siteName,
       description: desc,
-      ogTitle: `${siteName} — Your Business, Fully Alive`,
+      ogTitle: title,
       ogDescription: desc,
       ogImage: defaultImage,
       ogUrl: baseURL,
-      twitterTitle: `${siteName} — Your Business, Fully Alive`,
+      twitterTitle: title,
       twitterDescription: desc,
       twitterImage: defaultImage,
     })
@@ -361,7 +362,8 @@ export const useSeo = () => {
     username?: string | null
   }) => {
     const author = post.username ? `@${post.username}` : 'a seller'
-    const desc = post.caption?.slice(0, 160) || `Post by ${author} on ${siteName}.`
+    const desc =
+      post.caption?.slice(0, 160) || `Post by ${author} on ${siteName}.`
     useSeoMeta({
       title: post.caption?.slice(0, 60) || `Post by ${author}`,
       description: desc,

@@ -13,18 +13,20 @@
     <!-- ── 1. HERO + DUAL-ACTION DOCK ─────────────────────────────────────── -->
     <section class="pt-8">
       <div class="mx-auto max-w-3xl text-center">
-        <p class="text-xs font-semibold uppercase tracking-wider text-gray-500">
+        <p
+          class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-neutral-400"
+        >
           Nigeria's safe-commerce network
         </p>
 
         <h1
-          class="mt-3 text-3xl font-bold leading-tight tracking-tight text-gray-900 sm:text-5xl"
+          class="mt-3 text-3xl font-bold leading-tight tracking-tight text-gray-900 sm:text-5xl dark:text-white"
         >
           Buy safely from trusted<br class="hidden sm:block" />
           Nigerian businesses.
         </h1>
         <p
-          class="mx-auto mt-4 max-w-xl text-base leading-relaxed text-gray-600"
+          class="mx-auto mt-4 max-w-xl text-base leading-relaxed text-gray-600 dark:text-neutral-300"
         >
           Verify any seller in seconds. Pay into protected escrow, and release
           funds only when your order arrives.
@@ -32,12 +34,14 @@
       </div>
 
       <div ref="searchRoot" class="relative mx-auto mt-8 max-w-2xl">
-        <div class="rounded-xl border border-gray-200 bg-white p-2">
+        <div
+          class="rounded-xl border border-gray-200 bg-white p-2 dark:border-neutral-800 dark:bg-neutral-900"
+        >
           <!-- Tab selector -->
           <div
             role="tablist"
             aria-label="Find or verify a seller"
-            class="mb-2 flex rounded-lg bg-gray-100 p-1"
+            class="mb-2 flex rounded-lg bg-gray-100 p-1 dark:bg-neutral-800"
           >
             <button
               type="button"
@@ -46,8 +50,8 @@
               class="flex flex-1 items-center justify-center gap-2 rounded-md py-1.5 text-xs font-semibold"
               :class="
                 activeHeroTab === 'search'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-900'
+                  ? 'bg-white text-gray-900 shadow-sm dark:bg-neutral-700 dark:text-white'
+                  : 'text-gray-500 hover:text-gray-900 dark:text-neutral-400 dark:hover:text-white'
               "
               @click="activeHeroTab = 'search'"
             >
@@ -61,8 +65,8 @@
               class="flex flex-1 items-center justify-center gap-2 rounded-md py-1.5 text-xs font-semibold"
               :class="
                 activeHeroTab === 'verify'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-900'
+                  ? 'bg-white text-gray-900 shadow-sm dark:bg-neutral-700 dark:text-white'
+                  : 'text-gray-500 hover:text-gray-900 dark:text-neutral-400 dark:hover:text-white'
               "
               @click="activeHeroTab = 'verify'"
             >
@@ -90,7 +94,7 @@
               type="text"
               autocomplete="off"
               placeholder="Search markets, traders or goods…"
-              class="w-full bg-transparent text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:outline-none"
+              class="w-full bg-transparent text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:outline-none dark:text-white dark:placeholder:text-neutral-500"
               @focus="searchFocused = true"
               @keydown.enter="submitSearch"
               @keydown.escape="closeSearch"
@@ -99,14 +103,14 @@
               v-if="searchQuery"
               type="button"
               aria-label="Clear search"
-              class="rounded-full p-1 text-gray-400 hover:text-gray-700"
+              class="rounded-full p-1 text-gray-400 hover:text-gray-700 dark:text-neutral-500 dark:hover:text-neutral-200"
               @click="clearSearch"
             >
               <Icon name="solar:close-circle-linear" size="18" />
             </button>
             <button
               type="button"
-              class="shrink-0 rounded-lg bg-gray-900 px-4 py-2 text-xs font-semibold text-white hover:bg-gray-800"
+              class="shrink-0 rounded-lg bg-gray-900 px-4 py-2 text-xs font-semibold text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-neutral-200"
               @click="submitSearch"
             >
               Search
@@ -122,7 +126,7 @@
             <Icon
               name="solar:shield-user-linear"
               size="20"
-              class="shrink-0 text-gray-600"
+              class="shrink-0 text-gray-600 dark:text-neutral-400"
             />
             <label class="sr-only" for="trust-home-verify"
               >Enter a seller's phone, handle or link</label
@@ -133,11 +137,11 @@
               type="text"
               autocomplete="off"
               placeholder="Phone, @instagram_handle or shop link…"
-              class="w-full bg-transparent text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:outline-none"
+              class="w-full bg-transparent text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:outline-none dark:text-white dark:placeholder:text-neutral-500"
             />
             <button
               type="submit"
-              class="shrink-0 rounded-lg bg-gray-900 px-4 py-2 text-xs font-semibold text-white hover:bg-gray-800"
+              class="shrink-0 rounded-lg bg-gray-900 px-4 py-2 text-xs font-semibold text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-neutral-200"
             >
               Verify seller
             </button>
@@ -149,14 +153,14 @@
           v-if="
             activeHeroTab === 'search' && searchFocused && !searchQuery.trim()
           "
-          class="absolute inset-x-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-gray-200 bg-white p-2"
+          class="absolute inset-x-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-gray-200 bg-white p-2 dark:border-neutral-800 dark:bg-neutral-900"
         >
           <SearchSuggestions @search="onSuggestion" @close="closeSearch" />
         </div>
 
         <div
           v-else-if="activeHeroTab === 'search' && showLiveResults"
-          class="absolute inset-x-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-gray-200 bg-white"
+          class="absolute inset-x-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
         >
           <div
             v-if="searchLoading && !liveHasHits"
@@ -165,19 +169,19 @@
             <Icon
               name="solar:refresh-linear"
               size="20"
-              class="animate-spin text-gray-300"
+              class="animate-spin text-gray-300 dark:text-neutral-600"
             />
           </div>
           <div
             v-else-if="!liveHasHits"
-            class="px-4 py-6 text-center text-sm text-gray-400"
+            class="px-4 py-6 text-center text-sm text-gray-400 dark:text-neutral-500"
           >
             No results for "{{ searchQuery }}"
           </div>
           <div v-else class="max-h-80 overflow-y-auto py-1">
             <template v-if="liveResults.stores.length">
               <p
-                class="px-3 pb-1 pt-2.5 text-[10px] font-bold uppercase tracking-wider text-gray-400"
+                class="px-3 pb-1 pt-2.5 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-neutral-500"
               >
                 Traders
               </p>
@@ -185,7 +189,7 @@
                 v-for="s in liveResults.stores.slice(0, 3)"
                 :key="`s-${s.id}`"
                 :to="`/sellers/profile/${s.store_slug}`"
-                class="flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50"
+                class="flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 dark:hover:bg-neutral-800"
                 @click="onResultClick"
               >
                 <StoreAvatar
@@ -193,14 +197,15 @@
                   :logo="s.store_logo ?? undefined"
                   size="sm"
                 />
-                <span class="truncate text-sm font-medium text-gray-900">{{
-                  s.store_name
-                }}</span>
+                <span
+                  class="truncate text-sm font-medium text-gray-900 dark:text-white"
+                  >{{ s.store_name }}</span
+                >
               </NuxtLink>
             </template>
             <template v-if="liveResults.products.length">
               <p
-                class="px-3 pb-1 pt-2.5 text-[10px] font-bold uppercase tracking-wider text-gray-400"
+                class="px-3 pb-1 pt-2.5 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-neutral-500"
               >
                 Goods
               </p>
@@ -208,11 +213,11 @@
                 v-for="p in liveResults.products.slice(0, 4)"
                 :key="`p-${p.id}`"
                 :to="`/product/${p.slug}`"
-                class="flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50"
+                class="flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 dark:hover:bg-neutral-800"
                 @click="onResultClick"
               >
                 <div
-                  class="h-9 w-9 shrink-0 overflow-hidden rounded bg-gray-100"
+                  class="h-9 w-9 shrink-0 overflow-hidden rounded bg-gray-100 dark:bg-neutral-800"
                 >
                   <img
                     v-if="p.media?.[0]?.url"
@@ -233,19 +238,21 @@
                   </div>
                 </div>
                 <div class="min-w-0 flex-1">
-                  <p class="truncate text-sm font-medium text-gray-900">
+                  <p
+                    class="truncate text-sm font-medium text-gray-900 dark:text-white"
+                  >
                     {{ p.title }}
                   </p>
-                  <p class="text-sm text-gray-600">
+                  <p class="text-sm text-gray-600 dark:text-neutral-400">
                     {{ formatPrice(p.price ?? 0) }}
                   </p>
                 </div>
               </NuxtLink>
             </template>
-            <div class="border-t border-gray-100 p-2">
+            <div class="border-t border-gray-100 p-2 dark:border-neutral-800">
               <button
                 type="button"
-                class="flex w-full items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-semibold text-gray-900 hover:bg-gray-50"
+                class="flex w-full items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-semibold text-gray-900 hover:bg-gray-50 dark:text-white dark:hover:bg-neutral-800"
                 @click="submitSearch"
               >
                 See all results
@@ -255,11 +262,13 @@
           </div>
         </div>
 
-        <p class="mt-4 text-center text-xs font-medium text-gray-500">
+        <p
+          class="mt-4 text-center text-xs font-medium text-gray-500 dark:text-neutral-400"
+        >
           Selling instead?
           <NuxtLink
             to="/sellers/create"
-            class="font-semibold text-gray-900 underline underline-offset-2 hover:text-gray-700"
+            class="font-semibold text-gray-900 underline underline-offset-2 hover:text-gray-700 dark:text-white dark:hover:text-neutral-300"
           >
             Become a verified seller →
           </NuxtLink>
@@ -270,10 +279,14 @@
     <!-- ── 2. HOW PROTECTED BUYING WORKS ──────────────────────────────────── -->
     <section>
       <div class="mx-auto mb-8 max-w-xl text-center">
-        <p class="text-xs font-semibold uppercase tracking-wider text-gray-500">
+        <p
+          class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-neutral-400"
+        >
           Guaranteed protection
         </p>
-        <h2 class="mt-1 text-xl font-bold text-gray-900 sm:text-2xl">
+        <h2
+          class="mt-1 text-xl font-bold text-gray-900 sm:text-2xl dark:text-white"
+        >
           How protected buying works
         </h2>
       </div>
@@ -281,20 +294,26 @@
         <li
           v-for="(step, i) in HOW_IT_WORKS"
           :key="step.title"
-          class="rounded-lg border border-gray-200 bg-white p-5"
+          class="rounded-lg border border-gray-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900"
         >
           <div class="flex items-center gap-3">
             <span
-              class="flex h-6 w-6 items-center justify-center rounded-full bg-gray-900 text-[11px] font-bold text-white"
+              class="flex h-6 w-6 items-center justify-center rounded-full bg-gray-900 text-[11px] font-bold text-white dark:bg-white dark:text-gray-900"
               aria-hidden="true"
               >{{ i + 1 }}</span
             >
-            <Icon :name="step.icon" size="20" class="text-gray-500" />
+            <Icon
+              :name="step.icon"
+              size="20"
+              class="text-gray-500 dark:text-neutral-400"
+            />
           </div>
-          <h3 class="mt-4 text-sm font-bold text-gray-900">
+          <h3 class="mt-4 text-sm font-bold text-gray-900 dark:text-white">
             {{ step.title }}
           </h3>
-          <p class="mt-1 text-xs leading-relaxed text-gray-500">
+          <p
+            class="mt-1 text-xs leading-relaxed text-gray-500 dark:text-neutral-400"
+          >
             {{ step.desc }}
           </p>
         </li>
@@ -309,20 +328,20 @@
       <div class="mb-4 flex items-end justify-between gap-4">
         <div class="min-w-0">
           <p
-            class="text-xs font-semibold uppercase tracking-wider text-gray-500"
+            class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-neutral-400"
           >
             Local hubs
           </p>
-          <h2 class="text-lg font-bold text-gray-900">
+          <h2 class="text-lg font-bold text-gray-900 dark:text-white">
             Nigeria's markets, online
           </h2>
-          <p class="mt-0.5 text-sm text-gray-500">
+          <p class="mt-0.5 text-sm text-gray-500 dark:text-neutral-400">
             Real market squares — step in and meet the traders inside
           </p>
         </div>
         <NuxtLink
           to="/squares"
-          class="mb-0.5 shrink-0 text-xs font-semibold text-gray-500 hover:text-gray-900"
+          class="mb-0.5 shrink-0 text-xs font-semibold text-gray-500 hover:text-gray-900 dark:text-neutral-400 dark:hover:text-white"
         >
           All markets →
         </NuxtLink>
@@ -355,7 +374,7 @@
         />
         <NuxtLink
           to="/squares"
-          class="flex w-20 shrink-0 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-gray-300 text-gray-500 hover:border-gray-400 hover:text-gray-900"
+          class="flex w-20 shrink-0 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-gray-300 text-gray-500 hover:border-gray-400 hover:text-gray-900 dark:border-neutral-700 dark:text-neutral-400 dark:hover:border-neutral-500 dark:hover:text-white"
         >
           <Icon name="solar:add-circle-linear" size="20" />
           <span class="text-[10px] font-semibold">More</span>
@@ -386,20 +405,20 @@
       <div class="mb-4 flex items-end justify-between gap-4">
         <div class="min-w-0">
           <p
-            class="text-xs font-semibold uppercase tracking-wider text-gray-500"
+            class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-neutral-400"
           >
             Live inventory
           </p>
-          <h2 class="text-lg font-bold text-gray-900">
+          <h2 class="text-lg font-bold text-gray-900 dark:text-white">
             Fresh from verified traders
           </h2>
-          <p class="mt-0.5 text-sm text-gray-500">
+          <p class="mt-0.5 text-sm text-gray-500 dark:text-neutral-400">
             Every one from a seller you can pay protected
           </p>
         </div>
         <NuxtLink
           to="/discover?tab=fresh"
-          class="mb-0.5 shrink-0 text-xs font-semibold text-gray-500 hover:text-gray-900"
+          class="mb-0.5 shrink-0 text-xs font-semibold text-gray-500 hover:text-gray-900 dark:text-neutral-400 dark:hover:text-white"
         >
           See all →
         </NuxtLink>
@@ -441,15 +460,19 @@
     </section>
 
     <!-- ── 6. WHY SELLERS JOIN ───────────────────────────────────────────── -->
-    <section class="rounded-xl border border-gray-200 bg-gray-50 p-6 sm:p-8">
+    <section
+      class="rounded-xl border border-gray-200 bg-gray-50 p-6 sm:p-8 dark:border-neutral-800 dark:bg-neutral-900/60"
+    >
       <div class="mb-5">
-        <p class="text-xs font-semibold uppercase tracking-wider text-gray-500">
+        <p
+          class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-neutral-400"
+        >
           For businesses
         </p>
-        <h2 class="text-xl font-bold text-gray-900 sm:text-2xl">
+        <h2 class="text-xl font-bold text-gray-900 sm:text-2xl dark:text-white">
           Why sellers join
         </h2>
-        <p class="mt-0.5 text-sm text-gray-500">
+        <p class="mt-0.5 text-sm text-gray-500 dark:text-neutral-400">
           Turn "trust me" into proof buyers can check in one tap
         </p>
       </div>
@@ -460,15 +483,17 @@
           class="flex items-start gap-3"
         >
           <span
-            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-700"
+            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-700 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200"
           >
             <Icon :name="reason.icon" size="18" />
           </span>
           <div>
-            <p class="text-sm font-bold text-gray-900">
+            <p class="text-sm font-bold text-gray-900 dark:text-white">
               {{ reason.title }}
             </p>
-            <p class="mt-0.5 text-[13px] leading-relaxed text-gray-500">
+            <p
+              class="mt-0.5 text-[13px] leading-relaxed text-gray-500 dark:text-neutral-400"
+            >
               {{ reason.desc }}
             </p>
           </div>
@@ -581,14 +606,22 @@
     </section>
 
     <!-- ── 8. CREDIT VISION ───────────────────────────────────────────────── -->
-    <section class="rounded-xl border border-gray-200 bg-white p-6 sm:p-8">
-      <p class="text-xs font-semibold uppercase tracking-wider text-gray-500">
+    <section
+      class="rounded-xl border border-gray-200 bg-white p-6 sm:p-8 dark:border-neutral-800 dark:bg-neutral-900"
+    >
+      <p
+        class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-neutral-400"
+      >
         Where this goes
       </p>
-      <h2 class="mt-1 text-xl font-bold text-gray-900 sm:text-2xl">
+      <h2
+        class="mt-1 text-xl font-bold text-gray-900 sm:text-2xl dark:text-white"
+      >
         Today's transaction becomes tomorrow's loan.
       </h2>
-      <p class="mt-2 max-w-xl text-sm leading-relaxed text-gray-500">
+      <p
+        class="mt-2 max-w-xl text-sm leading-relaxed text-gray-500 dark:text-neutral-400"
+      >
         Every clean, protected sale becomes a record lenders can read. Sellers
         who build reputation on MarketX build the credit history Nigeria's
         informal economy has never had a way to prove.
@@ -598,13 +631,15 @@
     <!-- ── 9. MARKET PULSE ────────────────────────────────────────────────── -->
     <section ref="section5Ref" class="mx-auto max-w-[560px]">
       <div class="mb-4">
-        <p class="text-xs font-semibold uppercase tracking-wider text-gray-500">
+        <p
+          class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-neutral-400"
+        >
           From the community
         </p>
-        <h2 class="text-lg font-bold text-gray-900">
+        <h2 class="text-lg font-bold text-gray-900 dark:text-white">
           Real people, trading now
         </h2>
-        <p class="mt-0.5 text-sm text-gray-500">
+        <p class="mt-0.5 text-sm text-gray-500 dark:text-neutral-400">
           The latest from merchants, creators and markets
         </p>
       </div>
@@ -631,8 +666,12 @@
         />
 
         <div class="pt-6 text-center">
-          <p class="text-base font-bold text-gray-900">This is just a peek.</p>
-          <p class="mx-auto mt-1 max-w-xs text-sm text-gray-500">
+          <p class="text-base font-bold text-gray-900 dark:text-white">
+            This is just a peek.
+          </p>
+          <p
+            class="mx-auto mt-1 max-w-xs text-sm text-gray-500 dark:text-neutral-400"
+          >
             Sign in to see the full market feed — everything happening across
             Nigeria's traders, right now.
           </p>
@@ -840,13 +879,11 @@ const submitSearch = () => {
   return navigateTo(`/discover?q=${encodeURIComponent(q)}`)
 }
 
+// Verify — the "check any seller" door → /verify (verified | unverified |
+// unknown). Guest-usable; works on sellers not yet on MarketX.
 const submitVerify = () => {
   const q = verifyQuery.value.trim()
-  return navigateTo(
-    q
-      ? `/discover?tab=sellers&q=${encodeURIComponent(q)}`
-      : '/discover?tab=sellers',
-  )
+  return navigateTo(q ? `/verify?q=${encodeURIComponent(q)}` : '/verify')
 }
 
 const onOutsideClick = (e: MouseEvent) => {

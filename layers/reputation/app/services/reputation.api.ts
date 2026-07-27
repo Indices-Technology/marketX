@@ -19,6 +19,18 @@ class ReputationApiClient extends BaseApiClient {
     })
   }
 
+  /**
+   * Check a pasted identifier (MarketX link, Seller ID, phone, or @handle) →
+   * one of: verified | unverified | unknown. Powers the Verify door. Guest-safe.
+   */
+  async verify(q: string): Promise<unknown> {
+    return this.request('/api/reputation/verify', {
+      method: 'GET',
+      params: { q },
+      skipAuth: true,
+    })
+  }
+
   /** Log a Trust Card QR scan (funnel top). Fire-and-forget. */
   async logScan(payload: {
     slug: string

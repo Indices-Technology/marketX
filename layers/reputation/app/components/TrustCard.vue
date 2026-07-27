@@ -148,22 +148,18 @@
 
         <!-- Proof Chips: Horizontal scroll on overflow instead of wrapping -->
         <div v-if="seller.chips?.length" class="-mx-5 px-5">
-          <div class="scrollbar-hide flex gap-2 overflow-x-auto pb-1">
+          <div
+            class="scrollbar-hide flex gap-2 overflow-x-auto pb-1"
+            tabindex="0"
+            role="group"
+            aria-label="Trust signals"
+          >
             <span
               v-for="(chip, i) in seller.chips"
               :key="chip.label"
-              class="inline-flex shrink-0 items-center gap-1.5 rounded-lg border bg-neutral-50 px-2.5 py-1 text-[11px] font-semibold text-neutral-600 transition-all duration-200 hover:bg-neutral-100 dark:bg-neutral-800/60 dark:text-neutral-300"
-              :class="[
-                chipBorder,
-                {
-                  'animate-in fade-in slide-in-from-bottom-2 translate-y-2 opacity-0':
-                    mounted,
-                },
-              ]"
-              :style="{
-                animationDelay: `${i * 60}ms`,
-                animationFillMode: 'forwards',
-              }"
+              class="mx-chip-in inline-flex shrink-0 items-center gap-1.5 rounded-lg border bg-neutral-50 px-2.5 py-1 text-[11px] font-semibold text-neutral-600 transition-all duration-200 hover:bg-neutral-100 dark:bg-neutral-800/60 dark:text-neutral-300"
+              :class="chipBorder"
+              :style="{ animationDelay: `${i * 60}ms` }"
             >
               <Icon
                 :name="chip.icon"
@@ -205,7 +201,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref } from 'vue'
 import { imgAvatar } from '~~/layers/core/app/utils/cloudinary'
 import type { TrustSpotlightSeller } from '~~/layers/reputation/app/types/trust.types'
 
@@ -219,12 +215,7 @@ const props = withDefaults(
   },
 )
 
-const mounted = ref(false)
 const logoError = ref(false)
-
-onMounted(() => {
-  mounted.value = true
-})
 
 // ─── Route ─────────────────────────────────────────────
 const sellerRoute = computed(() => {
@@ -287,8 +278,7 @@ const TIERS: Record<
       'bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300',
     trustIcon: 'text-amber-600 dark:text-amber-300',
     trustText: 'text-amber-900 dark:text-amber-100',
-    escrow:
-      'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300',
+    escrow: 'bg-mint/10 text-mint-dark dark:bg-mint/15 dark:text-mint',
     footerBorder: 'border-amber-100 dark:border-amber-500/10',
   },
   TIER_2: {
@@ -304,8 +294,7 @@ const TIERS: Record<
       'bg-slate-100 text-slate-600 dark:bg-slate-500/20 dark:text-slate-300',
     trustIcon: 'text-slate-600 dark:text-slate-300',
     trustText: 'text-slate-900 dark:text-slate-100',
-    escrow:
-      'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300',
+    escrow: 'bg-mint/10 text-mint-dark dark:bg-mint/15 dark:text-mint',
     footerBorder: 'border-slate-100 dark:border-slate-500/10',
   },
   TIER_3: {
@@ -321,8 +310,7 @@ const TIERS: Record<
       'bg-orange-100 text-orange-600 dark:bg-orange-500/20 dark:text-orange-300',
     trustIcon: 'text-orange-600 dark:text-orange-300',
     trustText: 'text-orange-900 dark:text-orange-100',
-    escrow:
-      'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300',
+    escrow: 'bg-mint/10 text-mint-dark dark:bg-mint/15 dark:text-mint',
     footerBorder: 'border-orange-100 dark:border-orange-500/10',
   },
 }
@@ -347,26 +335,25 @@ const chipBorder = computed(() => {
   display: none;
 }
 
-/* Staggered chip entrance */
-@keyframes fade-in {
+/* Staggered chip entrance — CSS-only (no JS `mounted` flag, so no
+   hydration flash). `backwards` fill holds the hidden state during the
+   per-chip delay, and the base (no-animation) state stays visible. */
+@keyframes mx-chip-in {
   from {
     opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-@keyframes slide-in-from-bottom-2 {
-  from {
     transform: translateY(0.5rem);
   }
   to {
+    opacity: 1;
     transform: translateY(0);
   }
 }
-.animate-in {
-  animation:
-    fade-in 0.4s ease-out,
-    slide-in-from-bottom-2 0.4s ease-out;
+.mx-chip-in {
+  animation: mx-chip-in 0.4s ease-out backwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mx-chip-in {
+    animation: none;
+  }
 }
 </style>
