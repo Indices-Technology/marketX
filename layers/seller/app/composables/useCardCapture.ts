@@ -188,5 +188,13 @@ export function useCardCapture() {
     }
   }
 
-  return { capture, captureTemplate, shareImage, capturing }
+  return {
+    capture,
+    captureTemplate,
+    shareImage,
+    capturing,
+    // Exposed for programmatic capture→upload (Growth Assets).
+    cardToPng,
+    dataUrlToFile,
+  }
 }

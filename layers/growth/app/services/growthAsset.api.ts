@@ -1,0 +1,66 @@
+import { BaseApiClient } from '~~/layers/core/app/services/base.api'
+
+export interface GrowthAssetDTO {
+  id: string
+  productId: number | null
+  status: string
+  cardImageUrl: string
+  canonicalUrl: string
+  trackedUrl: string
+}
+
+export interface TikTokCreatorInfoDTO {
+  nickname?: string
+  username?: string
+  avatarUrl?: string
+  privacyOptions: string[]
+  commentDisabled: boolean
+  duetDisabled: boolean
+  stitchDisabled: boolean
+}
+
+export class GrowthAssetApiClient extends BaseApiClient {
+  /** Get-or-create the Growth Asset for a product; returns its tracked CARD link. */
+  async fromProduct(productId: number) {
+    return this.request('/api/growth/assets', {
+      method: 'POST',
+      body: { productId },
+    }) as Promise<{ success: boolean; data: GrowthAssetDTO }>
+  }
+
+  /** Attach the rendered+uploaded card image to the asset. */
+  async attachCard(id: string, cardImageUrl: string, cardPublicId: string) {
+    return this.request(`/api/growth/assets/${id}`, {
+      method: 'PATCH',
+      body: { cardImageUrl, cardPublicId },
+    }) as Promise<{ success: boolean }>
+  }
+
+  /** Connected TikTok creator info (nickname + allowed privacy levels). */
+  async tiktokCreatorInfo() {
+    return this.request('/api/growth/tiktok/creator-info', {
+      method: 'GET',
+      silent: true,
+    }) as Promise<{ success: boolean; data: TikTokCreatorInfoDTO }>
+  }
+
+  /** Direct-post the asset's card to the connected TikTok. */
+  async postToTikTok(
+    id: string,
+    opts: { privacyLevel?: string; caption?: string } = {},
+  ) {
+    return this.request(`/api/growth/assets/${id}/post/tiktok`, {
+      method: 'POST',
+      body: opts,
+    }) as Promise<{
+      success: boolean
+      data: { publishId: string; trackedUrl: string; privacyLevel: string }
+    }>
+  }
+}
+
+let instance: GrowthAssetApiClient | null = null
+export const useGrowthAssetApi = () => {
+  if (!instance) instance = new GrowthAssetApiClient()
+  return instance
+}

@@ -77,8 +77,12 @@
       </div>
     </div>
 
-    <!-- Category tabs — inline on mobile, desktop uses SideNav -->
-    <CategoryListMobile class="-mx-2 mb-3 sm:-mx-4" />
+    <!-- Category tabs — inline on mobile, desktop uses SideNav.
+         TODO: CategoryListMobile was removed during a refactor and never replaced,
+         which threw "Failed to resolve component". To restore: wrap CategoryPills
+         (needs :categories from productApi.getCategories() + a v-model) and wire the
+         selection to filter the feed. Disabled for now to keep the console clean. -->
+    <!-- <CategoryListMobile class="-mx-2 mb-3 sm:-mx-4" /> -->
 
     <!-- Stories Section -->
     <ClientOnly>

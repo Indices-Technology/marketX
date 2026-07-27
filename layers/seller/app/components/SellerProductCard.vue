@@ -136,13 +136,14 @@
         >
           Edit
         </NuxtLink>
-        <NuxtLink
-          :to="`/seller/${storeSlug}/products/${product.id}/edit?tab=promote`"
+        <button
+          type="button"
           class="flex flex-1 items-center justify-center gap-1 rounded-lg border border-brand/40 py-1.5 text-center text-xs font-medium text-brand transition-colors hover:bg-brand/5"
+          @click="$emit('promote', product)"
         >
           <Icon name="solar:rocket-2-linear" size="12" />
           Promote
-        </NuxtLink>
+        </button>
         <button
           @click="$emit('archive', product)"
           class="rounded-lg border border-red-200 px-2.5 py-1.5 text-center text-xs font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
@@ -173,6 +174,7 @@ const props = defineProps<{
 
 defineEmits<{
   archive: [product: any]
+  promote: [product: any]
 }>()
 
 // Stock rollup from the DB-level counts the API attaches (no variant rows

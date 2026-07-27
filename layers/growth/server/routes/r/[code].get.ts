@@ -1,8 +1,6 @@
-// GET /r/:code — resolve a Growth Asset distribution short link and 302 to its
-// destination. This is the public entry point every QR/shared link routes through.
-//
-// Small bite: redirect only. Attribution logging (recording a CLICK/SCAN
-// AttributionEvent) is the next bite — see docs/GROWTH_ENGINE.md §3.
+// GET /r/:code — resolve a Growth Asset distribution short link, record the hit as
+// an AttributionEvent, then 302 to its destination. Every QR / shared link routes
+// through here — this is where the funnel data enters. See docs/GROWTH_ENGINE.md §3.
 
 export default defineEventHandler(async (event) => {
   const code = getRouterParam(event, 'code')
@@ -28,6 +26,28 @@ export default defineEventHandler(async (event) => {
     )
     throw createError({ statusCode: 404, statusMessage: 'Link has no destination' })
   }
+
+  // Record the hit — the CARD's own code is a physical/screenshot SCAN; every other
+  // channel's code is a link CLICK. Fire-and-forget so a logging hiccup never blocks
+  // the buyer's redirect.
+  prisma.attributionEvent
+    .create({
+      data: {
+        distributionId: dist.id,
+        type: dist.channel === 'CARD' ? 'SCAN' : 'CLICK',
+        meta: {
+          ip: getHeader(event, 'x-forwarded-for')?.split(',')[0]?.trim() || null,
+          ua: getHeader(event, 'user-agent') || null,
+          referrer: getHeader(event, 'referer') || null,
+        },
+      },
+    })
+    .catch((error) =>
+      logger.logError('[GET /r/:code] attribution log failed', error, {
+        requestId: event.context?.requestId,
+        shortCode: code,
+      }),
+    )
 
   return sendRedirect(event, commerce.canonicalUrl, 302)
 })

@@ -1706,7 +1706,9 @@ enum GrowthAssetStatus {
 }
 
 enum GrowthChannel {
+  CARD // the card's own QR / direct scan — channel-agnostic, baked into the image
   ORGANIC_SHARE // seller shares it themselves (share-sheet/download) — no API, no gate
+  TIKTOK
   META_FB
   META_IG
   WHATSAPP
@@ -1873,4 +1875,47 @@ model GuardRailEvent {
 
   @@index([userId])
   @@index([type, createdAt])
+}
+
+// ── Growth Engine — Social connections ──────────────────────────────────────
+// A seller's authorization for MarketX to act on their social accounts (post
+// cards, read posts). Part of the extractable growth layer: sellerId is a scalar
+// ref, no relation. See docs/GROWTH_ENGINE.md.
+
+enum SocialPlatform {
+  TIKTOK
+  META_FB
+  META_IG
+}
+
+enum SocialConnectionStatus {
+  ACTIVE
+  EXPIRED // access token expired; refresh needed
+  REVOKED // seller disconnected or provider revoked
+  ERROR // last refresh/post failed — needs re-auth
+}
+
+/// Distinct from LOGIN OAuth: this carries POSTING scopes + a refresh token.
+/// Tokens are stored AES-256-GCM encrypted (same as UserAIConfig.apiKey).
+model SocialConnection {
+  id               String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sellerId         String                 @db.Uuid // scalar ref — no relation (extractable)
+  platform         SocialPlatform
+  /// Provider account id — TikTok open_id, FB page/user id. The stable handle.
+  providerUserId   String
+  displayName      String? // handle / display name for the UI
+  avatarUrl        String?
+  /// OAuth tokens — AES-256-GCM encrypted at rest, never returned to clients.
+  accessToken      String
+  refreshToken     String?
+  scope            String?
+  expiresAt        DateTime?              @db.Timestamptz(6)
+  refreshExpiresAt DateTime?              @db.Timestamptz(6)
+  status           SocialConnectionStatus @default(ACTIVE)
+  created_at       DateTime               @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime               @updatedAt @db.Timestamptz(6)
+
+  // One row per (seller, platform, account) — re-connecting the same account upserts.
+  @@unique([sellerId, platform, providerUserId])
+  @@index([sellerId, status])
 }

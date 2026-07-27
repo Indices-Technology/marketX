@@ -3,12 +3,15 @@
     class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-gray-50 dark:bg-neutral-950"
   >
     <div class="relative flex items-center justify-center">
-      <div class="absolute h-24 w-24 animate-ping rounded-full bg-brand/30" />
+      <!-- Breathing halo — kept from the original splash: a soft blurred glow
+           that swells, plus a radar ping, framing the full "mx." mark. -->
       <div
-        class="z-10 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand shadow-2xl shadow-brand/40"
-      >
-        <Icon name="solar:bag-4-linear" size="32" class="text-white" />
-      </div>
+        class="animate-mx-breathe absolute h-28 w-40 rounded-full bg-brand/20 blur-2xl"
+      />
+      <div class="absolute h-24 w-24 animate-ping rounded-full bg-brand/25" />
+
+      <!-- Full MarketX "mx." mark — circle m + x + coral dot -->
+      <BrandLogo variant="mark" class="relative z-10 h-14 w-24" />
     </div>
 
     <h1
@@ -27,3 +30,33 @@
     </p>
   </div>
 </template>
+
+<script setup lang="ts">
+import BrandLogo from '~~/layers/ui/app/components/BrandLogo.vue'
+</script>
+
+<style scoped>
+/* Soft "breathing" — gently swells and fades. Paired with the Tailwind
+   animate-ping radar pulse behind the mark. */
+@keyframes mx-breathe {
+  0%,
+  100% {
+    transform: scale(0.9);
+    opacity: 0.45;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.85;
+  }
+}
+.animate-mx-breathe {
+  animation: mx-breathe 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-mx-breathe,
+  .animate-ping {
+    animation: none;
+  }
+}
+</style>

@@ -119,8 +119,16 @@
           :product="product"
           :store-slug="storeSlug"
           @archive="confirmDelete"
+          @promote="promoteProduct = product"
         />
       </div>
+
+      <!-- Growth promote (card + organic share + TikTok) -->
+      <GrowthPromoteModal
+        :open="!!promoteProduct"
+        :product="promoteProduct"
+        @close="promoteProduct = null"
+      />
 
       <!-- Load More -->
       <div v-if="hasMore" class="mt-8 flex justify-center">
@@ -182,6 +190,7 @@ import { useProduct } from '~~/layers/commerce/app/composables/useProduct'
 import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { extractErrorMessage } from '~~/layers/core/app/utils/errors'
 import SellerProductCard from '~~/layers/seller/app/components/SellerProductCard.vue'
+import GrowthPromoteModal from '~~/layers/growth/app/components/GrowthPromoteModal.vue'
 
 definePageMeta({ middleware: 'auth', layout: 'store-layout' })
 
@@ -207,6 +216,7 @@ const offset = ref(0)
 const limit = 20
 const hasMore = computed(() => offset.value < total.value)
 const productToDelete = ref<any | null>(null)
+const promoteProduct = ref<any | null>(null)
 const isDeleting = ref(false)
 
 // Local loading/error — isolated from global Pinia store so other

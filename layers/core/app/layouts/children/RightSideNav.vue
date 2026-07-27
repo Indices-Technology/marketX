@@ -1,12 +1,25 @@
 <!-- ~~/layers/core/app/layouts/children/RightSideNav.vue -->
+<!--
+  Design pass notes (this revision):
+  - Tab bar de-glassed: solid fills, no backdrop-blur, no translucent borders.
+  - AI tab lost its glow (brand-tinted shadow + white blur overlay). The solid
+    brand fill alone marks it as the one special surface in the rail.
+  - Verified badge switched from Twitter-blue to mint — trust marks should
+    speak in MarketX's own trust color, not a borrowed platform's.
+  - Tabs got real tab semantics; transition-all narrowed to transition-colors.
+-->
 <template>
   <div class="flex h-full flex-col bg-white dark:bg-neutral-900">
     <!-- ── Tab Bar ───────────────────────────────────────────────────────────── -->
     <div
-      class="flex shrink-0 gap-1 border-b border-gray-200 bg-gray-50/80 p-2 backdrop-blur-sm dark:border-neutral-800/50 dark:bg-neutral-900/70"
+      role="tablist"
+      aria-label="Sidebar panels"
+      class="flex shrink-0 gap-1 border-b border-gray-200 bg-gray-50 p-2 dark:border-neutral-800 dark:bg-neutral-900"
     >
       <button
-        class="flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all"
+        role="tab"
+        :aria-selected="activeTab === 'discover'"
+        class="flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors"
         :class="
           activeTab === 'discover'
             ? 'border border-gray-200 bg-white text-gray-900 shadow-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-white'
@@ -19,28 +32,25 @@
       </button>
 
       <button
-        class="relative flex flex-1 items-center justify-center gap-2 overflow-hidden rounded-lg px-3 py-2.5 text-sm font-semibold transition-all"
+        role="tab"
+        :aria-selected="activeTab === 'ai'"
+        class="flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors"
         :class="
           activeTab === 'ai'
-            ? 'bg-brand text-white shadow-sm shadow-brand/20'
-            : 'text-gray-500 hover:bg-gray-100 hover:text-brand dark:text-neutral-400 dark:hover:bg-neutral-800'
+            ? 'bg-brand text-white'
+            : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-300'
         "
         @click="activeTab = 'ai'"
       >
-        <div
-          v-if="activeTab === 'ai'"
-          class="pointer-events-none absolute inset-0 bg-white/15 blur-sm"
-        />
         <Icon
           :name="
             activeTab === 'ai'
-              ? 'solar:programming-bold'
-              : 'solar:programming-linear'
+              ? 'solar:chat-round-dots-bold'
+              : 'solar:chat-round-dots-linear'
           "
           size="17"
-          class="relative z-10"
         />
-        <span class="relative z-10">MarketX AI</span>
+        <span>MarketX AI</span>
       </button>
     </div>
 
@@ -174,12 +184,16 @@
                   :logo="seller.store_logo ?? undefined"
                   size="lg"
                 />
+                <!-- Verified = MarketX's own trust mark, in the trust color.
+                     Not Twitter blue — verification here means escrow-backed
+                     identity, and it should look like the rest of that system. -->
                 <div
                   v-if="seller.is_verified"
-                  class="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-blue-500 ring-2 ring-white dark:ring-neutral-900"
+                  class="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-mint ring-2 ring-white dark:ring-neutral-900"
+                  aria-label="Verified seller"
                 >
                   <Icon
-                    name="solar:check-circle-linear"
+                    name="solar:check-read-linear"
                     size="10"
                     class="text-white"
                   />
@@ -462,7 +476,7 @@
         />
         <div v-else class="flex flex-1 items-center justify-center px-6">
           <BaseEmptyState
-            icon="solar:programming-linear"
+            icon="solar:chat-round-dots-linear"
             title="Sign in to use MarketX AI"
             description="Ask about products, prices and traders, and get answers from the live market."
           >
