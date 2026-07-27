@@ -10,13 +10,22 @@
           @{{ storeSlug }}
         </p>
       </div>
-      <NuxtLink
-        :to="`/seller/${storeSlug}/products/create`"
-        class="flex items-center gap-2 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#d81b36]"
-      >
-        <Icon name="solar:add-circle-linear" size="18" />
-        Add Product
-      </NuxtLink>
+      <div class="flex items-center gap-2">
+        <NuxtLink
+          :to="`/seller/${storeSlug}/products/bulk`"
+          class="flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:border-gray-300 dark:border-neutral-700 dark:text-neutral-200 dark:hover:border-neutral-600"
+        >
+          <Icon name="solar:gallery-add-linear" size="18" />
+          Bulk import
+        </NuxtLink>
+        <NuxtLink
+          :to="`/seller/${storeSlug}/products/create`"
+          class="flex items-center gap-2 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#d81b36]"
+        >
+          <Icon name="solar:add-circle-linear" size="18" />
+          Add Product
+        </NuxtLink>
+      </div>
     </div>
 
     <div>
@@ -110,8 +119,16 @@
           :product="product"
           :store-slug="storeSlug"
           @archive="confirmDelete"
+          @promote="promoteProduct = product"
         />
       </div>
+
+      <!-- Growth promote (card + organic share + TikTok) -->
+      <GrowthPromoteModal
+        :open="!!promoteProduct"
+        :product="promoteProduct"
+        @close="promoteProduct = null"
+      />
 
       <!-- Load More -->
       <div v-if="hasMore" class="mt-8 flex justify-center">
@@ -173,6 +190,7 @@ import { useProduct } from '~~/layers/commerce/app/composables/useProduct'
 import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { extractErrorMessage } from '~~/layers/core/app/utils/errors'
 import SellerProductCard from '~~/layers/seller/app/components/SellerProductCard.vue'
+import GrowthPromoteModal from '~~/layers/growth/app/components/GrowthPromoteModal.vue'
 
 definePageMeta({ middleware: 'auth', layout: 'store-layout' })
 
@@ -198,6 +216,7 @@ const offset = ref(0)
 const limit = 20
 const hasMore = computed(() => offset.value < total.value)
 const productToDelete = ref<any | null>(null)
+const promoteProduct = ref<any | null>(null)
 const isDeleting = ref(false)
 
 // Local loading/error — isolated from global Pinia store so other

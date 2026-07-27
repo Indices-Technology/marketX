@@ -30,18 +30,26 @@ export default defineEventHandler(async (event) => {
   }
 
   const body = await readBody(event)
-  const { imageBase64, mimeType, optionalHint } = body
+  const { imageBase64, mimeType, optionalHint, imageUrl } = body
 
-  if (!imageBase64 || !mimeType) {
+  // Accept EITHER a hosted image URL (bulk import — photo already on Cloudinary)
+  // OR inline base64 (single-product create, before upload). OpenAI vision takes
+  // a remote URL directly, so no fetch/re-encode is needed for the bulk path.
+  if (!imageUrl && (!imageBase64 || !mimeType)) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'imageBase64 and mimeType are required',
+      statusMessage: 'Provide either imageUrl, or imageBase64 + mimeType',
     })
   }
 
-  // Strip data URI prefix if client sent it (e.g. "data:image/jpeg;base64,...")
-  const cleanBase64 = (imageBase64 as string).replace(/^data:[^;]+;base64,/, '')
-  const dataUrl = `data:${mimeType};base64,${cleanBase64}`
+  let imageSource: string
+  if (imageUrl) {
+    imageSource = imageUrl as string
+  } else {
+    // Strip data URI prefix if client sent it (e.g. "data:image/jpeg;base64,...")
+    const cleanBase64 = (imageBase64 as string).replace(/^data:[^;]+;base64,/, '')
+    imageSource = `data:${mimeType};base64,${cleanBase64}`
+  }
 
   const systemPrompt = `You are an expert e-commerce copywriter and social media strategist for an African fashion & lifestyle marketplace.
 Your job is to analyze a product image and generate compelling, platform-optimized listing content.
@@ -80,7 +88,7 @@ Return ONLY this JSON structure:
               content: [
                 {
                   type: 'image_url',
-                  image_url: { url: dataUrl, detail: 'low' },
+                  image_url: { url: imageSource, detail: 'low' },
                 },
                 { type: 'text', text: userPrompt },
               ],

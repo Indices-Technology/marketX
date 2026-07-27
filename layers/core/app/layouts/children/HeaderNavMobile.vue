@@ -5,9 +5,7 @@
     <div class="flex h-14 items-center gap-2 px-4">
       <!-- Logo -->
       <NuxtLink to="/" class="flex shrink-0 items-center">
-        <span class="brand-wordmark" aria-label="MarketX">
-          <span>Market</span><span class="brand-x">X</span>
-        </span>
+        <BrandLogo variant="mark" class="h-6 w-auto" />
       </NuxtLink>
 
       <!-- Spacer -->
@@ -77,6 +75,7 @@ import { useRoute } from 'vue-router'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import { useNotificationStore } from '~~/layers/profile/app/stores/notification.store'
 import AppIcon from '~~/layers/ui/app/components/AppIcon.vue'
+import BrandLogo from '~~/layers/ui/app/components/BrandLogo.vue'
 
 defineEmits(['open-notifications', 'open-cart', 'open-search'])
 
@@ -103,28 +102,5 @@ const unreadCount = computed(() => notificationStore.unreadCount)
 
 .header-button {
   @apply rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100;
-}
-
-.brand-wordmark {
-  display: inline-flex;
-  align-items: baseline;
-  font-family: Archivo, Manrope, system-ui, sans-serif;
-  font-size: 1.12rem;
-  font-weight: 900;
-  letter-spacing: 0;
-  line-height: 1;
-  color: rgb(17 24 39);
-}
-
-:global(.dark) .brand-wordmark,
-:global(.theme-dark-mode) .brand-wordmark {
-  color: rgb(245 245 245);
-}
-
-.brand-x {
-  margin-left: 1px;
-  color: #f43f5e;
-  font-style: italic;
-  transform: translateY(-0.03em) skewX(-8deg);
 }
 </style>

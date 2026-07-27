@@ -412,9 +412,15 @@
                           "
                         />
                         <span
-                          class="text-[13px] font-semibold text-gray-700 dark:text-neutral-300"
+                          class="flex items-center gap-1.5 text-[13px] font-semibold text-gray-700 dark:text-neutral-300"
                         >
-                          {{ offer.label || `Buy ${offer.minQuantity}+` }}
+                          Buy {{ offer.minQuantity }}+
+                          <span
+                            v-if="offer.label"
+                            class="rounded-full bg-brand/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-brand"
+                          >
+                            {{ offer.label }}
+                          </span>
                         </span>
                       </div>
                       <span

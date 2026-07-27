@@ -83,6 +83,7 @@ export default defineNuxtConfig({
     './layers/admin',
     './layers/support',
     './layers/reputation',
+    './layers/growth',
   ],
 
   icon: {

@@ -1,179 +1,359 @@
-<!--
-  TrustCard — the discovery projection of a seller's reputation (framework §5.4).
-  Story-first: the trust story reads as a human sentence (numbers in context),
-  grounded by a real recent moment and small proof chips — not a stat grid.
-  Colour system: BLUE = verified identity (matches the rest of the app); MINT =
-  delivery success. Type snaps to the scale (font-display for the name + claim,
-  Manrope for detail). Identity AND story are real — headline/loyalty/recent/
-  stats are computed from actual orders, reviews and disputes in
-  /api/reputation/spotlight; sellers under MIN_EVIDENCE are excluded entirely.
--->
 <template>
-  <NuxtLink
-    :to="`/sellers/profile/${seller.store_slug}`"
-    class="group relative flex w-[272px] shrink-0 snap-start flex-col gap-3 overflow-hidden rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-gray-300 dark:border-neutral-800 dark:bg-neutral-900 dark:shadow-black/20 dark:hover:border-neutral-600"
+  <article
+    :class="[
+      'group relative flex min-w-[280px] max-w-[320px] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition-all duration-300 dark:bg-neutral-900',
+      tierStyles.container,
+      loading ? 'animate-pulse' : 'hover:-translate-y-1 hover:shadow-lg',
+    ]"
+    :aria-busy="loading"
   >
-    <!-- rank hairline — the only tier chrome, capped by design (§1.4) -->
-    <span class="absolute inset-x-0 top-0 h-[3px]" :class="tier.bar" />
-
-    <!-- identity -->
-    <div class="flex items-center gap-2.5">
-      <div class="relative shrink-0">
-        <div
-          class="flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl bg-brand/10 font-display text-sm font-black text-brand"
-        >
-          <img
-            v-if="seller.store_logo"
-            :src="logo"
-            :alt="name"
-            width="44"
-            height="44"
-            class="h-full w-full object-cover"
-            loading="lazy"
-            decoding="async"
+    <!-- Loading Skeleton -->
+    <template v-if="loading">
+      <div class="flex flex-1 flex-col gap-4 p-5">
+        <div class="flex items-center gap-3">
+          <div
+            class="h-12 w-12 rounded-xl bg-neutral-200 dark:bg-neutral-800"
           />
-          <template v-else>{{ initials }}</template>
+          <div class="flex-1 space-y-2">
+            <div class="h-4 w-24 rounded bg-neutral-200 dark:bg-neutral-800" />
+            <div class="h-3 w-16 rounded bg-neutral-200 dark:bg-neutral-800" />
+          </div>
         </div>
-        <span
-          v-if="seller.is_verified"
-          class="absolute -bottom-1 -right-1 flex h-[17px] w-[17px] items-center justify-center rounded-full border-2 border-white bg-blue-500 dark:border-neutral-900"
-          title="Verified seller"
-        >
-          <Icon name="solar:verified-check-bold" size="11" class="text-white" />
-        </span>
+        <div class="h-16 rounded-xl bg-neutral-200 dark:bg-neutral-800" />
+        <div class="space-y-2">
+          <div class="h-3 w-full rounded bg-neutral-200 dark:bg-neutral-800" />
+          <div class="h-3 w-3/4 rounded bg-neutral-200 dark:bg-neutral-800" />
+        </div>
       </div>
+    </template>
 
-      <div class="min-w-0 flex-1">
-        <p
-          class="truncate font-display text-sm font-bold text-gray-900 transition-colors group-hover:text-brand dark:text-neutral-100"
+    <!-- Content -->
+    <template v-else>
+      <NuxtLink
+        :to="sellerRoute"
+        class="flex flex-1 flex-col gap-4 p-5 transition-colors"
+      >
+        <!-- Header: Identity + Tier -->
+        <header class="flex items-start gap-3">
+          <!-- Avatar with verified overlay -->
+          <div class="relative shrink-0">
+            <div
+              class="flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl bg-neutral-100 ring-1 ring-black/5 transition-transform duration-300 group-hover:scale-105 dark:bg-neutral-800 dark:ring-white/10"
+            >
+              <img
+                v-if="seller.store_logo && !logoError"
+                :src="logoUrl"
+                :alt="`${name} logo`"
+                width="48"
+                height="48"
+                class="h-full w-full object-cover"
+                loading="lazy"
+                decoding="async"
+                @error="logoError = true"
+              />
+              <span
+                v-else
+                class="font-display text-sm font-black text-neutral-700 dark:text-neutral-300"
+              >
+                {{ initials }}
+              </span>
+            </div>
+
+            <!-- Verified: Better visual weight -->
+            <div
+              v-if="seller.is_verified"
+              class="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-white shadow-md ring-2 ring-white dark:ring-neutral-900"
+              title="Identity verified by platform"
+            >
+              <Icon name="solar:verified-check-bold" size="12" />
+            </div>
+          </div>
+
+          <!-- Name & Meta -->
+          <div class="min-w-0 flex-1 pt-0.5">
+            <h3
+              class="truncate font-display text-[15px] font-bold tracking-tight text-neutral-900 transition-colors group-hover:text-brand dark:text-neutral-100"
+            >
+              {{ name }}
+            </h3>
+            <p
+              v-if="seller.publicId"
+              class="mt-0.5 font-mono text-[10px] font-semibold uppercase tracking-widest text-neutral-400 dark:text-neutral-500"
+            >
+              {{ seller.publicId }}
+            </p>
+          </div>
+
+          <!-- Tier Badge: Icon + Label for instant recognition -->
+          <span
+            class="inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-[10px] font-extrabold uppercase tracking-wider shadow-sm"
+            :class="tierStyles.badge"
+          >
+            <Icon :name="tierStyles.icon" size="12" />
+            {{ tierStyles.label }}
+          </span>
+        </header>
+
+        <!-- Trust Credential: The "why" this seller is safe -->
+        <div
+          v-if="seller.headline"
+          class="relative overflow-hidden rounded-xl border p-3"
+          :class="tierStyles.trustBox"
         >
-          {{ name }}
-        </p>
-        <p
-          v-if="seller.publicId"
-          class="mt-0.5 font-mono text-2xs font-semibold uppercase tabular-nums tracking-wide text-gray-400 dark:text-neutral-500"
+          <div class="flex items-start gap-2.5">
+            <div
+              class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full"
+              :class="tierStyles.trustIconBg"
+            >
+              <Icon
+                name="solar:shield-check-bold"
+                size="14"
+                :class="tierStyles.trustIcon"
+              />
+            </div>
+            <p
+              class="font-display text-[13px] font-semibold leading-snug"
+              :class="tierStyles.trustText"
+            >
+              {{ seller.headline }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Supporting Evidence: Compact, scannable list -->
+        <dl
+          class="flex flex-col gap-2 text-xs text-neutral-500 dark:text-neutral-400"
         >
-          {{ seller.publicId }}
-        </p>
-      </div>
+          <div v-if="seller.loyalty" class="flex items-center gap-2">
+            <dt class="shrink-0">
+              <Icon
+                name="solar:medal-ribbon-star-linear"
+                size="14"
+                class="text-neutral-400 dark:text-neutral-500"
+              />
+            </dt>
+            <dd class="truncate font-medium">{{ seller.loyalty }}</dd>
+          </div>
+          <div v-if="seller.recent" class="flex items-center gap-2">
+            <dt class="shrink-0">
+              <Icon
+                name="solar:map-point-linear"
+                size="14"
+                class="text-neutral-400 dark:text-neutral-500"
+              />
+            </dt>
+            <dd class="truncate font-medium">{{ seller.recent }}</dd>
+          </div>
+        </dl>
 
-      <span
-        class="shrink-0 self-start rounded-md px-1.5 py-0.5 text-3xs font-extrabold uppercase tracking-wider"
-        :class="tier.chip"
-      >
-        {{ tier.label }}
-      </span>
-    </div>
+        <!-- Proof Chips: Horizontal scroll on overflow instead of wrapping -->
+        <div v-if="seller.chips?.length" class="-mx-5 px-5">
+          <div
+            class="scrollbar-hide flex gap-2 overflow-x-auto pb-1"
+            tabindex="0"
+            role="group"
+            aria-label="Trust signals"
+          >
+            <span
+              v-for="(chip, i) in seller.chips"
+              :key="chip.label"
+              class="mx-chip-in inline-flex shrink-0 items-center gap-1.5 rounded-lg border bg-neutral-50 px-2.5 py-1 text-[11px] font-semibold text-neutral-600 transition-all duration-200 hover:bg-neutral-100 dark:bg-neutral-800/60 dark:text-neutral-300"
+              :class="chipBorder"
+              :style="{ animationDelay: `${i * 60}ms` }"
+            >
+              <Icon
+                :name="chip.icon"
+                size="12"
+                class="text-neutral-400 dark:text-neutral-500"
+              />
+              {{ chip.label }}
+            </span>
+          </div>
+        </div>
 
-    <!-- the story — a sentence a buyer can relate to (mint = delivered safely) -->
-    <div class="flex items-start gap-2">
-      <Icon
-        name="solar:check-circle-bold"
-        size="17"
-        class="mt-px shrink-0 text-mint-dark dark:text-mint"
-      />
-      <p
-        class="font-display text-sm font-bold leading-snug text-gray-900 dark:text-neutral-50"
-      >
-        {{ seller.headline }}
-      </p>
-    </div>
+        <!-- Footer: Clear CTA + Security Lockup -->
+        <footer
+          class="mt-auto flex items-center justify-between border-t pt-4"
+          :class="tierStyles.footerBorder"
+        >
+          <span
+            class="inline-flex items-center gap-1.5 text-sm font-bold text-neutral-900 transition-colors group-hover:text-brand dark:text-white"
+          >
+            View profile
+            <Icon
+              name="solar:arrow-right-linear"
+              size="14"
+              class="transition-transform duration-200 group-hover:translate-x-1"
+            />
+          </span>
 
-    <!-- two supporting story beats: loyalty + a real recent moment -->
-    <div
-      class="flex flex-col gap-1.5 text-xs leading-snug text-gray-500 dark:text-neutral-400"
-    >
-      <span class="flex items-center gap-1.5">
-        <Icon
-          name="solar:refresh-circle-linear"
-          size="14"
-          class="shrink-0 text-gray-400 dark:text-neutral-500"
-        />
-        {{ seller.loyalty }}
-      </span>
-      <span class="flex items-center gap-1.5">
-        <Icon
-          name="solar:map-point-linear"
-          size="14"
-          class="shrink-0 text-gray-400 dark:text-neutral-500"
-        />
-        <span class="truncate">{{ seller.recent }}</span>
-      </span>
-    </div>
-
-    <!-- proof chips — why you can trust the story above -->
-    <div class="flex flex-wrap gap-1.5">
-      <span
-        v-for="chip in seller.chips"
-        :key="chip.label"
-        class="inline-flex items-center gap-1 rounded-md bg-gray-50 px-1.5 py-0.5 text-2xs font-semibold text-gray-600 dark:bg-neutral-800 dark:text-neutral-300"
-      >
-        <Icon
-          :name="chip.icon"
-          size="11"
-          class="text-gray-400 dark:text-neutral-500"
-        />
-        {{ chip.label }}
-      </span>
-    </div>
-
-    <!-- entry point into the full buyer view (/t/{publicId}) -->
-    <div
-      class="mt-auto flex items-center justify-between border-t border-gray-100 pt-2.5 dark:border-neutral-800"
-    >
-      <span class="flex items-center gap-1 text-xs font-bold text-brand">
-        View trust profile
-        <Icon name="solar:arrow-right-linear" size="13" />
-      </span>
-      <span
-        class="flex items-center gap-1 text-2xs font-semibold text-gray-400 dark:text-neutral-500"
-      >
-        <Icon name="solar:lock-keyhole-minimalistic-bold" size="11" />
-        Protected
-      </span>
-    </div>
-  </NuxtLink>
+          <span
+            class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold"
+            :class="tierStyles.escrow"
+          >
+            <Icon name="solar:lock-keyhole-minimalistic-bold" size="11" />
+            Escrow
+          </span>
+        </footer>
+      </NuxtLink>
+    </template>
+  </article>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { imgAvatar } from '~~/layers/core/app/utils/cloudinary'
 import type { TrustSpotlightSeller } from '~~/layers/reputation/app/types/trust.types'
 
-const props = defineProps<{ seller: TrustSpotlightSeller }>()
-
-const name = computed(
-  () => props.seller.store_name || props.seller.store_slug || 'Store',
+const props = withDefaults(
+  defineProps<{
+    seller: TrustSpotlightSeller
+    loading?: boolean
+  }>(),
+  {
+    loading: false,
+  },
 )
 
-const logo = computed(() =>
-  props.seller.store_logo ? imgAvatar(props.seller.store_logo) : '',
-)
+const logoError = ref(false)
 
-const initials = computed(() =>
-  (props.seller.store_name || props.seller.store_slug || '?')
+// ─── Route ─────────────────────────────────────────────
+const sellerRoute = computed(() => {
+  if (!props.seller?.store_slug) return '#'
+  return `/sellers/profile/${props.seller.store_slug}`
+})
+
+// ─── Identity ──────────────────────────────────────────
+const name = computed(() => {
+  return (
+    props.seller?.store_name?.trim() ||
+    props.seller?.store_slug ||
+    'Unnamed Store'
+  )
+})
+
+const logoUrl = computed(() => {
+  if (!props.seller?.store_logo) return ''
+  return imgAvatar(props.seller.store_logo)
+})
+
+const initials = computed(() => {
+  const source = props.seller?.store_name || props.seller?.store_slug || '?'
+  return source
+    .split(' ')
+    .map((w) => w[0])
+    .join('')
     .slice(0, 2)
-    .toUpperCase(),
-)
+    .toUpperCase()
+})
 
-// Rank chrome — shown, but structurally minor (a hairline + a small chip).
-const TIERS = {
+// ─── Tier System: Semantic, accessible, scalable ───────
+type TierKey = 'TIER_1' | 'TIER_2' | 'TIER_3'
+
+const TIERS: Record<
+  TierKey,
+  {
+    label: string
+    icon: string
+    container: string
+    badge: string
+    trustBox: string
+    trustIconBg: string
+    trustIcon: string
+    trustText: string
+    escrow: string
+    footerBorder: string
+  }
+> = {
   TIER_1: {
-    label: 'Tier 1',
-    bar: 'bg-amber-400',
-    chip: 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400',
+    label: 'Gold',
+    icon: 'solar:crown-bold',
+    container:
+      'border-amber-200/60 dark:border-amber-500/20 hover:border-amber-300 dark:hover:border-amber-500/40',
+    badge:
+      'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/15 dark:text-amber-300',
+    trustBox:
+      'border-amber-100 bg-amber-50/50 dark:border-amber-500/15 dark:bg-amber-500/10',
+    trustIconBg:
+      'bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300',
+    trustIcon: 'text-amber-600 dark:text-amber-300',
+    trustText: 'text-amber-900 dark:text-amber-100',
+    escrow: 'bg-mint/10 text-mint-dark dark:bg-mint/15 dark:text-mint',
+    footerBorder: 'border-amber-100 dark:border-amber-500/10',
   },
   TIER_2: {
-    label: 'Tier 2',
-    bar: 'bg-slate-300 dark:bg-slate-500',
-    chip: 'bg-slate-100 text-slate-600 dark:bg-neutral-800 dark:text-neutral-300',
+    label: 'Silver',
+    icon: 'solar:medal-star-circle-bold',
+    container:
+      'border-slate-200 dark:border-slate-600/30 hover:border-slate-300 dark:hover:border-slate-500/50',
+    badge:
+      'border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-500/30 dark:bg-slate-500/15 dark:text-slate-200',
+    trustBox:
+      'border-slate-100 bg-slate-50/50 dark:border-slate-500/15 dark:bg-slate-500/10',
+    trustIconBg:
+      'bg-slate-100 text-slate-600 dark:bg-slate-500/20 dark:text-slate-300',
+    trustIcon: 'text-slate-600 dark:text-slate-300',
+    trustText: 'text-slate-900 dark:text-slate-100',
+    escrow: 'bg-mint/10 text-mint-dark dark:bg-mint/15 dark:text-mint',
+    footerBorder: 'border-slate-100 dark:border-slate-500/10',
   },
   TIER_3: {
-    label: 'Tier 3',
-    bar: 'bg-orange-300 dark:bg-orange-500/60',
-    chip: 'bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400',
+    label: 'Bronze',
+    icon: 'solar:star-bold',
+    container:
+      'border-orange-200/60 dark:border-orange-500/20 hover:border-orange-300 dark:hover:border-orange-500/40',
+    badge:
+      'border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-500/30 dark:bg-orange-500/15 dark:text-orange-300',
+    trustBox:
+      'border-orange-100 bg-orange-50/50 dark:border-orange-500/15 dark:bg-orange-500/10',
+    trustIconBg:
+      'bg-orange-100 text-orange-600 dark:bg-orange-500/20 dark:text-orange-300',
+    trustIcon: 'text-orange-600 dark:text-orange-300',
+    trustText: 'text-orange-900 dark:text-orange-100',
+    escrow: 'bg-mint/10 text-mint-dark dark:bg-mint/15 dark:text-mint',
+    footerBorder: 'border-orange-100 dark:border-orange-500/10',
   },
-} as const
+}
 
-const tier = computed(() => TIERS[props.seller.tier])
+const tierStyles = computed(() => {
+  const key = (props.seller?.tier as TierKey) ?? 'TIER_2'
+  return TIERS[key] ?? TIERS.TIER_2
+})
+
+const chipBorder = computed(() => {
+  return 'border-black/[0.04] dark:border-white/[0.06] hover:border-black/10 dark:hover:border-white/10'
+})
 </script>
+
+<style scoped>
+/* Hide scrollbar for chip row while keeping scrollability */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Staggered chip entrance — CSS-only (no JS `mounted` flag, so no
+   hydration flash). `backwards` fill holds the hidden state during the
+   per-chip delay, and the base (no-animation) state stays visible. */
+@keyframes mx-chip-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.mx-chip-in {
+  animation: mx-chip-in 0.4s ease-out backwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mx-chip-in {
+    animation: none;
+  }
+}
+</style>

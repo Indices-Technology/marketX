@@ -56,7 +56,7 @@
         <thead class="bg-gray-50 dark:bg-neutral-800/50">
           <tr class="text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-neutral-500">
             <th class="px-4 py-3">Store</th>
-            <th class="px-4 py-3">Amount</th>
+            <th class="px-4 py-3">Payable</th>
             <th class="px-4 py-3">Bank</th>
             <th class="px-4 py-3">Requested</th>
             <th class="px-4 py-3">Status</th>
@@ -83,13 +83,14 @@
                 </div>
               </div>
             </td>
-            <!-- Amount -->
+            <!-- Amount: payable (net) is what the admin transfers; gross is what
+                 was debited from the wallet. Both shown to avoid over-paying. -->
             <td class="px-4 py-3">
               <p class="font-semibold text-gray-900 dark:text-neutral-100">
-                {{ formatNGN(p.amount) }}
+                {{ formatNGN(payableOf(p)) }}
               </p>
-              <p v-if="netOf(p) != null" class="text-[11px] text-gray-400 dark:text-neutral-500">
-                net {{ formatNGN(netOf(p)) }}
+              <p class="text-[11px] text-gray-400 dark:text-neutral-500">
+                {{ formatNGN(p.amount) }} requested<template v-if="totalFeesOf(p) != null"> · {{ formatNGN(totalFeesOf(p)) }} fees</template>
               </p>
             </td>
             <!-- Bank -->
@@ -161,12 +162,40 @@
             </span>
           </div>
           <div class="mt-1 flex items-center justify-between">
-            <span class="text-gray-500 dark:text-neutral-400">Amount</span>
-            <span class="font-semibold text-gray-900 dark:text-neutral-100">
+            <span class="text-gray-500 dark:text-neutral-400">Requested (debited)</span>
+            <span class="text-gray-700 dark:text-neutral-300">
               {{ formatNGN(modal.payout.amount) }}
             </span>
           </div>
-          <div class="mt-1 flex items-center justify-between">
+          <div
+            v-if="feesOf(modal.payout).platformFee != null"
+            class="mt-1 flex items-center justify-between"
+          >
+            <span class="text-gray-500 dark:text-neutral-400">Platform fee</span>
+            <span class="text-gray-700 dark:text-neutral-300">
+              −{{ formatNGN(feesOf(modal.payout).platformFee) }}
+            </span>
+          </div>
+          <div
+            v-if="feesOf(modal.payout).transferFee != null"
+            class="mt-1 flex items-center justify-between"
+          >
+            <span class="text-gray-500 dark:text-neutral-400">Transfer fee</span>
+            <span class="text-gray-700 dark:text-neutral-300">
+              −{{ formatNGN(feesOf(modal.payout).transferFee) }}
+            </span>
+          </div>
+          <div
+            class="mt-2 flex items-center justify-between border-t border-gray-200 pt-2 dark:border-neutral-700"
+          >
+            <span class="font-medium text-gray-900 dark:text-neutral-100">
+              {{ modal.action === 'PAID' ? 'Transfer to seller' : 'Net to seller' }}
+            </span>
+            <span class="text-base font-bold text-gray-900 dark:text-neutral-100">
+              {{ formatNGN(payableOf(modal.payout)) }}
+            </span>
+          </div>
+          <div class="mt-2 flex items-center justify-between">
             <span class="text-gray-500 dark:text-neutral-400">Pay to</span>
             <span class="text-right text-gray-700 dark:text-neutral-300">
               {{ modal.payout.bank_account?.name }}<br />
@@ -185,8 +214,8 @@
             placeholder="e.g. FT250706XYZ"
           />
           <p class="text-[12px] text-gray-500 dark:text-neutral-400">
-            Confirm only after you've completed the bank transfer. This records the
-            payout as settled.
+            Transfer <span class="font-semibold text-gray-700 dark:text-neutral-300">{{ formatNGN(payableOf(modal.payout)) }}</span>
+            to the seller's bank, then confirm. This records the payout as settled.
           </p>
         </template>
         <template v-else>
@@ -260,10 +289,31 @@ watch(statusFilter, () => {
   offset.value = 0
 })
 
-// Net amount the seller receives (gross minus fees), stored on the request.
-function netOf(p: any): number | null {
-  const n = p?.bank_account?.netAmount
-  return typeof n === 'number' ? n : null
+// Fee breakdown stored on the request at withdrawal time (all in kobo).
+// `netAmount` is what the seller actually receives — i.e. what the admin must
+// transfer. The gross (`p.amount`) is what was debited from the wallet.
+function feesOf(p: any): { net: number | null; platformFee: number | null; transferFee: number | null } {
+  const ba = p?.bank_account ?? {}
+  const num = (v: unknown) => (typeof v === 'number' ? v : null)
+  return {
+    net: num(ba.netAmount),
+    platformFee: num(ba.platformFee),
+    transferFee: num(ba.transferFee),
+  }
+}
+
+// Amount the admin should actually transfer to the seller (net of fees).
+// Falls back to the gross for legacy payouts recorded before fees were stored.
+function payableOf(p: any): number {
+  const { net } = feesOf(p)
+  return net ?? p?.amount ?? 0
+}
+
+// Total fees withheld (platform + transfer), or null when not recorded.
+function totalFeesOf(p: any): number | null {
+  const { platformFee, transferFee } = feesOf(p)
+  if (platformFee == null && transferFee == null) return null
+  return (platformFee ?? 0) + (transferFee ?? 0)
 }
 
 function statusClass(status: string) {

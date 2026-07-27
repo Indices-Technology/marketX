@@ -1,4 +1,4 @@
-<!--
+  <!--
   TrustSpotlightRail — top-seller trust cards interleaved into the home feed
   (framework §5.4). Interleaves the same way FeedProductShelf does. Sellers earn
   a slot through verified commerce, never followers; the rail self-hides when it

@@ -333,46 +333,17 @@
           <!-- Tags -->
           <ProductTagsSection :tag-names="form.tagNames" />
 
+          <!-- Distribution -->
+          <ProductDistributionSection
+            :form="form"
+            :is-premium-seller="isPremiumSeller"
+            :has-video="hasVideo"
+            :conditions="CONDITIONS"
+            :min-deal-date="minDealDate"
+          />
+
           <!-- Flags -->
-          <div
-            class="rounded-xl border border-gray-200 bg-white p-6 dark:border-neutral-700 dark:bg-neutral-800"
-          >
-            <h2 class="mb-4 font-semibold text-gray-900 dark:text-neutral-100">
-              Product Flags
-            </h2>
-            <div class="grid grid-cols-3 gap-4">
-              <label class="flex cursor-pointer items-center gap-2">
-                <input
-                  v-model="form.isFeatured"
-                  type="checkbox"
-                  class="h-4 w-4 rounded border-gray-300 text-brand focus:ring-brand"
-                />
-                <span class="text-sm text-gray-700 dark:text-neutral-300"
-                  >Featured</span
-                >
-              </label>
-              <label class="flex cursor-pointer items-center gap-2">
-                <input
-                  v-model="form.isThrift"
-                  type="checkbox"
-                  class="h-4 w-4 rounded border-gray-300 text-brand focus:ring-brand"
-                />
-                <span class="text-sm text-gray-700 dark:text-neutral-300"
-                  >Thrift</span
-                >
-              </label>
-              <label class="flex cursor-pointer items-center gap-2">
-                <input
-                  v-model="form.isAccessory"
-                  type="checkbox"
-                  class="h-4 w-4 rounded border-gray-300 text-brand focus:ring-brand"
-                />
-                <span class="text-sm text-gray-700 dark:text-neutral-300"
-                  >Accessory</span
-                >
-              </label>
-            </div>
-          </div>
+          <ProductFlagsSection :form="form" />
 
           <!-- Submit -->
           <div class="flex gap-3">
@@ -463,6 +434,7 @@ import { useRoute } from 'vue-router'
 import { notify } from '@kyvg/vue3-notification'
 import { useProduct } from '~~/layers/commerce/app/composables/useProduct'
 import { useProductApi } from '~~/layers/commerce/app/services/product.api'
+import { useSellerApi } from '~~/layers/seller/app/services/seller.services'
 import { useMediaUpload } from '~~/layers/core/app/composables/useMediaUpload'
 import { useAiApi } from '~~/layers/core/app/services/ai.api'
 import { extractErrorMessage } from '~~/layers/core/app/utils/errors'
@@ -475,6 +447,8 @@ import ProductVariantsSection from '~~/layers/seller/app/components/product-form
 import VolumeOffersSection from '~~/layers/seller/app/components/product-form/VolumeOffersSection.vue'
 import ProductCategoriesSection from '~~/layers/seller/app/components/product-form/ProductCategoriesSection.vue'
 import ProductTagsSection from '~~/layers/seller/app/components/product-form/ProductTagsSection.vue'
+import ProductDistributionSection from '~~/layers/seller/app/components/product-form/ProductDistributionSection.vue'
+import ProductFlagsSection from '~~/layers/seller/app/components/product-form/ProductFlagsSection.vue'
 
 definePageMeta({ middleware: 'auth', layout: 'store-layout' })
 
@@ -630,12 +604,44 @@ const form = reactive({
     discount: number | null
     label: string
   }>,
+  // Distribution — where this product appears
+  showInFeed: false,
+  showInReels: false,
+  isDeal: false,
+  dealEndsAt: '' as string,
+  condition: '' as string,
+  socialCaptions: { feedCaption: '' },
 })
 
 const socialCaptions = reactive({
   instagram: '',
   facebook: '',
   pinterest: '',
+})
+
+// ── Distribution helpers (parity with the create page) ────────────────────────
+const CONDITIONS = [
+  { value: 'NEW_WITH_TAGS', label: 'New with tags' },
+  { value: 'LIKE_NEW', label: 'Like new' },
+  { value: 'GOOD', label: 'Good' },
+  { value: 'FAIR', label: 'Fair' },
+  { value: 'POOR', label: 'Poor' },
+]
+
+const isPremiumSeller = ref(false)
+
+const hasVideo = computed(
+  () =>
+    visibleExistingMedia.value.some((m) => m.type === 'VIDEO') ||
+    newMediaItems.value.some(
+      (m) => m.result?.type === 'VIDEO' || m.file.type.startsWith('video/'),
+    ),
+)
+
+const minDealDate = computed(() => {
+  const d = new Date()
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset())
+  return d.toISOString().slice(0, 16)
 })
 
 const categories = ref<Array<{ id: number; name: string; slug: string }>>([])
@@ -661,6 +667,18 @@ onMounted(async () => {
           form.isThrift = product.isThrift ?? false
           form.isAccessory = product.isAccessory ?? false
           form.affiliateCommission = product.affiliateCommission ?? null
+
+          // Distribution
+          form.showInFeed = product.showInFeed ?? false
+          form.showInReels = product.showInReels ?? false
+          form.isDeal = product.isDeal ?? false
+          form.condition = product.condition ?? ''
+          if (product.dealEndsAt) {
+            // ISO → value the datetime-local input expects (local, no seconds/zone)
+            const d = new Date(product.dealEndsAt)
+            d.setMinutes(d.getMinutes() - d.getTimezoneOffset())
+            form.dealEndsAt = d.toISOString().slice(0, 16)
+          }
           form.categoryIds = (product.category || []).map(
             (c: any) => c.category.id,
           )
@@ -700,6 +718,7 @@ onMounted(async () => {
             socialCaptions.instagram = sc.instagram || ''
             socialCaptions.facebook = sc.facebook || ''
             socialCaptions.pinterest = sc.pinterest || ''
+            form.socialCaptions.feedCaption = sc.feedCaption || ''
           }
         }
       } catch (e: any) {
@@ -714,6 +733,14 @@ onMounted(async () => {
   if (catRes.status === 'fulfilled')
     categories.value = (catRes.value as any).data || []
   categoriesLoading.value = false
+
+  // Premium gating for Share to Feed / Reels — non-critical, defaults to false
+  try {
+    const res: any = await useSellerApi().getSellerProfileBySlug(storeSlug.value)
+    isPremiumSeller.value = res?.data?.isPremium ?? false
+  } catch {
+    // ignore — leaves the premium-only toggles disabled
+  }
 })
 
 // Draft vs Publish are explicit buttons — set the status, then submit.
@@ -734,7 +761,26 @@ const handleSubmit = async () => {
       isFeatured: form.isFeatured,
       isThrift: form.isThrift,
       isAccessory: form.isAccessory,
+      // Distribution
+      showInFeed: form.showInFeed,
+      showInReels: form.showInReels,
+      isDeal: form.isDeal,
+      dealEndsAt:
+        form.isDeal && form.dealEndsAt
+          ? new Date(form.dealEndsAt).toISOString()
+          : null,
+      condition: form.isThrift && form.condition ? form.condition : null,
     }
+
+    // Social captions (feed + socials) — merge so a Details save never wipes
+    // captions set on the Promote tab. Only sent when something is present.
+    const captions: Record<string, string> = {}
+    if (socialCaptions.instagram) captions.instagram = socialCaptions.instagram
+    if (socialCaptions.facebook) captions.facebook = socialCaptions.facebook
+    if (socialCaptions.pinterest) captions.pinterest = socialCaptions.pinterest
+    if (form.socialCaptions.feedCaption)
+      captions.feedCaption = form.socialCaptions.feedCaption
+    if (Object.keys(captions).length) payload.socialCaptions = captions
 
     if (form.SKU) payload.SKU = form.SKU
     payload.affiliateCommission =

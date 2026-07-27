@@ -18,11 +18,6 @@
       <!-- ── STEP 0: Choose path ─────────────────────────────────────────────── -->
       <div v-if="step === 0" class="fade-in w-full max-w-xl">
         <div class="mb-8 text-center">
-          <div
-            class="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-brand shadow-2xl shadow-brand/40"
-          >
-            <span class="text-base font-black italic text-white">MX</span>
-          </div>
           <h1 class="text-3xl font-black tracking-tight text-white sm:text-4xl">
             Join MarketX
           </h1>

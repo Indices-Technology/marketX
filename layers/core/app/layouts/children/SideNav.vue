@@ -8,15 +8,8 @@
       :class="expanded ? 'justify-start px-1' : 'justify-center'"
       aria-label="MarketX"
     >
-      <span v-if="expanded" class="brand-wordmark inline-flex">
-        <span>Market</span><span class="brand-x">X</span>
-      </span>
-      <span
-        v-else
-        class="flex h-9 w-9 items-center justify-center rounded-xl bg-brand text-sm font-black italic text-white shadow-sm shadow-brand/25"
-      >
-        MX
-      </span>
+      <BrandLogo v-if="expanded" variant="wordmark" />
+      <BrandLogo v-else variant="mark" class="h-7 w-auto" />
     </NuxtLink>
 
     <!-- Scrollable nav area — profile stays pinned below this -->
@@ -347,6 +340,7 @@ import { useChatStore } from '~~/layers/profile/app/stores/chat.store'
 import { useChat } from '~~/layers/profile/app/composables/useChat'
 import Avatar from '~~/layers/profile/app/components/Avatar.vue'
 import AppIcon from '~~/layers/ui/app/components/AppIcon.vue'
+import BrandLogo from '~~/layers/ui/app/components/BrandLogo.vue'
 import AccountMenu from './AccountMenu.vue'
 
 defineEmits(['create', 'open-notifications', 'open-cart'])
@@ -464,27 +458,5 @@ onUnmounted(() => document.removeEventListener('click', onClickOutside, true))
 .nav-scroll {
   -ms-overflow-style: none;
   scrollbar-width: none;
-}
-
-.brand-wordmark {
-  align-items: baseline;
-  font-family: Archivo, Manrope, system-ui, sans-serif;
-  font-size: 1.24rem;
-  font-weight: 900;
-  letter-spacing: 0;
-  line-height: 1;
-  color: rgb(17 24 39);
-}
-
-:global(.dark) .brand-wordmark,
-:global(.theme-dark-mode) .brand-wordmark {
-  color: white;
-}
-
-.brand-x {
-  margin-left: 1px;
-  color: #f43f5e;
-  font-style: italic;
-  transform: translateY(-0.03em) skewX(-8deg);
 }
 </style>

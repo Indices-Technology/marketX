@@ -24,6 +24,18 @@ export class AiApiClient extends BaseApiClient {
     }) as Promise<{ success: boolean; data: IAiListingResult }>
   }
 
+  /** Generate a listing from an already-hosted image URL (bulk import). */
+  async generateListingFromUrl(
+    imageUrl: string,
+    optionalHint = '',
+  ): Promise<{ success: boolean; data: IAiListingResult }> {
+    return this.request('/api/ai/generate-listing', {
+      method: 'POST',
+      body: { imageUrl, optionalHint },
+      silent: true,
+    }) as Promise<{ success: boolean; data: IAiListingResult }>
+  }
+
   async enhanceDescription(
     description: string,
   ): Promise<{ success: boolean; html: string }> {

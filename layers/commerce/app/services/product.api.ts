@@ -49,6 +49,24 @@ export class ProductApiClient extends BaseApiClient {
     })
   }
 
+  /** Bulk-create products (as DRAFT) from staged import rows. Partial success. */
+  async bulkImportProducts(
+    rows: Record<string, unknown>[],
+    storeSlug?: string,
+  ): Promise<{
+    success: boolean
+    data: {
+      summary: { total: number; created: number; failed: number }
+      created: Array<{ index: number; id: number; slug: string; title: string }>
+      errors: Array<{ index: number; error: string }>
+    }
+  }> {
+    return this.request('/api/commerce/products/bulk', {
+      method: 'POST',
+      body: { rows, ...(storeSlug ? { storeSlug } : {}) },
+    })
+  }
+
   async deleteProduct(id: number) {
     return this.request(`/api/commerce/products/${id}`, { method: 'DELETE' })
   }

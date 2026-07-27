@@ -77,8 +77,12 @@
       </div>
     </div>
 
-    <!-- Category tabs — inline on mobile, desktop uses SideNav -->
-    <CategoryListMobile class="-mx-2 mb-3 sm:-mx-4" />
+    <!-- Category tabs — inline on mobile, desktop uses SideNav.
+         TODO: CategoryListMobile was removed during a refactor and never replaced,
+         which threw "Failed to resolve component". To restore: wrap CategoryPills
+         (needs :categories from productApi.getCategories() + a v-model) and wire the
+         selection to filter the feed. Disabled for now to keep the console clean. -->
+    <!-- <CategoryListMobile class="-mx-2 mb-3 sm:-mx-4" /> -->
 
     <!-- Stories Section -->
     <ClientOnly>
@@ -239,10 +243,7 @@
         </div>
       </div>
 
-      <div
-        v-else-if="nearbyStores.length"
-        class="scrollbar-hide flex gap-3 overflow-x-auto pb-2"
-      >
+      <CarouselRail v-else-if="nearbyStores.length" :gap="12" pad="16px">
         <NuxtLink
           v-for="store in nearbyStores"
           :key="store.store_slug"
@@ -291,7 +292,7 @@
             {{ store.distanceKm.toFixed(1) }}km
           </p>
         </NuxtLink>
-      </div>
+      </CarouselRail>
 
       <div v-else>
         <button
@@ -494,6 +495,7 @@ import BaseSkeleton from '~~/layers/ui/app/components/BaseSkeleton.vue'
 import BaseEmptyState from '~~/layers/ui/app/components/BaseEmptyState.vue'
 import BaseTabs from '~~/layers/ui/app/components/BaseTabs.vue'
 import FeedProductShelf from '~~/layers/feed/app/components/FeedProductShelf.vue'
+import CarouselRail from '~~/layers/ui/app/components/CarouselRail.vue'
 import PostCard from '~~/layers/social/app/components/PostCard.vue'
 import PostListCard from '~~/layers/social/app/components/PostListCard.vue'
 import TrustSpotlightRail from '~~/layers/reputation/app/components/TrustSpotlightRail.vue'

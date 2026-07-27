@@ -62,7 +62,9 @@
             <p class="text-lg font-bold text-gray-900 dark:text-white">
               {{ yesterday?.views ?? 0 }}
             </p>
-            <p class="text-[10px] text-gray-400 dark:text-neutral-500">Visitors</p>
+            <p class="text-[10px] text-gray-400 dark:text-neutral-500">
+              Visitors
+            </p>
           </div>
           <div
             class="rounded-xl bg-gray-50 p-3 text-center dark:bg-neutral-800/50"
@@ -70,7 +72,9 @@
             <p class="text-lg font-bold text-gray-900 dark:text-white">
               {{ yesterday?.orders ?? 0 }}
             </p>
-            <p class="text-[10px] text-gray-400 dark:text-neutral-500">Orders</p>
+            <p class="text-[10px] text-gray-400 dark:text-neutral-500">
+              Orders
+            </p>
           </div>
           <div
             class="rounded-xl bg-gray-50 p-3 text-center dark:bg-neutral-800/50"
@@ -137,7 +141,9 @@
           >
             {{ seller?.is_active ? 'Active' : 'Inactive' }}
           </span>
-          <span class="truncate text-[13px] text-gray-400 dark:text-neutral-500">
+          <span
+            class="truncate text-[13px] text-gray-400 dark:text-neutral-500"
+          >
             @{{ storeSlug }}
           </span>
         </div>
@@ -161,7 +167,6 @@
         </div>
       </div>
 
-
       <!-- Store completeness score -->
       <div
         v-if="completeness < 100"
@@ -169,7 +174,11 @@
       >
         <div class="mb-3 flex items-center justify-between">
           <div class="flex items-center gap-2.5">
-            <Icon name="solar:shield-star-linear" size="22" class="text-brand" />
+            <Icon
+              name="solar:shield-star-linear"
+              size="22"
+              class="text-brand"
+            />
             <div>
               <p class="text-sm font-semibold text-gray-900 dark:text-white">
                 Store Strength
@@ -178,11 +187,14 @@
                 <Icon
                   v-for="n in 5"
                   :key="n"
-                  :name="n <= strengthStars ? 'solar:star-bold' : 'solar:star-linear'"
+                  :name="
+                    n <= strengthStars ? 'solar:star-bold' : 'solar:star-linear'
+                  "
                   size="14"
                   class="text-amber-400"
                 />
-                <span class="ml-1.5 text-[11px] text-gray-500 dark:text-neutral-400"
+                <span
+                  class="ml-1.5 text-[11px] text-gray-500 dark:text-neutral-400"
                   >{{ completeness }}%</span
                 >
               </div>
@@ -243,7 +255,9 @@
           </div>
           <div class="flex flex-col items-end gap-2">
             <Icon name="solar:wallet-bold" size="40" class="text-white/20" />
-            <span class="flex items-center gap-0.5 text-[11px] font-semibold text-white/80">
+            <span
+              class="flex items-center gap-0.5 text-[11px] font-semibold text-white/80"
+            >
               Manage <Icon name="solar:alt-arrow-right-linear" size="14" />
             </span>
           </div>
@@ -389,7 +403,8 @@
             :to="`/seller/${storeSlug}/products/create`"
             class="mt-3 inline-flex items-center gap-1.5 text-[13px] font-semibold text-brand hover:underline"
           >
-            <Icon name="solar:add-circle-linear" size="14" /> Add your first product
+            <Icon name="solar:add-circle-linear" size="14" /> Add your first
+            product
           </NuxtLink>
         </div>
 
@@ -486,9 +501,13 @@ const seller = computed(
     null,
 )
 
-watch(() => seller.value?.store_name, (name) => {
-  useSeo().setDashboardPage(name ?? undefined)
-}, { immediate: true })
+watch(
+  () => seller.value?.store_name,
+  (name) => {
+    useSeo().setDashboardPage(name ?? undefined)
+  },
+  { immediate: true },
+)
 const { fetchSellerProducts } = useProduct()
 const sellerApi = useSellerApi()
 const orderApi = useOrderApi()
@@ -507,10 +526,22 @@ const completenessItems = computed(() => {
     { label: 'Store logo', done: !!s?.store_logo, to: settings },
     { label: 'Store banner', done: !!s?.store_banner, to: settings },
     { label: 'Description', done: !!s?.store_description, to: settings },
-    { label: 'Location set', done: !!(s?.store_location || s?.locationLabel), to: settings },
+    {
+      label: 'Location set',
+      done: !!(s?.store_location || s?.locationLabel),
+      to: settings,
+    },
     { label: 'Phone number', done: !!s?.store_phone, to: settings },
-    { label: 'First product', done: productCount.value > 0, to: `/seller/${storeSlug.value}/products/create` },
-    { label: 'GPS location', done: !!(s?.latitude && s?.longitude), to: settings },
+    {
+      label: 'First product',
+      done: productCount.value > 0,
+      to: `/seller/${storeSlug.value}/products/create`,
+    },
+    {
+      label: 'GPS location',
+      done: !!(s?.latitude && s?.longitude),
+      to: settings,
+    },
     { label: 'Verified store', done: !!s?.is_verified, to: settings },
   ]
 })
@@ -559,7 +590,9 @@ const yesterday = computed(() => {
   return chart.length >= 2 ? chart[chart.length - 2] : chart[chart.length - 1]
 })
 
-const trendingProduct = computed(() => analytics.value?.topProducts?.[0] ?? null)
+const trendingProduct = computed(
+  () => analytics.value?.topProducts?.[0] ?? null,
+)
 const weekSummary = computed(() => analytics.value?.summary ?? null)
 
 const suggestion = computed(() => {
@@ -600,7 +633,6 @@ const suggestion = computed(() => {
   }
 })
 
-
 const itemsLabel = (order: Record<string, unknown>) => {
   const count = (order.orderItem as unknown[])?.length ?? 0
   return `${count} item${count !== 1 ? 's' : ''}`
@@ -622,7 +654,8 @@ const loadData = async (slug: string) => {
 
   // Analytics (for the TODAY snapshot) — non-critical
   if (analyticsRes.status === 'fulfilled') {
-    analytics.value = (analyticsRes.value as Record<string, unknown>)?.data ?? null
+    analytics.value =
+      (analyticsRes.value as Record<string, unknown>)?.data ?? null
   }
 
   // Products

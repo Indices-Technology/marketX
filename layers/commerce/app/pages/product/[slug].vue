@@ -224,9 +224,9 @@
               </div>
 
               <!-- Bulk / volume offers -->
-              <template v-if="product.offers?.length">
+              <template v-if="activeOffers.length">
                 <div
-                  v-for="offer in product.offers"
+                  v-for="offer in activeOffers"
                   :key="offer.id"
                   class="flex items-start gap-2.5"
                 >
@@ -239,20 +239,21 @@
                       class="text-brand"
                     />
                   </div>
-                  <div>
+                  <div class="min-w-0">
                     <p
-                      class="text-sm font-semibold text-gray-800 dark:text-neutral-200"
+                      class="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm font-semibold text-gray-800 dark:text-neutral-200"
                     >
-                      {{
-                        offer.label ||
-                        `Buy ${offer.minQuantity}+, save ${offer.discount}%`
-                      }}
+                      <span>Buy {{ offer.minQuantity }}, get {{ offer.discount }}% off</span>
+                      <span
+                        v-if="offer.label"
+                        class="rounded-full bg-brand/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-brand"
+                      >
+                        {{ offer.label }}
+                      </span>
                     </p>
-                    <p
-                      v-if="offer.label"
-                      class="mt-0.5 text-[11px] text-gray-500 dark:text-neutral-400"
-                    >
-                      Buy {{ offer.minQuantity }}+ units to qualify
+                    <p class="mt-0.5 text-[11px] text-gray-500 dark:text-neutral-400">
+                      Save {{ formatProductPrice(offerSavings(offer), 'NGN') }} when
+                      you buy {{ offer.minQuantity }}
                     </p>
                   </div>
                 </div>
@@ -1163,6 +1164,21 @@ const discountedPrice = computed(() => {
   const disc = product.value.discount ?? 0
   return disc > 0 ? Math.round(base * (1 - disc / 100)) : base
 })
+
+// ── Volume offers ────────────────────────────────────────────────────────────
+// Only active offers are honoured at checkout (see cart.store effectiveUnitPrice),
+// so only those are surfaced. Shown low→high by qualifying quantity.
+const activeOffers = computed(() =>
+  (product.value?.offers ?? [])
+    .filter((o) => o.isActive)
+    .slice()
+    .sort((a, b) => a.minQuantity - b.minQuantity),
+)
+
+// Naira saved on a qualifying bundle: the volume % stacks on the current
+// (post-flat-discount) unit price, matching how the cart prices the item.
+const offerSavings = (offer: { minQuantity: number; discount: number }) =>
+  Math.round(discountedPrice.value * offer.minQuantity * (offer.discount / 100))
 
 // Auto-select first available variant when product loads
 watch(
