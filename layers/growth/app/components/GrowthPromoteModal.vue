@@ -153,7 +153,14 @@ watch(
     if (!open || !p) return
     tiktokState.value = 'loading'
     caption.value = p.title ?? ''
-    await prepare(p.id)
+    try {
+      await prepare(p.id)
+    } catch (e) {
+      // Asset creation failed — don't hang the modal on "Checking TikTok".
+      tiktokState.value = 'disconnected'
+      notify({ type: 'error', text: (e as Error)?.message || 'Could not prepare the card' })
+      return
+    }
     try {
       const info = await loadTikTokCreatorInfo()
       privacyLevel.value = info.privacyOptions?.[0] ?? 'SELF_ONLY'

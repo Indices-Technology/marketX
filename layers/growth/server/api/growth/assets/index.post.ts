@@ -3,18 +3,13 @@
 // (what the QR encodes). Body: { productId }.
 
 import { UserError } from '~~/layers/profile/server/types/user.types'
-import {
-  requireAuth,
-  getAuthSellerProfile,
-} from '~~/server/layers/shared/middleware/requireAuth'
+import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
 import { resolveOAuthAppUrl } from '~~/server/utils/auth/oauth'
 import { growthAssetService } from '~~/layers/growth/server/services/growthAsset.service'
 
 export default defineEventHandler(async (event) => {
   try {
-    await requireAuth(event)
-    const seller = await getAuthSellerProfile(event)
-    if (!seller) throw new UserError('SELLER_REQUIRED', 'A seller profile is required', 403)
+    const user = await requireAuth(event)
 
     const body = await readBody(event)
     const productId = Number(body?.productId)
@@ -27,7 +22,7 @@ export default defineEventHandler(async (event) => {
 
     const asset = await growthAssetService.fromProduct({
       productId,
-      sellerId: seller.id,
+      userId: user.id,
       baseUrl,
     })
     return { success: true, data: asset }

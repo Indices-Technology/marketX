@@ -3,23 +3,18 @@
 // requires this before posting, and it drives the mandatory privacy-picker UX.
 
 import { UserError } from '~~/layers/profile/server/types/user.types'
+import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
 import {
-  requireAuth,
-  getAuthSellerProfile,
-} from '~~/server/layers/shared/middleware/requireAuth'
-import {
-  getActiveConnection,
+  getUserActiveConnection,
   decryptAccessToken,
 } from '~~/layers/growth/server/services/socialConnection.service'
 import { queryCreatorInfo } from '~~/layers/growth/server/utils/tiktok.posting'
 
 export default defineEventHandler(async (event) => {
   try {
-    await requireAuth(event)
-    const seller = await getAuthSellerProfile(event)
-    if (!seller) throw new UserError('SELLER_REQUIRED', 'A seller profile is required', 403)
+    const user = await requireAuth(event)
 
-    const conn = await getActiveConnection(seller.id, 'TIKTOK')
+    const conn = await getUserActiveConnection(user.id, 'TIKTOK')
     const info = await queryCreatorInfo(decryptAccessToken(conn))
     return { success: true, data: info }
   } catch (error) {

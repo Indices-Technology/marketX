@@ -104,7 +104,7 @@
         <!-- Main feed / page content -->
         <div
           ref="mainScrollRef"
-          class="main-scroll scrollbar-hide h-[100dvh] min-w-0 flex-1 overflow-y-auto px-2 transition-all duration-200 sm:px-4"
+          class="main-scroll scrollbar-hide h-[100dvh] min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-2 transition-all duration-200 sm:px-4"
           :class="[
             mainContentClasses,
             hasScrolled

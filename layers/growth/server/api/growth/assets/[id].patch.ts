@@ -3,17 +3,12 @@
 // ProductShareCard and uploads it to Cloudinary). Body: { cardImageUrl, cardPublicId, qrPublicId? }.
 
 import { UserError } from '~~/layers/profile/server/types/user.types'
-import {
-  requireAuth,
-  getAuthSellerProfile,
-} from '~~/server/layers/shared/middleware/requireAuth'
+import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
 import { growthAssetService } from '~~/layers/growth/server/services/growthAsset.service'
 
 export default defineEventHandler(async (event) => {
   try {
-    await requireAuth(event)
-    const seller = await getAuthSellerProfile(event)
-    if (!seller) throw new UserError('SELLER_REQUIRED', 'A seller profile is required', 403)
+    const user = await requireAuth(event)
 
     const id = getRouterParam(event, 'id')
     if (!id) throw new UserError('BAD_REQUEST', 'Missing asset id', 400)
@@ -25,7 +20,7 @@ export default defineEventHandler(async (event) => {
 
     const result = await growthAssetService.attachCard({
       assetId: id,
-      sellerId: seller.id,
+      userId: user.id,
       cardImageUrl: String(body.cardImageUrl),
       cardPublicId: String(body.cardPublicId),
       qrPublicId: body.qrPublicId ? String(body.qrPublicId) : undefined,
