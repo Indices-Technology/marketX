@@ -109,6 +109,9 @@ export class SellerApiClient extends BaseApiClient {
       method: 'POST',
       body: { slug },
       skipAuth: true, // Public endpoint
+      // Typeahead call fired on every debounced keystroke — a transient
+      // failure shouldn't pop a global toast; the inline field UI handles it.
+      silent: true,
     })
   }
 
@@ -120,6 +123,7 @@ export class SellerApiClient extends BaseApiClient {
       method: 'POST',
       body: { baseName },
       skipAuth: true, // Public endpoint
+      silent: true,
     })
   }
 

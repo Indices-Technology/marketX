@@ -167,9 +167,7 @@
           <div class="relative">
             <span
               class="absolute left-3.5 top-1/2 -translate-y-1/2 select-none text-[13px] text-gray-400 dark:text-neutral-500"
-              >{{
-                $config.public.brandDomain || 'marketx.africa'
-              }}/</span
+              >{{ $config.public.brandDomain || 'marketx.africa' }}/</span
             >
             <input
               v-model="form.store_slug"
@@ -201,6 +199,12 @@
                 class="text-red-500"
               />
               <Icon
+                v-else-if="slugStatus === 'error'"
+                name="solar:danger-triangle-bold"
+                size="18"
+                class="text-amber-500"
+              />
+              <Icon
                 v-else-if="slugChecking"
                 name="eos-icons:loading"
                 size="16"
@@ -209,7 +213,20 @@
             </div>
           </div>
           <p
-            v-if="fieldErrors.store_slug"
+            v-if="slugStatus === 'error'"
+            class="mt-1 text-[11px] text-amber-600"
+          >
+            {{ fieldErrors.store_slug }}
+            <button
+              type="button"
+              class="ml-1 font-semibold underline"
+              @click="triggerSlugCheck"
+            >
+              Retry
+            </button>
+          </p>
+          <p
+            v-else-if="fieldErrors.store_slug"
             class="mt-1 text-[11px] text-red-500"
           >
             {{ fieldErrors.store_slug }}
@@ -292,7 +309,10 @@
               >Location
               <span class="font-normal text-gray-400">(optional)</span></label
             >
-            <BaseInput v-model="form.store_location" placeholder="Lagos, Nigeria" />
+            <BaseInput
+              v-model="form.store_location"
+              placeholder="Lagos, Nigeria"
+            />
           </div>
           <div>
             <label
@@ -306,7 +326,12 @@
               placeholder="+2348012345678"
               :error="fieldErrors.store_phone"
               @input="clearFieldError('store_phone')"
-              @blur="() => { const e = validatePhone(form.store_phone); if (e) fieldErrors.store_phone = e }"
+              @blur="
+                () => {
+                  const e = validatePhone(form.store_phone)
+                  if (e) fieldErrors.store_phone = e
+                }
+              "
             />
           </div>
         </div>
@@ -324,7 +349,12 @@
             placeholder="https://yourstore.com"
             :error="fieldErrors.store_website"
             @input="clearFieldError('store_website')"
-            @blur="() => { const e = validateWebsite(form.store_website); if (e) fieldErrors.store_website = e }"
+            @blur="
+              () => {
+                const e = validateWebsite(form.store_website)
+                if (e) fieldErrors.store_website = e
+              }
+            "
           />
         </div>
 
@@ -400,7 +430,10 @@
                   class="mb-1 block text-[11px] font-semibold text-gray-500 dark:text-neutral-400"
                   >Contact Name</label
                 >
-                <BaseInput v-model="form.shipFromName" placeholder="Sender full name" />
+                <BaseInput
+                  v-model="form.shipFromName"
+                  placeholder="Sender full name"
+                />
               </div>
 
               <!-- Address -->
@@ -409,7 +442,10 @@
                   class="mb-1 block text-[11px] font-semibold text-gray-500 dark:text-neutral-400"
                   >Street Address</label
                 >
-                <BaseInput v-model="form.shipFromAddress" placeholder="123 Broad Street" />
+                <BaseInput
+                  v-model="form.shipFromAddress"
+                  placeholder="123 Broad Street"
+                />
               </div>
 
               <div class="grid grid-cols-2 gap-2.5">
@@ -453,7 +489,10 @@
                     class="mb-1 block text-[11px] font-semibold text-gray-500 dark:text-neutral-400"
                     >Country</label
                   >
-                  <select v-model="form.shipFromCountry" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2 text-[13px] text-gray-900 placeholder-gray-400 transition focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100">
+                  <select
+                    v-model="form.shipFromCountry"
+                    class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2 text-[13px] text-gray-900 placeholder-gray-400 transition focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+                  >
                     <option
                       v-for="c in SHIP_COUNTRIES"
                       :key="c.code"
@@ -470,7 +509,11 @@
                   class="mb-1 block text-[11px] font-semibold text-gray-500 dark:text-neutral-400"
                   >Phone (carrier pickup)</label
                 >
-                <BaseInput v-model="form.shipFromPhone" type="tel" placeholder="+2348012345678" />
+                <BaseInput
+                  v-model="form.shipFromPhone"
+                  type="tel"
+                  placeholder="+2348012345678"
+                />
               </div>
             </div>
           </Transition>
@@ -489,12 +532,21 @@
               <div
                 class="flex h-8 w-8 items-center justify-center rounded-xl bg-brand/10"
               >
-                <Icon name="solar:map-point-linear" size="16" class="text-brand" />
+                <Icon
+                  name="solar:map-point-linear"
+                  size="16"
+                  class="text-brand"
+                />
               </div>
               <div>
-                <p class="text-[13px] font-semibold text-gray-800 dark:text-neutral-200">
+                <p
+                  class="text-[13px] font-semibold text-gray-800 dark:text-neutral-200"
+                >
                   Map Discovery
-                  <span class="ml-1.5 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold text-gray-400 dark:bg-neutral-800 dark:text-neutral-500">optional</span>
+                  <span
+                    class="ml-1.5 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold text-gray-400 dark:bg-neutral-800 dark:text-neutral-500"
+                    >optional</span
+                  >
                 </p>
                 <p class="text-[11px] text-gray-400 dark:text-neutral-500">
                   Let buyers find your store on the Near Me map
@@ -523,16 +575,29 @@
             >
               <!-- Visibility toggle -->
               <div class="flex items-center justify-between">
-                <p class="text-[12px] font-semibold text-gray-600 dark:text-neutral-400">Show on map</p>
+                <p
+                  class="text-[12px] font-semibold text-gray-600 dark:text-neutral-400"
+                >
+                  Show on map
+                </p>
                 <button
                   type="button"
                   class="flex items-center gap-2 rounded-xl px-3 py-2 text-[12px] font-semibold transition"
-                  :class="form.hideLocation
-                    ? 'bg-gray-100 text-gray-500 dark:bg-neutral-800 dark:text-neutral-400'
-                    : 'bg-brand/10 text-brand'"
+                  :class="
+                    form.hideLocation
+                      ? 'bg-gray-100 text-gray-500 dark:bg-neutral-800 dark:text-neutral-400'
+                      : 'bg-brand/10 text-brand'
+                  "
                   @click="form.hideLocation = !form.hideLocation"
                 >
-                  <Icon :name="form.hideLocation ? 'solar:eye-closed-linear' : 'solar:eye-linear'" size="15" />
+                  <Icon
+                    :name="
+                      form.hideLocation
+                        ? 'solar:eye-closed-linear'
+                        : 'solar:eye-linear'
+                    "
+                    size="15"
+                  />
                   {{ form.hideLocation ? 'Hidden' : 'Visible on map' }}
                 </button>
               </div>
@@ -540,41 +605,79 @@
               <!-- City + State -->
               <div class="grid grid-cols-2 gap-2.5">
                 <div>
-                  <label class="mb-1 block text-[11px] font-semibold text-gray-500 dark:text-neutral-400">City</label>
+                  <label
+                    class="mb-1 block text-[11px] font-semibold text-gray-500 dark:text-neutral-400"
+                    >City</label
+                  >
                   <BaseInput v-model="form.city" placeholder="Lagos" />
                 </div>
                 <div>
-                  <label class="mb-1 block text-[11px] font-semibold text-gray-500 dark:text-neutral-400">State / Region</label>
+                  <label
+                    class="mb-1 block text-[11px] font-semibold text-gray-500 dark:text-neutral-400"
+                    >State / Region</label
+                  >
                   <BaseInput v-model="form.state" placeholder="Lagos State" />
                 </div>
               </div>
 
               <!-- Display label -->
               <div>
-                <label class="mb-1 block text-[11px] font-semibold text-gray-500 dark:text-neutral-400">Display location label</label>
-                <BaseInput v-model="form.locationLabel" placeholder="e.g. Yaba, Lagos" />
+                <label
+                  class="mb-1 block text-[11px] font-semibold text-gray-500 dark:text-neutral-400"
+                  >Display location label</label
+                >
+                <BaseInput
+                  v-model="form.locationLabel"
+                  placeholder="e.g. Yaba, Lagos"
+                />
               </div>
 
               <!-- GPS coordinates -->
               <div>
                 <div class="mb-1.5 flex items-center justify-between">
-                  <label class="text-[11px] font-semibold text-gray-500 dark:text-neutral-400">GPS Coordinates</label>
+                  <label
+                    class="text-[11px] font-semibold text-gray-500 dark:text-neutral-400"
+                    >GPS Coordinates</label
+                  >
                   <button
                     type="button"
                     :disabled="gettingLocation"
                     class="flex items-center gap-1 rounded-lg bg-gray-100 px-2.5 py-1.5 text-[11px] font-semibold text-gray-600 transition hover:bg-brand/10 hover:text-brand disabled:opacity-50 dark:bg-neutral-800 dark:text-neutral-300"
                     @click="detectLocation"
                   >
-                    <Icon :name="gettingLocation ? 'solar:refresh-linear' : 'solar:gps-linear'" size="13" :class="gettingLocation && 'animate-spin'" />
+                    <Icon
+                      :name="
+                        gettingLocation
+                          ? 'solar:refresh-linear'
+                          : 'solar:gps-linear'
+                      "
+                      size="13"
+                      :class="gettingLocation && 'animate-spin'"
+                    />
                     {{ gettingLocation ? 'Detecting…' : 'Detect my location' }}
                   </button>
                 </div>
                 <div class="grid grid-cols-2 gap-2.5">
-                  <input v-model.number="form.latitude" type="number" step="0.000001" placeholder="Latitude e.g. 6.5244" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2 text-[13px] text-gray-900 placeholder-gray-400 transition focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100" />
-                  <input v-model.number="form.longitude" type="number" step="0.000001" placeholder="Longitude e.g. 3.3792" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2 text-[13px] text-gray-900 placeholder-gray-400 transition focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100" />
+                  <input
+                    v-model.number="form.latitude"
+                    type="number"
+                    step="0.000001"
+                    placeholder="Latitude e.g. 6.5244"
+                    class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2 text-[13px] text-gray-900 placeholder-gray-400 transition focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+                  />
+                  <input
+                    v-model.number="form.longitude"
+                    type="number"
+                    step="0.000001"
+                    placeholder="Longitude e.g. 3.3792"
+                    class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2 text-[13px] text-gray-900 placeholder-gray-400 transition focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+                  />
                 </div>
-                <p class="mt-1.5 text-[11px] text-gray-400 dark:text-neutral-500">
-                  Used to show your store on the buyer map. City-level precision recommended.
+                <p
+                  class="mt-1.5 text-[11px] text-gray-400 dark:text-neutral-500"
+                >
+                  Used to show your store on the buyer map. City-level precision
+                  recommended.
                 </p>
               </div>
             </div>
@@ -587,7 +690,12 @@
           size="lg"
           class="w-full"
           :loading="isSubmitting"
-          :disabled="isSubmitting || slugStatus === 'taken' || slugChecking || Object.values(fieldErrors).some(Boolean)"
+          :disabled="
+            isSubmitting ||
+            slugStatus === 'taken' ||
+            slugChecking ||
+            Object.values(fieldErrors).some(Boolean)
+          "
         >
           Create Store
         </BaseButton>
@@ -602,7 +710,11 @@ import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { useSellerManagement } from '~~/layers/seller/app/composables/useSellerManagement'
 import { useMediaUpload } from '~~/layers/core/app/composables/useMediaUpload'
 import { SUPPORTED_CURRENCIES } from '~~/shared/utils/currency'
-import { NIGERIA_STATES, SHIP_COUNTRIES, countryName } from '~~/shared/utils/locations'
+import {
+  NIGERIA_STATES,
+  SHIP_COUNTRIES,
+  countryName,
+} from '~~/shared/utils/locations'
 import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 import BaseInput from '~~/layers/ui/app/components/BaseInput.vue'
 
@@ -689,7 +801,9 @@ const detectLocation = () => {
       form.longitude = Math.round(pos.coords.longitude * 1e6) / 1e6
       gettingLocation.value = false
     },
-    () => { gettingLocation.value = false },
+    () => {
+      gettingLocation.value = false
+    },
     { enableHighAccuracy: false, timeout: 10000 },
   )
 }
@@ -729,6 +843,9 @@ const validateForm = (): boolean => {
   } else if (slugStatus.value === 'taken') {
     fieldErrors.store_slug = 'This URL is already taken — choose another'
     valid = false
+  } else if (slugStatus.value === 'error') {
+    fieldErrors.store_slug = "Couldn't check this URL — try again"
+    valid = false
   }
 
   const phoneErr = validatePhone(form.store_phone)
@@ -748,7 +865,7 @@ const validateForm = (): boolean => {
 
 // ── Slug checker ────────────────────────────────────────────────────────────
 
-const slugStatus = ref<'idle' | 'available' | 'taken'>('idle')
+const slugStatus = ref<'idle' | 'available' | 'taken' | 'error'>('idle')
 const slugChecking = ref(false)
 const slugSuggestions = ref<string[]>([])
 let slugTimer: ReturnType<typeof setTimeout> | null = null
@@ -779,9 +896,18 @@ const triggerSlugCheck = () => {
     if (!slug || slug.length < 3) return
     slugChecking.value = true
     const available = await checkSlugAvailability(slug)
-    slugStatus.value = available ? 'available' : 'taken'
-    if (!available)
-      fieldErrors.store_slug = 'This URL is already taken — choose another'
+    // null = the check itself failed (network/validation hiccup) — never
+    // treat that as "taken", or the user gets stuck on a URL that was never
+    // actually checked.
+    if (available === null) {
+      slugStatus.value = 'error'
+      fieldErrors.store_slug = "Couldn't check this URL — try again"
+    } else {
+      slugStatus.value = available ? 'available' : 'taken'
+      fieldErrors.store_slug = available
+        ? ''
+        : 'This URL is already taken — choose another'
+    }
     slugChecking.value = false
   }, 500)
 }
@@ -879,4 +1005,3 @@ onUnmounted(() => {
   if (slugTimer) clearTimeout(slugTimer)
 })
 </script>
-

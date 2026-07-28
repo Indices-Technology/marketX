@@ -4,6 +4,8 @@ import { authRepository } from '~~/layers/core/server/repositories/auth.reposito
 import { bust } from '~~/server/utils/cache'
 import { notificationQueue } from '~~/server/queues/notification.queue'
 import { emailQueue } from '~~/server/queues/email.queue'
+import { clearRateLimit } from '~~/server/utils/auth/rateLimiter'
+import { RATE_LIMITS } from '~~/server/config/rateLimits'
 import {
   buildSellerVerificationEmail,
   buildAccountStatusEmail,
@@ -304,6 +306,22 @@ export const adminService = {
       .catch(() => {})
 
     return result
+  },
+
+  /**
+   * Support/admin escape hatch for a login-locked user: the login rate limiter
+   * has no self-service reset, so a support agent handling a "can't log in"
+   * complaint needs a way to clear it without waiting out the lockout window.
+   */
+  async clearLoginLockout(userId: string) {
+    const user = await prisma.profile.findUnique({
+      where: { id: userId },
+      select: { email: true },
+    })
+    if (!user) throw createError({ statusCode: 404, statusMessage: 'User not found' })
+
+    clearRateLimit(`login:${user.email.toLowerCase()}`, RATE_LIMITS.LOGIN.keyPrefix)
+    return { email: user.email }
   },
 
   // ── Sellers ──────────────────────────────────────────────────────────────

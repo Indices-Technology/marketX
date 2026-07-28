@@ -204,13 +204,20 @@ export function useSellerManagement() {
 
   // ==================== SLUG MANAGEMENT ====================
 
-  const checkSlugAvailability = async (slug: string): Promise<boolean> => {
+  // Returns null (not false!) when the check itself failed — e.g. a transient
+  // network blip or a validation 400. Collapsing that into `false` made every
+  // hiccup look identical to "this URL is taken," which is exactly backwards:
+  // it blocks the user on a URL that was never actually checked. Callers must
+  // treat null as "couldn't check, try again," not as unavailable.
+  const checkSlugAvailability = async (
+    slug: string,
+  ): Promise<boolean | null> => {
     try {
       const result = await sellerApi.checkSlugAvailability(slug)
       return result.available
     } catch (error) {
       console.error('Error checking slug:', error)
-      return false
+      return null
     }
   }
 

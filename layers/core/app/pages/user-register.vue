@@ -473,6 +473,12 @@
                   class="text-red-500"
                 />
                 <Icon
+                  v-else-if="slugStatus === 'error'"
+                  name="solar:danger-triangle-bold"
+                  size="18"
+                  class="text-amber-500"
+                />
+                <Icon
                   v-else-if="slugChecking"
                   name="eos-icons:loading"
                   size="16"
@@ -480,7 +486,23 @@
                 />
               </div>
             </div>
-            <p v-if="storeErrors.slug" class="mt-1 text-[11px] text-red-500">
+            <p
+              v-if="slugStatus === 'error'"
+              class="mt-1 text-[11px] text-amber-600"
+            >
+              {{ storeErrors.slug }}
+              <button
+                type="button"
+                class="ml-1 font-semibold underline"
+                @click="triggerSlugCheck"
+              >
+                Retry
+              </button>
+            </p>
+            <p
+              v-else-if="storeErrors.slug"
+              class="mt-1 text-[11px] text-red-500"
+            >
               {{ storeErrors.slug }}
             </p>
             <p
@@ -489,6 +511,30 @@
             >
               Available!
             </p>
+
+            <!-- Suggestions -->
+            <div
+              v-if="slugSuggestions.length"
+              class="mt-2 flex flex-wrap gap-1.5"
+            >
+              <button
+                v-for="s in slugSuggestions"
+                :key="s"
+                type="button"
+                class="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-600 transition-colors hover:bg-blue-100 dark:bg-blue-950/40 dark:text-blue-400 dark:hover:bg-blue-950/60"
+                @click="pickSlugSuggestion(s)"
+              >
+                {{ s }}
+              </button>
+            </div>
+            <button
+              v-if="storeForm.name && !slugSuggestions.length"
+              type="button"
+              class="mt-1.5 text-[11px] font-semibold text-brand transition-colors hover:text-[#d81b36]"
+              @click="loadSlugSuggestions"
+            >
+              Get suggestions →
+            </button>
           </div>
 
           <!-- Currency + Location -->
@@ -604,8 +650,15 @@
                   placeholder="Postal / ZIP"
                   :class="shipInputClass"
                 />
-                <select v-model="storeForm.shipFromCountry" :class="shipInputClass">
-                  <option v-for="c in SHIP_COUNTRIES" :key="c.code" :value="c.code">
+                <select
+                  v-model="storeForm.shipFromCountry"
+                  :class="shipInputClass"
+                >
+                  <option
+                    v-for="c in SHIP_COUNTRIES"
+                    :key="c.code"
+                    :value="c.code"
+                  >
                     {{ c.name }}
                   </option>
                 </select>
@@ -622,7 +675,10 @@
           <button
             type="submit"
             :disabled="
-              storeSubmitting || slugStatus === 'taken' || slugChecking
+              storeSubmitting ||
+              slugStatus === 'taken' ||
+              slugStatus === 'error' ||
+              slugChecking
             "
             class="flex w-full items-center justify-center gap-2 rounded-xl bg-brand py-3.5 text-[14px] font-bold text-white shadow-lg shadow-brand/25 transition-all hover:bg-[#d81b36] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
           >
@@ -645,7 +701,11 @@
           <div
             class="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500 shadow-2xl shadow-emerald-500/30"
           >
-            <Icon name="solar:check-circle-linear" size="40" class="text-white" />
+            <Icon
+              name="solar:check-circle-linear"
+              size="40"
+              class="text-white"
+            />
           </div>
           <h1 class="text-3xl font-black text-white sm:text-4xl">
             Your store is live!
@@ -677,7 +737,9 @@
             @click="copyStoreLink"
           >
             <Icon
-              :name="linkCopied ? 'solar:check-circle-linear' : 'solar:copy-linear'"
+              :name="
+                linkCopied ? 'solar:check-circle-linear' : 'solar:copy-linear'
+              "
               size="16"
             />
             {{ linkCopied ? 'Copied!' : 'Copy link' }}
@@ -740,7 +802,7 @@ const {
   error: authError,
   message: authMessage,
 } = useAuth()
-const { checkSlugAvailability } = useSellerManagement()
+const { checkSlugAvailability, suggestSlugs } = useSellerManagement()
 const { uploadMedia } = useMediaUpload()
 
 // ── Wizard state ──────────────────────────────────────────────────────────────
@@ -913,13 +975,15 @@ const onStoreNameChange = () => {
   }
 }
 
-const slugStatus = ref<'idle' | 'available' | 'taken'>('idle')
+const slugStatus = ref<'idle' | 'available' | 'taken' | 'error'>('idle')
 const slugChecking = ref(false)
+const slugSuggestions = ref<string[]>([])
 let slugTimer: ReturnType<typeof setTimeout> | null = null
 
 const onSlugInput = () => {
   storeErrors.slug = ''
   slugStatus.value = 'idle'
+  slugSuggestions.value = []
   triggerSlugCheck()
 }
 
@@ -930,10 +994,31 @@ const triggerSlugCheck = () => {
     if (!slug || slug.length < 3) return
     slugChecking.value = true
     const available = await checkSlugAvailability(slug)
-    slugStatus.value = available ? 'available' : 'taken'
-    if (!available) storeErrors.slug = 'This URL is already taken'
+    // null = the check itself failed (network/validation hiccup) — never
+    // treat that as "taken", or the user gets stuck on a URL that was never
+    // actually checked.
+    if (available === null) {
+      slugStatus.value = 'error'
+      storeErrors.slug = "Couldn't check this URL — try again"
+    } else {
+      slugStatus.value = available ? 'available' : 'taken'
+      storeErrors.slug = available ? '' : 'This URL is already taken'
+    }
     slugChecking.value = false
   }, 500)
+}
+
+const loadSlugSuggestions = async () => {
+  if (!storeForm.name) return
+  const suggestions = await suggestSlugs(storeForm.name)
+  slugSuggestions.value = suggestions.slice(0, 4)
+}
+
+const pickSlugSuggestion = (s: string) => {
+  storeForm.slug = s
+  slugSuggestions.value = []
+  slugStatus.value = 'available'
+  storeErrors.slug = ''
 }
 
 const handleLogoUpload = async (e: Event) => {
@@ -964,6 +1049,10 @@ const handleSellerSubmit = async () => {
   }
   if (slugStatus.value === 'taken') {
     storeErrors.slug = 'This URL is already taken — choose another'
+    return
+  }
+  if (slugStatus.value === 'error') {
+    storeErrors.slug = "Couldn't check this URL — try again"
     return
   }
 

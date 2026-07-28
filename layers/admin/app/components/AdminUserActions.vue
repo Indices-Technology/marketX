@@ -47,6 +47,14 @@
         >
           <Icon name="solar:user-check-linear" size="15" /> Lift suspension
         </button>
+        <button
+          class="flex w-full items-center gap-2 px-3 py-2 text-sky-600 transition-colors hover:bg-sky-50 dark:hover:bg-sky-900/20"
+          :disabled="unlockingLogin"
+          @click="unlockLogin"
+        >
+          <Icon name="solar:lock-keyhole-unlocked-linear" size="15" />
+          {{ loginUnlocked ? 'Login lockout cleared' : 'Clear login lockout' }}
+        </button>
 
         <!-- Role -->
         <div class="mx-3 my-1 h-px bg-gray-100 dark:bg-neutral-800" />
@@ -217,6 +225,23 @@ async function lift() {
     await adminApi.unsuspendUser(props.user.id)
     emit('updated', { suspendedUntil: null, bannedAt: null })
   } catch {}
+}
+
+const unlockingLogin = ref(false)
+const loginUnlocked = ref(false)
+
+async function unlockLogin() {
+  unlockingLogin.value = true
+  try {
+    await adminApi.unlockLogin(props.user.id)
+    loginUnlocked.value = true
+    setTimeout(() => {
+      loginUnlocked.value = false
+    }, 3000)
+  } catch {
+  } finally {
+    unlockingLogin.value = false
+  }
 }
 
 async function toggleActive(isActive: boolean) {
