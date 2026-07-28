@@ -296,8 +296,8 @@
                 class="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-neutral-800"
               >
                 <img
-                  v-if="deal.media?.[0]?.url"
-                  :src="imgThumb(deal.media[0].url) ?? deal.media[0].url"
+                  v-if="productThumb(deal)"
+                  :src="productThumb(deal)"
                   :alt="deal.title ?? 'Deal'"
                   class="h-full w-full object-cover"
                   loading="lazy"
@@ -378,8 +378,8 @@
                   class="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-neutral-800"
                 >
                   <img
-                    v-if="p.media?.[0]?.url"
-                    :src="imgThumb(p.media[0].url) ?? p.media[0].url"
+                    v-if="productThumb(p)"
+                    :src="productThumb(p)"
                     :alt="p.title ?? 'Product'"
                     class="h-full w-full object-cover"
                     loading="lazy"
@@ -507,7 +507,7 @@ import {
 } from '~~/layers/core/app/composables/useRightSidebarData'
 import { useSocialApi } from '~~/layers/profile/app/services/social.api'
 import { useDassaPanel } from '~~/layers/ai/app/composables/useDassaPanel'
-import { imgThumb } from '~~/layers/core/app/utils/cloudinary'
+import { productThumb } from '~~/layers/core/app/utils/cloudinary'
 import StoreAvatar from '~~/layers/profile/app/components/StoreAvatar.vue'
 import DassaChat from '~~/layers/ai/app/components/dassa/Chat.vue'
 import DealCountdown from '~~/layers/commerce/app/components/DealCountdown.vue'

@@ -33,6 +33,9 @@
       </div>
     </Transition>
 
+    <!-- Find a trader / Verify any seller — same dock as the logged-out home. -->
+    <TrustFindVerifyDock :show-seller-cta="false" class="mb-4" />
+
     <!-- Feed filter (For You · Following · Trending · Deals) + card/list toggle.
          Filter drives which feed loads; toggle switches post layout. -->
     <div class="mb-3 flex items-center justify-between gap-3">
@@ -499,6 +502,7 @@ import CarouselRail from '~~/layers/ui/app/components/CarouselRail.vue'
 import PostCard from '~~/layers/social/app/components/PostCard.vue'
 import PostListCard from '~~/layers/social/app/components/PostListCard.vue'
 import TrustSpotlightRail from '~~/layers/reputation/app/components/TrustSpotlightRail.vue'
+import TrustFindVerifyDock from '~~/layers/feed/app/components/TrustFindVerifyDock.vue'
 
 import { getCachedLocation } from '~~/layers/map/app/composables/useMapSellers'
 import type { IMapSeller } from '~~/layers/map/app/types/map.types'
