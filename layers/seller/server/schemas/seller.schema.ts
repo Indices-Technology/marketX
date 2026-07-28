@@ -63,7 +63,10 @@ export const createSellerProfileSchema = z.object({
     (val) => (typeof val === 'string' ? val.trim() || undefined : val),
     z
       .string()
-      .refine(safeHttpUrl, 'Website must be an http(s) URL, e.g. https://yourstore.com')
+      .refine(
+        safeHttpUrl,
+        'Website must be an http(s) URL, e.g. https://yourstore.com',
+      )
       .optional(),
   ),
 
@@ -131,7 +134,10 @@ export const updateSellerProfileSchema = z
       (val) => (typeof val === 'string' ? val.trim() || undefined : val),
       z
         .string()
-        .refine(safeHttpUrl, 'Website must be an http(s) URL, e.g. https://yourstore.com')
+        .refine(
+          safeHttpUrl,
+          'Website must be an http(s) URL, e.g. https://yourstore.com',
+        )
         .optional(),
     ),
 
@@ -157,7 +163,8 @@ export const updateSellerProfileSchema = z
     // Kept short + trimmed so overlays stay legible. Empty string → null so the
     // render helper falls back to the store name.
     watermark_text: z.preprocess(
-      (val) => (typeof val === 'string' ? val.trim().slice(0, 24) || null : val),
+      (val) =>
+        typeof val === 'string' ? val.trim().slice(0, 24) || null : val,
       z
         .string()
         .max(24, 'Watermark must be 24 characters or less')
@@ -291,13 +298,23 @@ export type GetSellerBySlugRequest = z.infer<typeof getSellerBySlugSchema>
 // ==================== SLUG VALIDATION ====================
 
 export const checkSlugAvailabilitySchema = z.object({
+  // Trim + lowercase BEFORE the regex check (not after, via .toLowerCase()) —
+  // the regex only allows lowercase, so a slug typed/pasted with any uppercase
+  // or stray whitespace must be normalized first or it 400s on a slug that
+  // would otherwise be perfectly valid.
   slug: z
     .string()
-    .min(3, 'Store slug must be at least 3 characters')
-    .max(50, 'Store slug must be less than 50 characters')
-    .regex(
-      /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
-      'Store slug can only contain lowercase letters, numbers, and hyphens',
+    .trim()
+    .toLowerCase()
+    .pipe(
+      z
+        .string()
+        .min(3, 'Store slug must be at least 3 characters')
+        .max(50, 'Store slug must be less than 50 characters')
+        .regex(
+          /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+          'Store slug can only contain lowercase letters, numbers, and hyphens',
+        ),
     ),
 })
 

@@ -239,6 +239,11 @@ export const sellerService = {
   // ==================== SLUG MANAGEMENT ====================
 
   async checkSlugAvailability(slug: string): Promise<{ available: boolean }> {
+    // Reserved slugs (route names, system paths) must be rejected here too —
+    // registration already enforces this (see reservedSlugs.ts), but the live
+    // "available!" check was skipping it, so a name like "Market" or "Cart"
+    // could show available while typing and only fail later, at submit.
+    if (isReservedSlug(slug)) return { available: false }
     const isTaken = await sellerRepository.isStoreSlugTaken(slug)
     return { available: !isTaken }
   },
@@ -250,7 +255,7 @@ export const sellerService = {
       `${baseName}-store`,
       `the-${baseName}`,
       baseName.substring(0, 20), // Truncate if too long
-    ]
+    ].filter((s) => !isReservedSlug(s))
 
     const suggestions: string[] = []
 

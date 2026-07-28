@@ -100,7 +100,12 @@ async function checkRedis(
 
   const windowSec = Math.ceil(config.windowMs / 1000)
   const count = await redis!.incr(key)
-  if (count === 1) await redis!.expire(key, windowSec)
+  // NX (not "if count === 1"): if a prior request's incr succeeded but this
+  // expire call never ran (timeout/crash between the two), the key would be
+  // left with no TTL and accumulate failed attempts forever. Calling this on
+  // every hit self-heals that — NX means it only takes effect when the key
+  // is still missing a TTL, so it never resets an in-progress window.
+  await redis!.expire(key, windowSec, 'NX')
 
   if (count > config.maxAttempts) {
     const lockSec = Math.ceil(config.lockoutMs / 1000)
