@@ -16,6 +16,22 @@ export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
   if (!id) throw createError({ statusCode: 400, statusMessage: 'Missing id' })
 
+  // TikTok URL-prefix verification: it fetches `tiktok{TOKEN}.txt` under this
+  // prefix and expects the body `tiktok-developers-site-verification={TOKEN}`.
+  // If TIKTOK_SITE_VERIFICATION is set, only that exact token is served (locks the
+  // prefix to your app); if unset, we echo the requested token so first-time
+  // verification works before you add the env var.
+  const verify = /^tiktok([A-Za-z0-9_-]+)\.txt$/.exec(id)
+  if (verify) {
+    const configured = process.env.TIKTOK_SITE_VERIFICATION
+    const token = verify[1]!
+    if (!configured || configured === token) {
+      setHeader(event, 'Content-Type', 'text/plain; charset=utf-8')
+      return `tiktok-developers-site-verification=${token}`
+    }
+    throw createError({ statusCode: 404, statusMessage: 'Not found' })
+  }
+
   const asset = await prisma.growthAsset.findUnique({
     where: { id },
     select: { content: true },

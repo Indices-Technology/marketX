@@ -1,5 +1,5 @@
 <template>
-  <div :class="wrapperClasses" role="tablist" :aria-label="ariaLabel">
+  <div :class="[wrapperClasses, 'mx-tabs']" role="tablist" :aria-label="ariaLabel">
     <button
       v-for="tab in tabs"
       :key="String(tab.value)"
@@ -65,7 +65,7 @@ const iconSize = computed(() => props.size === 'sm' ? '14' : '16')
 
 const wrapperClasses = computed(() =>
   props.variant === 'underline'
-    ? 'flex items-center gap-4 border-b border-gray-200 dark:border-neutral-800'
+    ? 'flex items-center gap-4 overflow-x-auto border-b border-gray-200 dark:border-neutral-800'
     : 'inline-flex max-w-full items-center gap-1 rounded-xl bg-gray-100 p-1 dark:bg-neutral-800',
 )
 
@@ -75,7 +75,7 @@ const tabClasses = (tab: TabOption) => {
 
   if (props.variant === 'underline') {
     return [
-      'inline-flex items-center gap-2 border-b-2 font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+      'inline-flex shrink-0 items-center gap-2 border-b-2 font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50',
       sizeClass,
       active
         ? 'border-brand text-brand'
@@ -92,3 +92,14 @@ const tabClasses = (tab: TabOption) => {
   ]
 }
 </script>
+
+<style scoped>
+/* Underline tabs scroll horizontally when they overflow (mobile); hide the bar. */
+.mx-tabs {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.mx-tabs::-webkit-scrollbar {
+  display: none;
+}
+</style>

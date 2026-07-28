@@ -252,7 +252,7 @@
               class="flex items-center justify-between p-4"
             >
               <div class="flex items-center gap-3">
-                <img :src="imgThumb(product.imageUrl)" :alt="product.title || 'Product image'" class="h-12 w-12 rounded-lg bg-gray-100 object-cover dark:bg-neutral-800" />
+                <img :src="productThumb({ media: [{ url: product.imageUrl }] })" :alt="product.title || 'Product image'" class="h-12 w-12 rounded-lg bg-gray-100 object-cover dark:bg-neutral-800" />
                 <div>
                   <p class="text-sm font-medium text-gray-900 dark:text-neutral-100">{{ product.title }}</p>
                   <p class="text-xs text-gray-400 dark:text-neutral-500">
@@ -409,7 +409,7 @@ import { useCurrency } from '~~/layers/core/app/composables/useCurrency'
 import { useAffiliateApi } from '~~/layers/commerce/app/services/affiliate.api'
 import { computed, onMounted, ref } from 'vue'
 import type { Promoter, Referral } from '~~/layers/commerce/app/types/affiliate'
-import { imgThumb, productThumb, avatarSrc } from '~~/layers/core/app/utils/cloudinary'
+import { productThumb, avatarSrc } from '~~/layers/core/app/utils/cloudinary'
 
 const toast = useToast()
 const sellerStore = useSellerStore()

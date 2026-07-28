@@ -65,6 +65,11 @@ model Profile {
   squareAnnouncements       SquareAnnouncement[] @relation("AnnouncementAuthor")
   squareRequests            SquareRequest[]      @relation("SquareRequestBuyer")
 
+  // ── Demo / closed-testing ────────────────────────────────────────────────
+  /// Seeded demo account (closed-testing release). Their stores/posts are shown
+  /// to testers labelled as demo; the cleanup script preserves these rows.
+  isDemo            Boolean          @default(false)
+
   // ── Moderation ────────────────────────────────────────────────────────────
   isActive          Boolean          @default(true)
   strikeCount       Int              @default(0)
@@ -99,6 +104,9 @@ model SellerProfile {
   followers_count       Int                    @default(0)
   is_verified           Boolean                @default(false)
   is_active             Boolean                @default(true)
+  /// Seeded demo store (closed-testing). Surfaced to testers with a "Demo"
+  /// badge; preserved by the cleanup script. See docs/DB_CLEANUP.md.
+  isDemo                Boolean                @default(false)
   verification_status   VerificationStatus     @default(PENDING)
   verification_reason   String?
   created_at            DateTime               @default(now()) @db.Timestamptz(6)
@@ -750,6 +758,9 @@ model Post {
   viewCount      Int              @default(0)
   /// True when this Post was auto-created from a product (unified product post)
   isProductPost  Boolean          @default(false)
+  /// Seeded demo post (closed-testing). Standalone demo posts keep the feed
+  /// populated during the pilot; preserved by the cleanup script.
+  isDemo         Boolean          @default(false)
   /// The Square this post belongs to — inherited from the author's primary Square at creation time
   squareId       String?          @db.Uuid
   square         Square?          @relation("SquarePosts", fields: [squareId], references: [id], onDelete: SetNull)

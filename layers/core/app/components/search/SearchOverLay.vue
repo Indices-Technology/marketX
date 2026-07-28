@@ -188,8 +188,8 @@
                     class="h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-neutral-800"
                   >
                     <img
-                      v-if="product.media?.[0]?.url"
-                      :src="imgThumb(product.media[0].url)"
+                      v-if="productThumb(product)"
+                      :src="productThumb(product)"
                       :alt="product.title"
                       class="h-full w-full object-cover"
                     />
@@ -237,8 +237,8 @@
                     class="h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-neutral-800"
                   >
                     <img
-                      v-if="post.media?.[0]?.url"
-                      :src="imgThumb(post.media[0].url)"
+                      v-if="productThumb(post)"
+                      :src="productThumb(post)"
                       :alt="post.caption || 'Post'"
                       class="h-full w-full object-cover"
                     />
@@ -284,7 +284,7 @@
 
 <script setup lang="ts">
 import { useSearchApi } from '~~/layers/core/app/services/search.api'
-import { imgAvatar, imgThumb } from '~~/layers/core/app/utils/cloudinary'
+import { imgAvatar, productThumb } from '~~/layers/core/app/utils/cloudinary'
 import SearchSuggestions from '~~/layers/commerce/app/components/discover/SearchSuggestions.vue'
 import { useRecentSearches } from '~~/layers/commerce/app/composables/useRecentSearches'
 
