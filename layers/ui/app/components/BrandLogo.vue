@@ -126,6 +126,7 @@ const TAGLINE = [
 </script>
 
 <style scoped>
+/* Light defaults (theme-light-mode). */
 .mx-plate {
   fill: #000;
 }
@@ -139,32 +140,6 @@ const TAGLINE = [
   fill: #f43f5e;
 }
 
-/* Dark mode. The app's Tailwind `dark:` variants resolve via `prefers-color-scheme`
-   (darkMode is unset → 'media'), so the logo follows the same signal to stay in
-   sync with the surrounding UI. On dark: white circle, dark "m", white "x". The
-   color-mode class is kept as a fallback for any class-based toggle. */
-@media (prefers-color-scheme: dark) {
-  .mx-plate {
-    fill: #fff;
-  }
-  .mx-m {
-    fill: #0b0b0f;
-  }
-  .mx-x {
-    fill: #f5f5f5;
-  }
-}
-:global(.theme-dark-mode) .mx-plate {
-  fill: #fff;
-}
-:global(.theme-dark-mode) .mx-m {
-  fill: #0b0b0f;
-}
-:global(.theme-dark-mode) .mx-x {
-  fill: #f5f5f5;
-}
-
-/* wordmark (text approximation of the spelled-out "marketx" lockup) */
 .mx-wordmark {
   display: inline-flex;
   align-items: baseline;
@@ -175,15 +150,32 @@ const TAGLINE = [
   line-height: 1;
   color: #0b0b0f;
 }
-@media (prefers-color-scheme: dark) {
-  .mx-wordmark {
-    color: #fff;
-  }
-}
-:global(.theme-dark-mode) .mx-wordmark {
-  color: #fff;
-}
 .mx-wordmark-x {
   color: #f43f5e;
+}
+</style>
+
+<!--
+  Dark overrides live in a NON-scoped block on purpose. The app themes via the
+  `.theme-dark-mode` class (Tailwind's `dark:` compiles to `[class~=theme-dark-mode]`,
+  set by @nuxtjs/color-mode) — NOT `prefers-color-scheme`. A scoped
+  `:global(.theme-dark-mode) .mx-plate` rule miscompiles (Vue drops the descendant
+  and the fill lands on <html>), so we write plain global selectors here. Element
+  qualifiers (circle/path/span) give them a higher specificity than the scoped
+  `.mx-*[data-v-…]` light rules, so dark wins whenever the class is present.
+  On dark: white circle, dark "m", white "x".
+-->
+<style>
+.theme-dark-mode circle.mx-plate {
+  fill: #fff;
+}
+.theme-dark-mode path.mx-m {
+  fill: #0b0b0f;
+}
+.theme-dark-mode path.mx-x {
+  fill: #f5f5f5;
+}
+.theme-dark-mode span.mx-wordmark {
+  color: #fff;
 }
 </style>
