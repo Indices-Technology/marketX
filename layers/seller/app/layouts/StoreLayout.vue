@@ -10,11 +10,7 @@
           to="/"
           class="flex items-center gap-2.5 transition-opacity hover:opacity-80"
         >
-          <div
-            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand shadow-sm shadow-brand/20"
-          >
-            <span class="text-xs font-black italic text-white">MX</span>
-          </div>
+          <BrandLogo variant="icon" class="h-9 w-9 shrink-0" />
           <span class="text-sm font-bold text-gray-500 dark:text-neutral-400"
             >← Back to {{ $config.public.siteName || 'MarketX' }}</span
           >
@@ -133,11 +129,7 @@
           class="flex shrink-0 items-center gap-1.5 text-gray-500 hover:text-gray-700 dark:text-neutral-400"
         >
           <Icon name="solar:arrow-left-linear" size="20" />
-          <div
-            class="flex h-7 w-7 items-center justify-center rounded-lg bg-brand"
-          >
-            <span class="text-[9px] font-black italic text-white">MX</span>
-          </div>
+          <BrandLogo variant="icon" class="h-7 w-7 shrink-0" />
         </NuxtLink>
         <div class="min-w-0 flex-1">
           <ClientOnly>
@@ -307,6 +299,7 @@
 
 <script setup lang="ts">
 import StoreSwitcher from '~~/layers/seller/app/components/StoreSwitcher.vue'
+import BrandLogo from '~~/layers/ui/app/components/BrandLogo.vue'
 import { useChat } from '~~/layers/profile/app/composables/useChat'
 import { useChatStore } from '~~/layers/profile/app/stores/chat.store'
 import { useOrderApi } from '~~/layers/commerce/app/services/order.api'

@@ -13,7 +13,8 @@
         :share-url="trackedUrl"
         :display-url="trackedUrl"
         :price-text="priceText"
-        :copied="null"
+        :copied="copied"
+        @copy="onCopy"
       />
 
       <!-- Organic share — free, works everywhere -->
@@ -99,6 +100,19 @@ const cardRef = ref<{ rootEl: HTMLElement | null } | null>(null)
 const tiktokState = ref<'loading' | 'ready' | 'disconnected'>('loading')
 const caption = ref('')
 const privacyLevel = ref('')
+const copied = ref<string | null>(null)
+
+async function onCopy(text: string | null | undefined, label: string) {
+  if (!text) return
+  try {
+    await navigator.clipboard.writeText(text)
+    copied.value = label
+    notify({ type: 'success', text: `${label} copied!` })
+    setTimeout(() => (copied.value = null), 2000)
+  } catch {
+    notify({ type: 'error', text: 'Could not copy' })
+  }
+}
 
 const storeSlug = computed(
   () => props.product?.seller?.store_slug || props.product?.store_slug || '',

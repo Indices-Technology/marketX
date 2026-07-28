@@ -18,11 +18,7 @@
       class="mb-6 max-w-3xl rounded-2xl border border-brand/20 bg-brand/10 p-5 dark:bg-brand/20"
     >
       <div class="flex items-start gap-4">
-        <div
-          class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand shadow-lg shadow-brand/25"
-        >
-          <span class="text-sm font-black italic text-white">MX</span>
-        </div>
+        <BrandLogo variant="icon" class="h-12 w-12 shrink-0" />
         <div>
           <h2 class="font-bold text-gray-900 dark:text-white">
             One last step — add your first product!
@@ -369,6 +365,7 @@ import MusicPicker from '~~/layers/core/app/components/MusicPicker.vue'
 import type { MusicSelection } from '~~/layers/core/app/components/MusicPicker.vue'
 
 
+import BrandLogo from '~~/layers/ui/app/components/BrandLogo.vue'
 import SaveStatusOverlay from '~~/layers/core/app/components/SaveStatusOverlay.vue'
 import ProductBasicInfo from '~~/layers/seller/app/components/product-form/ProductBasicInfo.vue'
 import ProductVariantsSection from '~~/layers/seller/app/components/product-form/ProductVariantsSection.vue'
