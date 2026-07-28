@@ -288,11 +288,7 @@ export class BaseApiClient {
     // HTTP error
     const statusCode = errorObj.status || errorObj.statusCode || 500
     const data = errorObj.data || errorObj.response?.data || {}
-    const serverMessage =
-      data.message ||
-      data.statusMessage ||
-      errorObj.message ||
-      'An unexpected error occurred.'
+    const serverMessage = this.extractServerMessage(data, errorObj.message)
     const safeMessage = this.getSafeErrorMessage(statusCode, serverMessage)
 
     if (isClient) {
@@ -314,6 +310,32 @@ export class BaseApiClient {
     }
 
     throw new ApiError(safeMessage, statusCode, data)
+  }
+
+  /**
+   * Server error bodies come in two shapes: `{ message }` / `{ statusMessage }`,
+   * or a bare Zod issues array (`data: error.errors` — see e.g. seller/register.post.ts).
+   * Pull the field-level message out of the latter so users see e.g. "Store slug can
+   * only contain lowercase letters, numbers, and hyphens" instead of just "Validation Error".
+   */
+  private extractServerMessage(
+    data: unknown,
+    fallbackMessage?: string,
+  ): string {
+    if (Array.isArray(data) && data.length > 0) {
+      const messages = data
+        .map((issue) => (issue as { message?: string })?.message)
+        .filter((m): m is string => !!m)
+      if (messages.length > 0) return messages.join(' ')
+    }
+
+    const obj = data as { message?: string; statusMessage?: string }
+    return (
+      obj?.message ||
+      obj?.statusMessage ||
+      fallbackMessage ||
+      'An unexpected error occurred.'
+    )
   }
 
   private getSafeErrorMessage(
