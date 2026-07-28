@@ -24,9 +24,24 @@ defineRouteMeta({
       '(rejects mismatch), provisions/links the account, sets auth cookies, and ' +
       'redirects back into the app. Not called directly by clients.',
     parameters: [
-      { in: 'path', name: 'provider', required: true, schema: { type: 'string', enum: ['google', 'facebook', 'tiktok'] } },
-      { in: 'query', name: 'code', required: false, schema: { type: 'string' } },
-      { in: 'query', name: 'state', required: false, schema: { type: 'string' } },
+      {
+        in: 'path',
+        name: 'provider',
+        required: true,
+        schema: { type: 'string', enum: ['google', 'facebook', 'tiktok'] },
+      },
+      {
+        in: 'query',
+        name: 'code',
+        required: false,
+        schema: { type: 'string' },
+      },
+      {
+        in: 'query',
+        name: 'state',
+        required: false,
+        schema: { type: 'string' },
+      },
     ],
     responses: {
       302: { description: 'Redirect into the app (or to an error page)' },
@@ -118,7 +133,9 @@ export default defineEventHandler(async (event) => {
       oauthError instanceof Error
         ? oauthError.message
         : 'OAuth authentication failed'
-    logger.logError('[GET /api/auth/oauth/:provider/callback]', oauthError, { requestId: event.context?.requestId })
+    logger.logError('[GET /api/auth/oauth/:provider/callback]', oauthError, {
+      requestId: event.context?.requestId,
+    })
     return sendRedirect(
       event,
       `${appUrl}/user-login?oauth_error=${encodeURIComponent(message)}`,

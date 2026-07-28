@@ -19,8 +19,14 @@
  * NOT yet enabled (add in the TikTok console, then append here):
  *   • video.list       — read the creator's videos (for post → product IMPORT)
  *   • user.info.profile / user.info.stats — richer profile + follower/like counts
+ *
+ * Override with the TIKTOK_SCOPES env var — a TikTok "scope" error means the app
+ * (esp. a sandbox) doesn't have one of these enabled; set TIKTOK_SCOPES to exactly
+ * what the app allows (start with just `user.info.basic` to prove the flow, then
+ * add the video scopes once enabled on the sandbox) without a code redeploy.
  */
-export const TIKTOK_CONNECT_SCOPES = 'user.info.basic,video.upload,video.publish'
+export const TIKTOK_CONNECT_SCOPES =
+  process.env.TIKTOK_SCOPES || 'user.info.basic,video.upload,video.publish'
 
 export function tiktokAuthorizeUrl(state: string, redirectUri: string): string {
   const params = new URLSearchParams({

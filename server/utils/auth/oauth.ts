@@ -111,12 +111,15 @@ export const getOAuthAuthorizeUrl = (
     return `https://www.facebook.com/v19.0/dialog/oauth?${params.toString()}`
   }
 
-  // TikTok
+  // TikTok. NOTE: `user.info.email` is no longer a valid TikTok scope (removed
+  // from the Scopes reference) — requesting it fails with invalid_scope. Only
+  // `user.info.basic` is needed for login; the callback falls back to a placeholder
+  // email when none is returned.
   const params = new URLSearchParams({
     client_key: process.env.OAUTH_TIKTOK_CLIENT_KEY || '',
     redirect_uri: redirectUri,
     response_type: 'code',
-    scope: 'user.info.basic,user.info.email',
+    scope: 'user.info.basic',
     state,
   })
   return `https://www.tiktok.com/v2/auth/authorize/?${params.toString()}`
@@ -221,7 +224,9 @@ export const exchangeCodeForProfile = async (
     data?: { user?: { display_name?: string; avatar_url?: string; email?: string } }
     error?: { code?: string; message?: string }
   }>('https://open.tiktokapis.com/v2/user/info/', {
-    query: { fields: 'open_id,display_name,avatar_url,email' },
+    // `email` field dropped — the user.info.email scope no longer exists; requesting
+    // the field without a granting scope errors. Login uses a placeholder email.
+    query: { fields: 'open_id,display_name,avatar_url' },
     headers: { Authorization: `Bearer ${accessToken}` },
   })
 
