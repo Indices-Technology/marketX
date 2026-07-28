@@ -470,6 +470,46 @@ export const productRepository = {
     if (data.isDeal !== undefined) updateData.isDeal = data.isDeal
     if (data.dealEndsAt !== undefined) updateData.dealEndsAt = data.dealEndsAt
     if (data.condition !== undefined) updateData.condition = data.condition
+
+    // ── Unified Product Post on edit ──────────────────────────────────────────
+    // If the seller turns ON feed/reels distribution for the first time, spin up
+    // the linked Post (parity with the create path). Guarded on the flag flipping
+    // OFF→ON and on there being no existing linkedPostId, so re-saving an
+    // already-shared product never creates duplicate posts.
+    let newLinkedPostId: string | undefined
+    if (authorId && (data.showInFeed || data.showInReels)) {
+      const current = await prisma.products.findUnique({
+        where: { id },
+        select: {
+          showInFeed: true,
+          showInReels: true,
+          linkedPostId: true,
+          description: true,
+        },
+      })
+      const turningOn =
+        (data.showInFeed && !current?.showInFeed) ||
+        (data.showInReels && !current?.showInReels)
+      if (turningOn && !current?.linkedPostId) {
+        const caption =
+          data.socialCaptions?.feedCaption ||
+          data.description ||
+          current?.description ||
+          null
+        const post = await prisma.post.create({
+          data: {
+            authorId,
+            caption,
+            contentType: 'COMMERCE',
+            isProductPost: true,
+            visibility: 'PUBLIC',
+          },
+          select: { id: true },
+        })
+        newLinkedPostId = post.id
+        updateData.linkedPostId = newLinkedPostId
+      }
+    }
     if (data.categoryIds !== undefined) {
       updateData.category = {
         deleteMany: {},
@@ -588,6 +628,7 @@ export const productRepository = {
         type: m.type || 'IMAGE',
         isBgMusic: false,
         authorId,
+        ...(newLinkedPostId ? { postId: newLinkedPostId } : {}),
       }))
       // Update cover if no explicit bannerImageUrl
       if (!data.bannerImageUrl) {
@@ -623,6 +664,16 @@ export const productRepository = {
       data: updateData,
       include: productInclude,
     })
+
+    // Attach the product's existing media to the freshly-created linked Post so
+    // it renders as a full post in the feed (not just a product card). New media
+    // already carry the postId via the create block above.
+    if (newLinkedPostId) {
+      await prisma.media.updateMany({
+        where: { productId: id, isBgMusic: false, postId: null },
+        data: { postId: newLinkedPostId },
+      })
+    }
 
     // Sync tags if provided
     if (data.tagNames !== undefined) {

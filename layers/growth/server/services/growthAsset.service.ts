@@ -15,6 +15,15 @@ import { prisma } from '~~/server/utils/db'
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { mintDistribution, trackedUrl } from './shortlink.service'
 
+/** True if the user owns the store (sellerProfile) — multi-store safe ownership. */
+async function userOwnsStore(userId: string, sellerId: string): Promise<boolean> {
+  const owns = await prisma.sellerProfile.findFirst({
+    where: { id: sellerId, profileId: userId },
+    select: { id: true },
+  })
+  return !!owns
+}
+
 export interface GrowthAssetResult {
   id: string
   productId: number | null
@@ -54,24 +63,28 @@ export const growthAssetService = {
    */
   async fromProduct(args: {
     productId: number
-    sellerId: string
+    userId: string
     baseUrl: string
   }): Promise<GrowthAssetResult> {
-    const { productId, sellerId, baseUrl } = args
+    const { productId, userId, baseUrl } = args
 
-    // Ownership + the fields the card/commerce identity needs.
+    // Resolve ownership via the PRODUCT's store owner, not the caller's primary
+    // store — a user can own several stores, so the product's sellerId is the
+    // source of truth for which store this asset belongs to.
     const product = await prisma.products.findFirst({
-      where: { id: productId, sellerId },
+      where: { id: productId },
       select: {
         id: true,
         slug: true,
+        sellerId: true,
         socialCaptions: true,
-        seller: { select: { publicId: true } },
+        seller: { select: { publicId: true, profileId: true } },
       },
     })
-    if (!product) {
+    if (!product || product.seller?.profileId !== userId) {
       throw new UserError('PRODUCT_NOT_FOUND', 'Product not found or not yours', 404)
     }
+    const sellerId = product.sellerId
 
     const canonicalUrl = `${baseUrl.replace(/\/$/, '')}/product/${product.slug}`
 
@@ -116,19 +129,21 @@ export const growthAssetService = {
     return shape(asset, minted.trackedUrl)
   },
 
-  /** Attach the rendered+uploaded card image to an asset the seller owns. */
+  /** Attach the rendered+uploaded card image to an asset the user owns. */
   async attachCard(args: {
     assetId: string
-    sellerId: string
+    userId: string
     cardImageUrl: string
     cardPublicId: string
     qrPublicId?: string
   }) {
-    const asset = await prisma.growthAsset.findFirst({
-      where: { id: args.assetId, sellerId: args.sellerId },
-      select: { id: true, content: true, commerce: true },
+    const asset = await prisma.growthAsset.findUnique({
+      where: { id: args.assetId },
+      select: { id: true, content: true, commerce: true, sellerId: true },
     })
-    if (!asset) throw new UserError('ASSET_NOT_FOUND', 'Growth asset not found', 404)
+    if (!asset || !(await userOwnsStore(args.userId, asset.sellerId))) {
+      throw new UserError('ASSET_NOT_FOUND', 'Growth asset not found', 404)
+    }
 
     const content = (asset.content ?? {}) as Record<string, unknown>
     const commerce = (asset.commerce ?? {}) as Record<string, unknown>
