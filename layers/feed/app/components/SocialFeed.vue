@@ -1,6 +1,8 @@
 <!-- Social feed — rendered inside HomeLayout by the auth-aware index.vue -->
 <template>
-  <div class="w-full space-y-5 px-2 sm:px-0">
+  <!-- Feed column capped narrower than the layout's 640 so posts don't fill the
+       whole content area — a comfortable, IG-ish reading width, centered. -->
+  <div class="mx-auto w-full max-w-[600px] space-y-5 px-2 sm:px-0">
     <!-- Initial Splash Screen -->
     <Transition name="splash" mode="out-in">
       <SplashScreen
