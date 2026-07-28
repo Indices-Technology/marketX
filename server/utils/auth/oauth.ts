@@ -196,28 +196,35 @@ export const exchangeCodeForProfile = async (
     }
   }
 
-  // TikTok
-  const tokenRes = await $fetch<{
-    data?: { access_token?: string; open_id?: string }
-    error?: { code?: string; message?: string }
-  }>('https://open.tiktokapis.com/v2/oauth/token/', {
-    method: 'POST',
-    body: new URLSearchParams({
-      client_key: process.env.OAUTH_TIKTOK_CLIENT_KEY || '',
-      client_secret: process.env.OAUTH_TIKTOK_CLIENT_SECRET || '',
-      code,
-      grant_type: 'authorization_code',
-      redirect_uri: redirectUri,
-    }).toString(),
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-  })
-
-  if (tokenRes.error?.code && tokenRes.error.code !== 'ok') {
-    throw new Error(`TikTok token error: ${tokenRes.error.message}`)
+  // TikTok. The v2 /oauth/token/ endpoint returns token fields at the TOP LEVEL
+  // (not nested under `data`); read either to be robust to both shapes.
+  const rawToken = await $fetch<Record<string, unknown>>(
+    'https://open.tiktokapis.com/v2/oauth/token/',
+    {
+      method: 'POST',
+      body: new URLSearchParams({
+        client_key: process.env.OAUTH_TIKTOK_CLIENT_KEY || '',
+        client_secret: process.env.OAUTH_TIKTOK_CLIENT_SECRET || '',
+        code,
+        grant_type: 'authorization_code',
+        redirect_uri: redirectUri,
+      }).toString(),
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    },
+  )
+  const tk = ((rawToken as { data?: Record<string, unknown> }).data ??
+    rawToken) as {
+    access_token?: string
+    open_id?: string
+    error?: string
+    error_description?: string
+  }
+  if (tk.error) {
+    throw new Error(`TikTok token error: ${tk.error_description || tk.error}`)
   }
 
-  const accessToken = tokenRes.data?.access_token
-  const openId = tokenRes.data?.open_id
+  const accessToken = tk.access_token
+  const openId = tk.open_id
   if (!accessToken || !openId) throw new Error('TikTok did not return an access token')
 
   const userRes = await $fetch<{
