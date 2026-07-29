@@ -16,6 +16,28 @@ function ok(res: { error?: { code?: string; message?: string } }) {
   }
 }
 
+/**
+ * A non-2xx HTTP response (e.g. a scope/permission 403) makes ofetch throw a
+ * FetchError instead of resolving into `ok()`'s JSON-body check above. Convert
+ * it into a plain Error with a readable message — otherwise it escapes the
+ * caller's `'statusCode' in error` passthrough as an un-blessed H3 error and
+ * Nitro's prod handler redacts it down to the opaque "Server Error".
+ */
+function describeFetchError(e: unknown): string {
+  const err = e as {
+    data?: { error?: { code?: string; message?: string } }
+    statusCode?: number
+    status?: number
+    statusMessage?: string
+    message?: string
+  }
+  const apiMessage = err?.data?.error?.message || err?.data?.error?.code
+  if (apiMessage) return `TikTok: ${apiMessage}`
+  const status = err?.statusCode ?? err?.status
+  if (status) return `TikTok API request failed (${status} ${err?.statusMessage || ''})`.trim()
+  return err?.message || 'TikTok API request failed'
+}
+
 export interface TikTokCreatorInfo {
   nickname?: string
   username?: string
@@ -29,14 +51,16 @@ export interface TikTokCreatorInfo {
 
 /** Required before any post — also drives the mandatory privacy-picker UX. */
 export async function queryCreatorInfo(accessToken: string): Promise<TikTokCreatorInfo> {
-  const res = await $fetch<{
-    data?: Record<string, unknown>
-    error?: { code?: string; message?: string }
-  }>(`${BASE}/post/publish/creator_info/query/`, {
-    method: 'POST',
-    headers: JSON_HEADERS(accessToken),
-    body: {},
-  })
+  let res: { data?: Record<string, unknown>; error?: { code?: string; message?: string } }
+  try {
+    res = await $fetch(`${BASE}/post/publish/creator_info/query/`, {
+      method: 'POST',
+      headers: JSON_HEADERS(accessToken),
+      body: {},
+    })
+  } catch (e) {
+    throw new Error(describeFetchError(e))
+  }
   ok(res)
   const d = (res.data ?? {}) as Record<string, unknown>
   return {
@@ -63,29 +87,31 @@ export interface InitPhotoArgs {
 
 /** Direct-post a photo. Returns the publish_id to poll for status. */
 export async function initPhotoPost(args: InitPhotoArgs): Promise<{ publishId: string }> {
-  const res = await $fetch<{
-    data?: { publish_id?: string }
-    error?: { code?: string; message?: string }
-  }>(`${BASE}/post/publish/content/init/`, {
-    method: 'POST',
-    headers: JSON_HEADERS(args.accessToken),
-    body: {
-      post_info: {
-        title: args.title ?? '',
-        description: args.description ?? '',
-        privacy_level: args.privacyLevel,
-        disable_comment: args.disableComment ?? false,
-        auto_add_music: true,
+  let res: { data?: { publish_id?: string }; error?: { code?: string; message?: string } }
+  try {
+    res = await $fetch(`${BASE}/post/publish/content/init/`, {
+      method: 'POST',
+      headers: JSON_HEADERS(args.accessToken),
+      body: {
+        post_info: {
+          title: args.title ?? '',
+          description: args.description ?? '',
+          privacy_level: args.privacyLevel,
+          disable_comment: args.disableComment ?? false,
+          auto_add_music: true,
+        },
+        source_info: {
+          source: 'PULL_FROM_URL',
+          photo_cover_index: 0,
+          photo_images: [args.photoUrl],
+        },
+        post_mode: 'DIRECT_POST',
+        media_type: 'PHOTO',
       },
-      source_info: {
-        source: 'PULL_FROM_URL',
-        photo_cover_index: 0,
-        photo_images: [args.photoUrl],
-      },
-      post_mode: 'DIRECT_POST',
-      media_type: 'PHOTO',
-    },
-  })
+    })
+  } catch (e) {
+    throw new Error(describeFetchError(e))
+  }
   ok(res)
   const publishId = res.data?.publish_id
   if (!publishId) throw new Error('TikTok did not return a publish_id')
@@ -97,14 +123,16 @@ export async function getPostStatus(
   accessToken: string,
   publishId: string,
 ): Promise<{ status: string; failReason?: string }> {
-  const res = await $fetch<{
-    data?: { status?: string; fail_reason?: string }
-    error?: { code?: string; message?: string }
-  }>(`${BASE}/post/publish/status/fetch/`, {
-    method: 'POST',
-    headers: JSON_HEADERS(accessToken),
-    body: { publish_id: publishId },
-  })
+  let res: { data?: { status?: string; fail_reason?: string }; error?: { code?: string; message?: string } }
+  try {
+    res = await $fetch(`${BASE}/post/publish/status/fetch/`, {
+      method: 'POST',
+      headers: JSON_HEADERS(accessToken),
+      body: { publish_id: publishId },
+    })
+  } catch (e) {
+    throw new Error(describeFetchError(e))
+  }
   ok(res)
   return {
     status: res.data?.status ?? 'UNKNOWN',
