@@ -85,6 +85,7 @@ export default defineEventHandler(async (event) => {
     logger.logError('[POST /api/growth/assets/:id/post/tiktok]', error, {
       requestId: event.context?.requestId,
     })
-    throw createError({ statusCode: 502, statusMessage: 'TikTok post failed' })
+    const message = error instanceof Error && error.message ? error.message : 'TikTok post failed'
+    throw createError({ statusCode: 502, statusMessage: message })
   }
 })

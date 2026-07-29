@@ -28,13 +28,36 @@
         <p
           class="mx-auto mt-4 max-w-xl text-base leading-relaxed text-gray-600 dark:text-neutral-300"
         >
-          Verify any seller in seconds. Pay into protected escrow, and release
-          funds only when your order arrives.
+          Search for trusted sellers. Verify their identity before paying. Your
+          money is only released after you receive your order.
         </p>
       </div>
 
       <div class="mx-auto mt-8 max-w-2xl">
         <TrustFindVerifyDock />
+      </div>
+
+      <!-- Three trust pillars — the promise, in one glance -->
+      <div class="mx-auto mt-10 grid max-w-3xl gap-6 sm:grid-cols-3">
+        <div
+          v-for="pillar in TRUST_PILLARS"
+          :key="pillar.title"
+          class="flex flex-col items-center text-center sm:items-start sm:text-left"
+        >
+          <Icon
+            :name="pillar.icon"
+            size="22"
+            class="text-emerald-600 dark:text-emerald-400"
+          />
+          <p class="mt-2 text-sm font-bold text-gray-900 dark:text-white">
+            {{ pillar.title }}
+          </p>
+          <p
+            class="mt-0.5 text-xs leading-relaxed text-gray-500 dark:text-neutral-400"
+          >
+            {{ pillar.desc }}
+          </p>
+        </div>
       </div>
     </section>
 
@@ -506,6 +529,24 @@ import type { IFeedItem } from '~~/layers/feed/app/types/feed.types'
 
 defineOptions({ name: 'TrustMarketHome' })
 defineEmits<{ 'sign-in': [] }>()
+
+const TRUST_PILLARS = [
+  {
+    icon: 'solar:verified-check-linear',
+    title: 'Verify sellers',
+    desc: 'Government ID, CAC and reputation — checked before you pay.',
+  },
+  {
+    icon: 'solar:lock-keyhole-minimalistic-linear',
+    title: 'Protected payments',
+    desc: 'Money is released only after your order is delivered.',
+  },
+  {
+    icon: 'solar:graph-up-linear',
+    title: 'Build reputation',
+    desc: 'Every completed order strengthens a seller’s trust.',
+  },
+]
 
 const HOW_IT_WORKS = [
   {
