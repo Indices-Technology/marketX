@@ -2,8 +2,13 @@
   BottomNavMobile — mobile primary navigation.
 
   Destinations mirror the desktop rail (SideNav) so the app has ONE navigation
-  model: Home · Near Me · Create · Squares · Account. Icons come from AppIcon
-  (the semantic icon map) so a glyph change lands on both surfaces at once.
+  model. The centre slot is state-dependent: signed-in users get the Create CTA
+  (a members-only action) and reach Near Me from the top bar; guests can't create,
+  so the centre becomes Near Me instead.
+    guest     → Home · Discover · Near Me · Squares · Account
+    signed-in → Home · Discover · Create  · Squares · Account   (Near Me → top bar)
+  Icons come from AppIcon (the semantic icon map) so a glyph change lands on both
+  surfaces at once.
 -->
 <template>
   <nav
@@ -21,17 +26,19 @@
         <AppIcon name="home" :active="isHome" size="26" />
       </NuxtLink>
 
-      <!-- Near Me -->
+      <!-- Discover -->
       <NuxtLink
-        to="/map"
+        to="/discover"
         class="nav-item"
-        :class="{ active: isNearby }"
-        aria-label="Near Me"
+        :class="{ active: isDiscover }"
+        aria-label="Discover"
       >
-        <AppIcon name="nearby" :active="isNearby" size="26" />
+        <AppIcon name="discover" :active="isDiscover" size="26" />
       </NuxtLink>
 
-      <!-- Create (centre CTA) — logged in: open create modal; guest: register -->
+      <!-- Centre slot — Create for signed-in members, Near Me for guests.
+           Create is a members-only action, so guests get the map here instead;
+           signed-in users reach the map from the top bar. -->
       <ClientOnly>
         <button
           v-if="profileStore.isLoggedIn"
@@ -46,17 +53,15 @@
         </button>
         <NuxtLink
           v-else
-          to="/user-register"
-          class="sell-btn"
-          aria-label="Start selling"
+          to="/map"
+          class="nav-item"
+          :class="{ active: isNearby }"
+          aria-label="Near Me"
         >
-          <AppIcon name="create" size="20" class="text-white" />
-          <span class="text-[11px] font-bold leading-none text-white"
-            >Create</span
-          >
+          <AppIcon name="nearby" :active="isNearby" size="26" />
         </NuxtLink>
         <template #fallback>
-          <div class="sell-btn pointer-events-none opacity-0" />
+          <div class="nav-item" />
         </template>
       </ClientOnly>
 
@@ -136,6 +141,7 @@ const menuOpen = ref(false)
 const menuRef = ref<HTMLElement | null>(null)
 
 const isHome = computed(() => route.path === '/')
+const isDiscover = computed(() => route.path.startsWith('/discover'))
 const isNearby = computed(() => route.path.startsWith('/map'))
 const isSquares = computed(() => route.path.startsWith('/squares'))
 const isProfileActive = computed(

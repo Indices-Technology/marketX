@@ -18,20 +18,29 @@ export default defineEventHandler(async (event) => {
   const redirectTo = redirectRaw ? decodeURIComponent(redirectRaw) : '/'
 
   // One-shot cookies — clear regardless of outcome.
-  for (const c of ['growth_tt_state', 'growth_tt_seller', 'growth_tt_redirect']) {
+  for (const c of [
+    'growth_tt_state',
+    'growth_tt_seller',
+    'growth_tt_redirect',
+  ]) {
     deleteCookie(event, c, { path: '/' })
   }
 
   const back = (params: string) =>
-    sendRedirect(event, `${redirectTo}${redirectTo.includes('?') ? '&' : '?'}${params}`)
-  const fail = (reason: string) => back(`tiktok=error&reason=${encodeURIComponent(reason)}`)
+    sendRedirect(
+      event,
+      `${redirectTo}${redirectTo.includes('?') ? '&' : '?'}${params}`,
+    )
+  const fail = (reason: string) =>
+    back(`tiktok=error&reason=${encodeURIComponent(reason)}`)
 
   try {
     if (query.error) return fail(String(query.error_description || query.error))
 
     const code = typeof query.code === 'string' ? query.code : ''
     const state = typeof query.state === 'string' ? query.state : ''
-    if (!code || !state || !stateCookie || state !== stateCookie) return fail('invalid_state')
+    if (!code || !state || !stateCookie || state !== stateCookie)
+      return fail('invalid_state')
     if (!sellerId) return fail('no_seller')
 
     const appUrl = resolveOAuthAppUrl(event, config.public.baseURL as string)
@@ -39,11 +48,15 @@ export default defineEventHandler(async (event) => {
     const conn = await exchangeTikTokConnection(code, redirectUri)
 
     const now = Date.now()
-    const expiresAt = conn.expiresIn ? new Date(now + conn.expiresIn * 1000) : null
+    const expiresAt = conn.expiresIn
+      ? new Date(now + conn.expiresIn * 1000)
+      : null
     const refreshExpiresAt = conn.refreshExpiresIn
       ? new Date(now + conn.refreshExpiresIn * 1000)
       : null
-    const encRefresh = conn.refreshToken ? encryptApiKey(conn.refreshToken) : null
+    const encRefresh = conn.refreshToken
+      ? encryptApiKey(conn.refreshToken)
+      : null
 
     await prisma.socialConnection.upsert({
       where: {

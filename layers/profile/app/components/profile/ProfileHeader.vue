@@ -109,27 +109,27 @@
             </div>
             <button
               @click="$emit('show-followers')"
-              class="text-center transition-opacity hover:opacity-70"
+              class="group -mx-1.5 rounded-lg px-1.5 py-1 text-center transition-colors hover:bg-gray-100 active:scale-95 dark:hover:bg-neutral-800"
             >
               <div
-                class="font-display text-[15px] font-bold leading-tight ink-strong"
+                class="font-display text-[15px] font-bold leading-tight ink-strong group-hover:text-brand"
               >
                 {{ formatNum(stats.followersCount) }}
               </div>
-              <div class="text-[11px] ink-faint">
+              <div class="text-[11px] ink-faint group-hover:text-brand">
                 {{ $t('profile.followers') }}
               </div>
             </button>
             <button
               @click="$emit('show-following')"
-              class="text-center transition-opacity hover:opacity-70"
+              class="group -mx-1.5 rounded-lg px-1.5 py-1 text-center transition-colors hover:bg-gray-100 active:scale-95 dark:hover:bg-neutral-800"
             >
               <div
-                class="font-display text-[15px] font-bold leading-tight ink-strong"
+                class="font-display text-[15px] font-bold leading-tight ink-strong group-hover:text-brand"
               >
                 {{ formatNum(stats.followingCount) }}
               </div>
-              <div class="text-[11px] ink-faint">
+              <div class="text-[11px] ink-faint group-hover:text-brand">
                 {{ $t('profile.following') }}
               </div>
             </button>
