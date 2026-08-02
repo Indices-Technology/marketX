@@ -98,6 +98,11 @@
         </template>
       </ClientOnly>
 
+      <!-- Who to follow -->
+      <ClientOnly>
+        <SuggestedFollows compact :limit="5" />
+      </ClientOnly>
+
       <!-- Top Shops -->
       <div
         v-if="topSellers.length"
@@ -239,6 +244,7 @@ import { useSellerStore } from '~~/layers/seller/app/store/seller.store'
 import { useLayoutData } from '~~/layers/core/app/composables/useLayoutData'
 import { useProfileApi } from '~~/layers/profile/app/services/profile.api'
 import { avatarSrc } from '~~/layers/core/app/utils/cloudinary'
+import SuggestedFollows from '~~/layers/profile/app/components/profile/SuggestedFollows.vue'
 
 const route = useRoute()
 const profileStore = useProfileStore()

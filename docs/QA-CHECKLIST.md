@@ -40,6 +40,38 @@ doesn't match the **Expected** result.
 
 ---
 
+## Quick smoke test (do this first, ~15 min)
+
+Run this before diving into a full section. If any of these fail, stop and flag it — no
+point testing deeper on a broken build.
+
+- [ ] Home loads logged out, no console errors.
+- [ ] Register a new account → verify email → land logged in.
+- [ ] Login / logout works.
+- [ ] Open a product → add to cart → checkout screen loads.
+- [ ] Complete a test payment → order appears in My Orders.
+- [ ] Open a seller's public store page.
+- [ ] Post something (text or image) to the feed.
+- [ ] Open Messages / Dasah chat — it opens without erroring.
+
+## Splitting this across interns
+
+Each session below is ~30–45 min and can be picked up independently. Pair them with
+a role from the test accounts table.
+
+| Session | Sections | Suggested account |
+|---|---|---|
+| A — Auth & Profile | 1, 8 | New user (register fresh) |
+| B — Content | 2, 12, 13 | Buyer |
+| C — Shop & Pay | 3, 4, 5, 6 | Buyer |
+| D — Selling | 9 (incl. 9.6 Trust Card & Growth) | Seller (chairman) |
+| E — Community | 7, 10, 11 | Buyer + Seller |
+| F — Everything else | 14, 15, 16 | Either |
+
+Do the **Quick smoke test** first regardless of which session you're assigned.
+
+---
+
 ## 0. Cross-cutting UX pass (check on every screen as you go)
 - [ ] Page loads without a flash of "not found" / blank then content. **Expected:** smooth load, skeletons while loading.
 - [ ] Loading states show a **skeleton/shimmer or spinner**, not a frozen blank. **Expected:** clear loading feedback.
@@ -133,6 +165,15 @@ doesn't match the **Expected** result.
 - [ ] Search a username. **Expected:** user results; **no email shown** on results.
 - [ ] Search 1 character. **Expected:** no results / "keep typing" (doesn't error).
 - [ ] Tap a seller from a product. **Expected:** opens that store's profile.
+
+### 3.1 Find / Verify dock (home page, works logged out)
+- [ ] On the home page, use the **Find a trader** tab, type a known trader/product name (2+ chars). **Expected:** live dropdown grouped into Traders / Goods within ~1s.
+- [ ] Press Enter with no query. **Expected:** goes to Discover.
+- [ ] Switch to the **Verify** tab, enter a seller's phone, @handle, or store link, tap Verify. **Expected:** goes to `/verify` with a result.
+- [ ] On `/verify`, try a **verified** seller. **Expected:** green/mint card — name, blue verified badge, Seller ID (e.g. `MX-LA-XXXX`), "View full trust profile" + "Visit store" buttons.
+- [ ] On `/verify`, try a seller **on MarketX but not verified**. **Expected:** amber card explaining they're not yet verified, still has "Visit store".
+- [ ] On `/verify`, try something **unrecognized** (random phone number). **Expected:** grey "no trust record" card with an "Invite them" share action — no crash.
+- [ ] Scroll the **"Trusted this week"** rail on the home/feed page. **Expected:** horizontally scrollable seller cards ranked by sales, each opens that seller's profile; hides itself cleanly if there's no data (not a broken empty box).
 
 ---
 
@@ -240,6 +281,18 @@ doesn't match the **Expected** result.
 - [ ] Edit store settings (logo, banner, description, ship-from). **Expected:** saves; public page updates.
 - [ ] View your public store page as a buyer. **Expected:** products, wall, follow button; **no private data** (no exact GPS / phone / verification status leaking).
 - [ ] Deactivate then reactivate the store. **Expected:** store hidden/shown accordingly.
+
+### 9.6 Trust Card & Growth Tools (new — test this)
+- [ ] Open **Store → Card** (`/store/card`). **Expected:** your card shows logo, Seller ID (copy button works), QR code, and a "copy store link" button.
+- [ ] Toggle a field in Card settings (e.g. hide phone). **Expected:** the card preview updates to match.
+- [ ] Tap **Download** on the card. **Expected:** a PNG image downloads.
+- [ ] Tap **Share** on the card. **Expected:** native share sheet opens (or link copies as a fallback).
+- [ ] On a product in your Products list, tap **Promote** (rocket icon). **Expected:** opens a modal with a share-card preview, price, and QR — loads within a few seconds.
+- [ ] In the Promote modal, tap **Download** / **Share**. **Expected:** same as the card actions above — works with no TikTok connection needed.
+- [ ] Open **Connections** (`/seller/[yourstore]/connections`) and connect TikTok. **Expected:** redirects to TikTok, and on approval returns with a "connected" confirmation.
+- [ ] Back in the Promote modal, with TikTok connected, edit the caption and tap **Post to TikTok**. **Expected:** success toast; note it will post as **private/only-you** while our TikTok app is unaudited — check on TikTok that it *did* post, just not publicly.
+- [ ] Disconnect TikTok, reopen Promote modal. **Expected:** shows a "Connect TikTok" prompt instead of the post form (no broken state).
+- [ ] ⚠️ **Known gap, don't log a bug for it:** there's currently no seller-facing page to upload verification/CAC documents — verification is admin-only for now.
 
 ---
 

@@ -35,7 +35,7 @@
     <circle class="mx-plate" cx="609.668" cy="750.062" r="215.195" />
 
     <!-- m -->
-    <path class="mx-m" :d="M_PATH" transform="translate(492.573204 845.500395)" />
+    <path class="mx-m" :d="M_PATH" :transform="mTransform" />
 
     <template v-if="variant !== 'icon'">
       <!-- x -->
@@ -76,6 +76,18 @@ const viewBox = computed(() => {
       return '384 524 772 452'
   }
 })
+
+// In the full "mx." lockup the plate backs the "m" while the "x" and dot sit to
+// its right, so the supplied transform places the "m" right of the plate centre.
+// For the icon-only badge (no x/dot) that offset makes the "m" hug the right
+// edge, so we re-centre it horizontally on the plate (cx 609.668): the "m" spans
+// local x[21.45, 334.19] (centre 177.82), so translateX = 609.668 − 177.82.
+// The vertical translate is left at the lockup value — it's already centred.
+const mTransform = computed(() =>
+  props.variant === 'icon'
+    ? 'translate(431.848 845.500395)'
+    : 'translate(492.573204 845.500395)',
+)
 
 // Glyph outlines lifted verbatim from the supplied mx_logo.svg.
 const M_PATH =

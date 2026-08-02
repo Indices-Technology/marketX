@@ -33,9 +33,15 @@
         <!-- ── Banner ─────────────────────────────────────────────────────── -->
         <div class="relative h-44 overflow-hidden rounded-2xl">
           <img
-            :src="square.bannerUrl || `https://picsum.photos/seed/${encodeURIComponent(square.slug)}/1200/176`"
+            v-if="square.bannerUrl && !bannerError"
+            :src="square.bannerUrl"
             :alt="square.name"
             class="h-full w-full object-cover"
+            @error="bannerError = true"
+          />
+          <div
+            v-else
+            class="h-full w-full bg-gradient-to-br from-gray-100 to-gray-50 dark:from-neutral-800 dark:to-neutral-900"
           />
           <!-- Back button — mobile only, floats over banner -->
           <button
@@ -78,10 +84,18 @@
               :style="`border-color: ${square.accentColor || '#f59e0b'}66`"
             >
               <img
-                :src="square.iconUrl || `https://picsum.photos/seed/${encodeURIComponent(square.slug)}-icon/56/56`"
+                v-if="square.iconUrl && !iconError"
+                :src="square.iconUrl"
                 :alt="square.name"
                 class="h-full w-full rounded-xl object-cover"
+                @error="iconError = true"
               />
+              <span
+                v-else
+                class="text-base font-black leading-none text-gray-500 dark:text-neutral-400"
+              >
+                {{ squareInitials }}
+              </span>
               <ClientOnly>
                 <label
                   v-if="canEditImages"
@@ -720,6 +734,14 @@ const {
   error,
 } = await useFetch(() => `/api/squares/${slug.value}`)
 const square = computed(() => (squareData.value as any)?.data)
+
+// Icon/banner fallbacks — a Square with no uploaded image shows a branded
+// initials chip (icon) or gradient (banner), never a random stock photo.
+const bannerError = ref(false)
+const iconError = ref(false)
+const squareInitials = computed(
+  () => (square.value?.name ?? '').slice(0, 2).toUpperCase() || '?',
+)
 
 useSeoMeta({
   title: computed(() =>

@@ -59,8 +59,8 @@
           @follow="handleFollow"
           @unfollow="handleUnfollow"
           @settings="goToSettings"
-          @show-followers="showFollowersModal = true"
-          @show-following="showFollowingModal = true"
+          @show-followers="activeTab = 'followers'"
+          @show-following="activeTab = 'following'"
         />
 
         <!-- Become a Seller banner — mobile only, own profile, not yet a seller -->
@@ -118,6 +118,18 @@
               :username="username"
               :is-own-profile="isOwnProfile"
             />
+            <FollowListTab
+              v-else-if="activeTab === 'followers'"
+              type="followers"
+              :username="username"
+              :is-own-profile="isOwnProfile"
+            />
+            <FollowListTab
+              v-else-if="activeTab === 'following'"
+              type="following"
+              :username="username"
+              :is-own-profile="isOwnProfile"
+            />
             <LikesTab v-else-if="activeTab === 'likes'" :username="username" />
             <SavedTab v-else-if="activeTab === 'saved' && isOwnProfile" />
             <OrdersTab v-else-if="activeTab === 'orders' && isOwnProfile" />
@@ -143,18 +155,6 @@
       :profile="profile!"
       @close="showEditModal = false"
       @updated="handleProfileUpdated"
-    />
-    <FollowListModal
-      v-if="showFollowersModal"
-      type="followers"
-      :username="username"
-      @close="showFollowersModal = false"
-    />
-    <FollowListModal
-      v-if="showFollowingModal"
-      type="following"
-      :username="username"
-      @close="showFollowingModal = false"
     />
   </HomeLayout>
 </template>
@@ -183,7 +183,7 @@ import AffiliateTab from '../../components/profile/tabs/AffiliateTab.vue'
 import TaggedTab from '../../components/profile/tabs/TaggedTab.vue'
 import AboutTab from '../../components/profile/tabs/AboutTab.vue'
 import EditProfileModal from '../../components/profile/modals/EditProfileModal.vue'
-import FollowListModal from '../../components/profile/modals/FollowListModal.vue'
+import FollowListTab from '../../components/profile/tabs/FollowListTab.vue'
 import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 import StoresTab from '../../components/profile/tabs/StoresTab.vue'
 import MediaTab from '../../components/profile/tabs/MediaTab.vue'
@@ -202,8 +202,6 @@ const { followUser, unfollowUser, checkIfFollowing } = useFollow()
 const username = computed(() => route.params.username as string)
 const activeTab = ref('posts')
 const showEditModal = ref(false)
-const showFollowersModal = ref(false)
-const showFollowingModal = ref(false)
 const isFollowing = ref(false)
 const isFollowLoading = ref(false)
 
@@ -230,6 +228,8 @@ const availableTabs = computed(() => {
   type Tab = { id: string; label: string; icon: string; badge?: number }
   const publicTabs: Tab[] = [
     { id: 'posts', label: 'Posts', icon: 'solar:widget-2-linear' },
+    { id: 'followers', label: 'Followers', icon: 'solar:users-group-rounded-linear', badge: stats.value.followersCount },
+    { id: 'following', label: 'Following', icon: 'solar:user-plus-linear', badge: stats.value.followingCount },
     { id: 'tagged', label: 'Tagged', icon: 'solar:user-id-bold' },
     { id: 'about', label: 'About', icon: 'solar:info-circle-linear' },
   ]
@@ -237,6 +237,8 @@ const availableTabs = computed(() => {
   if (isOwnProfile.value) {
     const tabs: Tab[] = [
       { id: 'posts', label: 'Posts', icon: 'solar:widget-2-linear' },
+      { id: 'followers', label: 'Followers', icon: 'solar:users-group-rounded-linear', badge: stats.value.followersCount },
+      { id: 'following', label: 'Following', icon: 'solar:user-plus-linear', badge: stats.value.followingCount },
       { id: 'likes', label: 'Liked', icon: 'solar:heart-linear' },
       { id: 'saved', label: 'Saved', icon: 'solar:bookmark-linear' },
       { id: 'orders', label: 'Orders', icon: 'solar:box-bold', badge: 0 },

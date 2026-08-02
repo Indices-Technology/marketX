@@ -13,6 +13,18 @@
 
       <!-- Actions -->
       <div class="flex shrink-0 items-center gap-1">
+        <!-- Near Me — only for signed-in users; guests reach it from the
+             bottom bar's centre slot instead. -->
+        <ClientOnly>
+          <NuxtLink
+            v-if="profileStore.isLoggedIn"
+            to="/map"
+            aria-label="Near Me"
+            class="header-button"
+          >
+            <AppIcon name="nearby" size="24" />
+          </NuxtLink>
+        </ClientOnly>
         <!-- Hidden on Discover — that page has its own prominent search -->
         <button
           v-if="route.path !== '/discover'"

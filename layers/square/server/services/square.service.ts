@@ -17,7 +17,7 @@ import { prisma } from '~~/server/utils/db'
 import { bust } from '~~/server/utils/cache'
 import { notificationQueue } from '~~/server/queues/notification.queue'
 
-// Bust stale list cache on deploy — followerCount shape changed
+// Bust stale list cache on deploy — memberCount/productCount now derived live
 bust('squares:list:*').catch(() => {})
 import { entityEmbedder } from '~~/layers/ai/server/services/entity-embedder.service'
 import type {
@@ -109,7 +109,15 @@ export const squareService = {
       where,
       select: {
         ...SQUARE_CARD_SELECT,
-        _count: { select: { followers: true, products: true } },
+        _count: {
+          select: {
+            // Live counts — the stored memberCount column drifts because it's
+            // only incremented on approval, never decremented on suspend/leave.
+            memberships: { where: { status: 'ACTIVE' } },
+            followers: true,
+            products: { where: { status: 'PUBLISHED' } },
+          },
+        },
       },
       orderBy: [{ type: 'asc' }, { memberCount: 'desc' }],
       take: limit + 1,
@@ -120,6 +128,7 @@ export const squareService = {
     const squares = (hasMore ? rows.slice(0, limit) : rows).map(
       ({ _count, ...s }) => ({
         ...s,
+        memberCount: _count.memberships,
         followerCount: _count.followers,
         productCount: _count.products,
       }),
@@ -135,7 +144,16 @@ export const squareService = {
         ...SQUARE_PUBLIC_SELECT,
         physicalAddress: true,
         officers: { select: OFFICER_SELECT },
-        _count: { select: { followers: true, posts: true } },
+        _count: {
+          select: {
+            // Live active-member count — the stored memberCount column drifts
+            // (incremented on approval, never decremented on suspend/leave),
+            // so it disagrees with the Sellers tab, which counts live.
+            memberships: { where: { status: 'ACTIVE' } },
+            followers: true,
+            posts: true,
+          },
+        },
       },
     })
 
@@ -175,6 +193,7 @@ export const squareService = {
     const { _count, ...squareData } = square
     return {
       ...squareData,
+      memberCount: _count.memberships,
       followerCount: _count.followers,
       postCount: _count.posts,
       isFollowing: !!followRow,
