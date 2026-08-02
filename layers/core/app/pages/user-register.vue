@@ -666,8 +666,13 @@
               <input
                 v-model="storeForm.shipFromPhone"
                 type="tel"
-                placeholder="Pickup phone (optional)"
+                placeholder="Pickup phone e.g. 08012345678 (optional)"
                 :class="shipInputClass"
+                @blur="
+                  storeForm.shipFromPhone =
+                    normalizePhone(storeForm.shipFromPhone) ||
+                    storeForm.shipFromPhone
+                "
               />
             </div>
           </div>
@@ -784,6 +789,7 @@ import { useSellerManagement } from '~~/layers/seller/app/composables/useSellerM
 import BaseInput from '~~/layers/ui/app/components/BaseInput.vue'
 import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 import { useRuntimeConfig } from '#imports'
+import { normalizePhone } from '~~/shared/utils/phone'
 
 definePageMeta({ layout: false, middleware: 'guest' })
 

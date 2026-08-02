@@ -262,8 +262,14 @@
               <input
                 v-model="form.store_phone"
                 type="tel"
+                placeholder="08012345678"
                 class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-[13px] text-gray-900 placeholder-gray-400 transition focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+                @input="phoneErrors.store_phone = ''"
+                @blur="normalizePhoneField('store_phone')"
               />
+              <p v-if="phoneErrors.store_phone" class="mt-1 text-[11px] text-red-500">
+                {{ phoneErrors.store_phone }}
+              </p>
             </div>
           </div>
 
@@ -516,9 +522,14 @@
               <input
                 v-model="form.shipFromPhone"
                 type="tel"
-                placeholder="+2348012345678"
+                placeholder="08012345678"
                 class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-[13px] text-gray-900 placeholder-gray-400 transition focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+                @input="phoneErrors.shipFromPhone = ''"
+                @blur="normalizePhoneField('shipFromPhone')"
               />
+              <p v-if="phoneErrors.shipFromPhone" class="mt-1 text-[11px] text-red-500">
+                {{ phoneErrors.shipFromPhone }}
+              </p>
             </div>
           </div>
 
@@ -839,6 +850,7 @@ import { useGeocode } from '~~/layers/core/app/composables/useGeocode'
 import { storeDisplayUrl } from '~~/layers/core/app/utils/storeUrl'
 import { SUPPORTED_CURRENCIES } from '~~/shared/utils/currency'
 import { NIGERIA_STATES } from '~~/shared/utils/locations'
+import { normalizePhone, validatePhone } from '~~/shared/utils/phone'
 
 const { reverseGeocode } = useGeocode()
 
@@ -930,6 +942,17 @@ const form = reactive({
   watermark_enabled: false,
   watermark_text: '',
 })
+
+// Phone fields accept a local Nigerian number (0803…) or an international one
+// and are rewritten to E.164 on blur. Errors surface inline per field.
+const phoneErrors = reactive({ store_phone: '', shipFromPhone: '' })
+const normalizePhoneField = (field: 'store_phone' | 'shipFromPhone') => {
+  const err = validatePhone(form[field])
+  phoneErrors[field] = err ?? ''
+  if (err) return
+  const normalized = normalizePhone(form[field])
+  if (normalized) form[field] = normalized
+}
 
 // Live preview label for the watermark (falls back to the store name).
 const watermarkPreview = computed(
