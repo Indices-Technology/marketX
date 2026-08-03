@@ -1720,6 +1720,7 @@ enum GrowthChannel {
   CARD // the seller's own card QR / direct scan — channel-agnostic, baked into the image
   ORGANIC_SHARE // any signed-in viewer's own share-sheet/download link — no API, no gate
   AFFILIATE // an enrolled affiliate's own share link — redirect carries their ?ref=
+  EMBED // iframed on a third-party site (seller blog/marketplace) — no OAuth, no gate
   TIKTOK
   META_FB
   META_IG

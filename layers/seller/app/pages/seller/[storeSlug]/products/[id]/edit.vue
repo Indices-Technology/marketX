@@ -142,7 +142,11 @@
                 :key="'new-' + i"
                 class="relative aspect-square overflow-hidden rounded-lg border border-gray-200 bg-gray-100 dark:border-neutral-700 dark:bg-neutral-900"
               >
-                <img :src="img.preview" alt="Product image preview" class="h-full w-full object-cover" />
+                <img
+                  :src="img.preview"
+                  alt="Product image preview"
+                  class="h-full w-full object-cover"
+                />
                 <div
                   v-if="img.uploading"
                   class="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-black/55"
@@ -359,7 +363,11 @@
               class="flex-1 rounded-xl border border-gray-200 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
               @click="submitAs('DRAFT')"
             >
-              {{ isLoading && form.status === 'DRAFT' ? 'Saving…' : 'Save as draft' }}
+              {{
+                isLoading && form.status === 'DRAFT'
+                  ? 'Saving…'
+                  : 'Save as draft'
+              }}
             </button>
             <button
               type="button"
@@ -389,7 +397,11 @@
               <h3
                 class="flex items-center gap-1.5 text-sm font-bold text-gray-900 dark:text-white"
               >
-                <Icon name="solar:magic-stick-3-linear" class="text-brand" size="18" />
+                <Icon
+                  name="solar:magic-stick-3-linear"
+                  class="text-brand"
+                  size="18"
+                />
                 AI Magic Lister
               </h3>
               <p class="mt-1 max-w-sm text-xs text-gray-600 dark:text-gray-300">
@@ -422,6 +434,8 @@
             @regenerate="runAiMagic"
             @saved="onCaptionsSaved"
           />
+
+          <ProductEmbedPanel :product-id="productId" />
         </div>
       </template>
     </div>
@@ -441,6 +455,7 @@ import { extractErrorMessage } from '~~/layers/core/app/utils/errors'
 import { videoThumb } from '~~/layers/core/app/utils/cloudinary'
 
 import ProductPromotePanel from '~~/layers/seller/app/components/ProductPromotePanel.vue'
+import ProductEmbedPanel from '~~/layers/seller/app/components/ProductEmbedPanel.vue'
 import SaveStatusOverlay from '~~/layers/core/app/components/SaveStatusOverlay.vue'
 import ProductBasicInfo from '~~/layers/seller/app/components/product-form/ProductBasicInfo.vue'
 import ProductVariantsSection from '~~/layers/seller/app/components/product-form/ProductVariantsSection.vue'
@@ -736,7 +751,9 @@ onMounted(async () => {
 
   // Premium gating for Share to Feed / Reels — non-critical, defaults to false
   try {
-    const res: any = await useSellerApi().getSellerProfileBySlug(storeSlug.value)
+    const res: any = await useSellerApi().getSellerProfileBySlug(
+      storeSlug.value,
+    )
     isPremiumSeller.value = res?.data?.isPremium ?? false
   } catch {
     // ignore — leaves the premium-only toggles disabled

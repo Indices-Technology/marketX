@@ -12,6 +12,7 @@
 
 export type ChannelId =
   | 'organic-share' // seller shares it themselves — no API, no App Review gate
+  | 'embed' // iframed on a third-party site — no API, no App Review gate
   | 'meta-fb'
   | 'meta-ig'
   | 'whatsapp'
@@ -20,6 +21,7 @@ export type ChannelId =
 /** Maps a wire ChannelId to the Prisma GrowthChannel enum value. */
 export const CHANNEL_ENUM: Record<ChannelId, string> = {
   'organic-share': 'ORGANIC_SHARE',
+  embed: 'EMBED',
   'meta-fb': 'META_FB',
   'meta-ig': 'META_IG',
   whatsapp: 'WHATSAPP',

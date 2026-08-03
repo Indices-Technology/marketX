@@ -12,6 +12,7 @@ export type GrowthChannelValue =
   | 'CARD'
   | 'ORGANIC_SHARE'
   | 'AFFILIATE'
+  | 'EMBED'
   | 'TIKTOK'
   | 'META_FB'
   | 'META_IG'
