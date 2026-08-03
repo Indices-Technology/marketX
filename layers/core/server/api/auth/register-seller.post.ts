@@ -5,6 +5,7 @@
 
 import { getClientIP } from '~~/server/layers/shared/utils/security'
 import { isReservedSlug } from '~~/server/layers/shared/utils/reservedSlugs'
+import { normalizePhone } from '~~/shared/utils/phone'
 import { AuthError } from '../../types/auth.types'
 import { SellerError } from '~~/layers/seller/server/types/seller.types'
 
@@ -209,7 +210,9 @@ export default defineEventHandler(async (event) => {
           store_logo: store_logo || undefined,
           store_banner: store_banner || undefined,
           store_location: store_location?.trim() || undefined,
-          store_phone: store_phone?.trim() || undefined,
+          // Accept local (0803…) or international; store as E.164. Unparseable
+          // optional input is dropped rather than blocking registration.
+          store_phone: normalizePhone(store_phone) || undefined,
           default_currency: store_currency || 'NGN',
           // Shipping origin (optional) — powers live GIG rates when provided
           shipFromName: shipFromName?.trim() || undefined,
@@ -218,7 +221,7 @@ export default defineEventHandler(async (event) => {
           shipFromState: shipFromState?.trim() || undefined,
           shipFromZip: shipFromZip?.trim() || undefined,
           shipFromCountry: shipFromCountry || undefined,
-          shipFromPhone: shipFromPhone?.trim() || undefined,
+          shipFromPhone: normalizePhone(shipFromPhone) || undefined,
           is_active: true,
         },
       })

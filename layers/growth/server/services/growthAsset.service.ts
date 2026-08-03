@@ -56,6 +56,65 @@ function shape(
   }
 }
 
+type AssetRow = {
+  id: string
+  productId: number | null
+  status: string
+  content: unknown
+  commerce: unknown
+}
+
+/** Loads the product this asset would belong to — no caller-identity check. */
+async function loadProductForAsset(productId: number) {
+  const product = await prisma.products.findFirst({
+    where: { id: productId },
+    select: {
+      id: true,
+      slug: true,
+      sellerId: true,
+      status: true,
+      affiliateCommission: true,
+      socialCaptions: true,
+      seller: { select: { publicId: true, profileId: true } },
+    },
+  })
+  if (!product) throw new UserError('PRODUCT_NOT_FOUND', 'Product not found', 404)
+  return product
+}
+
+/** Get (or create) the seller's canonical Growth Asset row for a product. */
+async function getOrCreateAsset(
+  product: Awaited<ReturnType<typeof loadProductForAsset>>,
+  baseUrl: string,
+): Promise<AssetRow> {
+  const existing = await prisma.growthAsset.findFirst({
+    where: { sellerId: product.sellerId, productId: product.id },
+    select: { id: true, productId: true, status: true, content: true, commerce: true },
+  })
+  if (existing) return existing
+
+  const canonicalUrl = `${baseUrl.replace(/\/$/, '')}/product/${product.slug}`
+  return prisma.growthAsset.create({
+    data: {
+      sellerId: product.sellerId,
+      productId: product.id,
+      intent: 'SELL',
+      status: 'DRAFT',
+      content: {
+        cardImageUrl: '',
+        cardPublicId: '',
+        captions: (product.socialCaptions ?? {}) as object,
+      },
+      commerce: {
+        productRef: String(product.id),
+        sellerPublicId: product.seller?.publicId ?? null,
+        canonicalUrl,
+      },
+    },
+    select: { id: true, productId: true, status: true, content: true, commerce: true },
+  })
+}
+
 export const growthAssetService = {
   /**
    * Get (or create) the Growth Asset for a product the seller owns, ensuring it
@@ -71,62 +130,79 @@ export const growthAssetService = {
     // Resolve ownership via the PRODUCT's store owner, not the caller's primary
     // store — a user can own several stores, so the product's sellerId is the
     // source of truth for which store this asset belongs to.
-    const product = await prisma.products.findFirst({
-      where: { id: productId },
-      select: {
-        id: true,
-        slug: true,
-        sellerId: true,
-        socialCaptions: true,
-        seller: { select: { publicId: true, profileId: true } },
-      },
-    })
-    if (!product || product.seller?.profileId !== userId) {
+    const product = await loadProductForAsset(productId)
+    if (product.seller?.profileId !== userId) {
       throw new UserError('PRODUCT_NOT_FOUND', 'Product not found or not yours', 404)
     }
-    const sellerId = product.sellerId
 
-    const canonicalUrl = `${baseUrl.replace(/\/$/, '')}/product/${product.slug}`
-
-    // Reuse an existing asset for this product if present.
-    const existing = await prisma.growthAsset.findFirst({
-      where: { sellerId, productId },
-      select: { id: true, productId: true, status: true, content: true, commerce: true },
+    const asset = await getOrCreateAsset(product, baseUrl)
+    const card = await prisma.assetDistribution.findFirst({
+      where: { assetId: asset.id, channel: 'CARD', sharerProfileId: null },
+      select: { shortCode: true },
     })
-    if (existing) {
-      const card = await prisma.assetDistribution.findFirst({
-        where: { assetId: existing.id, channel: 'CARD' },
-        select: { shortCode: true },
+    const code =
+      card?.shortCode ??
+      (await mintDistribution({ assetId: asset.id, channel: 'CARD', baseUrl }))
+        .shortCode
+    return shape(asset, trackedUrl(code, baseUrl))
+  },
+
+  /**
+   * Get (or create) a personal, per-sharer tracked link for a product — used by
+   * anyone who isn't the owning seller: an enrolled affiliate's own AFFILIATE
+   * card, or any other signed-in viewer's ORGANIC_SHARE card. Each (product,
+   * channel, sharer) triple gets its own short code, so clicks/scans roll up per
+   * sharer instead of all landing on the seller's single CARD link.
+   */
+  async forSharer(args: {
+    productId: number
+    sharerProfileId: string
+    channel: 'ORGANIC_SHARE' | 'AFFILIATE'
+    baseUrl: string
+  }): Promise<GrowthAssetResult> {
+    const { productId, sharerProfileId, channel, baseUrl } = args
+
+    const product = await loadProductForAsset(productId)
+    if (product.status !== 'PUBLISHED') {
+      throw new UserError('PRODUCT_NOT_FOUND', 'Product not found', 404)
+    }
+    if (channel === 'AFFILIATE') {
+      if (!product.affiliateCommission || product.affiliateCommission <= 0) {
+        throw new UserError(
+          'NOT_AFFILIATABLE',
+          'This product is not open to affiliates',
+          400,
+        )
+      }
+      const sharer = await prisma.profile.findUnique({
+        where: { id: sharerProfileId },
+        select: { affiliateCode: true },
       })
-      const code =
-        card?.shortCode ??
-        (await mintDistribution({ assetId: existing.id, channel: 'CARD', baseUrl }))
-          .shortCode
-      return shape(existing, trackedUrl(code, baseUrl))
+      if (!sharer?.affiliateCode) {
+        throw new UserError(
+          'NOT_ENROLLED',
+          'Enroll as an affiliate before sharing an affiliate link',
+          403,
+        )
+      }
     }
 
-    const asset = await prisma.growthAsset.create({
-      data: {
-        sellerId,
-        productId,
-        intent: 'SELL',
-        status: 'DRAFT',
-        content: {
-          cardImageUrl: '',
-          cardPublicId: '',
-          captions: (product.socialCaptions ?? {}) as object,
-        },
-        commerce: {
-          productRef: String(productId),
-          sellerPublicId: product.seller?.publicId ?? null,
-          canonicalUrl,
-        },
-      },
-      select: { id: true, productId: true, status: true, content: true, commerce: true },
+    const asset = await getOrCreateAsset(product, baseUrl)
+    const existing = await prisma.assetDistribution.findFirst({
+      where: { assetId: asset.id, channel, sharerProfileId },
+      select: { shortCode: true },
     })
-
-    const minted = await mintDistribution({ assetId: asset.id, channel: 'CARD', baseUrl })
-    return shape(asset, minted.trackedUrl)
+    const code =
+      existing?.shortCode ??
+      (
+        await mintDistribution({
+          assetId: asset.id,
+          channel,
+          baseUrl,
+          sharerProfileId,
+        })
+      ).shortCode
+    return shape(asset, trackedUrl(code, baseUrl))
   },
 
   /** Attach the rendered+uploaded card image to an asset the user owns. */

@@ -2,6 +2,7 @@
 
 import { z } from 'zod'
 import { safeHttpUrl } from '~~/shared/utils/safeUrl'
+import { normalizePhone, PHONE_ERROR } from '~~/shared/utils/phone'
 
 /**
  * Seller Profile Schemas
@@ -15,6 +16,16 @@ export const VerificationStatusEnum = z.enum([
   'VERIFIED',
   'REJECTED',
 ])
+
+// Optional phone: accept a Nigerian local number (0803…) or any international
+// number and store it as normalised E.164 (+234…). Empty → undefined. Only
+// genuinely un-parseable input is rejected. Shared with the client forms via
+// normalizePhone so both sides agree on what's valid.
+const optionalPhoneSchema = z
+  .union([z.string(), z.undefined(), z.null()])
+  .transform((v) => normalizePhone(typeof v === 'string' ? v : ''))
+  .refine((v) => v !== null, { message: PHONE_ERROR })
+  .transform((v) => (v ? v : undefined))
 
 // ==================== CREATE SELLER PROFILE ====================
 
@@ -45,19 +56,7 @@ export const createSellerProfileSchema = z.object({
     .max(100, 'Store location must be less than 100 characters')
     .optional(),
 
-  store_phone: z.preprocess(
-    (val) =>
-      typeof val === 'string'
-        ? val.replace(/[\s\-().]/g, '').trim() || undefined
-        : val,
-    z
-      .string()
-      .regex(
-        /^\+?[1-9]\d{6,14}$/,
-        'Phone must be in international format, e.g. +2348012345678',
-      )
-      .optional(),
-  ),
+  store_phone: optionalPhoneSchema,
 
   store_website: z.preprocess(
     (val) => (typeof val === 'string' ? val.trim() || undefined : val),
@@ -116,19 +115,7 @@ export const updateSellerProfileSchema = z
       .max(100, 'Store location must be less than 100 characters')
       .optional(),
 
-    store_phone: z.preprocess(
-      (val) =>
-        typeof val === 'string'
-          ? val.replace(/[\s\-().]/g, '').trim() || undefined
-          : val,
-      z
-        .string()
-        .regex(
-          /^\+?[1-9]\d{6,14}$/,
-          'Phone must be in international format, e.g. +2348012345678',
-        )
-        .optional(),
-    ),
+    store_phone: optionalPhoneSchema,
 
     store_website: z.preprocess(
       (val) => (typeof val === 'string' ? val.trim() || undefined : val),
@@ -183,16 +170,7 @@ export const updateSellerProfileSchema = z
     shipFromState: z.string().max(100).optional(),
     shipFromZip: z.string().max(20).optional(),
     shipFromCountry: z.string().length(2).optional(),
-    shipFromPhone: z.preprocess(
-      (val) =>
-        typeof val === 'string'
-          ? val.replace(/[\s\-().]/g, '').trim() || undefined
-          : val,
-      z
-        .string()
-        .regex(/^\+?[1-9]\d{6,14}$/)
-        .optional(),
-    ),
+    shipFromPhone: optionalPhoneSchema,
     // ── Map / Discovery ──────────────────────────────────────────────────────
     // preprocess: coerce empty string / NaN → null so number inputs don't break validation
     latitude: z.preprocess(

@@ -18,16 +18,8 @@
     </div>
 
     <template v-else>
-      <!-- Success -->
-      <div
-        v-if="saveSuccess"
-        class="mb-4 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-[13px] text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400"
-      >
-        <Icon name="solar:check-circle-bold" size="16" />
-        Store updated successfully!
-      </div>
-
-      <!-- Error -->
+      <!-- Load error (save success/failure is surfaced via a floating toast so
+           it's visible from the bottom Save button without scrolling up). -->
       <div
         v-if="error"
         class="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-600 dark:border-red-800 dark:bg-red-950/40 dark:text-red-400"
@@ -262,8 +254,14 @@
               <input
                 v-model="form.store_phone"
                 type="tel"
+                placeholder="08012345678"
                 class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-[13px] text-gray-900 placeholder-gray-400 transition focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+                @input="phoneErrors.store_phone = ''"
+                @blur="normalizePhoneField('store_phone')"
               />
+              <p v-if="phoneErrors.store_phone" class="mt-1 text-[11px] text-red-500">
+                {{ phoneErrors.store_phone }}
+              </p>
             </div>
           </div>
 
@@ -516,9 +514,14 @@
               <input
                 v-model="form.shipFromPhone"
                 type="tel"
-                placeholder="+2348012345678"
+                placeholder="08012345678"
                 class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-[13px] text-gray-900 placeholder-gray-400 transition focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+                @input="phoneErrors.shipFromPhone = ''"
+                @blur="normalizePhoneField('shipFromPhone')"
               />
+              <p v-if="phoneErrors.shipFromPhone" class="mt-1 text-[11px] text-red-500">
+                {{ phoneErrors.shipFromPhone }}
+              </p>
             </div>
           </div>
 
@@ -839,6 +842,8 @@ import { useGeocode } from '~~/layers/core/app/composables/useGeocode'
 import { storeDisplayUrl } from '~~/layers/core/app/utils/storeUrl'
 import { SUPPORTED_CURRENCIES } from '~~/shared/utils/currency'
 import { NIGERIA_STATES } from '~~/shared/utils/locations'
+import { normalizePhone, validatePhone } from '~~/shared/utils/phone'
+import { notify } from '@kyvg/vue3-notification'
 
 const { reverseGeocode } = useGeocode()
 
@@ -880,7 +885,6 @@ const { uploadMedia } = useMediaUpload()
 
 const pageLoading = ref(true)
 const isSaving = ref(false)
-const saveSuccess = ref(false)
 const logoInput = ref<HTMLInputElement | null>(null)
 const bannerInput = ref<HTMLInputElement | null>(null)
 const logoPreview = ref('')
@@ -930,6 +934,17 @@ const form = reactive({
   watermark_enabled: false,
   watermark_text: '',
 })
+
+// Phone fields accept a local Nigerian number (0803…) or an international one
+// and are rewritten to E.164 on blur. Errors surface inline per field.
+const phoneErrors = reactive({ store_phone: '', shipFromPhone: '' })
+const normalizePhoneField = (field: 'store_phone' | 'shipFromPhone') => {
+  const err = validatePhone(form[field])
+  phoneErrors[field] = err ?? ''
+  if (err) return
+  const normalized = normalizePhone(form[field])
+  if (normalized) form[field] = normalized
+}
 
 // Live preview label for the watermark (falls back to the store name).
 const watermarkPreview = computed(
@@ -1073,7 +1088,6 @@ const handleBannerUpload = async (e: Event) => {
 const handleSubmit = async () => {
   if (isSaving.value || !currentSeller.value) return
   isSaving.value = true
-  saveSuccess.value = false
   try {
     await updateSeller(currentSeller.value.id, {
       store_name: form.store_name || undefined,
@@ -1129,10 +1143,14 @@ const handleSubmit = async () => {
         ? form.watermark_text.trim() || null
         : undefined,
     } as any)
-    saveSuccess.value = true
-    setTimeout(() => {
-      saveSuccess.value = false
-    }, 3000)
+    // Floating toast (viewport-fixed) so the confirmation is visible right after
+    // tapping Save at the bottom of the form — no scroll to the top required.
+    notify({ type: 'success', text: '✓ Store updated successfully!' })
+  } catch {
+    notify({
+      type: 'error',
+      text: error.value || 'Failed to update store — please try again.',
+    })
   } finally {
     isSaving.value = false
   }

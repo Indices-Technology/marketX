@@ -11,6 +11,7 @@ import { randomShortCode } from '../utils/shortcode'
 export type GrowthChannelValue =
   | 'CARD'
   | 'ORGANIC_SHARE'
+  | 'AFFILIATE'
   | 'TIKTOK'
   | 'META_FB'
   | 'META_IG'
@@ -41,12 +42,19 @@ export async function mintDistribution(args: {
   assetId: string
   channel: GrowthChannelValue
   baseUrl?: string
+  /** Who this specific link belongs to — omit/null for the seller's own CARD link. */
+  sharerProfileId?: string | null
 }): Promise<MintedDistribution> {
   for (let attempt = 0; attempt < 5; attempt++) {
     const shortCode = randomShortCode()
     try {
       const row = await prisma.assetDistribution.create({
-        data: { assetId: args.assetId, channel: args.channel, shortCode },
+        data: {
+          assetId: args.assetId,
+          channel: args.channel,
+          shortCode,
+          sharerProfileId: args.sharerProfileId ?? null,
+        },
         select: { id: true, shortCode: true },
       })
       return {

@@ -28,6 +28,18 @@ export class GrowthAssetApiClient extends BaseApiClient {
     }) as Promise<{ success: boolean; data: GrowthAssetDTO }>
   }
 
+  /**
+   * Get-or-create the CALLER's own tracked link for a product they don't own —
+   * an affiliate's AFFILIATE link, or any signed-in viewer's ORGANIC_SHARE link.
+   */
+  async forSharer(productId: number, channel: 'ORGANIC_SHARE' | 'AFFILIATE') {
+    return this.request('/api/growth/assets/share', {
+      method: 'POST',
+      body: { productId, channel },
+      silent: true,
+    }) as Promise<{ success: boolean; data: GrowthAssetDTO }>
+  }
+
   /** Attach the rendered+uploaded card image to the asset. */
   async attachCard(id: string, cardImageUrl: string, cardPublicId: string) {
     return this.request(`/api/growth/assets/${id}`, {

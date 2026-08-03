@@ -323,15 +323,10 @@
             <BaseInput
               v-model="form.store_phone"
               type="tel"
-              placeholder="+2348012345678"
+              placeholder="08012345678"
               :error="fieldErrors.store_phone"
               @input="clearFieldError('store_phone')"
-              @blur="
-                () => {
-                  const e = validatePhone(form.store_phone)
-                  if (e) fieldErrors.store_phone = e
-                }
-              "
+              @blur="normalizePhoneField('store_phone')"
             />
           </div>
         </div>
@@ -512,7 +507,10 @@
                 <BaseInput
                   v-model="form.shipFromPhone"
                   type="tel"
-                  placeholder="+2348012345678"
+                  placeholder="08012345678"
+                  :error="fieldErrors.shipFromPhone"
+                  @input="clearFieldError('shipFromPhone')"
+                  @blur="normalizePhoneField('shipFromPhone')"
                 />
               </div>
             </div>
@@ -710,6 +708,7 @@ import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { useSellerManagement } from '~~/layers/seller/app/composables/useSellerManagement'
 import { useMediaUpload } from '~~/layers/core/app/composables/useMediaUpload'
 import { SUPPORTED_CURRENCIES } from '~~/shared/utils/currency'
+import { normalizePhone, validatePhone } from '~~/shared/utils/phone'
 import {
   NIGERIA_STATES,
   SHIP_COUNTRIES,
@@ -809,15 +808,19 @@ const detectLocation = () => {
 }
 
 // ── Client-side validation ──────────────────────────────────────────────────
+// Phone validation/normalisation lives in shared/utils/phone so the client and
+// the server schema agree on what's acceptable (local 0803… or international).
 
-const PHONE_RE = /^\+?[1-9]\d{6,14}$/
-
-const validatePhone = (raw: string): string | null => {
-  if (!raw.trim()) return null // optional
-  const stripped = raw.replace(/[\s\-().]/g, '')
-  if (!PHONE_RE.test(stripped))
-    return 'Phone must be in international format, e.g. +2348012345678'
-  return null
+// On blur: reject only un-parseable input; otherwise rewrite the field to its
+// E.164 form so the seller sees the number was accepted and stored consistently.
+const normalizePhoneField = (field: 'store_phone' | 'shipFromPhone') => {
+  const err = validatePhone(form[field])
+  if (err) {
+    fieldErrors[field] = err
+    return
+  }
+  const normalized = normalizePhone(form[field])
+  if (normalized) form[field] = normalized
 }
 
 const validateWebsite = (raw: string): string | null => {
@@ -851,6 +854,12 @@ const validateForm = (): boolean => {
   const phoneErr = validatePhone(form.store_phone)
   if (phoneErr) {
     fieldErrors.store_phone = phoneErr
+    valid = false
+  }
+
+  const shipPhoneErr = validatePhone(form.shipFromPhone)
+  if (shipPhoneErr) {
+    fieldErrors.shipFromPhone = shipPhoneErr
     valid = false
   }
 
