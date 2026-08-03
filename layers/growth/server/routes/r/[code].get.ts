@@ -27,6 +27,22 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'Link has no destination' })
   }
 
+  // AFFILIATE links carry the sharer's referral code so the existing order-time
+  // commission attribution (captureAffiliateRef reading ?ref=) keeps working —
+  // looked up live rather than baked in, so a short code never goes stale.
+  let destination = commerce.canonicalUrl
+  if (dist.channel === 'AFFILIATE' && dist.sharerProfileId) {
+    const sharer = await prisma.profile.findUnique({
+      where: { id: dist.sharerProfileId },
+      select: { affiliateCode: true },
+    })
+    if (sharer?.affiliateCode) {
+      const url = new URL(destination)
+      url.searchParams.set('ref', sharer.affiliateCode)
+      destination = url.toString()
+    }
+  }
+
   // Record the hit — the CARD's own code is a physical/screenshot SCAN; every other
   // channel's code is a link CLICK. Fire-and-forget so a logging hiccup never blocks
   // the buyer's redirect.

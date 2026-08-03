@@ -40,6 +40,19 @@ const SELLER_PRIVATE_OMIT = {
   shippingConfig: true,
 } as const
 
+/**
+ * Public store read omit: everything private, PLUS internal fields that must
+ * not leak to anonymous visitors. `primarySquareId` is an internal geo-index
+ * FK, and `lastActiveAt` is raw presence data — the map layer only ever exposes
+ * a derived `isOnline`/`lastSeenLabel`, never the raw timestamp, so we match
+ * that here instead of leaking exact last-seen times.
+ */
+const SELLER_PUBLIC_OMIT = {
+  ...SELLER_PRIVATE_OMIT,
+  primarySquareId: true,
+  lastActiveAt: true,
+} as const
+
 export const sellerRepository = {
   // ============================================
   // CREATE & RETRIEVE
@@ -122,7 +135,7 @@ export const sellerRepository = {
   async getSellerBySlug(slug: string): Promise<any | null> {
     const seller = await prisma.sellerProfile.findUnique({
       where: { store_slug: slug },
-      omit: SELLER_PRIVATE_OMIT,
+      omit: SELLER_PUBLIC_OMIT,
       include: {
         profile: {
           // No `email` — this is a public endpoint; the owner's personal email
@@ -152,16 +165,18 @@ export const sellerRepository = {
         .catch(() => {})
     }
 
+    const card = resolveCardSettings(seller.cardSettings)
+
     return {
       ...seller,
       followers_count: realFollowerCount,
       // Card visibility toggles (values come from the store's own fields).
-      cardSettings: resolveCardSettings(seller.cardSettings),
-      // store_email is only surfaced when the seller enabled it on the card
-      // (store_phone/store_location are already public store fields).
-      ...(resolveCardSettings(seller.cardSettings).showEmail
-        ? {}
-        : { store_email: null }),
+      cardSettings: card,
+      // Contact fields are opt-in: only surfaced when the seller enabled the
+      // matching card toggle. Defaults are off, so a bare store never leaks the
+      // owner's phone/email to anonymous visitors or scrapers.
+      ...(card.showEmail ? {} : { store_email: null }),
+      ...(card.showPhone ? {} : { store_phone: null }),
       // Ghost mode: never expose exact coordinates on the public read.
       ...(seller.hideLocation ? { latitude: null, longitude: null } : {}),
     }

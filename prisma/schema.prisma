@@ -1717,8 +1717,9 @@ enum GrowthAssetStatus {
 }
 
 enum GrowthChannel {
-  CARD // the card's own QR / direct scan — channel-agnostic, baked into the image
-  ORGANIC_SHARE // seller shares it themselves (share-sheet/download) — no API, no gate
+  CARD // the seller's own card QR / direct scan — channel-agnostic, baked into the image
+  ORGANIC_SHARE // any signed-in viewer's own share-sheet/download link — no API, no gate
+  AFFILIATE // an enrolled affiliate's own share link — redirect carries their ?ref=
   TIKTOK
   META_FB
   META_IG
@@ -1753,12 +1754,18 @@ model GrowthAsset {
   @@index([sellerId, status])
 }
 
-/// One row per (asset × channel) share. Mints the per-distribution short code —
-/// the unit of attribution. This is what lets one asset produce many funnels.
+/// One row per (asset × channel × sharer) share. Mints the per-distribution short
+/// code — the unit of attribution. This is what lets one asset produce many funnels,
+/// and lets many different people each get their own trackable link for the same
+/// product (the seller's CARD, an affiliate's AFFILIATE link, a random viewer's
+/// ORGANIC_SHARE link) without colliding.
 model AssetDistribution {
   id           String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   assetId      String        @db.Uuid
   channel      GrowthChannel
+  /// Who this specific link belongs to (scalar ref — no relation, extractable).
+  /// Null for the seller's own CARD distribution, which is asset-level, not per-viewer.
+  sharerProfileId String?    @db.Uuid
   /// Per-distribution trackable short code (e.g. "g7Kp2Q"). Unique — every scan/click resolves here.
   shortCode    String        @unique
   /// Set once the channel confirms delivery (remote post id for API channels; null for organic).
@@ -1770,8 +1777,13 @@ model AssetDistribution {
   asset  GrowthAsset        @relation(fields: [assetId], references: [id], onDelete: Cascade)
   events AttributionEvent[]
 
+  // Postgres treats NULLs as distinct, so this only enforces one row per
+  // (asset, channel, sharer) when sharerProfileId is set — the null-sharer CARD
+  // case keeps its existing get-or-create-in-app behavior untouched.
+  @@unique([assetId, channel, sharerProfileId])
   @@index([assetId])
   @@index([channel])
+  @@index([sharerProfileId])
 }
 
 /// A single measured interaction, keyed to a distribution's short code. Rolls up

@@ -651,42 +651,29 @@
             </BaseButton>
           </div>
 
-          <!-- Affiliate link panel — visible only to enrolled affiliates -->
+          <!-- Affiliate card — visible only to enrolled affiliates, on affiliatable products -->
           <div
-            v-if="isEnrolled && affiliateUrl"
-            class="rounded-2xl border border-brand/20 bg-brand/5 p-4 dark:border-brand/30 dark:bg-brand/10"
+            v-if="isEnrolled && isAffiliatable"
+            class="flex items-center justify-between gap-3 rounded-2xl border border-brand/20 bg-brand/5 p-4 dark:border-brand/30 dark:bg-brand/10"
           >
-            <div class="mb-2 flex items-center gap-2">
-              <Icon name="solar:link-round-linear" size="15" class="text-brand" />
-              <p class="text-xs font-bold uppercase tracking-wide text-brand">
-                Your Affiliate Link
+            <div class="min-w-0">
+              <p class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-brand">
+                <Icon name="solar:hand-money-linear" size="15" />
+                Affiliate Card
+              </p>
+              <p class="mt-1 text-xs text-gray-500 dark:text-neutral-400">
+                Get your own trackable link — earn a commission on every sale you refer.
               </p>
             </div>
-            <p class="mb-3 text-xs text-gray-500 dark:text-neutral-400">
-              Share this link to earn a commission on every sale you refer.
-            </p>
-            <div
-              class="flex items-center gap-2 rounded-xl border border-brand/20 bg-white px-3 py-2 dark:bg-neutral-900"
+            <BaseButton
+              variant="primary"
+              size="sm"
+              class="shrink-0"
+              @click="showAffiliateCard = true"
             >
-              <span
-                class="flex-1 truncate text-xs text-gray-600 dark:text-neutral-400"
-              >
-                {{ affiliateUrl }}
-              </span>
-              <BaseButton
-                variant="primary"
-                size="xs"
-                class="shrink-0"
-                @click="copyAffiliateLink"
-              >
-                <Icon
-                  :name="copiedAffiliate ? 'solar:check-circle-linear' : 'solar:copy-linear'"
-                  size="13"
-                  class="mr-1"
-                />
-                {{ copiedAffiliate ? 'Copied!' : 'Copy' }}
-              </BaseButton>
-            </div>
+              <Icon name="solar:card-2-linear" size="16" class="mr-1.5" />
+              Get card
+            </BaseButton>
           </div>
 
           <!-- Trust & protection -->
@@ -955,12 +942,20 @@
         </BaseButton>
       </div>
 
-      <!-- Shareable product card (affiliate-aware link + QR) -->
+      <!-- Shareable product card (public, own tracked link + QR) -->
       <ProductShareCardModal
         v-if="product"
         :open="showCard"
         :product="product"
         @close="showCard = false"
+      />
+
+      <!-- Affiliate card (enrolled affiliates only, own tracked + ref-attributed link) -->
+      <AffiliateProductCardModal
+        v-if="product"
+        :open="showAffiliateCard"
+        :product="product"
+        @close="showAffiliateCard = false"
       />
     </div>
   </HomeLayout>
@@ -980,6 +975,7 @@ import VideoPlayer from '~~/layers/core/app/components/VideoPlayer.vue'
 import ProductReviews from '~~/layers/commerce/app/components/ProductReviews.vue'
 import ProductCardMini from '~~/layers/commerce/app/components/ProductCardMini.vue'
 import ProductShareCardModal from '~~/layers/commerce/app/components/product-card/ProductShareCardModal.vue'
+import AffiliateProductCardModal from '~~/layers/commerce/app/components/product-card/AffiliateProductCardModal.vue'
 import { useRecentlyViewed } from '~~/layers/commerce/app/composables/useRecentlyViewed'
 import { useChatApi } from '~~/layers/profile/app/services/chat.api'
 import { useProductApi } from '~~/layers/commerce/app/services/product.api'
@@ -1007,8 +1003,7 @@ const slug = computed(() => route.params.slug as string)
 
 // ── Stores / composables ─────────────────────────────────────────────────────
 const profileStore = useProfileStore()
-const { captureAffiliateRef, affiliateCode, isEnrolled, fetchAffiliateStatus } =
-  useAffiliate()
+const { captureAffiliateRef, isEnrolled, fetchAffiliateStatus } = useAffiliate()
 const { open: openCart } = useCartDrawer()
 const { setProductPage } = useSeo()
 const { trackProduct } = useViewTracker()
@@ -1299,8 +1294,10 @@ const buyNow = async () => {
 
 // ── Share ────────────────────────────────────────────────────────────────────
 const copied = ref(false)
-const copiedAffiliate = ref(false)
 const showCard = ref(false) // shareable product-card modal
+const showAffiliateCard = ref(false) // affiliate card modal
+
+const isAffiliatable = computed(() => (product.value?.affiliateCommission ?? 0) > 0)
 
 const baseProductUrl = computed(() =>
   import.meta.client
@@ -1308,26 +1305,11 @@ const baseProductUrl = computed(() =>
     : `/product/${slug.value}`,
 )
 
-const affiliateUrl = computed(() =>
-  isEnrolled.value && affiliateCode.value
-    ? `${baseProductUrl.value}?ref=${affiliateCode.value}`
-    : null,
-)
-
 const copyLink = async () => {
   await navigator.clipboard.writeText(baseProductUrl.value).catch(() => {})
   copied.value = true
   setTimeout(() => {
     copied.value = false
-  }, 2000)
-}
-
-const copyAffiliateLink = async () => {
-  if (!affiliateUrl.value) return
-  await navigator.clipboard.writeText(affiliateUrl.value).catch(() => {})
-  copiedAffiliate.value = true
-  setTimeout(() => {
-    copiedAffiliate.value = false
   }, 2000)
 }
 

@@ -18,16 +18,8 @@
     </div>
 
     <template v-else>
-      <!-- Success -->
-      <div
-        v-if="saveSuccess"
-        class="mb-4 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-[13px] text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400"
-      >
-        <Icon name="solar:check-circle-bold" size="16" />
-        Store updated successfully!
-      </div>
-
-      <!-- Error -->
+      <!-- Load error (save success/failure is surfaced via a floating toast so
+           it's visible from the bottom Save button without scrolling up). -->
       <div
         v-if="error"
         class="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-600 dark:border-red-800 dark:bg-red-950/40 dark:text-red-400"
@@ -851,6 +843,7 @@ import { storeDisplayUrl } from '~~/layers/core/app/utils/storeUrl'
 import { SUPPORTED_CURRENCIES } from '~~/shared/utils/currency'
 import { NIGERIA_STATES } from '~~/shared/utils/locations'
 import { normalizePhone, validatePhone } from '~~/shared/utils/phone'
+import { notify } from '@kyvg/vue3-notification'
 
 const { reverseGeocode } = useGeocode()
 
@@ -892,7 +885,6 @@ const { uploadMedia } = useMediaUpload()
 
 const pageLoading = ref(true)
 const isSaving = ref(false)
-const saveSuccess = ref(false)
 const logoInput = ref<HTMLInputElement | null>(null)
 const bannerInput = ref<HTMLInputElement | null>(null)
 const logoPreview = ref('')
@@ -1096,7 +1088,6 @@ const handleBannerUpload = async (e: Event) => {
 const handleSubmit = async () => {
   if (isSaving.value || !currentSeller.value) return
   isSaving.value = true
-  saveSuccess.value = false
   try {
     await updateSeller(currentSeller.value.id, {
       store_name: form.store_name || undefined,
@@ -1152,10 +1143,14 @@ const handleSubmit = async () => {
         ? form.watermark_text.trim() || null
         : undefined,
     } as any)
-    saveSuccess.value = true
-    setTimeout(() => {
-      saveSuccess.value = false
-    }, 3000)
+    // Floating toast (viewport-fixed) so the confirmation is visible right after
+    // tapping Save at the bottom of the form — no scroll to the top required.
+    notify({ type: 'success', text: '✓ Store updated successfully!' })
+  } catch {
+    notify({
+      type: 'error',
+      text: error.value || 'Failed to update store — please try again.',
+    })
   } finally {
     isSaving.value = false
   }
