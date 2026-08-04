@@ -9,6 +9,11 @@ export interface GrowthAssetDTO {
   trackedUrl: string
 }
 
+export interface EmbedAssetDTO extends GrowthAssetDTO {
+  slug: string
+  shortCode: string
+}
+
 export interface TikTokCreatorInfoDTO {
   nickname?: string
   username?: string
@@ -40,6 +45,14 @@ export class GrowthAssetApiClient extends BaseApiClient {
     }) as Promise<{ success: boolean; data: GrowthAssetDTO }>
   }
 
+  /** Get-or-create the seller's own EMBED link + iframe-src ingredients for a product they own. */
+  async forEmbed(productId: number) {
+    return this.request('/api/growth/assets/embed', {
+      method: 'POST',
+      body: { productId },
+    }) as Promise<{ success: boolean; data: EmbedAssetDTO }>
+  }
+
   /** Attach the rendered+uploaded card image to the asset. */
   async attachCard(id: string, cardImageUrl: string, cardPublicId: string) {
     return this.request(`/api/growth/assets/${id}`, {
@@ -59,7 +72,15 @@ export class GrowthAssetApiClient extends BaseApiClient {
   /** Direct-post the asset's card to the connected TikTok. */
   async postToTikTok(
     id: string,
-    opts: { privacyLevel?: string; caption?: string } = {},
+    opts: {
+      privacyLevel: string
+      caption?: string
+      title?: string
+      allowComment?: boolean
+      isPromotional?: boolean
+      brandOrganic?: boolean
+      brandContent?: boolean
+    },
   ) {
     return this.request(`/api/growth/assets/${id}/post/tiktok`, {
       method: 'POST',
@@ -68,6 +89,15 @@ export class GrowthAssetApiClient extends BaseApiClient {
       success: boolean
       data: { publishId: string; trackedUrl: string; privacyLevel: string }
     }>
+  }
+
+  /** Poll a Direct Post's processing status. */
+  async tiktokPostStatus(id: string, publishId: string) {
+    return this.request(`/api/growth/assets/${id}/post/tiktok/status`, {
+      method: 'GET',
+      params: { publishId },
+      silent: true,
+    }) as Promise<{ success: boolean; data: { status: string; failReason?: string } }>
   }
 }
 

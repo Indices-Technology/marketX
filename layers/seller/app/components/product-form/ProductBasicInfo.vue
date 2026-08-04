@@ -6,16 +6,18 @@
       Basic Information
     </h2>
 
-    <div>
+    <div data-field="title">
       <BaseInput
         v-model="form.title"
         label="Product Title *"
         placeholder="e.g. Vintage Denim Jacket"
         required
+        :error="errors?.title"
+        @update:model-value="emit('clear-error', 'title')"
       />
     </div>
 
-    <div>
+    <div data-field="description">
       <div class="mb-1 flex items-center justify-between gap-2">
         <label class="block text-sm font-medium text-gray-700 dark:text-neutral-300">
           Description *
@@ -39,6 +41,7 @@
         <HtmlDescriptionEditor
           v-model="form.description"
           placeholder="Describe your product…"
+          @update:model-value="emit('clear-error', 'description')"
         />
         <template #fallback>
           <textarea
@@ -48,10 +51,13 @@
           />
         </template>
       </ClientOnly>
+      <p v-if="errors?.description" class="mt-1 text-xs text-red-500">
+        {{ errors.description }}
+      </p>
     </div>
 
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-      <div>
+      <div data-field="price">
         <label
           class="mb-1 block text-sm font-medium text-gray-700 dark:text-neutral-300"
         >
@@ -64,8 +70,17 @@
           min="0"
           step="0.01"
           placeholder="0.00"
-          class="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
+          class="w-full rounded-lg border bg-white px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 dark:bg-neutral-900 dark:text-neutral-100"
+          :class="
+            errors?.price
+              ? 'border-red-400 focus:ring-red-300/40 dark:border-red-600'
+              : 'border-gray-200 focus:ring-brand dark:border-neutral-700'
+          "
+          @input="emit('clear-error', 'price')"
         />
+        <p v-if="errors?.price" class="mt-1 text-xs text-red-500">
+          {{ errors.price }}
+        </p>
       </div>
       <div>
         <label
@@ -182,7 +197,10 @@ const props = defineProps<{
     SKU: string
     status: string
   }
+  errors?: Record<string, string>
 }>()
+
+const emit = defineEmits<{ 'clear-error': [field: string] }>()
 
 const showAffiliateHelp = ref(false)
 

@@ -144,7 +144,7 @@
         </div>
 
         <!-- Store Name -->
-        <div>
+        <div data-field="store_name">
           <label
             class="mb-1.5 block text-[12px] font-semibold text-gray-600 dark:text-neutral-400"
             >Store Name <span class="text-brand">*</span></label
@@ -159,7 +159,7 @@
         </div>
 
         <!-- Slug -->
-        <div>
+        <div data-field="store_slug">
           <label
             class="mb-1.5 block text-[12px] font-semibold text-gray-600 dark:text-neutral-400"
             >Store URL <span class="text-brand">*</span></label
@@ -314,7 +314,7 @@
               placeholder="Lagos, Nigeria"
             />
           </div>
-          <div>
+          <div data-field="store_phone">
             <label
               class="mb-1.5 block text-[12px] font-semibold text-gray-600 dark:text-neutral-400"
               >Phone
@@ -332,7 +332,7 @@
         </div>
 
         <!-- Website -->
-        <div>
+        <div data-field="store_website">
           <label
             class="mb-1.5 block text-[12px] font-semibold text-gray-600 dark:text-neutral-400"
             >Website
@@ -499,7 +499,7 @@
                 </div>
               </div>
 
-              <div>
+              <div data-field="shipFromPhone">
                 <label
                   class="mb-1 block text-[11px] font-semibold text-gray-500 dark:text-neutral-400"
                   >Phone (carrier pickup)</label
@@ -709,6 +709,7 @@ import { useSellerManagement } from '~~/layers/seller/app/composables/useSellerM
 import { useMediaUpload } from '~~/layers/core/app/composables/useMediaUpload'
 import { SUPPORTED_CURRENCIES } from '~~/shared/utils/currency'
 import { normalizePhone, validatePhone } from '~~/shared/utils/phone'
+import { useFormFocus } from '~~/layers/core/app/composables/useFormFocus'
 import {
   NIGERIA_STATES,
   SHIP_COUNTRIES,
@@ -766,6 +767,22 @@ const form = reactive({
 const fieldErrors = reactive<Record<string, string>>({})
 const clearFieldError = (field: string) => {
   fieldErrors[field] = ''
+}
+
+// Scroll+focus the first invalid field so a blocked save is never silent.
+const { focusFirstError } = useFormFocus()
+const FIELD_ORDER = [
+  'store_name',
+  'store_slug',
+  'store_phone',
+  'store_website',
+  'shipFromPhone',
+]
+const focusFirstFieldError = () => {
+  // The shipping-origin phone lives inside a collapsed accordion — open it so
+  // the field is in the DOM before we try to scroll to it.
+  if (fieldErrors.shipFromPhone) shipFromOpen.value = true
+  focusFirstError(FIELD_ORDER, fieldErrors)
 }
 
 // Auto-compose the display Location from the shipping-origin fields, so the
@@ -971,7 +988,10 @@ const handleSubmit = async () => {
   Object.keys(fieldErrors).forEach((k) => {
     fieldErrors[k] = ''
   })
-  if (!validateForm()) return
+  if (!validateForm()) {
+    focusFirstFieldError()
+    return
+  }
 
   isSubmitting.value = true
   try {
@@ -1004,6 +1024,7 @@ const handleSubmit = async () => {
     // Map API field errors back to inline messages
     if (err.fieldErrors) {
       Object.assign(fieldErrors, err.fieldErrors)
+      focusFirstFieldError()
     }
   } finally {
     isSubmitting.value = false

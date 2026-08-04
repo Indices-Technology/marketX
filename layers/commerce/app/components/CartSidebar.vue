@@ -161,10 +161,10 @@
                       {{ item.variant?.product?.title ?? 'Product' }}
                     </p>
                     <p
-                      v-if="item.variant?.size"
+                      v-if="variantLabel(item.variant?.size)"
                       class="mt-0.5 text-[11px] text-gray-400 dark:text-neutral-500"
                     >
-                      Size: {{ item.variant.size }}
+                      Size: {{ variantLabel(item.variant?.size) }}
                     </p>
                     <!-- Price row: effective price + crossed-out original -->
                     <div class="mt-0.5 flex items-baseline gap-1.5">
@@ -272,6 +272,7 @@
 import { computed, ref, watch } from 'vue'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import { effectiveUnitPrice } from '~~/layers/commerce/app/stores/cart.store'
+import { variantLabel } from '~~/layers/commerce/utils/variants'
 import { productThumb } from '~~/layers/core/app/utils/cloudinary'
 
 const props = defineProps<{ isOpen: boolean }>()

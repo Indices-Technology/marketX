@@ -199,6 +199,31 @@ export const authService = {
         rateLimit.lockedUntilMs ||
         Math.ceil((rateLimit.resetAt - Date.now()) / 1000)
 
+      // Mirror the Redis lock onto the durable ledger so admins/monitoring can
+      // see the lockout without reading Redis. Best-effort (swallows its own errors).
+      if (rateLimit.locked) {
+        await authRepository.markAccountLocked(
+          normalizedEmail,
+          new Date(rateLimit.resetAt),
+        )
+      }
+
+      // Time-series event the security dashboard counts (authMonitoring reads
+      // auditLog by event_type). ACCOUNT_LOCKED once the window trips a lock,
+      // otherwise the softer rate-limited signal. logAuditEvent never throws.
+      await logAuditEvent({
+        eventType: rateLimit.locked
+          ? 'ACCOUNT_LOCKED'
+          : 'LOGIN_FAILED_RATE_LIMITED',
+        email: normalizedEmail,
+        ipAddress,
+        userAgent,
+        success: false,
+        reason: rateLimit.locked
+          ? `Account locked after too many login attempts; retry in ${secondsLeft}s`
+          : `Login rate-limited; retry in ${secondsLeft}s`,
+      })
+
       throw new AuthError(
         rateLimit.locked ? 'ACCOUNT_LOCKED' : 'RATE_LIMIT_EXCEEDED',
         rateLimit.locked
@@ -214,6 +239,19 @@ export const authService = {
     })
 
     if (!user) {
+      // Log the probe against an unknown email (no userId — the account doesn't
+      // exist). Safe for auditLog (append-only, no unique-email bloat) and lets
+      // the dashboard + suspicious-activity check catch enumeration/spray attacks.
+      // NOT written to FailedLoginAttempt (that table is unique-by-email → bloat).
+      await logAuditEvent({
+        eventType: 'LOGIN_FAILED',
+        email: normalizedEmail,
+        ipAddress,
+        userAgent,
+        success: false,
+        reason: 'Unknown email',
+      })
+
       throw new AuthError(
         'INVALID_CREDENTIALS',
         'Invalid email or password',
@@ -237,6 +275,29 @@ export const authService = {
     const isPasswordValid = await verifyPassword(password, user.password_hash!)
 
     if (!isPasswordValid) {
+      // Record the failed attempt in the durable ledger. Redis already handled
+      // the throttling counter; this is the queryable audit trail. Best-effort —
+      // the repo method swallows its own errors so a 401 never becomes a 500.
+      await authRepository.recordFailedLoginAttempt({
+        email: normalizedEmail,
+        userId: user.id,
+        ipAddress,
+        userAgent,
+      })
+
+      // Time-series event for the security dashboard + brute-force detection.
+      // logAuditEvent runs checkForSuspiciousActivity for LOGIN_FAILED (flags
+      // failures from 3+ distinct IPs as SUSPICIOUS_ACTIVITY). Never throws.
+      await logAuditEvent({
+        eventType: 'LOGIN_FAILED',
+        userId: user.id,
+        email: normalizedEmail,
+        ipAddress,
+        userAgent,
+        success: false,
+        reason: 'Invalid password',
+      })
+
       throw new AuthError(
         'INVALID_CREDENTIALS',
         'Invalid email or password',
@@ -264,8 +325,9 @@ export const authService = {
       throw new AuthError('ACCOUNT_SUSPENDED', restriction, 403)
     }
 
-    // 5. Success: Clear rate limit and generate tokens
+    // 5. Success: Clear rate limit + failed-attempt ledger, then generate tokens
     clearRateLimit(`login:${normalizedEmail}`, RATE_LIMITS.LOGIN.keyPrefix)
+    await authRepository.clearFailedLoginAttempts(normalizedEmail)
 
     // Pre-generate session ID so it can be embedded in the access token,
     // enabling server-side revocation checks in requireAuth.

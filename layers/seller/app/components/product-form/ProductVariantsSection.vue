@@ -2,13 +2,21 @@
   <div
     class="space-y-4 rounded-xl border border-gray-200 bg-white p-4 sm:p-6 dark:border-neutral-700 dark:bg-neutral-800"
   >
-    <div class="flex items-center justify-between">
+    <div class="flex items-start justify-between gap-3">
       <div>
-        <h2 class="font-semibold text-gray-900 dark:text-neutral-100">Variants</h2>
+        <h2 class="font-semibold text-gray-900 dark:text-neutral-100">
+          Stock &amp; Options
+        </h2>
         <p class="mt-0.5 text-xs text-gray-500 dark:text-neutral-400">
-          Any option that changes price or stock. For example:
+          <template v-if="variants.length">
+            Stock is tracked per option below.
+          </template>
+          <template v-else>
+            How many do you have? Add options only if price or stock changes by
+            size, colour, etc.
+          </template>
         </p>
-        <div class="mt-1.5 flex flex-wrap gap-1.5">
+        <div v-if="!variants.length" class="mt-1.5 flex flex-wrap gap-1.5">
           <span
             v-for="ex in VARIANT_EXAMPLES"
             :key="ex"
@@ -19,15 +27,49 @@
         </div>
       </div>
       <button
+        v-if="variants.length"
         type="button"
-        class="flex items-center gap-1.5 rounded-lg border border-brand/30 bg-brand/5 px-3 py-1.5 text-sm font-semibold text-brand transition-colors hover:bg-brand/10"
+        class="flex shrink-0 items-center gap-1.5 rounded-lg border border-brand/30 bg-brand/5 px-3 py-1.5 text-sm font-semibold text-brand transition-colors hover:bg-brand/10"
         @click="addVariant"
       >
         <Icon name="solar:add-circle-linear" size="15" /> Add Variant
       </button>
     </div>
 
-    <div v-if="variants.length" class="space-y-2">
+    <!-- Simple product: a single base stock, no options -->
+    <div v-if="!variants.length" class="space-y-3">
+      <div data-field="stock" class="max-w-[12rem]">
+        <label class="mb-1 block text-xs font-medium text-gray-500 dark:text-neutral-400">
+          Quantity in stock *
+        </label>
+        <input
+          v-model.number="form.stock"
+          type="number"
+          min="0"
+          placeholder="e.g. 10"
+          class="w-full rounded-lg border bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none dark:bg-neutral-800 dark:text-neutral-100"
+          :class="
+            error
+              ? 'border-red-400 focus:border-red-400 dark:border-red-600'
+              : 'border-gray-200 focus:border-brand dark:border-neutral-700'
+          "
+          @input="$emit('clear-error')"
+        />
+        <p v-if="error" class="mt-1 text-xs text-red-500">{{ error }}</p>
+      </div>
+
+      <button
+        type="button"
+        class="flex items-center gap-1.5 rounded-lg border border-dashed border-gray-300 px-3 py-2 text-sm font-medium text-gray-500 transition-colors hover:border-brand hover:text-brand dark:border-neutral-600 dark:text-neutral-400"
+        @click="addVariant"
+      >
+        <Icon name="solar:add-circle-linear" size="15" />
+        Add sizes / colours
+      </button>
+    </div>
+
+    <!-- Options: per-variant stock & price -->
+    <div v-else data-field="variants" class="space-y-2">
       <div
         v-for="(variant, i) in variants"
         :key="i"
@@ -42,6 +84,7 @@
               v-model="variant.size"
               placeholder="e.g. M, Red, 42"
               class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+              @input="$emit('clear-error')"
             />
           </div>
           <div>
@@ -78,27 +121,22 @@
           <Icon name="solar:trash-bin-trash-linear" size="16" />
         </button>
       </div>
+      <p v-if="error" class="text-xs text-red-500">{{ error }}</p>
     </div>
-
-    <button
-      v-else
-      type="button"
-      class="flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed border-gray-200 py-8 transition-colors hover:border-brand hover:bg-brand/5 dark:border-neutral-700"
-      @click="addVariant"
-    >
-      <Icon name="solar:tag-horizontal-linear" size="28" class="text-gray-400 dark:text-neutral-500" />
-      <span class="text-sm font-medium text-gray-500 dark:text-neutral-400">
-        Click to add your first variant
-      </span>
-      <span class="text-xs text-gray-400 dark:text-neutral-500">e.g. Small / Medium / Large or Red / Blue</span>
-    </button>
   </div>
 </template>
 
 <script setup lang="ts">
 const props = defineProps<{
   variants: Array<{ size: string; price: number | null; stock: number }>
+  // Base stock for the simple-product case (no options). Bound in place, so the
+  // parent form's `stock` updates directly.
+  form: { stock: number }
+  // Validation message for the stock / variants field (from the parent form).
+  error?: string
 }>()
+
+defineEmits<{ 'clear-error': [] }>()
 
 // Illustrative option types — helps sellers understand what a "variant" is.
 const VARIANT_EXAMPLES = [

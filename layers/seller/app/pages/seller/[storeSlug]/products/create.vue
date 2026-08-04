@@ -260,13 +260,18 @@
         </div>
 
         <!-- Basic Info -->
-        <ProductBasicInfo :form="form" />
+        <ProductBasicInfo :form="form" :errors="errors" @clear-error="clearError" />
 
         <!-- ✨ AI Generated Social Posts (Only shows if AI was used) -->
         <ProductSocialCaptions :captions="form.socialCaptions" />
 
-        <!-- Variants -->
-        <ProductVariantsSection :variants="form.variants" />
+        <!-- Stock & Options -->
+        <ProductVariantsSection
+          :variants="form.variants"
+          :form="form"
+          :error="errors.stock || errors.variants"
+          @clear-error="clearError('stock'); clearError('variants')"
+        />
 
         <!-- Volume Offers -->
         <VolumeOffersSection :offers="form.offers" />
@@ -356,6 +361,8 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { useRoute, useRouter } from 'vue-router'
+import { useFormFocus } from '~~/layers/core/app/composables/useFormFocus'
+import { DEFAULT_VARIANT_SIZE } from '~~/layers/commerce/utils/variants'
 import { useProduct } from '~~/layers/commerce/app/composables/useProduct'
 import { useMediaUpload } from '~~/layers/core/app/composables/useMediaUpload'
 import { useAiApi } from '~~/layers/core/app/services/ai.api'
@@ -402,6 +409,41 @@ onMounted(async () => {
 
 const { createProduct, fetchCategories, isLoading, error } = useProduct()
 const saveSuccess = ref(false)
+
+// ── Client-side validation ────────────────────────────────────────────────────
+// The submit buttons are type="button", so native HTML validation never fires.
+// We validate here, show inline messages, and scroll+focus the first bad field
+// so the seller is never left wondering why "Save" did nothing.
+const { focusFirstError } = useFormFocus()
+const errors = reactive<Record<string, string>>({})
+const clearError = (field: string) => {
+  if (errors[field]) errors[field] = ''
+}
+// Order matches the on-page field order so we focus the topmost error first.
+const FIELD_ORDER = ['title', 'description', 'price', 'stock', 'variants']
+
+const validate = (): boolean => {
+  FIELD_ORDER.forEach((k) => (errors[k] = ''))
+
+  if (!form.title || form.title.trim().length < 2)
+    errors.title = 'Add a product title (at least 2 characters).'
+  const desc = (form.description || '').replace(/<[^>]*>/g, '').trim()
+  if (desc.length < 10)
+    errors.description = 'Add a description of at least 10 characters.'
+  if (!form.price || form.price <= 0)
+    errors.price = 'Set a price greater than 0.'
+
+  const filledVariants = form.variants.filter((v) => v.size && v.size.trim())
+  if (form.variants.length === 0) {
+    // Simple product — needs a base quantity so it's cartable.
+    if (!form.stock || form.stock < 1)
+      errors.stock = 'Set a quantity in stock (at least 1) so buyers can order.'
+  } else if (filledVariants.length === 0) {
+    errors.variants = 'Give each option a name, or remove the empty rows.'
+  }
+
+  return !Object.values(errors).some(Boolean)
+}
 
 // Post-publish "what's next" sheet
 const showPublishModal = ref(false)
@@ -527,6 +569,9 @@ const form = reactive({
   status: 'DRAFT' as 'DRAFT' | 'PUBLISHED',
   isFeatured: false,
   isAccessory: false,
+  // Base stock for a simple product (no options). Folded into a single Default
+  // variant on submit so the product is cartable.
+  stock: 1,
   variants: [] as Array<{ size: string; price: number | null; stock: number }>,
   offers: [] as Array<{
     minQuantity: number | null
@@ -670,6 +715,10 @@ const submitAs = (status: 'DRAFT' | 'PUBLISHED') => {
 }
 
 const handleSubmit = async () => {
+  if (!validate()) {
+    focusFirstError(FIELD_ORDER, errors)
+    return
+  }
   try {
     const payload: any = {
       storeSlug: storeSlug.value,
@@ -699,14 +748,18 @@ const handleSubmit = async () => {
     if (form.categoryIds.length) payload.categoryIds = form.categoryIds
     if (form.tagNames.length) payload.tagNames = form.tagNames
 
-    if (form.variants.length) {
-      payload.variants = form.variants
-        .filter((v) => v.size)
-        .map((v) => ({
-          size: v.size,
-          price: v.price ?? undefined,
-          stock: v.stock,
-        }))
+    const filledVariants = form.variants.filter((v) => v.size)
+    if (filledVariants.length) {
+      payload.variants = filledVariants.map((v) => ({
+        size: v.size,
+        price: v.price ?? undefined,
+        stock: v.stock,
+      }))
+    } else {
+      // Simple product: fold the base quantity into a single Default variant so
+      // the product is cartable. (The server repository does the same as a
+      // safety net for other callers.)
+      payload.variants = [{ size: DEFAULT_VARIANT_SIZE, stock: form.stock }]
     }
 
     const validOffers = form.offers.filter(
@@ -774,6 +827,7 @@ const resetForm = () => {
     status: 'DRAFT',
     isFeatured: false,
     isAccessory: false,
+    stock: 1,
     variants: [],
     offers: [],
     categoryIds: [],
@@ -791,6 +845,7 @@ const resetForm = () => {
     isDeal: false,
     dealEndsAt: '',
   })
+  FIELD_ORDER.forEach((k) => (errors[k] = ''))
   saveSuccess.value = false
   createdProduct.value = null
   showPublishModal.value = false

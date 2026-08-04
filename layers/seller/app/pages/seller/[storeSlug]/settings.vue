@@ -157,7 +157,7 @@
           </h2>
 
           <!-- Store Name -->
-          <div>
+          <div data-field="store_name">
             <label
               class="mb-1.5 block text-[12px] font-semibold text-gray-600 dark:text-neutral-400"
             >
@@ -168,8 +168,17 @@
               type="text"
               maxlength="100"
               required
-              class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-[14px] text-gray-900 transition focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+              class="w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-[14px] text-gray-900 transition focus:outline-none focus:ring-2 dark:bg-neutral-800 dark:text-neutral-100"
+              :class="
+                fieldErrors.store_name
+                  ? 'border-red-400 focus:ring-red-300/40 dark:border-red-600'
+                  : 'border-gray-200 focus:border-brand focus:ring-brand/20 dark:border-neutral-700'
+              "
+              @input="fieldErrors.store_name = ''"
             />
+            <p v-if="fieldErrors.store_name" class="mt-1 text-[11px] text-red-500">
+              {{ fieldErrors.store_name }}
+            </p>
           </div>
 
           <!-- Slug (read-only) -->
@@ -246,7 +255,7 @@
                 class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-[13px] text-gray-900 placeholder-gray-400 transition focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
               />
             </div>
-            <div>
+            <div data-field="store_phone">
               <label
                 class="mb-1.5 block text-[12px] font-semibold text-gray-600 dark:text-neutral-400"
                 >Phone</label
@@ -265,7 +274,7 @@
             </div>
           </div>
 
-          <div>
+          <div data-field="store_website">
             <label
               class="mb-1.5 block text-[12px] font-semibold text-gray-600 dark:text-neutral-400"
               >Website</label
@@ -274,8 +283,17 @@
               v-model="form.store_website"
               type="url"
               placeholder="https://yourstore.com"
-              class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-[14px] text-gray-900 placeholder-gray-400 transition focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+              class="w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-[14px] text-gray-900 placeholder-gray-400 transition focus:outline-none focus:ring-2 dark:bg-neutral-800 dark:text-neutral-100"
+              :class="
+                fieldErrors.store_website
+                  ? 'border-red-400 focus:ring-red-300/40 dark:border-red-600'
+                  : 'border-gray-200 focus:border-brand focus:ring-brand/20 dark:border-neutral-700'
+              "
+              @input="fieldErrors.store_website = ''"
             />
+            <p v-if="fieldErrors.store_website" class="mt-1 text-[11px] text-red-500">
+              {{ fieldErrors.store_website }}
+            </p>
           </div>
         </div>
 
@@ -506,7 +524,7 @@
                 </option>
               </select>
             </div>
-            <div class="col-span-2">
+            <div class="col-span-2" data-field="shipFromPhone">
               <label
                 class="mb-1.5 block text-[12px] font-semibold text-gray-600 dark:text-neutral-400"
                 >Contact Phone</label
@@ -843,6 +861,7 @@ import { storeDisplayUrl } from '~~/layers/core/app/utils/storeUrl'
 import { SUPPORTED_CURRENCIES } from '~~/shared/utils/currency'
 import { NIGERIA_STATES } from '~~/shared/utils/locations'
 import { normalizePhone, validatePhone } from '~~/shared/utils/phone'
+import { useFormFocus } from '~~/layers/core/app/composables/useFormFocus'
 import { notify } from '@kyvg/vue3-notification'
 
 const { reverseGeocode } = useGeocode()
@@ -944,6 +963,49 @@ const normalizePhoneField = (field: 'store_phone' | 'shipFromPhone') => {
   if (err) return
   const normalized = normalizePhone(form[field])
   if (normalized) form[field] = normalized
+}
+
+// Non-phone field errors (store name required, website URL). Kept separate from
+// phoneErrors, which the blur handlers already own.
+const fieldErrors = reactive({ store_name: '', store_website: '' })
+
+const validateWebsite = (raw: string): string => {
+  if (!raw.trim()) return ''
+  try {
+    new URL(raw.trim())
+    return ''
+  } catch {
+    return 'Website must be a valid URL, e.g. https://yourstore.com'
+  }
+}
+
+// Scroll+focus the first invalid field so a blocked save is never silent.
+const { focusFirstError } = useFormFocus()
+const FIELD_ORDER = [
+  'store_name',
+  'store_phone',
+  'store_website',
+  'shipFromPhone',
+]
+
+const validateForm = (): boolean => {
+  fieldErrors.store_name =
+    !form.store_name.trim() || form.store_name.trim().length < 3
+      ? 'Store name must be at least 3 characters'
+      : ''
+  phoneErrors.store_phone = validatePhone(form.store_phone) ?? ''
+  phoneErrors.shipFromPhone = validatePhone(form.shipFromPhone) ?? ''
+  fieldErrors.store_website = validateWebsite(form.store_website)
+
+  const allErrors: Record<string, string> = {
+    store_name: fieldErrors.store_name,
+    store_phone: phoneErrors.store_phone,
+    store_website: fieldErrors.store_website,
+    shipFromPhone: phoneErrors.shipFromPhone,
+  }
+  const ok = !Object.values(allErrors).some(Boolean)
+  if (!ok) focusFirstError(FIELD_ORDER, allErrors)
+  return ok
 }
 
 // Live preview label for the watermark (falls back to the store name).
@@ -1087,6 +1149,7 @@ const handleBannerUpload = async (e: Event) => {
 
 const handleSubmit = async () => {
   if (isSaving.value || !currentSeller.value) return
+  if (!validateForm()) return
   isSaving.value = true
   try {
     await updateSeller(currentSeller.value.id, {

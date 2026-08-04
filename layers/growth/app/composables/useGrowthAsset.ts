@@ -28,6 +28,9 @@ export function useGrowthAsset() {
   const uploading = ref(false)
   const posting = ref(false)
   const creatorInfo = ref<TikTokCreatorInfoDTO | null>(null)
+  /** Live status of the most recent TikTok post, polled after posting. */
+  const tiktokPostStatus = ref<string | null>(null)
+  const tiktokFailReason = ref<string | null>(null)
 
   /** The trackable link the QR encodes and captions carry. */
   const trackedUrl = computed(() => asset.value?.trackedUrl ?? '')
@@ -77,16 +80,48 @@ export function useGrowthAsset() {
    */
   async function postToTikTok(
     el: HTMLElement | null | undefined,
-    opts: { privacyLevel?: string; caption?: string } = {},
+    opts: {
+      privacyLevel: string
+      caption?: string
+      title?: string
+      allowComment?: boolean
+      isPromotional?: boolean
+      brandOrganic?: boolean
+      brandContent?: boolean
+    },
   ) {
     if (!asset.value) return null
     posting.value = true
+    tiktokPostStatus.value = null
+    tiktokFailReason.value = null
     try {
       if (!hasCard.value) await captureAndAttach(el)
       const res = await api.postToTikTok(asset.value.id, opts)
+      pollTikTokStatus(asset.value.id, res.data.publishId)
       return res.data
     } finally {
       posting.value = false
+    }
+  }
+
+  /**
+   * TikTok processes a Direct Post asynchronously — poll so the seller sees it
+   * actually complete rather than trusting a fire-and-forget "sent" toast.
+   * Stops on a terminal status or after ~30s.
+   */
+  async function pollTikTokStatus(assetId: string, publishId: string, attempt = 0) {
+    tiktokPostStatus.value = 'PROCESSING_DOWNLOAD'
+    try {
+      const res = await api.tiktokPostStatus(assetId, publishId)
+      const { status, failReason } = res.data
+      tiktokPostStatus.value = status
+      tiktokFailReason.value = failReason ?? null
+      const terminal = status === 'PUBLISH_COMPLETE' || status === 'FAILED'
+      if (!terminal && attempt < 10) {
+        setTimeout(() => pollTikTokStatus(assetId, publishId, attempt + 1), 3000)
+      }
+    } catch {
+      // Non-fatal — the post likely still went through; just stop polling.
     }
   }
 
@@ -99,6 +134,8 @@ export function useGrowthAsset() {
     uploading,
     posting,
     creatorInfo,
+    tiktokPostStatus,
+    tiktokFailReason,
     prepare,
     captureAndAttach,
     loadTikTokCreatorInfo,

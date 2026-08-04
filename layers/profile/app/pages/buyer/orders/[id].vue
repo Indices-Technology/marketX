@@ -104,8 +104,10 @@
                   {{ item.variant?.product?.title }}
                 </p>
                 <p class="mt-0.5 text-xs text-gray-400 dark:text-neutral-500">
-                  {{ item.variant?.size || item.variant?.label }} · Qty
-                  {{ item.quantity }}
+                  <span v-if="variantLabel(item.variant?.size) || item.variant?.label">
+                    {{ variantLabel(item.variant?.size) || item.variant?.label }} ·
+                  </span>
+                  Qty {{ item.quantity }}
                 </p>
                 <p class="mt-0.5 text-xs text-gray-500 dark:text-neutral-400">
                   Sold by
@@ -349,6 +351,7 @@
 <script setup lang="ts">
 import BaseImage from '~~/layers/ui/app/components/BaseImage.vue'
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
+import { variantLabel } from '~~/layers/commerce/utils/variants'
 import { useOrderApi } from '~~/layers/commerce/app/services/order.api'
 import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { extractErrorMessage } from '~~/layers/core/app/utils/errors'

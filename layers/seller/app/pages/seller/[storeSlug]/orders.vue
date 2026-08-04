@@ -198,8 +198,11 @@
                 {{ item.variant?.product?.title }}
               </p>
               <p class="text-[10px] text-gray-400">
-                {{ item.variant?.size || item.variant?.label }} ×
-                {{ item.quantity }}
+                <template v-if="variantLabel(item.variant?.size) || item.variant?.label">
+                  {{ variantLabel(item.variant?.size) || item.variant?.label }} ×
+                  {{ item.quantity }}
+                </template>
+                <template v-else>Qty {{ item.quantity }}</template>
               </p>
             </div>
           </div>
@@ -470,6 +473,7 @@
 
 <script setup lang="ts">
 import BaseImage from '~~/layers/ui/app/components/BaseImage.vue'
+import { variantLabel } from '~~/layers/commerce/utils/variants'
 import { useOrderApi } from '~~/layers/commerce/app/services/order.api'
 import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { imgAvatar } from '~~/layers/core/app/utils/cloudinary'

@@ -327,7 +327,7 @@
 
                 <!-- Variant selector -->
                 <div
-                  v-if="product.variants && product.variants.length > 0"
+                  v-if="displayVariants.length > 0"
                   class="rounded-2xl bg-gray-50 p-4 dark:bg-neutral-800"
                 >
                   <div class="mb-3 flex items-center justify-between">
@@ -350,7 +350,7 @@
                   </div>
                   <div class="flex flex-wrap gap-2">
                     <button
-                      v-for="variant in product.variants"
+                      v-for="variant in displayVariants"
                       :key="variant.id"
                       :disabled="variant.stock === 0"
                       class="relative overflow-hidden rounded-xl border-2 px-4 py-2.5 text-[13px] font-bold transition-all"
@@ -747,6 +747,7 @@ import VideoPlayer from '~~/layers/core/app/components/VideoPlayer.vue'
 // server too, matching the product page and avoiding a raw-HTML window during
 // any SSR/hydration. Pure CJS, no jsdom/htmlparser2 (safe in the serverless bundle).
 import { sanitizeHtml } from '~~/layers/commerce/utils/sanitizeHtml'
+import { isSimpleProduct, variantLabel } from '~~/layers/commerce/utils/variants'
 import type {
   IProduct,
   IProductVariant,
@@ -799,7 +800,11 @@ watch(
   () => props.product?.id,
   () => {
     currentIndex.value = 0
-    selectedVariant.value = null
+    // A simple product (single hidden Default variant) is auto-selected so the
+    // buyer can add it straight away — no lone "Default" chip to pick.
+    selectedVariant.value = isSimpleProduct(props.product?.variants)
+      ? (props.product?.variants?.[0] ?? null)
+      : null
     qty.value = 1
     cartAdded.value = false
     descExpanded.value = false
@@ -812,6 +817,7 @@ watch(
       audioRef.value.currentTime = 0
     }
   },
+  { immediate: true },
 )
 
 // Keyboard navigation for lightbox
@@ -879,6 +885,12 @@ const discountedPrice = computed(() => {
     return Math.round(props.product.price * (1 - effectiveDiscount / 100))
   return props.product.price
 })
+
+// Real, seller-named options only — the implicit Default (and any protected
+// Default left behind after a restructure) is never shown as a chip.
+const displayVariants = computed(
+  () => props.product?.variants?.filter((v) => variantLabel(v.size)) ?? [],
+)
 
 const maxQty = computed(() =>
   selectedVariant.value ? Math.min(selectedVariant.value.stock, 99) : 99,

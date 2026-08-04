@@ -205,7 +205,7 @@
           </p>
         </div>
 
-        <div v-if="product.variants && product.variants.length > 0">
+        <div v-if="displayVariants.length > 0">
           <h3
             class="mb-2 text-sm font-semibold text-gray-700 dark:text-neutral-300"
           >
@@ -213,7 +213,7 @@
           </h3>
           <div class="flex flex-wrap gap-2">
             <button
-              v-for="variant in product.variants"
+              v-for="variant in displayVariants"
               :key="variant.id"
               :disabled="variant.stock === 0"
               :class="[
@@ -226,7 +226,7 @@
               ]"
               @click="selectedVariant = variant"
             >
-              {{ variant.name }}
+              {{ variantLabel(variant.size) }}
               <span v-if="variant.stock === 0" class="text-xs">
                 (sold out)</span
               >
@@ -309,6 +309,7 @@
 import { computed, ref, watch } from 'vue'
 import VideoPlayer from '~~/layers/core/app/components/VideoPlayer.vue'
 import { useCart } from '~~/layers/commerce/app/composables/useCart'
+import { variantLabel } from '~~/layers/commerce/utils/variants'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import { notify } from '@kyvg/vue3-notification'
 import { formatProductPrice } from '~~/app/utils/currency'
@@ -335,9 +336,14 @@ const { addToCart } = useCart()
 const profileStore = useProfileStore()
 
 const activeImageIndex = ref(0)
-const selectedVariant = ref<IProductVariant | null>(
-  props.product.variants?.[0] ?? null,
+// Real, seller-named options only — the implicit Default is hidden as a chip
+// but still used as the auto-selected unit for a simple product.
+const displayVariants = computed(
+  () => props.product.variants?.filter((v) => variantLabel(v.size)) ?? [],
 )
+const pickDefaultVariant = () =>
+  displayVariants.value[0] ?? props.product.variants?.[0] ?? null
+const selectedVariant = ref<IProductVariant | null>(pickDefaultVariant())
 const isAddingToCart = ref(false)
 const addedToCart = ref(false)
 
@@ -345,7 +351,7 @@ watch(
   () => props.product?.id,
   () => {
     activeImageIndex.value = 0
-    selectedVariant.value = props.product?.variants?.[0] ?? null
+    selectedVariant.value = pickDefaultVariant()
     addedToCart.value = false
   },
 )

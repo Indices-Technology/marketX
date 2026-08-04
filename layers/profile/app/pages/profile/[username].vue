@@ -342,6 +342,13 @@ onMounted(async () => {
   if (tabFromQuery && availableTabs.value.some((t) => t.id === tabFromQuery)) {
     activeTab.value = tabFromQuery
   }
+
+  // Deep link from Settings → "Edit Profile" opens the edit modal directly.
+  if (route.query.edit && isOwnProfile.value) {
+    showEditModal.value = true
+    // Drop the flag so a refresh/back doesn't re-open the modal
+    router.replace({ query: { ...route.query, edit: undefined } })
+  }
 })
 
 watch(activeTab, (tab) => {

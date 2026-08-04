@@ -39,6 +39,10 @@ export const createProductSchema = z.object({
   bannerImageUrl: z.string().url().optional(),
   mediaId: z.string().uuid().optional(),
   variants: z.array(productVariantSchema).optional(),
+  // Base stock for a simple product (no seller-defined options). When no
+  // variants are supplied the repository creates a single Default variant
+  // carrying this stock so the product is cartable.
+  stock: z.number().int().min(0).optional(),
   offers: z.array(productOfferSchema).optional(),
   // Multi-image + background music
   mediaItems: z.array(mediaItemSchema).optional(),
@@ -79,6 +83,7 @@ export const updateProductSchema = z.object({
   bannerImageUrl: z.string().url().optional(),
   mediaId: z.string().uuid().optional(),
   variants: z.array(productVariantSchema).optional(),
+  stock: z.number().int().min(0).optional(),
   offers: z.array(productOfferSchema).optional(),
   mediaItems: z.array(mediaItemSchema).optional(),
   bgMusic: z

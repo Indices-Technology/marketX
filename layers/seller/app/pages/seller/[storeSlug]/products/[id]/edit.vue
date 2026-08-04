@@ -142,7 +142,11 @@
                 :key="'new-' + i"
                 class="relative aspect-square overflow-hidden rounded-lg border border-gray-200 bg-gray-100 dark:border-neutral-700 dark:bg-neutral-900"
               >
-                <img :src="img.preview" alt="Product image preview" class="h-full w-full object-cover" />
+                <img
+                  :src="img.preview"
+                  alt="Product image preview"
+                  class="h-full w-full object-cover"
+                />
                 <div
                   v-if="img.uploading"
                   class="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-black/55"
@@ -315,10 +319,15 @@
           </div>
 
           <!-- Basic Info -->
-          <ProductBasicInfo :form="form" />
+          <ProductBasicInfo :form="form" :errors="errors" @clear-error="clearError" />
 
-          <!-- Variants -->
-          <ProductVariantsSection :variants="form.variants" />
+          <!-- Stock & Options -->
+          <ProductVariantsSection
+            :variants="form.variants"
+            :form="form"
+            :error="errors.stock || errors.variants"
+            @clear-error="clearError('stock'); clearError('variants')"
+          />
 
           <!-- Volume Offers -->
           <VolumeOffersSection :offers="form.offers" />
@@ -359,7 +368,11 @@
               class="flex-1 rounded-xl border border-gray-200 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
               @click="submitAs('DRAFT')"
             >
-              {{ isLoading && form.status === 'DRAFT' ? 'Saving…' : 'Save as draft' }}
+              {{
+                isLoading && form.status === 'DRAFT'
+                  ? 'Saving…'
+                  : 'Save as draft'
+              }}
             </button>
             <button
               type="button"
@@ -389,7 +402,11 @@
               <h3
                 class="flex items-center gap-1.5 text-sm font-bold text-gray-900 dark:text-white"
               >
-                <Icon name="solar:magic-stick-3-linear" class="text-brand" size="18" />
+                <Icon
+                  name="solar:magic-stick-3-linear"
+                  class="text-brand"
+                  size="18"
+                />
                 AI Magic Lister
               </h3>
               <p class="mt-1 max-w-sm text-xs text-gray-600 dark:text-gray-300">
@@ -422,6 +439,8 @@
             @regenerate="runAiMagic"
             @saved="onCaptionsSaved"
           />
+
+          <ProductEmbedPanel :product-id="productId" />
         </div>
       </template>
     </div>
@@ -432,6 +451,8 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { notify } from '@kyvg/vue3-notification'
+import { useFormFocus } from '~~/layers/core/app/composables/useFormFocus'
+import { DEFAULT_VARIANT_SIZE, isSimpleProduct } from '~~/layers/commerce/utils/variants'
 import { useProduct } from '~~/layers/commerce/app/composables/useProduct'
 import { useProductApi } from '~~/layers/commerce/app/services/product.api'
 import { useSellerApi } from '~~/layers/seller/app/services/seller.services'
@@ -441,6 +462,7 @@ import { extractErrorMessage } from '~~/layers/core/app/utils/errors'
 import { videoThumb } from '~~/layers/core/app/utils/cloudinary'
 
 import ProductPromotePanel from '~~/layers/seller/app/components/ProductPromotePanel.vue'
+import ProductEmbedPanel from '~~/layers/seller/app/components/ProductEmbedPanel.vue'
 import SaveStatusOverlay from '~~/layers/core/app/components/SaveStatusOverlay.vue'
 import ProductBasicInfo from '~~/layers/seller/app/components/product-form/ProductBasicInfo.vue'
 import ProductVariantsSection from '~~/layers/seller/app/components/product-form/ProductVariantsSection.vue'
@@ -598,6 +620,8 @@ const form = reactive({
   isAccessory: false,
   categoryIds: [] as number[],
   tagNames: [] as string[],
+  // Base stock for a simple product (no options) — see create.vue.
+  stock: 1,
   variants: [] as Array<{ size: string; price: number | null; stock: number }>,
   offers: [] as Array<{
     minQuantity: number | null
@@ -698,12 +722,20 @@ onMounted(async () => {
           existingMedia.value = allMedia.filter((m) => !m.isBgMusic)
           existingBgMusic.value = allMedia.find((m) => m.isBgMusic) ?? null
 
-          // Load variants
-          form.variants = (product.variants || []).map((v: any) => ({
+          // Load variants. A product whose only variant is the Default sentinel
+          // is a simple product — unfold it back into the base "Quantity in
+          // stock" field instead of showing a "Default" option row.
+          const loadedVariants = (product.variants || []).map((v: any) => ({
             size: v.size || '',
             price: v.price ?? null,
             stock: v.stock ?? 0,
           }))
+          if (isSimpleProduct(loadedVariants)) {
+            form.stock = loadedVariants[0]?.stock ?? 1
+            form.variants = []
+          } else {
+            form.variants = loadedVariants
+          }
 
           // Load offers
           form.offers = (product.offers || []).map((o: any) => ({
@@ -736,12 +768,44 @@ onMounted(async () => {
 
   // Premium gating for Share to Feed / Reels — non-critical, defaults to false
   try {
-    const res: any = await useSellerApi().getSellerProfileBySlug(storeSlug.value)
+    const res: any = await useSellerApi().getSellerProfileBySlug(
+      storeSlug.value,
+    )
     isPremiumSeller.value = res?.data?.isPremium ?? false
   } catch {
     // ignore — leaves the premium-only toggles disabled
   }
 })
+
+// ── Client-side validation (parity with the create page) ──────────────────────
+const { focusFirstError } = useFormFocus()
+const errors = reactive<Record<string, string>>({})
+const clearError = (field: string) => {
+  if (errors[field]) errors[field] = ''
+}
+const FIELD_ORDER = ['title', 'description', 'price', 'stock', 'variants']
+
+const validate = (): boolean => {
+  FIELD_ORDER.forEach((k) => (errors[k] = ''))
+
+  if (!form.title || form.title.trim().length < 2)
+    errors.title = 'Add a product title (at least 2 characters).'
+  const desc = (form.description || '').replace(/<[^>]*>/g, '').trim()
+  if (desc.length < 10)
+    errors.description = 'Add a description of at least 10 characters.'
+  if (!form.price || form.price <= 0)
+    errors.price = 'Set a price greater than 0.'
+
+  const filledVariants = form.variants.filter((v) => v.size && v.size.trim())
+  if (form.variants.length === 0) {
+    if (!form.stock || form.stock < 1)
+      errors.stock = 'Set a quantity in stock (at least 1) so buyers can order.'
+  } else if (filledVariants.length === 0) {
+    errors.variants = 'Give each option a name, or remove the empty rows.'
+  }
+
+  return !Object.values(errors).some(Boolean)
+}
 
 // Draft vs Publish are explicit buttons — set the status, then submit.
 const submitAs = (status: 'DRAFT' | 'PUBLISHED') => {
@@ -751,6 +815,10 @@ const submitAs = (status: 'DRAFT' | 'PUBLISHED') => {
 
 const handleSubmit = async () => {
   successMsg.value = null
+  if (!validate()) {
+    focusFirstError(FIELD_ORDER, errors)
+    return
+  }
   try {
     const payload: any = {
       title: form.title,
@@ -790,14 +858,16 @@ const handleSubmit = async () => {
     payload.categoryIds = form.categoryIds
     payload.tagNames = form.tagNames
 
-    // Variants (replace all)
-    payload.variants = form.variants
-      .filter((v) => v.size)
-      .map((v) => ({
-        size: v.size,
-        price: v.price ?? undefined,
-        stock: v.stock,
-      }))
+    // Variants (replace all). A simple product (no options) is stored as a
+    // single Default variant carrying the base quantity, so it stays cartable.
+    const filledVariants = form.variants.filter((v) => v.size)
+    payload.variants = filledVariants.length
+      ? filledVariants.map((v) => ({
+          size: v.size,
+          price: v.price ?? undefined,
+          stock: v.stock,
+        }))
+      : [{ size: DEFAULT_VARIANT_SIZE, stock: form.stock }]
 
     // Offers (replace all)
     const validOffers = form.offers.filter(

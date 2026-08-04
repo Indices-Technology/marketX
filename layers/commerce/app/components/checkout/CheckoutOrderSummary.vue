@@ -52,7 +52,10 @@
             {{ item.variant?.product?.title }}
           </p>
           <p class="text-xs text-gray-400 dark:text-neutral-500">
-            {{ item.variant?.size }} × {{ item.quantity }}
+            <template v-if="variantLabel(item.variant?.size)">
+              {{ variantLabel(item.variant?.size) }} × {{ item.quantity }}
+            </template>
+            <template v-else>Qty {{ item.quantity }}</template>
           </p>
         </div>
         <div class="shrink-0 text-right">
@@ -88,6 +91,7 @@
 
 <script setup lang="ts">
 import BaseImage from '~~/layers/ui/app/components/BaseImage.vue'
+import { variantLabel } from '~~/layers/commerce/utils/variants'
 import { useCurrency } from '~~/layers/core/app/composables/useCurrency'
 import type { ICartItem } from '~~/layers/commerce/app/types/commerce.types'
 import type { SupportedCurrency } from '~~/shared/utils/currency'

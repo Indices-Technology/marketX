@@ -243,7 +243,10 @@
                     <p
                       class="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm font-semibold text-gray-800 dark:text-neutral-200"
                     >
-                      <span>Buy {{ offer.minQuantity }}, get {{ offer.discount }}% off</span>
+                      <span
+                        >Buy {{ offer.minQuantity }}, get {{ offer.discount }}%
+                        off</span
+                      >
                       <span
                         v-if="offer.label"
                         class="rounded-full bg-brand/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-brand"
@@ -251,8 +254,11 @@
                         {{ offer.label }}
                       </span>
                     </p>
-                    <p class="mt-0.5 text-[11px] text-gray-500 dark:text-neutral-400">
-                      Save {{ formatProductPrice(offerSavings(offer), 'NGN') }} when
+                    <p
+                      class="mt-0.5 text-[11px] text-gray-500 dark:text-neutral-400"
+                    >
+                      Save
+                      {{ formatProductPrice(offerSavings(offer), 'NGN') }} when
                       you buy {{ offer.minQuantity }}
                     </p>
                   </div>
@@ -343,7 +349,11 @@
                   v-else
                   class="flex h-12 w-12 items-center justify-center rounded-xl bg-brand/10"
                 >
-                  <Icon name="solar:shop-2-linear" size="22" class="text-brand" />
+                  <Icon
+                    name="solar:shop-2-linear"
+                    size="22"
+                    class="text-brand"
+                  />
                 </div>
               </NuxtLink>
 
@@ -352,7 +362,7 @@
                 <div class="flex flex-wrap items-center gap-1.5">
                   <NuxtLink
                     :to="`/sellers/profile/${product.seller.store_slug}`"
-                    class="text-sm font-semibold ink-strong hover:text-brand"
+                    class="ink-strong text-sm font-semibold hover:text-brand"
                   >
                     {{ product.seller.store_name || product.seller.store_slug }}
                   </NuxtLink>
@@ -378,7 +388,11 @@
                     v-if="product.seller.averageRating"
                     class="flex items-center gap-0.5"
                   >
-                    <Icon name="solar:star-bold" size="11" class="text-amber-400" />
+                    <Icon
+                      name="solar:star-bold"
+                      size="11"
+                      class="text-amber-400"
+                    />
                     {{ product.seller.averageRating.toFixed(1) }}
                     <span class="opacity-60"
                       >({{ product.seller.totalReviews }})</span
@@ -431,7 +445,9 @@
               >
                 <Icon
                   :name="
-                    messageLoading ? 'eos-icons:loading' : 'solar:chat-round-line-linear'
+                    messageLoading
+                      ? 'eos-icons:loading'
+                      : 'solar:chat-round-line-linear'
                   "
                   size="14"
                   :class="messageLoading ? 'animate-spin' : ''"
@@ -452,9 +468,7 @@
               <Icon name="solar:shop-2-linear" size="13" />
               {{ product.square.name }}
             </NuxtLink>
-            <h1
-              class="t-title text-2xl leading-snug"
-            >
+            <h1 class="t-title text-2xl leading-snug">
               {{ product.title }}
             </h1>
             <!-- Social proof: product rating + views -->
@@ -487,7 +501,7 @@
               }}</span>
               <span
                 v-if="product.discount && product.discount > 0"
-                class="text-base ink-faint line-through"
+                class="ink-faint text-base line-through"
               >
                 {{ formatProductPrice(product.price, 'NGN') }}
               </span>
@@ -501,7 +515,7 @@
           </div>
 
           <!-- Variants -->
-          <div v-if="product.variants?.length">
+          <div v-if="showVariantSelector">
             <p
               class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-neutral-400"
             >
@@ -509,7 +523,7 @@
             </p>
             <div class="flex flex-wrap gap-2">
               <button
-                v-for="v in product.variants"
+                v-for="v in displayVariants"
                 :key="v.id"
                 :disabled="v.stock === 0"
                 class="min-h-[44px] touch-manipulation rounded-xl border-2 px-4 py-2 text-sm font-semibold transition-all disabled:opacity-40"
@@ -553,24 +567,25 @@
             }}
           </p>
 
-          <!-- Qty + Add to Cart + Buy Now + View Cart — one row where it fits,
-               wraps to 2 rows on narrow screens so labels never squish. -->
-          <div class="flex flex-wrap items-stretch gap-2">
+          <!-- Qty + Add to Cart + Buy Now + View Cart + Share — always one row,
+               mobile and desktop. View Cart / Share shrink to icon-only so the
+               row never needs to wrap. -->
+          <div class="flex items-stretch gap-1.5 sm:gap-2">
             <div
               class="flex shrink-0 items-center gap-0.5 rounded-xl border border-gray-200 dark:border-neutral-700"
             >
               <button
-                class="touch-manipulation px-2.5 py-3 text-lg font-bold text-gray-600 hover:text-brand dark:text-neutral-400"
+                class="touch-manipulation px-2 py-3 text-lg font-bold text-gray-600 hover:text-brand dark:text-neutral-400"
                 @click="qty = Math.max(1, qty - 1)"
               >
                 −
               </button>
               <span
-                class="w-6 text-center text-sm font-bold text-gray-900 dark:text-neutral-100"
+                class="w-5 text-center text-sm font-bold text-gray-900 dark:text-neutral-100"
                 >{{ qty }}</span
               >
               <button
-                class="touch-manipulation px-2.5 py-3 text-lg font-bold text-gray-600 hover:text-brand dark:text-neutral-400"
+                class="touch-manipulation px-2 py-3 text-lg font-bold text-gray-600 hover:text-brand dark:text-neutral-400"
                 @click="qty++"
               >
                 +
@@ -578,7 +593,8 @@
             </div>
             <BaseButton
               variant="primary"
-              class="flex-1 touch-manipulation"
+              size="sm"
+              class="flex-1 touch-manipulation !px-2"
               :loading="addingToCart"
               :disabled="
                 addingToCart ||
@@ -597,7 +613,8 @@
             </BaseButton>
             <BaseButton
               variant="primary"
-              class="flex-1 touch-manipulation"
+              size="sm"
+              class="flex-1 touch-manipulation !px-2"
               :loading="buyingNow"
               :disabled="
                 buyingNow ||
@@ -616,38 +633,29 @@
               {{ buyingNow ? 'Starting…' : 'Buy Now' }}
             </BaseButton>
             <BaseButton
-              variant="secondary"
-              class="flex-1 touch-manipulation"
+              variant="icon"
+              size="sm"
+              class="shrink-0 touch-manipulation rounded-xl border border-gray-200 dark:border-neutral-700"
+              aria-label="View cart"
               @click="openCart()"
             >
-              <Icon name="solar:cart-large-2-linear" size="16" class="mr-1" />
-              View Cart<span v-if="cartCount > 0"> ({{ cartCount }})</span>
-            </BaseButton>
-          </div>
-
-          <!-- Copy link + Share as card (one row) -->
-          <div class="grid grid-cols-2 gap-2">
-            <BaseButton
-              variant="secondary"
-              size="sm"
-              class="touch-manipulation"
-              @click="copyLink"
-            >
-              <Icon
-                :name="copied ? 'solar:check-circle-linear' : 'solar:link-round-linear'"
-                size="15"
-                class="mr-1"
-              />
-              {{ copied ? 'Copied!' : 'Copy link' }}
+              <span class="relative">
+                <Icon name="solar:cart-large-2-linear" size="16" />
+                <span
+                  v-if="cartCount > 0"
+                  class="absolute -right-2 -top-2 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-brand px-0.5 text-[9px] font-bold text-white"
+                  >{{ cartCount > 9 ? '9+' : cartCount }}</span
+                >
+              </span>
             </BaseButton>
             <BaseButton
-              variant="secondary"
+              variant="icon"
               size="sm"
-              class="touch-manipulation"
-              @click="showCard = true"
+              class="shrink-0 touch-manipulation rounded-xl border border-gray-200 dark:border-neutral-700"
+              aria-label="Share"
+              @click="showShareOptions = true"
             >
-              <Icon name="solar:card-2-linear" size="16" class="mr-1.5" />
-              Share as card
+              <Icon name="solar:share-linear" size="16" />
             </BaseButton>
           </div>
 
@@ -657,12 +665,15 @@
             class="flex items-center justify-between gap-3 rounded-2xl border border-brand/20 bg-brand/5 p-4 dark:border-brand/30 dark:bg-brand/10"
           >
             <div class="min-w-0">
-              <p class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-brand">
+              <p
+                class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-brand"
+              >
                 <Icon name="solar:hand-money-linear" size="15" />
                 Affiliate Card
               </p>
               <p class="mt-1 text-xs text-gray-500 dark:text-neutral-400">
-                Get your own trackable link — earn a commission on every sale you refer.
+                Get your own trackable link — earn a commission on every sale
+                you refer.
               </p>
             </div>
             <BaseButton
@@ -720,14 +731,15 @@
             <details v-if="product.description" open class="group">
               <summary class="acc-summary">
                 Description
-                <Icon name="solar:alt-arrow-down-linear" size="18" class="acc-chev" />
+                <Icon
+                  name="solar:alt-arrow-down-linear"
+                  size="18"
+                  class="acc-chev"
+                />
               </summary>
               <div class="px-4 pb-4">
                 <!-- eslint-disable-next-line vue/no-v-html — sanitized by xss (sanitizeHtml) -->
-                <div
-                  class="product-desc t-body"
-                  v-html="safeDescription"
-                />
+                <div class="product-desc t-body" v-html="safeDescription" />
               </div>
             </details>
 
@@ -735,7 +747,11 @@
             <details v-if="productDetails.length" class="group">
               <summary class="acc-summary">
                 Specifications
-                <Icon name="solar:alt-arrow-down-linear" size="18" class="acc-chev" />
+                <Icon
+                  name="solar:alt-arrow-down-linear"
+                  size="18"
+                  class="acc-chev"
+                />
               </summary>
               <div class="px-4 pb-4">
                 <dl class="grid grid-cols-2 gap-x-4 gap-y-3">
@@ -780,7 +796,11 @@
             <details class="group">
               <summary class="acc-summary">
                 Delivery &amp; Returns
-                <Icon name="solar:alt-arrow-down-linear" size="18" class="acc-chev" />
+                <Icon
+                  name="solar:alt-arrow-down-linear"
+                  size="18"
+                  class="acc-chev"
+                />
               </summary>
               <div
                 class="space-y-2 px-4 pb-4 text-[13px] text-gray-600 dark:text-neutral-300"
@@ -866,9 +886,7 @@
       <!-- ── More from this market ── -->
       <section v-if="product.square && marketProducts.length" class="mt-10">
         <div class="mb-3 flex items-center justify-between">
-          <h2 class="t-heading text-lg">
-            More from {{ product.square.name }}
-          </h2>
+          <h2 class="t-heading text-lg">More from {{ product.square.name }}</h2>
           <NuxtLink
             :to="`/squares/${product.square.slug}`"
             class="text-xs font-semibold text-brand hover:underline"
@@ -891,9 +909,7 @@
 
       <!-- ── Recently viewed ── -->
       <section v-if="recentlyViewedItems.length" class="mt-10">
-        <h2 class="mb-3 t-heading text-lg">
-          Recently viewed
-        </h2>
+        <h2 class="t-heading mb-3 text-lg">Recently viewed</h2>
         <div
           class="rail-scroll -mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-2"
         >
@@ -909,16 +925,16 @@
 
       <!-- ── Reviews ── -->
       <div id="reviews" class="mt-10 scroll-mt-24">
-        <h2 class="mb-4 t-heading text-lg">
-          Customer Reviews
-        </h2>
+        <h2 class="t-heading mb-4 text-lg">Customer Reviews</h2>
         <ProductReviews :product-id="product.id" />
       </div>
 
       <!-- Mobile sticky buy bar (sits above the bottom nav) -->
       <div
         class="fixed inset-x-0 bottom-16 z-30 flex items-center gap-3 border-t border-gray-200 bg-white/95 px-4 py-2.5 backdrop-blur-md md:hidden dark:border-neutral-800 dark:bg-neutral-950/95"
-        style="padding-bottom: calc(0.625rem + env(safe-area-inset-bottom, 0px))"
+        style="
+          padding-bottom: calc(0.625rem + env(safe-area-inset-bottom, 0px));
+        "
       >
         <p class="min-w-0 flex-1 truncate text-lg font-extrabold text-brand">
           {{ formatProductPrice(discountedPrice, 'NGN') }}
@@ -941,6 +957,17 @@
           {{ addingToCart ? 'Adding…' : 'Add to Cart' }}
         </BaseButton>
       </div>
+
+      <!-- Share options — copy link / share as card / embed (owner-only) -->
+      <ShareOptionsModal
+        v-if="product"
+        :open="showShareOptions"
+        :product-id="product.id"
+        :copied="copied"
+        @close="showShareOptions = false"
+        @copy-link="copyLink"
+        @open-card="openCardFromShare"
+      />
 
       <!-- Shareable product card (public, own tracked link + QR) -->
       <ProductShareCardModal
@@ -969,12 +996,14 @@ import { useRoute } from 'vue-router'
 // executes on parse, before client hydration, so SSR must not ship it raw. xss
 // is pure CJS (no jsdom/htmlparser2), so it's safe in the serverless bundle.
 import { sanitizeHtml } from '~~/layers/commerce/utils/sanitizeHtml'
+import { variantLabel } from '~~/layers/commerce/utils/variants'
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 import VideoPlayer from '~~/layers/core/app/components/VideoPlayer.vue'
 import ProductReviews from '~~/layers/commerce/app/components/ProductReviews.vue'
 import ProductCardMini from '~~/layers/commerce/app/components/ProductCardMini.vue'
 import ProductShareCardModal from '~~/layers/commerce/app/components/product-card/ProductShareCardModal.vue'
+import ShareOptionsModal from '~~/layers/commerce/app/components/product-card/ShareOptionsModal.vue'
 import AffiliateProductCardModal from '~~/layers/commerce/app/components/product-card/AffiliateProductCardModal.vue'
 import { useRecentlyViewed } from '~~/layers/commerce/app/composables/useRecentlyViewed'
 import { useChatApi } from '~~/layers/profile/app/services/chat.api'
@@ -1034,13 +1063,11 @@ const product = computed(() => data.value?.data ?? null)
 // SSR-resolved copy — so social scrapers and search crawlers (no JS) receive the
 // product's OG meta in the server HTML. Mirrors the store page's `store-seo-*`
 // fetch. Prefer the live client product once it has loaded.
-const { data: seoData } = await useAsyncData(
-  `product-seo-${slug.value}`,
-  () =>
-    useProductApi()
-      .getProductBySlug(slug.value)
-      .then((r: any) => r?.data ?? null)
-      .catch(() => null),
+const { data: seoData } = await useAsyncData(`product-seo-${slug.value}`, () =>
+  useProductApi()
+    .getProductBySlug(slug.value)
+    .then((r: any) => r?.data ?? null)
+    .catch(() => null),
 )
 const seoProduct = computed(() => product.value ?? seoData.value ?? null)
 
@@ -1153,6 +1180,14 @@ const selectedVariant = computed(
     product.value?.variants?.find((v) => v.id === selectedVariantId.value) ??
     null,
 )
+// Real, seller-named options only — the implicit "Default" unit (and any
+// protected Default left behind after a seller restructures variants) is never
+// offered as a chip. A simple product therefore shows no selector at all; its
+// variant is still auto-selected below, so Add to Cart works.
+const displayVariants = computed(
+  () => product.value?.variants?.filter((v) => variantLabel(v.size)) ?? [],
+)
+const showVariantSelector = computed(() => displayVariants.value.length > 0)
 const discountedPrice = computed(() => {
   if (!product.value) return 0
   const base = selectedVariant.value?.price ?? product.value.price
@@ -1286,7 +1321,10 @@ const buyNow = async () => {
     await addToCart(selectedVariantId.value, qty.value)
     await navigateTo('/checkout')
   } catch {
-    notify({ type: 'error', text: 'Could not start checkout. Please try again.' })
+    notify({
+      type: 'error',
+      text: 'Could not start checkout. Please try again.',
+    })
   } finally {
     buyingNow.value = false
   }
@@ -1294,10 +1332,18 @@ const buyNow = async () => {
 
 // ── Share ────────────────────────────────────────────────────────────────────
 const copied = ref(false)
+const showShareOptions = ref(false) // merged share-options modal (copy link / card / embed)
 const showCard = ref(false) // shareable product-card modal
 const showAffiliateCard = ref(false) // affiliate card modal
 
-const isAffiliatable = computed(() => (product.value?.affiliateCommission ?? 0) > 0)
+const openCardFromShare = () => {
+  showShareOptions.value = false
+  showCard.value = true
+}
+
+const isAffiliatable = computed(
+  () => (product.value?.affiliateCommission ?? 0) > 0,
+)
 
 const baseProductUrl = computed(() =>
   import.meta.client

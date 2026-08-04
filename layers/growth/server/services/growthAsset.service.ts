@@ -16,7 +16,10 @@ import { UserError } from '~~/layers/profile/server/types/user.types'
 import { mintDistribution, trackedUrl } from './shortlink.service'
 
 /** True if the user owns the store (sellerProfile) — multi-store safe ownership. */
-async function userOwnsStore(userId: string, sellerId: string): Promise<boolean> {
+async function userOwnsStore(
+  userId: string,
+  sellerId: string,
+): Promise<boolean> {
   const owns = await prisma.sellerProfile.findFirst({
     where: { id: sellerId, profileId: userId },
     select: { id: true },
@@ -78,7 +81,8 @@ async function loadProductForAsset(productId: number) {
       seller: { select: { publicId: true, profileId: true } },
     },
   })
-  if (!product) throw new UserError('PRODUCT_NOT_FOUND', 'Product not found', 404)
+  if (!product)
+    throw new UserError('PRODUCT_NOT_FOUND', 'Product not found', 404)
   return product
 }
 
@@ -89,7 +93,13 @@ async function getOrCreateAsset(
 ): Promise<AssetRow> {
   const existing = await prisma.growthAsset.findFirst({
     where: { sellerId: product.sellerId, productId: product.id },
-    select: { id: true, productId: true, status: true, content: true, commerce: true },
+    select: {
+      id: true,
+      productId: true,
+      status: true,
+      content: true,
+      commerce: true,
+    },
   })
   if (existing) return existing
 
@@ -111,7 +121,13 @@ async function getOrCreateAsset(
         canonicalUrl,
       },
     },
-    select: { id: true, productId: true, status: true, content: true, commerce: true },
+    select: {
+      id: true,
+      productId: true,
+      status: true,
+      content: true,
+      commerce: true,
+    },
   })
 }
 
@@ -132,7 +148,11 @@ export const growthAssetService = {
     // source of truth for which store this asset belongs to.
     const product = await loadProductForAsset(productId)
     if (product.seller?.profileId !== userId) {
-      throw new UserError('PRODUCT_NOT_FOUND', 'Product not found or not yours', 404)
+      throw new UserError(
+        'PRODUCT_NOT_FOUND',
+        'Product not found or not yours',
+        404,
+      )
     }
 
     const asset = await getOrCreateAsset(product, baseUrl)
@@ -203,6 +223,49 @@ export const growthAssetService = {
         })
       ).shortCode
     return shape(asset, trackedUrl(code, baseUrl))
+  },
+
+  /**
+   * Get (or create) the seller's EMBED distribution for a product they own — the
+   * tracked link a third-party <iframe> (their own blog/site) points at. One per
+   * (seller, product), like the CARD link, since embedding is the seller
+   * publishing their own product on their own site, not a per-viewer share.
+   *
+   * Returns the product slug + short code (not just the /r/ tracked link) so the
+   * caller can build the <iframe src="/embed/product/{slug}?code={shortCode}">
+   * snippet — the embed page uses that same code to log VIEW events and to link
+   * its own CTA through /r/{shortCode} (which logs the CLICK on the way through).
+   */
+  async forEmbed(args: {
+    productId: number
+    userId: string
+    baseUrl: string
+  }): Promise<GrowthAssetResult & { slug: string; shortCode: string }> {
+    const { productId, userId, baseUrl } = args
+
+    const product = await loadProductForAsset(productId)
+    if (product.seller?.profileId !== userId) {
+      throw new UserError(
+        'PRODUCT_NOT_FOUND',
+        'Product not found or not yours',
+        404,
+      )
+    }
+
+    const asset = await getOrCreateAsset(product, baseUrl)
+    const existing = await prisma.assetDistribution.findFirst({
+      where: { assetId: asset.id, channel: 'EMBED', sharerProfileId: null },
+      select: { shortCode: true },
+    })
+    const code =
+      existing?.shortCode ??
+      (await mintDistribution({ assetId: asset.id, channel: 'EMBED', baseUrl }))
+        .shortCode
+    return {
+      ...shape(asset, trackedUrl(code, baseUrl)),
+      slug: product.slug,
+      shortCode: code,
+    }
   },
 
   /** Attach the rendered+uploaded card image to an asset the user owns. */

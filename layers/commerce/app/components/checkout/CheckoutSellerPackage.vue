@@ -51,7 +51,10 @@
             {{ item.variant?.product?.title }}
           </p>
           <p class="text-xs text-gray-400 dark:text-neutral-500">
-            {{ item.variant?.size }} × {{ item.quantity }}
+            <template v-if="variantLabel(item.variant?.size)">
+              {{ variantLabel(item.variant?.size) }} × {{ item.quantity }}
+            </template>
+            <template v-else>Qty {{ item.quantity }}</template>
           </p>
         </div>
         <div class="shrink-0 text-right">
@@ -122,6 +125,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import BaseImage from '~~/layers/ui/app/components/BaseImage.vue'
+import { variantLabel } from '~~/layers/commerce/utils/variants'
 import CheckoutShipping from './CheckoutShipping.vue'
 import { useCurrency } from '~~/layers/core/app/composables/useCurrency'
 import { effectiveUnitPrice } from '~~/layers/commerce/app/stores/cart.store'

@@ -9,25 +9,77 @@
          bottom off them. Cloudinary crops to this exact ratio with g_auto, so
          object-cover has nothing left to crop a second time. -->
     <div
-      class="relative aspect-[4/5] w-full overflow-hidden bg-gray-100 dark:bg-neutral-800"
+      class="relative aspect-[4/5] w-full touch-pan-y select-none overflow-hidden bg-gray-100 dark:bg-neutral-800"
+      @touchstart.passive="onTouchStart"
+      @touchend.passive="onTouchEnd"
     >
-      <img
-        v-if="coverUrl"
-        :src="coverUrl"
-        :alt="product.title"
-        crossorigin="anonymous"
-        class="h-full w-full object-cover"
-      />
       <div
-        v-else
+        v-if="tiles.length === 0"
         class="flex h-full w-full items-center justify-center bg-gradient-to-br from-brand/15 to-brand/5"
       >
         <Icon name="solar:bag-4-linear" size="40" class="text-brand/50" />
       </div>
+
+      <template v-else>
+        <!-- One full-bleed photo at a time — sharer swipes/taps to pick the hero.
+             Only the ACTIVE slide is in the DOM, so whichever one is showing is
+             exactly what the download/share capture snapshots. -->
+        <img
+          :src="activeTile.url"
+          :alt="product.title"
+          crossorigin="anonymous"
+          class="h-full w-full object-cover"
+        />
+        <div
+          v-if="activeTile.isVideo"
+          class="absolute inset-0 flex items-center justify-center bg-black/10"
+        >
+          <Icon
+            name="solar:play-bold"
+            size="36"
+            class="text-white drop-shadow"
+          />
+        </div>
+
+        <!-- Prev/next + dots are preview-only navigation — capture-hide keeps
+             them out of the exported/shared image. -->
+        <template v-if="tiles.length > 1">
+          <button
+            type="button"
+            class="capture-hide absolute left-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur-sm transition-colors hover:bg-black/55"
+            aria-label="Previous photo"
+            @click.stop="prevTile"
+          >
+            <Icon name="solar:alt-arrow-left-linear" size="16" />
+          </button>
+          <button
+            type="button"
+            class="capture-hide absolute right-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur-sm transition-colors hover:bg-black/55"
+            aria-label="Next photo"
+            @click.stop="nextTile"
+          >
+            <Icon name="solar:alt-arrow-right-linear" size="16" />
+          </button>
+          <div
+            class="capture-hide absolute inset-x-0 bottom-3 z-10 flex items-center justify-center gap-1.5"
+          >
+            <button
+              v-for="(t, i) in tiles"
+              :key="i"
+              type="button"
+              class="h-1.5 rounded-full transition-all"
+              :class="i === activeIndex ? 'w-4 bg-white' : 'w-1.5 bg-white/50'"
+              :aria-label="`Show photo ${i + 1}`"
+              @click.stop="activeIndex = i"
+            />
+          </div>
+        </template>
+      </template>
+
       <!-- Discount flag -->
       <span
         v-if="product.discount && product.discount > 0"
-        class="absolute left-3 top-3 rounded-lg bg-brand px-2 py-1 text-[11px] font-bold text-white shadow-sm"
+        class="absolute left-3 top-3 z-10 rounded-lg bg-brand px-2 py-1 text-[11px] font-bold text-white shadow-sm"
       >
         {{ product.discount }}% OFF
       </span>
@@ -173,7 +225,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import {
   imgAvatar,
   imgBanner,
@@ -202,19 +254,59 @@ const emit = defineEmits<{
 
 const fmt = (major: number) => formatProductPrice(major, 'NGN')
 
-// Prefer a real image; for a video-only product fall back to a poster frame
-// (Cloudinary renders one via videoThumb) so the card never shows a blank cover.
-// Both are requested at the box's 4:5 ratio and at enough pixels for the 3×
-// capture the download/share path rasterises at.
+// One full-bleed photo shown at a time; dots/arrows switch between all of the
+// product's media. Videos fall back to a Cloudinary poster frame (so a slide
+// never shows blank) with a play badge so viewers know it's a clip. Only the
+// ACTIVE slide is ever in the DOM, so whichever one the sharer lands on is
+// exactly what the download/share capture snapshots.
 const COVER_W = 1200
 const COVER_H = 1500
-const coverUrl = computed(() => {
+
+const tiles = computed(() => {
   const media = (props.product?.media ?? []).filter((m: any) => !m?.isBgMusic)
-  const img = media.find((m: any) => m?.type !== 'VIDEO')
-  if (img?.url) return imgBanner(img.url, COVER_W, COVER_H)
-  const vid = media.find((m: any) => m?.type === 'VIDEO')
-  return vid?.url
-    ? videoThumb(vid.url, { width: COVER_W, height: COVER_H })
-    : ''
+  return media.map((m: any) => {
+    const isVideo = (m?.type ?? '').toUpperCase() === 'VIDEO'
+    return {
+      isVideo,
+      url: isVideo
+        ? videoThumb(m.url, { width: COVER_W, height: COVER_H })
+        : imgBanner(m.url, COVER_W, COVER_H),
+    }
+  })
 })
+
+const activeIndex = ref(0)
+const activeTile = computed(
+  () => tiles.value[activeIndex.value] ?? tiles.value[0],
+)
+
+// Reset to the first photo whenever the modal is pointed at a new product.
+watch(
+  () => props.product?.id,
+  () => {
+    activeIndex.value = 0
+  },
+)
+
+const prevTile = () => {
+  if (!tiles.value.length) return
+  activeIndex.value =
+    (activeIndex.value - 1 + tiles.value.length) % tiles.value.length
+}
+const nextTile = () => {
+  if (!tiles.value.length) return
+  activeIndex.value = (activeIndex.value + 1) % tiles.value.length
+}
+
+const SWIPE_THRESHOLD = 40
+const touchStartX = ref(0)
+const onTouchStart = (e: TouchEvent) => {
+  touchStartX.value = e.changedTouches[0]?.clientX ?? 0
+}
+const onTouchEnd = (e: TouchEvent) => {
+  const dx = (e.changedTouches[0]?.clientX ?? 0) - touchStartX.value
+  if (Math.abs(dx) < SWIPE_THRESHOLD) return
+  if (dx < 0) nextTile()
+  else prevTile()
+}
 </script>

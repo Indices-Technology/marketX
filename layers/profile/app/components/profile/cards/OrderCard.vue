@@ -37,8 +37,8 @@
             {{ item.variant?.product?.title || 'Product' }}
           </p>
           <p class="text-xs text-gray-500 dark:text-neutral-400">
-            <span v-if="item.variant?.size || item.variant?.label">
-              {{ item.variant?.size || item.variant?.label }} ·
+            <span v-if="variantLabel(item.variant?.size) || item.variant?.label">
+              {{ variantLabel(item.variant?.size) || item.variant?.label }} ·
             </span>
             Qty: {{ item.quantity }}
             <span v-if="item.price"> × {{ formatPrice(item.price) }}</span>
@@ -123,6 +123,7 @@
 
 <script setup lang="ts">
 import BaseImage from '~~/layers/ui/app/components/BaseImage.vue'
+import { variantLabel } from '~~/layers/commerce/utils/variants'
 import { useOrderApi } from '~~/layers/commerce/app/services/order.api'
 import BaseBadge from '~~/layers/ui/app/components/BaseBadge.vue'
 import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'

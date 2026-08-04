@@ -13,9 +13,10 @@ import type {
   ChannelActionKind,
 } from '../utils/types'
 import { organicShareChannel } from './organic-share'
+import { embedChannel } from './embed'
 
 // meta-fb, meta-ig, whatsapp, email register here as they land (behind App Review).
-const CHANNELS: IChannelProvider[] = [organicShareChannel]
+const CHANNELS: IChannelProvider[] = [organicShareChannel, embedChannel]
 
 export function getChannels(): IChannelProvider[] {
   return CHANNELS

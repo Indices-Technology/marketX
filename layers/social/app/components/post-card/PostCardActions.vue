@@ -198,6 +198,9 @@ const taggedProducts = computed(() =>
     price: t.product?.price ?? t.price,
     slug: t.product?.slug ?? t.slug,
     image: t.product?.media?.[0]?.url ?? t.image ?? null,
+    averageRating: t.product?.averageRating ?? t.averageRating ?? null,
+    totalReviews: t.product?.totalReviews ?? t.totalReviews ?? 0,
+    likeCount: t.product?._count?.likes ?? t._count?.likes ?? 0,
   })),
 )
 

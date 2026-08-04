@@ -13,6 +13,28 @@ const OPENAPI_DOC_CSP = [
   "worker-src 'self' blob:",
 ].join('; ')
 
+// Embeddable product card (/embed/product/[slug]) — meant to be iframed on
+// arbitrary third-party sites (seller blogs, marketplaces), so it needs its own
+// CSP with an explicit `frame-ancestors *`. Modern browsers give CSP
+// frame-ancestors precedence over X-Frame-Options when both are present (verified
+// against this app's own dev server), so the app-wide `X-Frame-Options:
+// SAMEORIGIN` from the `/**` rule below is harmlessly superseded here rather than
+// needing its own override. Otherwise as close to the app-wide policy as this
+// read-only surface allows — no script-src beyond 'self' since it renders no
+// third-party embeds of its own.
+const EMBED_CSP = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline'",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com",
+  "img-src 'self' data: https://res.cloudinary.com",
+  "media-src 'self' https://res.cloudinary.com",
+  "connect-src 'self'",
+  "frame-ancestors *",
+  "base-uri 'self'",
+  "object-src 'none'",
+].join('; ')
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
@@ -330,6 +352,9 @@ export default defineNuxtConfig({
       },
       '/api/swagger': {
         headers: { 'Content-Security-Policy': OPENAPI_DOC_CSP },
+      },
+      '/embed/**': {
+        headers: { 'Content-Security-Policy': EMBED_CSP },
       },
     },
   },
