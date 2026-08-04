@@ -43,6 +43,9 @@ const schema = z.object({
       }),
     )
     .optional(),
+  buyerNotes: z
+    .array(z.object({ storeSlug: z.string(), note: z.string().max(500) }))
+    .optional(),
   // Paystack settles NGN here — lock it so the client can't dictate currency
   // (the confirmPayment gate also rejects a non-NGN settlement at verify).
   currency: z.enum(['NGN']).default('NGN'),

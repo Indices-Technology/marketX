@@ -34,6 +34,9 @@ const schema = z.object({
       }),
     )
     .optional(),
+  buyerNotes: z
+    .array(z.object({ storeSlug: z.string(), note: z.string().max(500) }))
+    .optional(),
   callback_url: z.string().url().optional(),
   affiliateCode: z.string().optional(),
 })

@@ -384,6 +384,12 @@ model Orders {
   shipState         String?
   /// Destination contact phone — required by the carrier for delivery.
   shipPhone         String?
+  /// Buyer's delivery/handling note captured at checkout — an immutable snapshot
+  /// for the packer/courier (e.g. "call before arriving", "gift wrap"). Content-
+  /// guard masked, ≤280 chars, per-seller. NOT a channel to renegotiate the order
+  /// (price/terms/address changes must be structured fields the escrow logic reads),
+  /// and never edited after creation so it can be cited verbatim in a dispute.
+  buyerNote         String?         @db.VarChar(280)
   /// Shipping cost in cents
   shippingCost      Int             @default(0)
   shippingZone      String?

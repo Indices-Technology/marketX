@@ -106,6 +106,36 @@
       />
     </div>
 
+    <!-- Note for this seller — a frozen delivery/handling instruction sent with
+         the order (not a chat). Kept short; contact info is stripped server-side. -->
+    <div class="mt-4 border-t border-gray-100 pt-4 dark:border-neutral-800">
+      <label
+        :for="`note-${storeSlug}`"
+        class="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-neutral-400"
+      >
+        <Icon name="solar:notebook-linear" size="14" />
+        Note for the seller
+        <span class="font-normal normal-case text-gray-400">(optional)</span>
+      </label>
+      <textarea
+        :id="`note-${storeSlug}`"
+        :value="note"
+        :maxlength="NOTE_MAX"
+        rows="2"
+        placeholder="Delivery or handling instructions — e.g. call before arriving, gift wrap."
+        class="w-full resize-none rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100"
+        @input="emit('update:note', ($event.target as HTMLTextAreaElement).value)"
+      />
+      <div class="mt-1 flex items-center justify-between">
+        <p class="text-[11px] text-gray-400 dark:text-neutral-500">
+          Instructions only — not for changing price or address.
+        </p>
+        <p class="text-[11px] tabular-nums text-gray-400 dark:text-neutral-500">
+          {{ note.length }}/{{ NOTE_MAX }}
+        </p>
+      </div>
+    </div>
+
     <!-- Cost for this seller, in one place -->
     <div
       class="mt-4 space-y-1 border-t border-gray-100 pt-3 text-[13px] dark:border-neutral-800"
@@ -156,10 +186,16 @@ const props = defineProps<{
   shippingLoading: boolean
   ratesError: string | null
   activeCountry: string
+  /** Buyer's frozen note to this seller (delivery/handling instructions). */
+  note: string
 }>()
+
+/** Max note length — mirrors the buyerNote DB column / server cap. */
+const NOTE_MAX = 280
 
 const emit = defineEmits<{
   'update:selectedRate': [rate: IShipmentRate]
+  'update:note': [note: string]
 }>()
 
 const displayStoreName = computed(() => props.store?.name ?? props.storeName)

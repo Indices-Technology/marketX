@@ -170,6 +170,26 @@
           </div>
         </BaseCard>
 
+        <!-- Buyer's note — the instruction they left the seller at checkout.
+             Read-only here (frozen with the order); conversations go to messages. -->
+        <BaseCard v-if="order.buyerNote" title="Your note to the seller">
+          <p class="text-sm leading-relaxed text-gray-700 dark:text-neutral-300">
+            {{ order.buyerNote }}
+          </p>
+          <div
+            class="mt-3 flex items-center gap-1.5 border-t border-gray-100 pt-3 text-xs text-gray-400 dark:border-neutral-800 dark:text-neutral-500"
+          >
+            <Icon name="solar:info-circle-linear" size="14" class="shrink-0" />
+            <span>
+              This was sent with your order and can't be edited. Need something
+              changed?
+              <NuxtLink to="/messages/new" class="font-semibold text-brand hover:underline">
+                Message the seller
+              </NuxtLink>
+            </span>
+          </div>
+        </BaseCard>
+
         <!-- Live tracking timeline (carrier scans) -->
         <BaseCard v-if="order.waybill || order.trackingNumber" title="Tracking">
           <div v-if="loadingTracking" class="space-y-3">
