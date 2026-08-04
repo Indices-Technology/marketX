@@ -53,7 +53,7 @@ export interface TikTokCreatorInfo {
 export async function queryCreatorInfo(accessToken: string): Promise<TikTokCreatorInfo> {
   let res: { data?: Record<string, unknown>; error?: { code?: string; message?: string } }
   try {
-    res = await $fetch(`${BASE}/post/publish/creator_info/query/`, {
+    res = await $fetch<typeof res>(`${BASE}/post/publish/creator_info/query/`, {
       method: 'POST',
       headers: JSON_HEADERS(accessToken),
       body: {},
@@ -97,7 +97,7 @@ export interface InitPhotoArgs {
 export async function initPhotoPost(args: InitPhotoArgs): Promise<{ publishId: string }> {
   let res: { data?: { publish_id?: string }; error?: { code?: string; message?: string } }
   try {
-    res = await $fetch(`${BASE}/post/publish/content/init/`, {
+    res = await $fetch<typeof res>(`${BASE}/post/publish/content/init/`, {
       method: 'POST',
       headers: JSON_HEADERS(args.accessToken),
       body: {
@@ -135,7 +135,7 @@ export async function getPostStatus(
 ): Promise<{ status: string; failReason?: string }> {
   let res: { data?: { status?: string; fail_reason?: string }; error?: { code?: string; message?: string } }
   try {
-    res = await $fetch(`${BASE}/post/publish/status/fetch/`, {
+    res = await $fetch<typeof res>(`${BASE}/post/publish/status/fetch/`, {
       method: 'POST',
       headers: JSON_HEADERS(accessToken),
       body: { publish_id: publishId },

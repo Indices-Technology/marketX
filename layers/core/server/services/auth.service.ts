@@ -239,6 +239,19 @@ export const authService = {
     })
 
     if (!user) {
+      // Log the probe against an unknown email (no userId — the account doesn't
+      // exist). Safe for auditLog (append-only, no unique-email bloat) and lets
+      // the dashboard + suspicious-activity check catch enumeration/spray attacks.
+      // NOT written to FailedLoginAttempt (that table is unique-by-email → bloat).
+      await logAuditEvent({
+        eventType: 'LOGIN_FAILED',
+        email: normalizedEmail,
+        ipAddress,
+        userAgent,
+        success: false,
+        reason: 'Unknown email',
+      })
+
       throw new AuthError(
         'INVALID_CREDENTIALS',
         'Invalid email or password',

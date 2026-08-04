@@ -262,10 +262,16 @@ const onShare = () =>
   })
 
 async function onPost() {
+  if (!canPost.value) return
   try {
     const res = await postToTikTok(cardRef.value?.rootEl, {
-      caption: caption.value,
       privacyLevel: privacyLevel.value,
+      caption: caption.value,
+      title: title.value,
+      allowComment: allowComment.value && !creatorInfo.value?.commentDisabled,
+      isPromotional: isPromotional.value,
+      brandOrganic: brandOrganic.value,
+      brandContent: brandContent.value,
     })
     if (res) notify({ type: 'success', text: 'Sent to TikTok — processing' })
   } catch (e) {
@@ -279,6 +285,14 @@ watch(
     if (!open || !p) return
     tiktokState.value = 'loading'
     caption.value = p.title ?? ''
+    title.value = p.title ?? ''
+    // No defaults for privacy/interaction settings — TikTok's Content Sharing
+    // Guidelines require the seller to actively choose these, every time.
+    privacyLevel.value = ''
+    allowComment.value = false
+    isPromotional.value = false
+    brandOrganic.value = false
+    brandContent.value = false
     try {
       await prepare(p.id)
     } catch (e) {
@@ -288,8 +302,7 @@ watch(
       return
     }
     try {
-      const info = await loadTikTokCreatorInfo()
-      privacyLevel.value = info.privacyOptions?.[0] ?? 'SELF_ONLY'
+      await loadTikTokCreatorInfo()
       tiktokState.value = 'ready'
     } catch {
       tiktokState.value = 'disconnected'
