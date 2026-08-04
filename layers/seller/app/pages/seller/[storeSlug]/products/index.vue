@@ -186,6 +186,7 @@
 </template>
 
 <script setup lang="ts">
+import { notify } from '@kyvg/vue3-notification'
 import { useProduct } from '~~/layers/commerce/app/composables/useProduct'
 import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { extractErrorMessage } from '~~/layers/core/app/utils/errors'
@@ -197,9 +198,10 @@ definePageMeta({ middleware: 'auth', layout: 'store-layout' })
 useSeo().setPrivatePage('Products')
 
 const route = useRoute()
+const router = useRouter()
 const storeSlug = computed(() => route.params.storeSlug as string)
 
-const { fetchSellerProducts, deleteProduct } = useProduct()
+const { fetchSellerProducts, deleteProduct, getProductById } = useProduct()
 
 const statusTabs = [
   { label: 'All', value: '' },
@@ -284,5 +286,37 @@ const handleDelete = async () => {
   }
 }
 
-onMounted(() => load())
+onMounted(async () => {
+  await load()
+
+  // Round-trip from GrowthPromoteModal's "Connect TikTok" — reopen the same
+  // product's promote modal instead of leaving the seller on a bare page.
+  const tiktokResult = route.query.tiktok
+  if (tiktokResult === 'connected') {
+    notify({ type: 'success', text: 'TikTok connected' })
+  } else if (tiktokResult === 'error') {
+    notify({
+      type: 'error',
+      text: `Couldn't connect TikTok${route.query.reason ? `: ${route.query.reason}` : ''}`,
+    })
+  }
+
+  const promoteId = route.query.promote ? Number(route.query.promote) : null
+  if (promoteId) {
+    const found = products.value.find((p) => p.id === promoteId)
+    if (found) {
+      promoteProduct.value = found
+    } else {
+      try {
+        promoteProduct.value = await getProductById(promoteId)
+      } catch {
+        // Product no longer available — nothing to reopen.
+      }
+    }
+  }
+
+  if (tiktokResult || promoteId) {
+    router.replace({ path: route.path })
+  }
+})
 </script>
