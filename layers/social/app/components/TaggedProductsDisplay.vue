@@ -22,7 +22,20 @@
         </div>
         <div class="min-w-0 flex-1">
           <p class="truncate text-xs font-semibold text-gray-800 dark:text-neutral-200">{{ products[0].title }}</p>
-          <p class="text-sm font-bold text-brand">{{ formatPrice(products[0].price) }}</p>
+          <div class="flex items-center gap-1.5">
+            <p class="text-sm font-bold text-brand">{{ formatPrice(products[0].price) }}</p>
+            <span
+              v-if="socialProof(products[0])"
+              class="flex items-center gap-0.5 text-[10px] ink-faint"
+            >
+              <Icon
+                :name="products[0].averageRating ? 'solar:star-bold' : 'solar:heart-linear'"
+                size="10"
+                :class="products[0].averageRating ? 'text-amber-500' : ''"
+              />
+              {{ socialProof(products[0]) }}
+            </span>
+          </div>
         </div>
       </button>
       <button
@@ -62,7 +75,20 @@
               />
             </div>
             <p class="mt-1 truncate text-[11px] text-gray-700 dark:text-neutral-300">{{ product.title }}</p>
-            <p class="text-xs font-bold text-brand">{{ formatPrice(product.price) }}</p>
+            <div class="flex items-center justify-between gap-1">
+              <p class="text-xs font-bold text-brand">{{ formatPrice(product.price) }}</p>
+              <span
+                v-if="socialProof(product)"
+                class="flex shrink-0 items-center gap-0.5 text-[9px] ink-faint"
+              >
+                <Icon
+                  :name="product.averageRating ? 'solar:star-bold' : 'solar:heart-linear'"
+                  size="9"
+                  :class="product.averageRating ? 'text-amber-500' : ''"
+                />
+                {{ socialProof(product) }}
+              </span>
+            </div>
           </button>
           <button
             class="cart-btn-sm w-full"
@@ -81,7 +107,16 @@
 
 <script setup lang="ts">
 const props = defineProps<{
-  products: Array<{ id: number; title: string; price: number; image: string | null; slug?: string }>
+  products: Array<{
+    id: number
+    title: string
+    price: number
+    image: string | null
+    slug?: string
+    averageRating?: number | null
+    totalReviews?: number
+    likeCount?: number
+  }>
   contentType: string
 }>()
 
@@ -90,6 +125,19 @@ const emit = defineEmits<{
 }>()
 
 const { formatPrice } = useCurrency()
+
+// Rating takes priority; falls back to like count when there's no review yet.
+const socialProof = (product: {
+  averageRating?: number | null
+  totalReviews?: number
+  likeCount?: number
+}): string => {
+  if (product.averageRating) {
+    return `${product.averageRating.toFixed(1)}${product.totalReviews ? ` (${product.totalReviews})` : ''}`
+  }
+  if (product.likeCount) return `${product.likeCount}`
+  return ''
+}
 
 // Products open the detail modal for variant selection — no direct add-to-cart.
 // addedIds tracks nothing yet; placeholder so the template bindings don't throw.

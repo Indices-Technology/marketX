@@ -1,8 +1,11 @@
 // POST /api/growth/assets/:id/post/tiktok
 // Direct-post a Growth Asset's card to the seller's connected TikTok. The card is
 // pulled from our verified /growth/cards/:id URL; a TIKTOK distribution is minted
-// so the caption link is attributable. Body: { privacyLevel?, caption? }.
-// Unaudited apps ⇒ privacy is forced SELF_ONLY by TikTok regardless.
+// so the caption link is attributable.
+// Body: { privacyLevel, caption?, title?, allowComment?, brandOrganic?, brandContent? }.
+// privacyLevel is required from the client — TikTok's Content Sharing Guidelines
+// prohibit defaulting/auto-selecting it. Unaudited apps ⇒ privacy is forced
+// SELF_ONLY by TikTok regardless of what's sent.
 
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
@@ -58,15 +61,44 @@ export default defineEventHandler(async (event) => {
       ? `${userCaption}\n\n${minted.trackedUrl}`
       : minted.trackedUrl
 
-    // Sandbox / unaudited apps are limited to SELF_ONLY; honour an explicit choice.
-    const privacyLevel =
-      typeof body?.privacyLevel === 'string' ? body.privacyLevel : 'SELF_ONLY'
+    // No default — the seller must actively choose (Content Sharing Guidelines
+    // prohibit auto-selecting privacy). Unaudited apps still get forced SELF_ONLY
+    // by TikTok itself regardless of what we send.
+    const privacyLevel = typeof body?.privacyLevel === 'string' ? body.privacyLevel : ''
+    if (!privacyLevel) {
+      throw new UserError('PRIVACY_REQUIRED', 'Choose who can see this post', 400)
+    }
+
+    const title = typeof body?.title === 'string' ? body.title.trim() : ''
+    const allowComment = body?.allowComment === true
+    const brandOrganic = body?.brandOrganic === true
+    const brandContent = body?.brandContent === true
+    const isPromotional = brandOrganic || brandContent
+
+    if (body?.isPromotional === true && !isPromotional) {
+      throw new UserError(
+        'DISCLOSURE_REQUIRED',
+        'Select "Your Brand" and/or "Branded Content" for promotional content',
+        400,
+      )
+    }
+    if (brandContent && privacyLevel === 'SELF_ONLY') {
+      throw new UserError(
+        'BRANDED_CONTENT_PRIVATE',
+        "Branded content visibility can't be private — choose a public or friends option",
+        400,
+      )
+    }
 
     const { publishId } = await initPhotoPost({
       accessToken,
       photoUrl,
+      title,
       description: caption,
       privacyLevel,
+      disableComment: !allowComment,
+      brandOrganicToggle: brandOrganic,
+      brandContentToggle: brandContent,
     })
 
     await prisma.assetDistribution.update({

@@ -113,6 +113,7 @@ const productInclude = {
 }
 
 import type { CreateProductInput, UpdateProductInput } from '../schemas/product.schema'
+import { DEFAULT_VARIANT_SIZE } from '~~/layers/commerce/utils/variants'
 
 // Upsert tags by name and sync the product→tag join table
 async function upsertProductTags(productId: number, tagNames: string[]) {
@@ -217,6 +218,14 @@ export const productRepository = {
           stock: v.stock,
           price: v.price,
         })),
+      }
+    } else {
+      // Simple product (no seller-defined options): every cartable unit is a
+      // ProductVariant, so synthesize a single Default variant carrying the
+      // base stock. Without this the product would have zero variants and be
+      // impossible to add to cart. Covers single create AND bulk import.
+      productData.variants = {
+        create: [{ size: DEFAULT_VARIANT_SIZE, stock: data.stock ?? 0, price: null }],
       }
     }
 

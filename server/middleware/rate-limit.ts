@@ -48,7 +48,14 @@ async function checkRedis(
   windowMs: number,
 ): Promise<boolean> {
   const count = await redis!.incr(key)
-  if (count === 1) await redis!.expire(key, Math.ceil(windowMs / 1000))
+  // Set the TTL on every hit with NX (not just when count === 1): if the first
+  // request's expire never landed — a timeout/crash between incr+expire, or a
+  // concurrent-first-hit race where neither request observed count === 1 — the
+  // key would be left with no expiry and incr forever, permanently 429-ing that
+  // user/IP. NX only takes effect while the key still lacks a TTL, so it
+  // self-heals that case without ever resetting an in-progress window. (Mirrors
+  // the auth limiter fix in server/utils/auth/rateLimiter.ts.)
+  await redis!.expire(key, Math.ceil(windowMs / 1000), 'NX')
   return count <= limit
 }
 

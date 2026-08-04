@@ -137,66 +137,85 @@ export const authRepository = {
   // ============================================
   // FAILED LOGIN ATTEMPTS & ACCOUNT LOCKOUT
   // ============================================
+  //
+  // Redis (server/utils/auth/rateLimiter.ts) is the *enforcer* — it decides when
+  // a login is throttled or locked. This table is a durable forensic ledger of
+  // those failures: it survives Redis eviction/flush, is queryable by admins, and
+  // powers brute-force monitoring. One row per email (upserted); cleared on a
+  // successful login. All writes are best-effort — a bookkeeping failure must
+  // never turn a 401 into a 500 or block a legitimate login.
 
-  // async getFailedAttempts(email: string) {
-  //   return prisma.failedLoginAttempt.findUnique({
-  //     where: { email: email.toLowerCase() },
-  //   })
-  // },
+  /**
+   * Increment the failed-attempt counter for an email (one row per email).
+   * Refreshes ip/user_agent/last_attempt_at so the row reflects the latest probe.
+   */
+  async recordFailedLoginAttempt(data: {
+    email: string
+    userId?: string
+    ipAddress?: string
+    userAgent?: string
+  }) {
+    const email = data.email.toLowerCase()
+    return prisma.failedLoginAttempt
+      .upsert({
+        where: { email },
+        update: {
+          attempt_count: { increment: 1 },
+          last_attempt_at: new Date(),
+          ip_address: data.ipAddress,
+          user_agent: data.userAgent,
+          ...(data.userId ? { user_id: data.userId } : {}),
+        },
+        create: {
+          email,
+          user_id: data.userId,
+          ip_address: data.ipAddress,
+          user_agent: data.userAgent,
+          attempt_count: 1,
+          last_attempt_at: new Date(),
+        },
+      })
+      .catch((err) => {
+        logger.logError('[authRepository.recordFailedLoginAttempt]', err)
+        return null
+      })
+  },
 
-  // async incrementFailedAttempts(email: string, user_id?: string, ipAddress?: string) {
-  //   // Atomic upsert to prevent race conditions
-  //   return prisma.failedLoginAttempt.upsert({
-  //     where: { email: email.toLowerCase() },
-  //     update: {
-  //       attempt_count: { increment: 1 },
-  //       last_attempt_at: new Date(),
-  //     },
-  //     create: {
-  //       user_id: user_id,
-  //       email: email.toLowerCase(),
-  //       ip_address: ipAddress,
-  //       attempt_count: 1,
-  //       last_attempt_at: new Date(),
-  //     },
-  //   })
-  // },
+  /**
+   * Stamp the lockout window onto the email's row so admins/monitoring can see
+   * a locked account without reading Redis. Mirrors the Redis lock's expiry.
+   */
+  async markAccountLocked(email: string, lockedUntil: Date) {
+    const e = email.toLowerCase()
+    return prisma.failedLoginAttempt
+      .upsert({
+        where: { email: e },
+        update: { locked_until: lockedUntil, last_attempt_at: new Date() },
+        create: {
+          email: e,
+          attempt_count: 0,
+          locked_until: lockedUntil,
+          last_attempt_at: new Date(),
+        },
+      })
+      .catch((err) => {
+        logger.logError('[authRepository.markAccountLocked]', err)
+        return null
+      })
+  },
 
-  // async clearFailedAttempts(email: string) {
-  //   return prisma.failedLoginAttempt.delete({
-  //     where: { email: email.toLowerCase() },
-  //   }).catch(() => null)
-  // },
-
-  // async lockAccount(user_id: string, email: string, lockoutUntil: Date) {
-  //   return prisma.failedLoginAttempt.upsert({
-  //     where: { email: email.toLowerCase() },
-  //     update: { locked_until: lockoutUntil },
-  //     create: {
-  //       user_id: user_id,
-  //       email: email.toLowerCase(),
-  //       attempt_count: 5,
-  //       locked_until: lockoutUntil,
-  //       last_attempt_at: new Date(),
-  //     },
-  //   })
-  // },
-
-  // async isAccountLocked(email: string): Promise<boolean> {
-  //   const attempt = await prisma.failedLoginAttempt.findUnique({
-  //     where: { email: email.toLowerCase() },
-  //   })
-
-  //   if (!attempt?.locked_until) return false
-
-  //   // Check if lock has expired
-  //   if (new Date() > attempt.locked_until) {
-  //     await this.clearFailedAttempts(email)
-  //     return false
-  //   }
-
-  //   return true
-  // },
+  /**
+   * Clear the ledger for an email after a successful login (deleteMany so a
+   * missing row is a no-op rather than a P2025 throw).
+   */
+  async clearFailedLoginAttempts(email: string) {
+    return prisma.failedLoginAttempt
+      .deleteMany({ where: { email: email.toLowerCase() } })
+      .catch((err) => {
+        logger.logError('[authRepository.clearFailedLoginAttempts]', err)
+        return null
+      })
+  },
 
   // ============================================
   // AUDIT LOGGING

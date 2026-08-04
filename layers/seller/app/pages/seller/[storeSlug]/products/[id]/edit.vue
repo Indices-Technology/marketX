@@ -319,10 +319,15 @@
           </div>
 
           <!-- Basic Info -->
-          <ProductBasicInfo :form="form" />
+          <ProductBasicInfo :form="form" :errors="errors" @clear-error="clearError" />
 
-          <!-- Variants -->
-          <ProductVariantsSection :variants="form.variants" />
+          <!-- Stock & Options -->
+          <ProductVariantsSection
+            :variants="form.variants"
+            :form="form"
+            :error="errors.stock || errors.variants"
+            @clear-error="clearError('stock'); clearError('variants')"
+          />
 
           <!-- Volume Offers -->
           <VolumeOffersSection :offers="form.offers" />
@@ -446,6 +451,8 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { notify } from '@kyvg/vue3-notification'
+import { useFormFocus } from '~~/layers/core/app/composables/useFormFocus'
+import { DEFAULT_VARIANT_SIZE, isSimpleProduct } from '~~/layers/commerce/utils/variants'
 import { useProduct } from '~~/layers/commerce/app/composables/useProduct'
 import { useProductApi } from '~~/layers/commerce/app/services/product.api'
 import { useSellerApi } from '~~/layers/seller/app/services/seller.services'
@@ -613,6 +620,8 @@ const form = reactive({
   isAccessory: false,
   categoryIds: [] as number[],
   tagNames: [] as string[],
+  // Base stock for a simple product (no options) — see create.vue.
+  stock: 1,
   variants: [] as Array<{ size: string; price: number | null; stock: number }>,
   offers: [] as Array<{
     minQuantity: number | null
@@ -713,12 +722,20 @@ onMounted(async () => {
           existingMedia.value = allMedia.filter((m) => !m.isBgMusic)
           existingBgMusic.value = allMedia.find((m) => m.isBgMusic) ?? null
 
-          // Load variants
-          form.variants = (product.variants || []).map((v: any) => ({
+          // Load variants. A product whose only variant is the Default sentinel
+          // is a simple product — unfold it back into the base "Quantity in
+          // stock" field instead of showing a "Default" option row.
+          const loadedVariants = (product.variants || []).map((v: any) => ({
             size: v.size || '',
             price: v.price ?? null,
             stock: v.stock ?? 0,
           }))
+          if (isSimpleProduct(loadedVariants)) {
+            form.stock = loadedVariants[0]?.stock ?? 1
+            form.variants = []
+          } else {
+            form.variants = loadedVariants
+          }
 
           // Load offers
           form.offers = (product.offers || []).map((o: any) => ({
@@ -760,6 +777,36 @@ onMounted(async () => {
   }
 })
 
+// ── Client-side validation (parity with the create page) ──────────────────────
+const { focusFirstError } = useFormFocus()
+const errors = reactive<Record<string, string>>({})
+const clearError = (field: string) => {
+  if (errors[field]) errors[field] = ''
+}
+const FIELD_ORDER = ['title', 'description', 'price', 'stock', 'variants']
+
+const validate = (): boolean => {
+  FIELD_ORDER.forEach((k) => (errors[k] = ''))
+
+  if (!form.title || form.title.trim().length < 2)
+    errors.title = 'Add a product title (at least 2 characters).'
+  const desc = (form.description || '').replace(/<[^>]*>/g, '').trim()
+  if (desc.length < 10)
+    errors.description = 'Add a description of at least 10 characters.'
+  if (!form.price || form.price <= 0)
+    errors.price = 'Set a price greater than 0.'
+
+  const filledVariants = form.variants.filter((v) => v.size && v.size.trim())
+  if (form.variants.length === 0) {
+    if (!form.stock || form.stock < 1)
+      errors.stock = 'Set a quantity in stock (at least 1) so buyers can order.'
+  } else if (filledVariants.length === 0) {
+    errors.variants = 'Give each option a name, or remove the empty rows.'
+  }
+
+  return !Object.values(errors).some(Boolean)
+}
+
 // Draft vs Publish are explicit buttons — set the status, then submit.
 const submitAs = (status: 'DRAFT' | 'PUBLISHED') => {
   form.status = status
@@ -768,6 +815,10 @@ const submitAs = (status: 'DRAFT' | 'PUBLISHED') => {
 
 const handleSubmit = async () => {
   successMsg.value = null
+  if (!validate()) {
+    focusFirstError(FIELD_ORDER, errors)
+    return
+  }
   try {
     const payload: any = {
       title: form.title,
@@ -807,14 +858,16 @@ const handleSubmit = async () => {
     payload.categoryIds = form.categoryIds
     payload.tagNames = form.tagNames
 
-    // Variants (replace all)
-    payload.variants = form.variants
-      .filter((v) => v.size)
-      .map((v) => ({
-        size: v.size,
-        price: v.price ?? undefined,
-        stock: v.stock,
-      }))
+    // Variants (replace all). A simple product (no options) is stored as a
+    // single Default variant carrying the base quantity, so it stays cartable.
+    const filledVariants = form.variants.filter((v) => v.size)
+    payload.variants = filledVariants.length
+      ? filledVariants.map((v) => ({
+          size: v.size,
+          price: v.price ?? undefined,
+          stock: v.stock,
+        }))
+      : [{ size: DEFAULT_VARIANT_SIZE, stock: form.stock }]
 
     // Offers (replace all)
     const validOffers = form.offers.filter(

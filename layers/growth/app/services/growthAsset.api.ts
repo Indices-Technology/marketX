@@ -72,7 +72,15 @@ export class GrowthAssetApiClient extends BaseApiClient {
   /** Direct-post the asset's card to the connected TikTok. */
   async postToTikTok(
     id: string,
-    opts: { privacyLevel?: string; caption?: string } = {},
+    opts: {
+      privacyLevel: string
+      caption?: string
+      title?: string
+      allowComment?: boolean
+      isPromotional?: boolean
+      brandOrganic?: boolean
+      brandContent?: boolean
+    },
   ) {
     return this.request(`/api/growth/assets/${id}/post/tiktok`, {
       method: 'POST',
@@ -81,6 +89,15 @@ export class GrowthAssetApiClient extends BaseApiClient {
       success: boolean
       data: { publishId: string; trackedUrl: string; privacyLevel: string }
     }>
+  }
+
+  /** Poll a Direct Post's processing status. */
+  async tiktokPostStatus(id: string, publishId: string) {
+    return this.request(`/api/growth/assets/${id}/post/tiktok/status`, {
+      method: 'GET',
+      params: { publishId },
+      silent: true,
+    }) as Promise<{ success: boolean; data: { status: string; failReason?: string } }>
   }
 }
 

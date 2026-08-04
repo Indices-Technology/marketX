@@ -83,6 +83,14 @@ export interface InitPhotoArgs {
   /** Must be one of creator_info.privacyOptions. Unaudited ⇒ SELF_ONLY. */
   privacyLevel: string
   disableComment?: boolean
+  /**
+   * TikTok's Commercial Content Disclosure — required whenever the post
+   * promotes a business (which every Growth Asset post does). At least one
+   * must be true when `isPromotional` is set; enforced by the caller's UI and
+   * re-checked in the route handler.
+   */
+  brandOrganicToggle?: boolean
+  brandContentToggle?: boolean
 }
 
 /** Direct-post a photo. Returns the publish_id to poll for status. */
@@ -98,6 +106,8 @@ export async function initPhotoPost(args: InitPhotoArgs): Promise<{ publishId: s
           description: args.description ?? '',
           privacy_level: args.privacyLevel,
           disable_comment: args.disableComment ?? false,
+          brand_organic_toggle: args.brandOrganicToggle ?? false,
+          brand_content_toggle: args.brandContentToggle ?? false,
           auto_add_music: true,
         },
         source_info: {

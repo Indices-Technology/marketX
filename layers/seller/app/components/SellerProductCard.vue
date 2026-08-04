@@ -65,8 +65,13 @@
         {{ formatPrice(product.price) }}
       </p>
       <p class="mt-1 text-xs text-gray-500 dark:text-neutral-400">
-        {{ product._count?.variants ?? product.variants?.length ?? 0 }}
-        variant(s)
+        <template v-if="isSimpleProduct(product.variants)">
+          {{ product.variants?.[0]?.stock ?? 0 }} in stock
+        </template>
+        <template v-else>
+          {{ product._count?.variants ?? product.variants?.length ?? 0 }}
+          variant(s)
+        </template>
       </p>
 
       <!-- Stock summary — how many sizes need a refill -->
@@ -158,6 +163,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { isSimpleProduct } from '~~/layers/commerce/utils/variants'
 import { imgThumb, videoThumb } from '~~/layers/core/app/utils/cloudinary'
 const { formatPrice } = useCurrency()
 

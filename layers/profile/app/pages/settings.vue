@@ -323,11 +323,7 @@
           </NuxtLink>
 
           <NuxtLink
-            :to="
-              profileStore.me?.role === 'seller'
-                ? '/seller/dashboard'
-                : '/buyer/profile'
-            "
+            :to="editProfileLink"
             class="setting-link border-b border-gray-200 dark:border-neutral-800"
           >
             <Icon
@@ -375,6 +371,14 @@ const { settings, update, reset } = useSettings()
 const colorMode = useColorMode()
 const profileStore = useProfileStore()
 const { locale, locales, setLocale } = useI18n()
+
+// "Edit Profile" opens the edit modal on the user's own profile page.
+// Falls back to /user-login when we don't yet have a username.
+const editProfileLink = computed(() =>
+  profileStore.me?.username
+    ? `/profile/${profileStore.me.username}?edit=1`
+    : '/user-login',
+)
 
 // On mount, apply saved theme + language from settings (covers server-hydrated values)
 onMounted(() => {

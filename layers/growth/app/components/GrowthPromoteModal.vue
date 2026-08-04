@@ -49,19 +49,87 @@
           <p v-if="creatorInfo?.nickname" class="text-xs text-gray-500 dark:text-neutral-400">
             Posting as <span class="font-semibold">{{ creatorInfo.nickname }}</span>
           </p>
+
+          <BaseInput v-model="title" label="Title" placeholder="Product name" size="sm" />
+
           <textarea
             v-model="caption"
             rows="2"
             placeholder="Caption…"
             class="w-full rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-sm text-gray-900 focus:border-brand focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
           />
-          <BaseSelect v-model="privacyLevel" label="Who can see it" :options="privacyOptions" size="sm" />
-          <BaseButton variant="primary" size="sm" :loading="posting || uploading" :disabled="!privacyLevel" @click="onPost">
+
+          <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-neutral-300">
+            <input
+              v-model="allowComment"
+              type="checkbox"
+              :disabled="creatorInfo?.commentDisabled"
+              class="h-4 w-4 rounded border-gray-300 text-brand focus:ring-brand dark:border-neutral-600"
+            />
+            Allow comments
+          </label>
+
+          <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-neutral-300">
+            <input
+              v-model="isPromotional"
+              type="checkbox"
+              class="h-4 w-4 rounded border-gray-300 text-brand focus:ring-brand dark:border-neutral-600"
+            />
+            This is promotional content
+          </label>
+
+          <div v-if="isPromotional" class="ml-1 space-y-1.5 border-l-2 border-gray-100 pl-3 dark:border-neutral-800">
+            <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-neutral-300">
+              <input
+                v-model="brandOrganic"
+                type="checkbox"
+                class="h-4 w-4 rounded border-gray-300 text-brand focus:ring-brand dark:border-neutral-600"
+              />
+              Your Brand
+            </label>
+            <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-neutral-300">
+              <input
+                v-model="brandContent"
+                type="checkbox"
+                class="h-4 w-4 rounded border-gray-300 text-brand focus:ring-brand dark:border-neutral-600"
+              />
+              Branded Content
+            </label>
+            <p v-if="!brandOrganic && !brandContent" class="text-[11px] text-red-500">
+              Select at least one option
+            </p>
+            <p v-else class="text-[11px] text-gray-400 dark:text-neutral-500">
+              Your photo will be labeled as "{{ brandContent ? 'Paid partnership' : 'Promotional content' }}"
+            </p>
+          </div>
+
+          <BaseSelect
+            v-model="privacyLevel"
+            label="Who can see it"
+            placeholder="Choose who can see it"
+            :options="privacyOptions"
+            size="sm"
+          />
+          <p v-if="brandContent && privacyLevel === 'SELF_ONLY'" class="text-[11px] text-red-500">
+            Branded content can't be set to private — choose a public or friends option
+          </p>
+
+          <p class="text-[11px] text-gray-400 dark:text-neutral-500">
+            By posting, you agree to TikTok's
+            <span v-if="brandContent"> Branded Content Policy and</span>
+            Music Usage Confirmation.
+          </p>
+
+          <BaseButton variant="primary" size="sm" :loading="posting || uploading" :disabled="!canPost" @click="onPost">
             Post to TikTok
           </BaseButton>
+
           <p class="text-[11px] text-gray-400 dark:text-neutral-500">
-            Until your app is approved, TikTok keeps posts private (only you see them).
+            Until your app is approved, TikTok keeps posts private (only you see them). Processing can take a few
+            minutes after you post.
           </p>
+
+          <p v-if="statusText" class="text-xs" :class="statusClass">{{ statusText }}</p>
         </div>
 
         <!-- Loading creator info -->
@@ -76,6 +144,7 @@ import { notify } from '@kyvg/vue3-notification'
 import BaseModal from '~~/layers/ui/app/components/BaseModal.vue'
 import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 import BaseSelect from '~~/layers/ui/app/components/BaseSelect.vue'
+import BaseInput from '~~/layers/ui/app/components/BaseInput.vue'
 import ProductShareCard from '~~/layers/commerce/app/components/product-card/ProductShareCard.vue'
 import { useCardCapture } from '~~/layers/seller/app/composables/useCardCapture'
 import { useGrowthAsset } from '~~/layers/growth/app/composables/useGrowthAsset'
@@ -90,6 +159,8 @@ const {
   uploading,
   posting,
   creatorInfo,
+  tiktokPostStatus,
+  tiktokFailReason,
   prepare,
   loadTikTokCreatorInfo,
   postToTikTok,
@@ -99,7 +170,12 @@ const { capture, shareImage, capturing } = useCardCapture()
 const cardRef = ref<{ rootEl: HTMLElement | null } | null>(null)
 const tiktokState = ref<'loading' | 'ready' | 'disconnected'>('loading')
 const caption = ref('')
+const title = ref('')
 const privacyLevel = ref('')
+const allowComment = ref(false)
+const isPromotional = ref(false)
+const brandOrganic = ref(false)
+const brandContent = ref(false)
 const copied = ref<string | null>(null)
 
 async function onCopy(text: string | null | undefined, label: string) {
@@ -134,10 +210,46 @@ const PRIVACY_LABELS: Record<string, string> = {
   SELF_ONLY: 'Only me',
 }
 const privacyOptions = computed(() =>
-  (creatorInfo.value?.privacyOptions ?? []).map((v) => ({
-    value: v,
-    label: PRIVACY_LABELS[v] ?? v,
-  })),
+  (creatorInfo.value?.privacyOptions ?? [])
+    // Branded Content can't be posted private — TikTok's guidelines require this
+    // option be unavailable rather than silently rejected on submit.
+    .filter((v) => !(brandContent.value && v === 'SELF_ONLY'))
+    .map((v) => ({ value: v, label: PRIVACY_LABELS[v] ?? v })),
+)
+
+watch(brandContent, (checked) => {
+  if (checked && privacyLevel.value === 'SELF_ONLY') privacyLevel.value = ''
+})
+
+const canPost = computed(() => {
+  if (!privacyLevel.value) return false
+  if (isPromotional.value && !brandOrganic.value && !brandContent.value) return false
+  if (brandContent.value && privacyLevel.value === 'SELF_ONLY') return false
+  return true
+})
+
+const statusText = computed(() => {
+  switch (tiktokPostStatus.value) {
+    case 'PROCESSING_DOWNLOAD':
+    case 'PROCESSING_UPLOAD':
+    case 'SEND_TO_USER_INBOX':
+      return 'Processing on TikTok — this can take a few minutes…'
+    case 'PUBLISH_COMPLETE':
+      return 'Posted to TikTok.'
+    case 'FAILED':
+      return tiktokFailReason.value
+        ? `TikTok couldn't process this post: ${tiktokFailReason.value}`
+        : "TikTok couldn't process this post."
+    default:
+      return ''
+  }
+})
+const statusClass = computed(() =>
+  tiktokPostStatus.value === 'FAILED'
+    ? 'text-red-500'
+    : tiktokPostStatus.value === 'PUBLISH_COMPLETE'
+      ? 'text-green-600 dark:text-green-400'
+      : 'text-gray-400 dark:text-neutral-500',
 )
 
 const slug = () => props.product?.slug || 'product'

@@ -438,6 +438,7 @@
 
 <script setup lang="ts">
 import { useProduct } from '~~/layers/commerce/app/composables/useProduct'
+import { DEFAULT_VARIANT_SIZE } from '~~/layers/commerce/utils/variants'
 import { useSellerManagement } from '~~/layers/seller/app/composables/useSellerManagement'
 import { useMediaUpload } from '~~/layers/core/app/composables/useMediaUpload'
 import { useProductApi } from '~~/layers/commerce/app/services/product.api'
@@ -723,7 +724,7 @@ const submit = async () => {
       status: form.status,
       // A product needs at least one variant with stock to be purchasable —
       // without this the item shows but "Add to cart" fails (variant stock 0).
-      variants: [{ size: 'Default', stock: Number(form.stock) }],
+      variants: [{ size: DEFAULT_VARIANT_SIZE, stock: Number(form.stock) }],
     }
     if (form.description.trim()) payload.description = form.description.trim()
     if (Number(form.affiliateCommission) > 0)

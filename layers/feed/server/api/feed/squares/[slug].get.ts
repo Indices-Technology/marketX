@@ -83,7 +83,9 @@ export default defineEventHandler(async (event) => {
                   select: {
                     product: {
                       select: { id: true, title: true, price: true, slug: true,
-                        media: { take: 1, select: { url: true, type: true } } },
+                        averageRating: true, totalReviews: true,
+                        media: { take: 1, select: { url: true, type: true } },
+                        _count: { select: { likes: true } } },
                     },
                   },
                   take: 4,

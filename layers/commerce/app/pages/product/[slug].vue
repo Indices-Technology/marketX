@@ -515,7 +515,7 @@
           </div>
 
           <!-- Variants -->
-          <div v-if="product.variants?.length">
+          <div v-if="showVariantSelector">
             <p
               class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-neutral-400"
             >
@@ -523,7 +523,7 @@
             </p>
             <div class="flex flex-wrap gap-2">
               <button
-                v-for="v in product.variants"
+                v-for="v in displayVariants"
                 :key="v.id"
                 :disabled="v.stock === 0"
                 class="min-h-[44px] touch-manipulation rounded-xl border-2 px-4 py-2 text-sm font-semibold transition-all disabled:opacity-40"
@@ -996,6 +996,7 @@ import { useRoute } from 'vue-router'
 // executes on parse, before client hydration, so SSR must not ship it raw. xss
 // is pure CJS (no jsdom/htmlparser2), so it's safe in the serverless bundle.
 import { sanitizeHtml } from '~~/layers/commerce/utils/sanitizeHtml'
+import { variantLabel } from '~~/layers/commerce/utils/variants'
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 import VideoPlayer from '~~/layers/core/app/components/VideoPlayer.vue'
@@ -1179,6 +1180,14 @@ const selectedVariant = computed(
     product.value?.variants?.find((v) => v.id === selectedVariantId.value) ??
     null,
 )
+// Real, seller-named options only — the implicit "Default" unit (and any
+// protected Default left behind after a seller restructures variants) is never
+// offered as a chip. A simple product therefore shows no selector at all; its
+// variant is still auto-selected below, so Add to Cart works.
+const displayVariants = computed(
+  () => product.value?.variants?.filter((v) => variantLabel(v.size)) ?? [],
+)
+const showVariantSelector = computed(() => displayVariants.value.length > 0)
 const discountedPrice = computed(() => {
   if (!product.value) return 0
   const base = selectedVariant.value?.price ?? product.value.price
