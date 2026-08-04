@@ -37,18 +37,30 @@
         </div>
 
         <!-- Not connected -->
-        <div v-if="tiktokState === 'disconnected'" class="text-sm text-gray-500 dark:text-neutral-400">
-          Connect your TikTok first.
-          <NuxtLink :to="`/seller/${storeSlug}/connections`" class="font-semibold text-brand">
-            Connect →
-          </NuxtLink>
+        <div v-if="tiktokState === 'disconnected'" class="space-y-2">
+          <p class="text-sm text-gray-500 dark:text-neutral-400">
+            Connect your TikTok to post this card directly.
+          </p>
+          <BaseButton variant="primary" size="sm" :loading="connecting" @click="onConnectTikTok">
+            Connect TikTok
+          </BaseButton>
         </div>
 
         <!-- Connected -->
         <div v-else-if="tiktokState === 'ready'" class="space-y-2">
-          <p v-if="creatorInfo?.nickname" class="text-xs text-gray-500 dark:text-neutral-400">
-            Posting as <span class="font-semibold">{{ creatorInfo.nickname }}</span>
-          </p>
+          <div class="flex items-center justify-between gap-2">
+            <p v-if="creatorInfo?.nickname" class="text-xs text-gray-500 dark:text-neutral-400">
+              Posting as <span class="font-semibold">{{ creatorInfo.nickname }}</span>
+            </p>
+            <button
+              type="button"
+              class="text-[11px] font-medium text-gray-400 hover:text-red-500 disabled:opacity-50 dark:text-neutral-500"
+              :disabled="disconnecting"
+              @click="onDisconnectTikTok"
+            >
+              Disconnect
+            </button>
+          </div>
 
           <BaseInput v-model="title" label="Title" placeholder="Product name" size="sm" />
 
@@ -148,11 +160,13 @@ import BaseInput from '~~/layers/ui/app/components/BaseInput.vue'
 import ProductShareCard from '~~/layers/commerce/app/components/product-card/ProductShareCard.vue'
 import { useCardCapture } from '~~/layers/seller/app/composables/useCardCapture'
 import { useGrowthAsset } from '~~/layers/growth/app/composables/useGrowthAsset'
+import { useConnections } from '~~/layers/growth/app/composables/useConnections'
 import { formatProductPrice } from '~~/shared/utils/currency'
 
 const props = defineProps<{ open: boolean; product: any }>()
 const emit = defineEmits<{ (e: 'close'): void }>()
 
+const route = useRoute()
 const {
   qr,
   trackedUrl,
@@ -166,6 +180,34 @@ const {
   postToTikTok,
 } = useGrowthAsset()
 const { capture, shareImage, capturing } = useCardCapture()
+const { connectTikTok, connecting, refresh: refreshConnections, forPlatform, disconnect } =
+  useConnections()
+
+/**
+ * Connect without leaving the product the seller was promoting — round-trips
+ * through TikTok OAuth back to this exact page with `?promote=<id>` so the
+ * caller reopens this same modal for this same product on return, instead of
+ * dumping the seller on the Connected Accounts page to navigate back manually.
+ */
+function onConnectTikTok() {
+  if (!props.product) return
+  connectTikTok(`${route.path}?promote=${props.product.id}`)
+}
+
+const disconnecting = ref(false)
+async function onDisconnectTikTok() {
+  const conn = forPlatform('TIKTOK')
+  if (!conn) return
+  disconnecting.value = true
+  try {
+    await disconnect(conn.id)
+    creatorInfo.value = null
+    tiktokState.value = 'disconnected'
+    notify({ type: 'success', text: 'TikTok disconnected' })
+  } finally {
+    disconnecting.value = false
+  }
+}
 
 const cardRef = ref<{ rootEl: HTMLElement | null } | null>(null)
 const tiktokState = ref<'loading' | 'ready' | 'disconnected'>('loading')
@@ -190,9 +232,6 @@ async function onCopy(text: string | null | undefined, label: string) {
   }
 }
 
-const storeSlug = computed(
-  () => props.product?.seller?.store_slug || props.product?.store_slug || '',
-)
 const priceText = computed(() => {
   const p = props.product
   if (!p) return ''
@@ -302,7 +341,7 @@ watch(
       return
     }
     try {
-      await loadTikTokCreatorInfo()
+      await Promise.all([loadTikTokCreatorInfo(), refreshConnections()])
       tiktokState.value = 'ready'
     } catch {
       tiktokState.value = 'disconnected'
