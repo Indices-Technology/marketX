@@ -105,12 +105,14 @@
               :shipping-loading="shippingLoading"
               :rates-error="shipBySeller[g.slug]?.error ?? null"
               :active-country="activeCountry"
+              :note="notesBySeller[g.slug] ?? ''"
               @update:selected-rate="
                 (r) => {
                   const s = shipBySeller[g.slug]
                   if (s) s.selected = r
                 }
               "
+              @update:note="(n) => (notesBySeller[g.slug] = n)"
             />
           </div>
         </template>
@@ -394,6 +396,10 @@ interface SellerShip {
 }
 const shipBySeller = reactive<Record<string, SellerShip>>({})
 
+// Buyer's per-seller checkout note (delivery/handling instructions). Keyed by
+// store slug; sent with the order and frozen server-side as an immutable snapshot.
+const notesBySeller = reactive<Record<string, string>>({})
+
 // Insure shipments for their value (carrier declared-value cover, ~1% at GIG).
 // On by default for buyer protection; toggling re-quotes without the premium.
 const insureShipment = ref(true)
@@ -584,6 +590,10 @@ const handleCheckout = async () => {
     estimatedDays,
     // Per-seller shipping selections — backend stores this; Phase 2 splits on it.
     shippingBreakdown: breakdown,
+    // Per-seller buyer notes — only the ones actually filled in.
+    buyerNotes: sellerGroups.value
+      .map((g) => ({ storeSlug: g.slug, note: (notesBySeller[g.slug] ?? '').trim() }))
+      .filter((n) => n.note.length > 0),
     ...(affiliateCode ? { affiliateCode } : {}),
   }
 

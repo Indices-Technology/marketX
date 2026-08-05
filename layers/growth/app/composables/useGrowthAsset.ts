@@ -105,6 +105,29 @@ export function useGrowthAsset() {
   }
 
   /**
+   * Upload the card to the seller's TikTok inbox as a draft (MEDIA_UPLOAD) —
+   * no audit gate, no forced privacy. The seller finishes posting themselves
+   * in the TikTok app, where they can also attach a Link Sticker.
+   */
+  async function postToTikTokDraft(
+    el: HTMLElement | null | undefined,
+    opts: { caption?: string; title?: string } = {},
+  ) {
+    if (!asset.value) return null
+    posting.value = true
+    tiktokPostStatus.value = null
+    tiktokFailReason.value = null
+    try {
+      if (!hasCard.value) await captureAndAttach(el)
+      const res = await api.postToTikTokDraft(asset.value.id, opts)
+      pollTikTokStatus(asset.value.id, res.data.publishId)
+      return res.data
+    } finally {
+      posting.value = false
+    }
+  }
+
+  /**
    * TikTok processes a Direct Post asynchronously — poll so the seller sees it
    * actually complete rather than trusting a fire-and-forget "sent" toast.
    * Stops on a terminal status or after ~30s.
@@ -140,5 +163,6 @@ export function useGrowthAsset() {
     captureAndAttach,
     loadTikTokCreatorInfo,
     postToTikTok,
+    postToTikTokDraft,
   }
 }

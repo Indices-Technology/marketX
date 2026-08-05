@@ -1,7 +1,9 @@
 /**
- * TikTok Content Posting API — creator info + photo direct-post + status.
+ * TikTok Content Posting API — creator info + photo direct-post/draft + status.
  * See docs/GROWTH_ENGINE.md. Photos are PULL_FROM_URL only (verified domain);
- * we pass our own /growth/cards/:id URL. Unaudited apps ⇒ posts are SELF_ONLY.
+ * we pass our own /growth/cards/:id URL. DIRECT_POST (video.publish, unaudited
+ * ⇒ forced SELF_ONLY) publishes immediately; MEDIA_UPLOAD (video.upload, no
+ * audit needed) drops a draft in the creator's inbox for them to finish.
  */
 
 const BASE = 'https://open.tiktokapis.com/v2'
@@ -95,27 +97,70 @@ export interface InitPhotoArgs {
 
 /** Direct-post a photo. Returns the publish_id to poll for status. */
 export async function initPhotoPost(args: InitPhotoArgs): Promise<{ publishId: string }> {
+  return initPhoto({
+    accessToken: args.accessToken,
+    photoUrl: args.photoUrl,
+    postMode: 'DIRECT_POST',
+    postInfo: {
+      title: args.title ?? '',
+      description: args.description ?? '',
+      privacy_level: args.privacyLevel,
+      disable_comment: args.disableComment ?? false,
+      brand_organic_toggle: args.brandOrganicToggle ?? false,
+      brand_content_toggle: args.brandContentToggle ?? false,
+      auto_add_music: true,
+    },
+  })
+}
+
+export interface InitPhotoDraftArgs {
+  accessToken: string
+  /** Public image URL on a TikTok-verified domain (our /growth/cards/:id). */
+  photoUrl: string
+  title?: string
+  description?: string
+}
+
+/**
+ * Upload a photo to the creator's TikTok inbox as a DRAFT (MEDIA_UPLOAD) —
+ * the `video.upload` scope, not `video.publish`. Nothing auto-publishes: the
+ * creator opens the TikTok app, finishes editing (privacy, comments, a Link
+ * Sticker if eligible) and posts it themselves. No audit required — TikTok
+ * only forces SELF_ONLY on unaudited apps' DIRECT_POST, not this mode; per
+ * TikTok's photo-post reference, privacy_level/disable_comment/brand toggles
+ * don't apply here since the creator sets them in-app.
+ */
+export async function initPhotoDraft(args: InitPhotoDraftArgs): Promise<{ publishId: string }> {
+  return initPhoto({
+    accessToken: args.accessToken,
+    photoUrl: args.photoUrl,
+    postMode: 'MEDIA_UPLOAD',
+    postInfo: {
+      title: args.title ?? '',
+      description: args.description ?? '',
+    },
+  })
+}
+
+async function initPhoto(args: {
+  accessToken: string
+  photoUrl: string
+  postMode: 'DIRECT_POST' | 'MEDIA_UPLOAD'
+  postInfo: Record<string, unknown>
+}): Promise<{ publishId: string }> {
   let res: { data?: { publish_id?: string }; error?: { code?: string; message?: string } }
   try {
     res = await $fetch<typeof res>(`${BASE}/post/publish/content/init/`, {
       method: 'POST',
       headers: JSON_HEADERS(args.accessToken),
       body: {
-        post_info: {
-          title: args.title ?? '',
-          description: args.description ?? '',
-          privacy_level: args.privacyLevel,
-          disable_comment: args.disableComment ?? false,
-          brand_organic_toggle: args.brandOrganicToggle ?? false,
-          brand_content_toggle: args.brandContentToggle ?? false,
-          auto_add_music: true,
-        },
+        post_info: args.postInfo,
         source_info: {
           source: 'PULL_FROM_URL',
           photo_cover_index: 0,
           photo_images: [args.photoUrl],
         },
-        post_mode: 'DIRECT_POST',
+        post_mode: args.postMode,
         media_type: 'PHOTO',
       },
     })

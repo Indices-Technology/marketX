@@ -448,7 +448,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { notify } from '@kyvg/vue3-notification'
 import { useFormFocus } from '~~/layers/core/app/composables/useFormFocus'
@@ -471,6 +471,7 @@ import ProductCategoriesSection from '~~/layers/seller/app/components/product-fo
 import ProductTagsSection from '~~/layers/seller/app/components/product-form/ProductTagsSection.vue'
 import ProductDistributionSection from '~~/layers/seller/app/components/product-form/ProductDistributionSection.vue'
 import ProductFlagsSection from '~~/layers/seller/app/components/product-form/ProductFlagsSection.vue'
+import { findSuspiciousVariantPrice } from '~~/layers/seller/app/utils/variantPriceCheck'
 
 definePageMeta({ middleware: 'auth', layout: 'store-layout' })
 
@@ -785,6 +786,17 @@ const clearError = (field: string) => {
 }
 const FIELD_ORDER = ['title', 'description', 'price', 'stock', 'variants']
 
+// A variant price far from the base price is usually a typo (see
+// variantPriceCheck.ts) — warn once and let the seller confirm by saving
+// again, rather than blocking outright.
+const variantPriceWarningShown = ref(false)
+watch(
+  () => [form.price, ...form.variants.map((v) => v.price)],
+  () => {
+    variantPriceWarningShown.value = false
+  },
+)
+
 const validate = (): boolean => {
   FIELD_ORDER.forEach((k) => (errors[k] = ''))
 
@@ -819,6 +831,17 @@ const handleSubmit = async () => {
     focusFirstError(FIELD_ORDER, errors)
     return
   }
+
+  if (!variantPriceWarningShown.value) {
+    const suspicious = findSuspiciousVariantPrice(form.price, form.variants)
+    if (suspicious) {
+      errors.variants = `"${suspicious.size}" is priced ₦${suspicious.price.toLocaleString()} — very different from your base price of ₦${form.price?.toLocaleString()}. Click Save again if that's intentional.`
+      variantPriceWarningShown.value = true
+      focusFirstError(FIELD_ORDER, errors)
+      return
+    }
+  }
+
   try {
     const payload: any = {
       title: form.title,

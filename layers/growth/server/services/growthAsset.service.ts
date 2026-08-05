@@ -311,4 +311,116 @@ export const growthAssetService = {
       orderBy: { created_at: 'desc' },
     })
   },
+
+  /**
+   * The Growth tab's data: every asset plus its rollup funnel (shared →
+   * viewed → scanned → leads → orders), summed across all its distributions
+   * (CARD, TikTok, organic shares, ...). Manual joins, not Prisma relations —
+   * growth reads the Products table by scalar id (extractability boundary,
+   * see docs/GROWTH_ENGINE.md §5), it never gets a `product` relation to include.
+   */
+  async dashboardForSeller(sellerId: string) {
+    const zeroEvents = (): Record<AttributionEventType, number> => ({
+      VIEW: 0,
+      SCAN: 0,
+      CLICK: 0,
+      LEAD: 0,
+      ORDER: 0,
+    })
+
+    const assets = await prisma.growthAsset.findMany({
+      where: { sellerId },
+      select: { id: true, productId: true, status: true, content: true, created_at: true },
+      orderBy: { created_at: 'desc' },
+    })
+    if (assets.length === 0) {
+      return { assets: [] as GrowthDashboardAsset[], summary: { assets: 0, distributions: 0, events: zeroEvents() } }
+    }
+
+    const assetIds = assets.map((a) => a.id)
+    const distributions = await prisma.assetDistribution.findMany({
+      where: { assetId: { in: assetIds } },
+      select: { id: true, assetId: true },
+    })
+    const distIdsByAsset = new Map<string, string[]>()
+    for (const d of distributions) {
+      const list = distIdsByAsset.get(d.assetId) ?? []
+      list.push(d.id)
+      distIdsByAsset.set(d.assetId, list)
+    }
+
+    const distIds = distributions.map((d) => d.id)
+    const eventGroups = distIds.length
+      ? await prisma.attributionEvent.groupBy({
+          by: ['distributionId', 'type'],
+          where: { distributionId: { in: distIds } },
+          _count: { _all: true },
+        })
+      : []
+    const eventsByDist = new Map<string, Partial<Record<AttributionEventType, number>>>()
+    for (const row of eventGroups) {
+      const m = eventsByDist.get(row.distributionId) ?? {}
+      m[row.type as AttributionEventType] = row._count._all
+      eventsByDist.set(row.distributionId, m)
+    }
+
+    const productIds = [...new Set(assets.map((a) => a.productId).filter((id): id is number => id != null))]
+    const products = productIds.length
+      ? await prisma.products.findMany({
+          where: { id: { in: productIds } },
+          select: { id: true, title: true, bannerImageUrl: true },
+        })
+      : []
+    const productById = new Map(products.map((p) => [p.id, p]))
+
+    const shapedAssets: GrowthDashboardAsset[] = assets.map((a) => {
+      const dIds = distIdsByAsset.get(a.id) ?? []
+      const events = zeroEvents()
+      for (const dId of dIds) {
+        const m = eventsByDist.get(dId)
+        if (!m) continue
+        for (const t of Object.keys(events) as AttributionEventType[]) events[t] += m[t] ?? 0
+      }
+      const content = (a.content ?? {}) as { cardImageUrl?: string }
+      const product = a.productId != null ? productById.get(a.productId) : undefined
+      return {
+        id: a.id,
+        productId: a.productId,
+        productTitle: product?.title ?? null,
+        productImage: product?.bannerImageUrl ?? null,
+        status: a.status,
+        cardImageUrl: content.cardImageUrl ?? '',
+        createdAt: a.created_at.toISOString(),
+        distributions: dIds.length,
+        events,
+      }
+    })
+
+    const summary = shapedAssets.reduce(
+      (acc, a) => {
+        acc.assets += 1
+        acc.distributions += a.distributions
+        for (const t of Object.keys(acc.events) as AttributionEventType[]) acc.events[t] += a.events[t]
+        return acc
+      },
+      { assets: 0, distributions: 0, events: zeroEvents() },
+    )
+
+    return { assets: shapedAssets, summary }
+  },
+}
+
+type AttributionEventType = 'VIEW' | 'SCAN' | 'CLICK' | 'LEAD' | 'ORDER'
+
+export interface GrowthDashboardAsset {
+  id: string
+  productId: number | null
+  productTitle: string | null
+  productImage: string | null
+  status: string
+  cardImageUrl: string
+  createdAt: string
+  /** How many channels this asset has been shared to (CARD counts as one). */
+  distributions: number
+  events: Record<AttributionEventType, number>
 }

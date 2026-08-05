@@ -7,6 +7,25 @@ import { walletService } from './wallet.service'
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { auditQueue } from '~~/server/queues/audit.queue'
 import { verifyShippingQuote } from '~~/layers/shipping/server/utils/quoteToken'
+import { sanitizeBuyerNote } from '~~/shared/utils/buyerNote'
+import { aiDataService } from '~~/layers/ai/server/services/ai-data.service'
+
+/**
+ * Sanitize a buyer's checkout note before it is persisted as an immutable order
+ * snapshot (see sanitizeBuyerNote for the rules) and log a CONTACT_LEAK event when
+ * contact info had to be masked. Returns null for empty/whitespace-only input.
+ */
+function guardBuyerNote(userId: string, text: string | null | undefined): string | null {
+  const { note, masked, matches } = sanitizeBuyerNote(text)
+  if (masked) {
+    aiDataService.logGuardEvent({
+      userId,
+      type: 'CONTACT_LEAK',
+      inputFragment: matches.join(' | ').slice(0, 280),
+    })
+  }
+  return note
+}
 
 export interface PlaceOrderInput {
   items: Array<{ variantId: number; quantity: number }>
@@ -21,6 +40,9 @@ export interface PlaceOrderInput {
   country: string
   paymentMethod?: string
   affiliateCode?: string
+  /** Per-seller buyer notes from checkout — delivery/handling instructions, not
+   *  a renegotiation channel. Masked + capped per order before persisting. */
+  buyerNotes?: Array<{ storeSlug: string; note: string }>
   /** Total shipping in kobo — fallback when no per-seller breakdown is given. */
   shippingCost?: number
   /** Per-seller shipping selections from checkout — used to split shipping per order. */
@@ -207,6 +229,14 @@ export const orderService = {
     const hasBreakdown = breakdownMap.size > 0
     const fallbackShipping = data.shippingCost ?? 0
 
+    // Per-seller buyer notes — masked + capped once here so every payment path
+    // (card / paypal / pod / direct) gets the same sanitized snapshot.
+    const noteBySeller = new Map<string, string>()
+    for (const n of data.buyerNotes ?? []) {
+      const guarded = guardBuyerNote(userId, n.note)
+      if (guarded) noteBySeller.set(n.storeSlug, guarded)
+    }
+
     const purchaseGroupId = crypto.randomUUID()
     const orderInclude = {
       orderItem: {
@@ -314,6 +344,9 @@ export const orderService = {
             ...(bd?.estimatedDays ? { estimatedDays: bd.estimatedDays } : {}),
             ...(storedBd
               ? { shippingBreakdown: storedBd as unknown as object }
+              : {}),
+            ...(noteBySeller.has(storeSlug)
+              ? { buyerNote: noteBySeller.get(storeSlug) }
               : {}),
             paymentMethod: paymentMethod || 'card',
             ...(affiliateUserId ? { affiliateUserId } : {}),

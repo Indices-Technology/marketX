@@ -208,6 +208,21 @@
           </div>
         </div>
 
+        <!-- Buyer's note — a frozen instruction captured at checkout (call before
+             arriving, gift wrap, etc). Read-only; contact info is masked. -->
+        <div
+          v-if="order.buyerNote"
+          class="border-t border-indigo-100 bg-indigo-50 px-5 py-3 text-xs dark:border-indigo-500/20 dark:bg-indigo-500/10"
+        >
+          <p class="flex items-center gap-1.5 font-semibold text-indigo-700 dark:text-indigo-300">
+            <Icon name="solar:chat-round-line-linear" size="14" />
+            Note from buyer
+          </p>
+          <p class="mt-1 leading-relaxed text-gray-700 dark:text-neutral-300">
+            {{ order.buyerNote }}
+          </p>
+        </div>
+
         <!-- Drop-off booked: tell the seller where to take the parcel + the ref,
              then let them add the Waybill GIG issues at the counter. -->
         <div

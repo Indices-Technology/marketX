@@ -1,6 +1,6 @@
 import { BaseApiClient } from '~~/layers/core/app/services/base.api'
 
-export type SocialPlatform = 'TIKTOK' | 'META_FB' | 'META_IG'
+export type SocialPlatform = 'TIKTOK' | 'META_FB' | 'META_IG' | 'GOOGLE_GBP'
 export type SocialConnectionStatus = 'ACTIVE' | 'EXPIRED' | 'REVOKED' | 'ERROR'
 
 /** Safe, UI-facing shape — the API never returns tokens. */
@@ -30,6 +30,16 @@ export class ConnectionsApiClient extends BaseApiClient {
   ): Promise<{ success: boolean; data: { authorizeUrl: string } }> {
     return this.request(
       `/api/growth/connect/tiktok?redirectTo=${encodeURIComponent(redirectTo)}`,
+      { method: 'GET' },
+    ) as Promise<{ success: boolean; data: { authorizeUrl: string } }>
+  }
+
+  /** Returns the Google Business Profile authorize URL for the client to navigate to. */
+  async startGoogleBusiness(
+    redirectTo: string,
+  ): Promise<{ success: boolean; data: { authorizeUrl: string } }> {
+    return this.request(
+      `/api/growth/connect/google?redirectTo=${encodeURIComponent(redirectTo)}`,
       { method: 'GET' },
     ) as Promise<{ success: boolean; data: { authorizeUrl: string } }>
   }

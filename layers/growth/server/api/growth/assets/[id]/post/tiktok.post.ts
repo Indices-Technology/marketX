@@ -10,11 +10,7 @@
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
 import { resolveOAuthAppUrl } from '~~/server/utils/auth/oauth'
-import {
-  getUserActiveConnection,
-  decryptAccessToken,
-} from '~~/layers/growth/server/services/socialConnection.service'
-import { mintDistribution } from '~~/layers/growth/server/services/shortlink.service'
+import { resolveTikTokPostContext, buildTikTokCaption } from '~~/layers/growth/server/services/tiktokPost.service'
 import { initPhotoPost } from '~~/layers/growth/server/utils/tiktok.posting'
 
 export default defineEventHandler(async (event) => {
@@ -26,40 +22,10 @@ export default defineEventHandler(async (event) => {
 
     const body = await readBody(event).catch(() => ({}))
 
-    const asset = await prisma.growthAsset.findUnique({
-      where: { id },
-      select: { id: true, content: true, sellerId: true },
-    })
-    // Ownership: the asset's store must belong to the authenticated user.
-    const owns =
-      asset &&
-      (await prisma.sellerProfile.findFirst({
-        where: { id: asset.sellerId, profileId: user.id },
-        select: { id: true },
-      }))
-    if (!asset || !owns) {
-      throw new UserError('ASSET_NOT_FOUND', 'Growth asset not found', 404)
-    }
-    const cardImageUrl = ((asset.content ?? {}) as { cardImageUrl?: string }).cardImageUrl
-    if (!cardImageUrl) {
-      throw new UserError('NO_CARD', 'Generate the card image before posting', 400)
-    }
-
-    const conn = await getUserActiveConnection(user.id, 'TIKTOK')
-    const accessToken = decryptAccessToken(conn)
-
     const config = useRuntimeConfig()
     const base = resolveOAuthAppUrl(event, config.public.baseURL as string)
-    // TikTok pulls the photo from OUR verified domain (redirects are disallowed).
-    const photoUrl = `${base.replace(/\/$/, '')}/growth/cards/${asset.id}`
-
-    // Mint the channel distribution so the caption link is attributable to TikTok.
-    const minted = await mintDistribution({ assetId: asset.id, channel: 'TIKTOK', baseUrl: base })
-    // Always append the attributable tracked link so the caption is measurable.
-    const userCaption = typeof body?.caption === 'string' ? body.caption.trim() : ''
-    const caption = userCaption
-      ? `${userCaption}\n\n${minted.trackedUrl}`
-      : minted.trackedUrl
+    const { accessToken, photoUrl, minted } = await resolveTikTokPostContext(id, user.id, base)
+    const caption = buildTikTokCaption(body?.caption, minted.trackedUrl)
 
     // No default — the seller must actively choose (Content Sharing Guidelines
     // prohibit auto-selecting privacy). Unaudited apps still get forced SELF_ONLY

@@ -88,6 +88,14 @@
             <span>Analytics</span>
           </NuxtLink>
           <NuxtLink
+            :to="`/seller/${storeSlug}/growth`"
+            class="seller-nav-link"
+            active-class="active"
+          >
+            <Icon name="solar:rocket-2-linear" size="22" />
+            <span>Growth</span>
+          </NuxtLink>
+          <NuxtLink
             :to="`/seller/${storeSlug}/settings`"
             class="seller-nav-link"
             active-class="active"
@@ -249,6 +257,14 @@
             >
               <Icon name="solar:chart-2-linear" size="20" />
               <span>Analytics</span>
+            </NuxtLink>
+            <NuxtLink
+              :to="`/seller/${storeSlug}/growth`"
+              class="more-item"
+              active-class="more-item-active"
+            >
+              <Icon name="solar:rocket-2-linear" size="20" />
+              <span>Growth</span>
             </NuxtLink>
             <NuxtLink
               :to="`/seller/${storeSlug}/settings`"

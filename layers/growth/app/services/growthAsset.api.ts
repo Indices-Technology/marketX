@@ -14,6 +14,31 @@ export interface EmbedAssetDTO extends GrowthAssetDTO {
   shortCode: string
 }
 
+export interface GrowthEventCounts {
+  VIEW: number
+  SCAN: number
+  CLICK: number
+  LEAD: number
+  ORDER: number
+}
+
+export interface GrowthDashboardAssetDTO {
+  id: string
+  productId: number | null
+  productTitle: string | null
+  productImage: string | null
+  status: string
+  cardImageUrl: string
+  createdAt: string
+  distributions: number
+  events: GrowthEventCounts
+}
+
+export interface GrowthDashboardDTO {
+  assets: GrowthDashboardAssetDTO[]
+  summary: { assets: number; distributions: number; events: GrowthEventCounts }
+}
+
 export interface TikTokCreatorInfoDTO {
   nickname?: string
   username?: string
@@ -61,6 +86,13 @@ export class GrowthAssetApiClient extends BaseApiClient {
     }) as Promise<{ success: boolean }>
   }
 
+  /** The Growth tab's data: every asset + its rollup funnel. */
+  async dashboard() {
+    return this.request('/api/growth/dashboard', {
+      method: 'GET',
+    }) as Promise<{ success: boolean; data: GrowthDashboardDTO }>
+  }
+
   /** Connected TikTok creator info (nickname + allowed privacy levels). */
   async tiktokCreatorInfo() {
     return this.request('/api/growth/tiktok/creator-info', {
@@ -89,6 +121,14 @@ export class GrowthAssetApiClient extends BaseApiClient {
       success: boolean
       data: { publishId: string; trackedUrl: string; privacyLevel: string }
     }>
+  }
+
+  /** Upload the asset's card to the seller's TikTok inbox as a draft (MEDIA_UPLOAD) — no audit required. */
+  async postToTikTokDraft(id: string, opts: { caption?: string; title?: string } = {}) {
+    return this.request(`/api/growth/assets/${id}/post/tiktok/draft`, {
+      method: 'POST',
+      body: opts,
+    }) as Promise<{ success: boolean; data: { publishId: string; trackedUrl: string } }>
   }
 
   /** Poll a Direct Post's processing status. */
