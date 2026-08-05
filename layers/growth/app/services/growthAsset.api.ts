@@ -123,6 +123,14 @@ export class GrowthAssetApiClient extends BaseApiClient {
     }>
   }
 
+  /** Upload the asset's card to the seller's TikTok inbox as a draft (MEDIA_UPLOAD) — no audit required. */
+  async postToTikTokDraft(id: string, opts: { caption?: string; title?: string } = {}) {
+    return this.request(`/api/growth/assets/${id}/post/tiktok/draft`, {
+      method: 'POST',
+      body: opts,
+    }) as Promise<{ success: boolean; data: { publishId: string; trackedUrl: string } }>
+  }
+
   /** Poll a Direct Post's processing status. */
   async tiktokPostStatus(id: string, publishId: string) {
     return this.request(`/api/growth/assets/${id}/post/tiktok/status`, {

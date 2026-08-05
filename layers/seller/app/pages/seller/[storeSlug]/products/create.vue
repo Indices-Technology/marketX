@@ -358,7 +358,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { useRoute, useRouter } from 'vue-router'
 import { useFormFocus } from '~~/layers/core/app/composables/useFormFocus'
@@ -383,6 +383,7 @@ import ProductDistributionSection from '~~/layers/seller/app/components/product-
 import ProductFlagsSection from '~~/layers/seller/app/components/product-form/ProductFlagsSection.vue'
 import ProductSocialCaptions from '~~/layers/seller/app/components/product-form/ProductSocialCaptions.vue'
 import PublishSuccessModal from '~~/layers/seller/app/components/PublishSuccessModal.vue'
+import { findSuspiciousVariantPrice } from '~~/layers/seller/app/utils/variantPriceCheck'
 
 
 definePageMeta({ middleware: 'auth', layout: 'store-layout' })
@@ -421,6 +422,17 @@ const clearError = (field: string) => {
 }
 // Order matches the on-page field order so we focus the topmost error first.
 const FIELD_ORDER = ['title', 'description', 'price', 'stock', 'variants']
+
+// A variant price far from the base price is usually a typo (see
+// variantPriceCheck.ts) — warn once and let the seller confirm by saving
+// again, rather than blocking outright.
+const variantPriceWarningShown = ref(false)
+watch(
+  () => [form.price, ...form.variants.map((v) => v.price)],
+  () => {
+    variantPriceWarningShown.value = false
+  },
+)
 
 const validate = (): boolean => {
   FIELD_ORDER.forEach((k) => (errors[k] = ''))
@@ -719,6 +731,17 @@ const handleSubmit = async () => {
     focusFirstError(FIELD_ORDER, errors)
     return
   }
+
+  if (!variantPriceWarningShown.value) {
+    const suspicious = findSuspiciousVariantPrice(form.price, form.variants)
+    if (suspicious) {
+      errors.variants = `"${suspicious.size}" is priced ₦${suspicious.price.toLocaleString()} — very different from your base price of ₦${form.price?.toLocaleString()}. Click Save again if that's intentional.`
+      variantPriceWarningShown.value = true
+      focusFirstError(FIELD_ORDER, errors)
+      return
+    }
+  }
+
   try {
     const payload: any = {
       storeSlug: storeSlug.value,

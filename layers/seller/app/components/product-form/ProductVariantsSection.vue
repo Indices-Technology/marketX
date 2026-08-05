@@ -99,6 +99,13 @@
               placeholder="Same as base"
               class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
             />
+            <p
+              v-if="isVariantPriceSuspicious(form.price, variant.price)"
+              class="mt-1 text-xs text-amber-600 dark:text-amber-400"
+            >
+              Far from your base price (₦{{ form.price?.toLocaleString() }}) —
+              double check this is right.
+            </p>
           </div>
           <div>
             <label class="mb-1 block text-xs font-medium text-gray-500 dark:text-neutral-400">
@@ -127,11 +134,14 @@
 </template>
 
 <script setup lang="ts">
+import { isVariantPriceSuspicious } from '~~/layers/seller/app/utils/variantPriceCheck'
+
 const props = defineProps<{
   variants: Array<{ size: string; price: number | null; stock: number }>
-  // Base stock for the simple-product case (no options). Bound in place, so the
-  // parent form's `stock` updates directly.
-  form: { stock: number }
+  // Base stock for the simple-product case (no options), and base price used
+  // to flag a variant price that looks like a data-entry mistake. Bound in
+  // place, so the parent form's `stock` updates directly.
+  form: { stock: number; price?: number | null }
   // Validation message for the stock / variants field (from the parent form).
   error?: string
 }>()

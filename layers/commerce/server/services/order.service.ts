@@ -7,32 +7,24 @@ import { walletService } from './wallet.service'
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { auditQueue } from '~~/server/queues/audit.queue'
 import { verifyShippingQuote } from '~~/layers/shipping/server/utils/quoteToken'
-import { maskContact, scanForContact } from '~~/shared/utils/contentGuard'
+import { sanitizeBuyerNote } from '~~/shared/utils/buyerNote'
 import { aiDataService } from '~~/layers/ai/server/services/ai-data.service'
-
-/** Max length of a buyer's checkout note — mirrors the buyerNote DB column. */
-const BUYER_NOTE_MAX = 280
 
 /**
  * Sanitize a buyer's checkout note before it is persisted as an immutable order
- * snapshot: strip contact info (so the deal can't leave the platform via the
- * note), log a CONTACT_LEAK event if anything was masked, and cap the length to
- * the DB column. Returns null for empty/whitespace-only input.
+ * snapshot (see sanitizeBuyerNote for the rules) and log a CONTACT_LEAK event when
+ * contact info had to be masked. Returns null for empty/whitespace-only input.
  */
 function guardBuyerNote(userId: string, text: string | null | undefined): string | null {
-  const trimmed = text?.trim()
-  if (!trimmed) return null
-  const { clean, matches } = scanForContact(trimmed)
-  let out = trimmed
-  if (!clean) {
+  const { note, masked, matches } = sanitizeBuyerNote(text)
+  if (masked) {
     aiDataService.logGuardEvent({
       userId,
       type: 'CONTACT_LEAK',
       inputFragment: matches.join(' | ').slice(0, 280),
     })
-    out = maskContact(trimmed)
   }
-  return out.slice(0, BUYER_NOTE_MAX)
+  return note
 }
 
 export interface PlaceOrderInput {

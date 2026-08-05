@@ -141,6 +141,16 @@
             minutes after you post.
           </p>
 
+          <div class="border-t border-gray-100 pt-2 dark:border-neutral-800">
+            <BaseButton variant="secondary" size="sm" :loading="posting || uploading" @click="onSendDraft">
+              Send to TikTok inbox instead
+            </BaseButton>
+            <p class="mt-1 text-[11px] text-gray-400 dark:text-neutral-500">
+              Lands as a draft in your TikTok app — finish editing and post it yourself there (this
+              is also how you can attach a clickable link). Not restricted while your app is in review.
+            </p>
+          </div>
+
           <p v-if="statusText" class="text-xs" :class="statusClass">{{ statusText }}</p>
         </div>
 
@@ -178,6 +188,7 @@ const {
   prepare,
   loadTikTokCreatorInfo,
   postToTikTok,
+  postToTikTokDraft,
 } = useGrowthAsset()
 const { capture, shareImage, capturing } = useCardCapture()
 const { connectTikTok, connecting, refresh: refreshConnections, forPlatform, disconnect } =
@@ -315,6 +326,18 @@ async function onPost() {
     if (res) notify({ type: 'success', text: 'Sent to TikTok — processing' })
   } catch (e) {
     notify({ type: 'error', text: (e as Error)?.message || 'TikTok post failed' })
+  }
+}
+
+async function onSendDraft() {
+  try {
+    const res = await postToTikTokDraft(cardRef.value?.rootEl, {
+      caption: caption.value,
+      title: title.value,
+    })
+    if (res) notify({ type: 'success', text: 'Sent to your TikTok inbox' })
+  } catch (e) {
+    notify({ type: 'error', text: (e as Error)?.message || 'Could not send to TikTok' })
   }
 }
 

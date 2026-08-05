@@ -539,7 +539,13 @@
                   v-if="v.price && v.price !== product.price"
                   class="ml-1 text-[11px] opacity-60"
                 >
-                  +{{ formatProductPrice(v.price - product.price, 'NGN') }}
+                  {{ v.price > product.price ? '+' : '−'
+                  }}{{
+                    formatProductPrice(
+                      Math.abs(v.price - product.price),
+                      'NGN',
+                    )
+                  }}
                 </span>
               </button>
             </div>

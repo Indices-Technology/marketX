@@ -1916,6 +1916,7 @@ enum SocialPlatform {
   TIKTOK
   META_FB
   META_IG
+  GOOGLE_GBP // Google Business Profile — owner-connected listing (posts, info, reviews)
 }
 
 enum SocialConnectionStatus {

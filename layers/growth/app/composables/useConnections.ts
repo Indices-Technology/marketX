@@ -45,6 +45,20 @@ export function useConnections() {
     }
   }
 
+  /**
+   * Kick off the Google Business Profile connect flow: ask the server for the
+   * authorize URL (sets the state cookie), then navigate the whole page to Google.
+   */
+  async function connectGoogleBusiness(redirectTo: string) {
+    connecting.value = true
+    try {
+      const res = await api.startGoogleBusiness(redirectTo)
+      window.location.href = res.data.authorizeUrl
+    } catch {
+      connecting.value = false
+    }
+  }
+
   async function disconnect(id: string) {
     await api.disconnect(id)
     connections.value = connections.value.filter((c) => c.id !== id)
@@ -57,6 +71,7 @@ export function useConnections() {
     refresh,
     forPlatform,
     connectTikTok,
+    connectGoogleBusiness,
     disconnect,
   }
 }

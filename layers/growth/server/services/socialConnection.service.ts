@@ -8,7 +8,7 @@ import { prisma } from '~~/server/utils/db'
 import { decryptApiKey } from '~~/layers/core/server/services/aiConfig.service'
 import { UserError } from '~~/layers/profile/server/types/user.types'
 
-type Platform = 'TIKTOK' | 'META_FB' | 'META_IG'
+type Platform = 'TIKTOK' | 'META_FB' | 'META_IG' | 'GOOGLE_GBP'
 
 export async function getActiveConnection(sellerId: string, platform: Platform) {
   const conn = await prisma.socialConnection.findFirst({
