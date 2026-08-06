@@ -81,6 +81,24 @@ const requiredVars: RequiredEnvVar[] = [
     description: 'From address for outgoing emails',
   },
 
+  // ─── WhatsApp Business API (Meta Cloud API) ─────────────────────────────────
+  {
+    name: 'WHATSAPP_ACCESS_TOKEN',
+    required: false,
+    description:
+      'WhatsApp Cloud API System User permanent access token (optional — messages skipped if unset)',
+  },
+  {
+    name: 'WHATSAPP_PHONE_NUMBER_ID',
+    required: false,
+    description: 'WhatsApp Business phone number ID (Graph API sender asset, not the phone number)',
+  },
+  {
+    name: 'WHATSAPP_WEBHOOK_VERIFY_TOKEN',
+    required: false,
+    description: 'Arbitrary token used to verify the WhatsApp webhook subscription handshake',
+  },
+
   // ─── Payments ────────────────────────────────────────────────────────────────
   {
     name: 'PAYSTACK_SECRET_KEY',
