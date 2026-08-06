@@ -13,6 +13,7 @@ import { startNotificationWorker } from '../queues/notification.queue'
 import { startEmailWorker } from '../queues/email.queue'
 import { startPodReminderCron } from '../queues/pod-reminder.queue'
 import { startReputationWorker } from '../queues/reputation.queue'
+import { startWhatsAppWorker } from '../queues/whatsapp.queue'
 
 // Guard against double-start. In dev, Nitro HMR can re-evaluate this plugin
 // module and re-run the bootstrap, stacking duplicate Workers on the SHARED
@@ -28,8 +29,9 @@ export default defineNitroPlugin(() => {
   const notification = startNotificationWorker()
   const email = startEmailWorker()
   const reputation = startReputationWorker()
+  const whatsapp = startWhatsAppWorker()
 
-  if (audit || notification || email || reputation) {
+  if (audit || notification || email || reputation || whatsapp) {
     console.log(
       '[workers] BullMQ workers started:',
       [
@@ -37,6 +39,7 @@ export default defineNitroPlugin(() => {
         notification && 'notification',
         email && 'email',
         reputation && 'reputation',
+        whatsapp && 'whatsapp',
       ]
         .filter(Boolean)
         .join(', '),

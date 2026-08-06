@@ -115,6 +115,7 @@ const {
   refresh,
   forPlatform,
   connectTikTok,
+  connectGoogleBusiness,
   disconnect,
 } = useConnections()
 
@@ -128,6 +129,16 @@ const platforms = computed(() => [
     available: true,
     blurb: 'Post cards to your inbox and import your videos',
     connection: forPlatform('TIKTOK'),
+  },
+  {
+    id: 'GOOGLE_GBP' as const,
+    name: 'Google Business Profile',
+    icon: 'logos:google-icon',
+    iconBg: 'bg-gray-50 dark:bg-neutral-800',
+    iconColor: '',
+    available: true,
+    blurb: 'Sync your reviews and post offers to your Google listing',
+    connection: forPlatform('GOOGLE_GBP'),
   },
   {
     id: 'META_FB' as const,
@@ -154,8 +165,11 @@ const platforms = computed(() => [
 void connections
 
 function onConnect(platform: string) {
+  const back = `/seller/${storeSlug.value}/connections`
   if (platform === 'TIKTOK') {
-    connectTikTok(`/seller/${storeSlug.value}/connections`)
+    connectTikTok(back)
+  } else if (platform === 'GOOGLE_GBP') {
+    connectGoogleBusiness(back)
   }
 }
 
@@ -165,17 +179,27 @@ async function onDisconnect(id: string) {
 }
 
 onMounted(async () => {
-  // Handle the OAuth return, then clean the query out of the URL.
-  const result = route.query.tiktok
-  if (result === 'connected') {
-    notify({ type: 'success', text: 'TikTok connected' })
-  } else if (result === 'error') {
-    notify({
-      type: 'error',
-      text: `Couldn't connect TikTok${route.query.reason ? `: ${route.query.reason}` : ''}`,
-    })
+  // Handle the OAuth return, then clean the query out of the URL. Each provider
+  // redirects back with `?<provider>=connected|error` + an optional `reason`.
+  const returns: Array<{ key: 'tiktok' | 'google'; label: string }> = [
+    { key: 'tiktok', label: 'TikTok' },
+    { key: 'google', label: 'Google Business Profile' },
+  ]
+  let handled = false
+  for (const { key, label } of returns) {
+    const result = route.query[key]
+    if (result === 'connected') {
+      notify({ type: 'success', text: `${label} connected` })
+      handled = true
+    } else if (result === 'error') {
+      notify({
+        type: 'error',
+        text: `Couldn't connect ${label}${route.query.reason ? `: ${route.query.reason}` : ''}`,
+      })
+      handled = true
+    }
   }
-  if (result) router.replace(`/seller/${storeSlug.value}/connections`)
+  if (handled) router.replace(`/seller/${storeSlug.value}/connections`)
 
   await refresh()
 })
