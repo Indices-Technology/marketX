@@ -35,7 +35,8 @@
 | 5 | `ARCHITECTURE.md` *(optional)* | Backend background | ✅ Available — trim secrets before sharing |
 
 **Access to provide alongside the docs:**
-- Staging base URL: `https://marketx.indicestech.com/api`
+- Staging base URL: `https://staging.marketx.africa/api`
+  _(old host `marketx.indicestech.com` still responds during the cutover)_
 - Docs secret for `/api/scalar` (share privately): `[STAGING OPENAPI_DOCS_SECRET]`
 - Test accounts (buyer, seller) + seed data: `[provide]`
 - Client GitHub repo invite (App lives here from day 1): `[repo]`

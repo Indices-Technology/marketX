@@ -14,6 +14,7 @@ import {
   buildSupportTicketCreatedEmail,
   buildSupportReplyEmail,
 } from '~~/server/utils/email/emailService'
+import { INBOX } from '~~/server/utils/email/addresses'
 import { walletService } from '~~/layers/commerce/server/services/wallet.service'
 import { orderRepository } from '~~/layers/commerce/server/repositories/order.repository'
 import { supportRepository } from '../repositories/support.repository'
@@ -31,7 +32,14 @@ import {
   type DisputeOutcome,
 } from '../utils/types'
 
-const SUPPORT_REPLY_TO = process.env.SUPPORT_EMAIL || 'support@marketx.africa'
+/**
+ * Disputes and ordinary support tickets are answered by different people, so a
+ * requester's reply should land in the matching inbox rather than one shared
+ * queue. Addresses come from server/utils/email/addresses.ts.
+ */
+function replyToFor(ticketType: SupportTicketType): string {
+  return ticketType === 'DISPUTE' ? INBOX.dispute : INBOX.support
+}
 
 type TicketWithParties = Awaited<
   ReturnType<typeof supportRepository.getTicketById>
@@ -135,7 +143,7 @@ export const supportService = {
         to,
         ...mail,
         type: 'GENERAL',
-        replyTo: SUPPORT_REPLY_TO,
+        replyTo: replyToFor(ticket.type),
       })
     }
 
@@ -560,7 +568,7 @@ export const supportService = {
         to,
         ...mail,
         type: 'GENERAL',
-        replyTo: SUPPORT_REPLY_TO,
+        replyTo: replyToFor(ticket.type),
       })
     }
   },

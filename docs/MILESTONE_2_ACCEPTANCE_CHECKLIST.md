@@ -3,7 +3,7 @@
 **Project:** MarketX Mobile Application
 **Milestone:** M2 — Marketplace, Discovery & Seller Storefronts
 **Fee:** ₦500,000
-**Test environment:** Staging only — `https://marketx.indicestech.com/api`
+**Test environment:** Staging only — `https://staging.marketx.africa/api`
 **Platforms:** Android **and** iOS (debug builds)
 
 > **How to use this checklist.** Every item is a pass/fail acceptance criterion.

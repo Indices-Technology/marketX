@@ -14,6 +14,7 @@
 import { Queue, Worker, type Job } from 'bullmq'
 import { Resend } from 'resend'
 import { queueConnection } from '../utils/queue'
+import { resolveFrom, resolveReplyTo } from '../utils/email/addresses'
 
 export interface EmailJob {
   to: string | string[]
@@ -77,15 +78,16 @@ async function _sendEmail(data: EmailJob): Promise<void> {
   }
 
   const resend = new Resend(apiKey)
-  const senderEmail = process.env.SENDER_EMAIL || 'noreply@marketx.africa'
 
   await resend.emails.send({
-    from: senderEmail,
+    from: resolveFrom(),
     to: data.to,
     subject: data.subject,
     html: data.html,
     text: data.text,
-    replyTo: data.replyTo,
+    // Never leave this empty: the From address is send-only, so a reply with no
+    // Reply-To lands nowhere a human reads. resolveReplyTo falls back per type.
+    replyTo: resolveReplyTo(data.type, data.replyTo),
   })
 }
 

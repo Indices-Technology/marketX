@@ -15,8 +15,12 @@
 
 | Environment | Base URL | Payments | Data |
 |---|---|---|---|
-| Staging | `https://marketx.indicestech.com/api` | Paystack **test** mode | throwaway — safe to break |
+| Staging | `https://staging.marketx.africa/api` | Paystack **test** mode | throwaway — safe to break |
 | Production | _(do not use for development)_ | Paystack **live** | real customers & money |
+
+> **Staging moved.** The old host `https://marketx.indicestech.com/api` still serves the
+> same environment during the cutover and will be retired — point new work at
+> `staging.marketx.africa`.
 
 - All API paths in the docs are relative to `…/api` (e.g. `POST …/api/auth/login`).
 - Health check (no auth): `GET …/api/health` → `{ ok: true, ts, env }`.
