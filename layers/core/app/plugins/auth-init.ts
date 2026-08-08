@@ -3,6 +3,7 @@ import { useAuthStore } from '../stores/auth.store'
 import { useSellerStore } from '~~/layers/seller/app/store/seller.store'
 import { useNotificationStore } from '~~/layers/profile/app/stores/notification.store'
 import { useChat } from '~~/layers/profile/app/composables/useChat'
+import { useSettings } from '~~/layers/profile/app/composables/useSettings'
 import type { Seller } from '~~/shared/types/seller'
 import type { IProfile } from '~~/layers/profile/app/types/profile.types'
 
@@ -51,6 +52,24 @@ const hydrateNotificationCount = async (
   }
 }
 
+// Settings only got hydrated from the interactive login() flow — a hard
+// refresh/fresh visit restored the token but never re-fetched settings, so
+// server-saved preferences (feedDisplayStyle among them) silently reverted
+// to defaults on every reload. Fetch + hydrate here too, same as seller/notif.
+const hydrateSettings = async (token: string) => {
+  try {
+    const res = await $fetch<{
+      success: boolean
+      data: Record<string, unknown>
+    }>('/api/profile/settings', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (res?.data) useSettings().hydrateFromServer(res.data)
+  } catch {
+    /* non-fatal — local/localStorage settings still apply */
+  }
+}
+
 export default defineNuxtPlugin(async () => {
   const profileStore = useProfileStore()
   const authStore = useAuthStore()
@@ -63,12 +82,14 @@ export default defineNuxtPlugin(async () => {
   // If no localStorage token, check for OAuth session cookies from a recent redirect
   if (import.meta.client && !authStore.accessToken) {
     try {
-      const session = await $fetch<{ accessToken: string | null; refreshToken: string | null }>(
-        '/api/auth/session',
-      )
+      const session = await $fetch<{
+        accessToken: string | null
+        refreshToken: string | null
+      }>('/api/auth/session')
       if (session?.accessToken) {
         authStore.setAccessToken(session.accessToken)
-        if (session.refreshToken) authStore.setRefreshToken(session.refreshToken)
+        if (session.refreshToken)
+          authStore.setRefreshToken(session.refreshToken)
       }
     } catch {
       // No OAuth session — that's fine
@@ -100,6 +121,7 @@ export default defineNuxtPlugin(async () => {
       await Promise.all([
         hydrateSellerStore(authStore.accessToken, sellerStore),
         hydrateNotificationCount(authStore.accessToken, notificationStore),
+        hydrateSettings(authStore.accessToken),
       ])
 
       // Re-open WebSocket and SSE streams after a hard refresh

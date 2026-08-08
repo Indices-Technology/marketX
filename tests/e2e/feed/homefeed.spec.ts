@@ -1,153 +1,159 @@
 /**
- * Home feed tests — covers both the guest (TrustMarketHome) and auth (SocialFeed) views.
+ * Home feed tests — covers MinimalHome (guest, and authenticated default)
+ * and SocialFeed (authenticated, opt-in "detailed" setting).
  *
- * Guest view:  safe-commerce hero + Find/Verify dock → "How protected buying
- *              works" → trusted sellers → markets → products
- * Auth view:   personalised social feed rendered inside the same HomeLayout
+ * MinimalHome: full-screen, one post/product/reel at a time; search/verify
+ *              lives behind a persistent top-bar icon, not inline copy.
+ * SocialFeed:  personalised social feed, opt-in via feedDisplayStyle=detailed.
  *
- * Locators are scoped to the scrolling content column (.main-scroll); the right
- * sidebar renders the same copy ("All markets", "See all") and would otherwise
- * make those locators resolve to two elements.
+ * Rewritten after the Feed/nav pivot retired TrustMarketHome — see project
+ * memory "Feed/nav pivot decision" for the reasoning.
  */
 import { test, expect } from '../../helpers/fixtures'
-import { pageLogin, apiLogin, TEST_USER } from '../../helpers/auth'
+import { pageLogin, apiLogin } from '../../helpers/auth'
 
 const T = { timeout: 15000 }
 
-const feed = (page: any) => page.locator('.main-scroll')
-
 // ── GUEST / UNAUTHENTICATED ──────────────────────────────────────────────────
 
-test.describe('home — guest (TrustMarketHome)', () => {
+test.describe('home — guest (MinimalHome)', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/', { waitUntil: 'networkidle' })
+    await page.goto('/', { waitUntil: 'domcontentloaded' })
   })
 
-  test('renders the safe-commerce hero', async ({ page }) => {
+  test('renders feed content or empty fallback — not stuck loading', async ({
+    page,
+  }) => {
     await expect(
-      feed(page).getByRole('heading', { name: /buy safely from trusted/i }),
+      page
+        .locator('.feed-slide')
+        .first()
+        .or(page.getByText(/nothing here yet/i)),
+    ).toBeVisible({ timeout: 30000 })
+  })
+
+  test('search/verify icon opens the find-or-verify sheet', async ({
+    page,
+  }) => {
+    await page
+      .getByRole('button', { name: /search or verify a seller/i })
+      .click()
+    await expect(page.getByRole('tab', { name: /find a trader/i })).toBeVisible(
+      T,
+    )
+    await expect(
+      page.getByRole('tab', { name: /verify any seller/i }),
     ).toBeVisible(T)
   })
 
-  test('renders "How protected buying works"', async ({ page }) => {
-    await expect(
-      feed(page).getByRole('heading', {
-        name: /how protected buying works/i,
-      }),
-    ).toBeVisible(T)
+  test('Verify tab routes to /verify', async ({ page }) => {
+    await page
+      .getByRole('button', { name: /search or verify a seller/i })
+      .click()
+    await page.getByRole('tab', { name: /verify any seller/i }).click()
+    await page.getByPlaceholder(/instagram_handle/i).fill('swankyshoes')
+    await page.getByRole('button', { name: /^verify seller$/i }).click()
+    await expect(page).toHaveURL(/\/verify\?q=/, T)
   })
 
-  test('renders the markets section heading', async ({ page }) => {
-    await expect(
-      feed(page).getByRole('heading', { name: /nigeria's markets, online/i }),
-    ).toBeVisible(T)
-  })
-
-  test('"See all" links navigate to /discover', async ({ page }) => {
-    const seeAll = feed(page)
-      .getByRole('link', { name: /see all/i })
-      .first()
-    await expect(seeAll).toBeVisible(T)
-    await seeAll.click()
-    await expect(page).toHaveURL(/\/discover/, T)
-  })
-
-  test('"All markets" link navigates to /squares', async ({ page }) => {
-    const link = feed(page).getByRole('link', { name: /all markets/i })
+  test('Squares nav link navigates to /squares', async ({ page }) => {
+    const link = page.locator('a[href="/squares"]').first()
     await expect(link).toBeVisible(T)
     await link.click()
     await expect(page).toHaveURL('/squares', T)
   })
 
-  test('products section shows products or empty fallback — not stuck loading', async ({
-    page,
-  }) => {
-    // Either products rendered OR the empty-state fallback — never blank
-    await expect(
-      feed(page)
-        .locator('a[href^="/product/"]')
-        .first()
-        .or(feed(page).getByText(/fresh goods are being arranged/i)),
-    ).toBeVisible(T)
-  })
-
-  test('Verify tab routes to /verify', async ({ page }) => {
-    await feed(page)
-      .getByRole('tab', { name: /verify any seller/i })
-      .click()
-    await feed(page)
-      .getByPlaceholder(/instagram_handle/i)
-      .fill('swankyshoes')
-    await feed(page)
-      .getByRole('button', { name: /^verify seller$/i })
-      .click()
-    await expect(page).toHaveURL(/\/verify\?q=/, T)
-  })
-
-  test('squares section shows square cards or empty fallback — not stuck loading', async ({
-    page,
-  }) => {
-    // Either square card links render, or the "No squares yet" fallback appears.
-    // Longer timeout: full suite runs after Lighthouse (CPU-intensive) so server may be slower.
-    await expect(
-      page
-        .locator('a[href^="/squares/"]')
-        .first()
-        .or(page.getByText('No squares yet')),
-    ).toBeVisible({ timeout: 30000 })
-  })
-
-  test('sign-in button navigates to /user-login', async ({ page }) => {
-    const signIn = page
-      .getByRole('button', { name: /sign in/i })
-      .or(page.getByRole('link', { name: /sign in/i }))
-    if ((await signIn.count()) > 0) {
-      await signIn.first().click()
-      await expect(page).toHaveURL(/user-login/, T)
-    }
+  test('sign-in nav link navigates to /user-login', async ({ page }) => {
+    // Both the (desktop-visible) SideNav and the (mobile-only, CSS-hidden at
+    // this project's desktop viewport) mobile header have a matching href —
+    // ':visible' picks whichever one actually renders for this viewport.
+    const link = page.locator('a[href="/user-login"]:visible').first()
+    await expect(link).toBeVisible(T)
+    await link.click()
+    await expect(page).toHaveURL(/user-login/, T)
   })
 
   test('no accessibility violations on guest home', async ({
     page,
     makeAxeBuilder,
   }) => {
+    // Wait for content past the loading spinner before auditing.
+    await expect(
+      page
+        .locator('.feed-slide')
+        .first()
+        .or(page.getByText(/nothing here yet/i)),
+    ).toBeVisible({ timeout: 30000 })
     const results = await makeAxeBuilder().analyze()
     expect(results.violations).toEqual([])
   })
 })
 
-// ── AUTHENTICATED / SOCIAL FEED ───────────────────────────────────────────────
+// ── AUTHENTICATED, DEFAULT SETTING (MinimalHome) ─────────────────────────────
 
-test.describe('home — authenticated (SocialFeed)', () => {
+test.describe('home — authenticated, minimal (default)', () => {
   test.beforeEach(async ({ page, request }) => {
+    // Explicitly reset to the default so this spec doesn't depend on
+    // leftover state from the "detailed" describe block below.
+    const { token } = await apiLogin(request)
+    await request.patch('/api/profile/settings', {
+      data: { feed_display_style: 'minimal' },
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    await pageLogin(page, request)
+    await page.goto('/', { waitUntil: 'domcontentloaded' })
+  })
+
+  test('renders MinimalHome, not SocialFeed', async ({ page }) => {
+    await expect(
+      page.getByRole('button', { name: /search or verify a seller/i }),
+    ).toBeVisible({ timeout: 30000 })
+    await expect(page.getByRole('tab', { name: /for you/i })).not.toBeVisible()
+  })
+})
+
+// ── AUTHENTICATED, DETAILED (opt-in, SocialFeed) ─────────────────────────────
+
+test.describe('home — authenticated, detailed (opt-in)', () => {
+  test.beforeEach(async ({ page, request }) => {
+    const { token } = await apiLogin(request)
+    await request.patch('/api/profile/settings', {
+      data: { feed_display_style: 'detailed' },
+      headers: { Authorization: `Bearer ${token}` },
+    })
     await pageLogin(page, request)
     // SSE/WS connections after login never reach networkidle — use domcontentloaded
     await page.goto('/', { waitUntil: 'domcontentloaded' })
   })
 
+  test.afterEach(async ({ request }) => {
+    // Don't leak "detailed" into other specs that assume the default.
+    const { token } = await apiLogin(request)
+    await request.patch('/api/profile/settings', {
+      data: { feed_display_style: 'minimal' },
+      headers: { Authorization: `Bearer ${token}` },
+    })
+  })
+
   test('renders social feed — SplashScreen clears after auth', async ({
     page,
   }) => {
-    // SplashScreen (fixed inset-0 z-[100]) shows while feed is loading, then hides
     const splash = page.locator('.fixed.inset-0.z-\\[100\\]')
     await expect(splash).not.toBeVisible({ timeout: 30000 })
   })
 
   test('feed is not stuck on SplashScreen after auth', async ({ page }) => {
-    // After SplashScreen clears, the page should not show a fatal error
     const splash = page.locator('.fixed.inset-0.z-\\[100\\]')
     await expect(splash).not.toBeVisible({ timeout: 30000 })
     // Wait for SocialFeed to actually mount (the feed filter tabs are
-    // SocialFeed-only). Until the profile store hydrates, index.vue's
-    // ClientOnly fallback shows the guest MarketHome, so asserting before
-    // this races auth hydration.
+    // SocialFeed-only).
     await expect(page.getByRole('tab', { name: /for you/i })).toBeVisible({
       timeout: 30000,
     })
-    // The safe-commerce hero is the guest/TrustMarketHome heading — should NOT
-    // be visible once SocialFeed is shown.
+    // MinimalHome's search icon is guest/minimal-only — should NOT be visible
+    // once SocialFeed (detailed) is shown.
     await expect(
-      page.getByRole('heading', { name: /buy safely from trusted/i }),
+      page.getByRole('button', { name: /search or verify a seller/i }),
     ).not.toBeVisible()
   })
 })
@@ -155,20 +161,22 @@ test.describe('home — authenticated (SocialFeed)', () => {
 // ── VISUAL SNAPSHOT ───────────────────────────────────────────────────────────
 
 test('guest home — visual snapshot', async ({ page }) => {
-  await page.goto('/', { waitUntil: 'networkidle' })
-  // NOTE: after the TrustMarketHome graduation the baseline home-guest.png must
-  // be regenerated — run this spec once with --update-snapshots.
+  await page.goto('/', { waitUntil: 'domcontentloaded' })
+  // NOTE: after the TrustMarketHome → MinimalHome switch the baseline
+  // home-guest.png must be regenerated — run this spec once with --update-snapshots.
   await expect(
-    page.getByRole('heading', { name: /buy safely from trusted/i }),
-  ).toBeVisible(T)
+    page
+      .locator('.feed-slide')
+      .first()
+      .or(page.getByText(/nothing here yet/i)),
+  ).toBeVisible({ timeout: 30000 })
   // Hide images + animate elements so layout is stable across runs with dynamic content
   await page.addStyleTag({
     content: `
-      img { visibility: hidden !important; }
+      img, video { visibility: hidden !important; }
       * { animation: none !important; transition: none !important; }
     `,
   })
-  // maxDiffPixelRatio: 0.1 = 10% tolerance for dynamic text content variation
   await expect(page).toHaveScreenshot('home-guest.png', {
     maxDiffPixelRatio: 0.1,
   })

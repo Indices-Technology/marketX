@@ -1,6 +1,9 @@
 <!-- layouts/default.vue (or your home layout file) -->
 <template>
-  <!-- ─── MOBILE HEADER — hidden on reels (full-screen), auto-hides on scroll elsewhere -->
+  <!-- ─── MOBILE HEADER — hidden on reels (full-screen), auto-hides on scroll elsewhere.
+       Stays visible on the immersive home too — losing one-tap Cart/Search
+       access from the home screen is a real usability regression, not
+       something the immersive redesign intended. -->
   <div
     v-if="route.name !== 'reels'"
     class="fixed left-0 right-0 top-0 z-30 transition-transform duration-300 ease-in-out md:hidden"
@@ -9,7 +12,7 @@
     <HeaderNavMobile
       @open-notifications="showNotificationOverlay = true"
       @open-cart="showCart = true"
-      @open-search="showSearchOverlay = true"
+      @open-search="onOpenSearch"
     />
   </div>
 
@@ -77,14 +80,18 @@
   >
     <!-- ─── DESKTOP LEFT SIDEBAR ──────────────────────────────────────────────
          Collapsed to an 80px icon rail by default; expands to 220px on hover as
-         an overlay (content margin stays 80px, so the hero keeps its width). -->
+         an overlay (content margin stays 80px, so the hero keeps its width).
+         Slides off-screen while the desktop hero fills the viewport — "no
+         navs" is a property of the hero, matching the mobile header/bottom
+         nav treatment. -->
     <aside
-      class="scrollbar-hide fixed left-0 top-0 z-30 hidden h-full bg-white transition-[width] duration-200 ease-out md:block dark:bg-neutral-900"
-      :class="
+      class="scrollbar-hide fixed left-0 top-0 z-30 hidden h-full bg-white transition-transform duration-300 ease-in-out md:block dark:bg-neutral-900"
+      :class="[
+        desktopHeroInView ? '-translate-x-full' : 'translate-x-0',
         sidebarExpanded
           ? 'w-[220px] shadow-2xl shadow-black/10 dark:shadow-black/40'
-          : 'w-20'
-      "
+          : 'w-20',
+      ]"
       @mouseenter="sidebarExpanded = true"
       @mouseleave="sidebarExpanded = false"
       @focusin="sidebarExpanded = true"
@@ -104,9 +111,16 @@
         <!-- Main feed / page content -->
         <div
           ref="mainScrollRef"
-          class="main-scroll scrollbar-hide h-[100dvh] min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-2 transition-all duration-200 sm:px-4"
+          class="main-scroll scrollbar-hide h-[100dvh] min-w-0 flex-1 overflow-y-auto overflow-x-hidden px-2 transition-all duration-200 sm:px-4"
           :class="[
             mainContentClasses,
+            // 'proximity', not 'mandatory' — the hero is the ONLY snap point
+            // here (unlike MinimalHome's own snap-scroll, which has one per
+            // slide). With 'mandatory' the browser has nowhere else to land
+            // and snaps straight back to the hero from anywhere, making it
+            // impossible to scroll past. 'proximity' only pulls you back if
+            // you let go near it — scrolling further away is unaffected.
+            snapHero ? 'snap-y snap-proximity' : '',
             hasScrolled
               ? 'shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.06)] dark:shadow-[inset_0_-1px_0_0_rgba(255,255,255,0.07)]'
               : '',
@@ -119,10 +133,22 @@
         </div>
 
         <!-- ─── RIGHT SIDEBAR (Desktop) ──────────────────────────────────────── -->
+        <!-- translate-only, NOT a width collapse: this aside is a normal flex
+             sibling of .main-scroll, and SocialFeed.vue self-centers inside
+             main-scroll via its own `mx-auto max-w-[600px]` (can't be
+             modified). If this aside's reserved width toggled with scroll
+             position, main-scroll's available width would change right as
+             SocialFeed scrolls into view, and its centering would visibly
+             recompute mid-scroll — the feed "dancing" sideways. Keeping the
+             width constant (paint-hidden only) trades a slightly less
+             full-bleed hero for a feed that never shifts. -->
         <aside
           v-if="showRightSidebar"
-          class="scrollbar-hide hidden h-[100dvh] shrink-0 overflow-y-auto p-4 lg:block"
-          :class="narrowSidebar ? 'w-64' : 'w-96'"
+          class="scrollbar-hide hidden h-[100dvh] shrink-0 overflow-y-auto p-4 transition-transform duration-300 ease-in-out lg:block"
+          :class="[
+            desktopHeroInView ? 'translate-x-full' : 'translate-x-0',
+            narrowSidebar ? 'w-64' : 'w-96',
+          ]"
         >
           <slot name="right-sidebar">
             <RightSideNav @open-ai="showAI = true" />
@@ -245,6 +271,7 @@ import {
   onMounted,
   onUnmounted,
   watch,
+  toRefs,
   defineAsyncComponent,
 } from 'vue'
 import { refreshNuxtData } from '#imports'
@@ -288,6 +315,7 @@ const MobileAIChatButton = defineAsyncComponent(
 
 import { useLayoutData } from '~~/layers/core/app/composables/useLayoutData'
 import { useNavVisibility } from '~~/layers/core/app/composables/useNavVisibility'
+import { useHomeSearch } from '~~/layers/core/app/composables/useHomeSearch'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import { useSellerStore } from '~~/layers/seller/app/store/seller.store'
 import { useShareModal } from '~~/layers/social/app/composables/useShareModal'
@@ -308,7 +336,23 @@ const props = defineProps<{
   hideRightSidebar?: boolean
   customPadding?: boolean
   narrowSidebar?: boolean
+  // MinimalHome's full-screen feed lives at '/'. It only needs the
+  // Feed/Reels tab bar suppressed (redundant now that Reels are woven into
+  // the unified feed) — header/bottom-nav stay, unlike route: 'reels', since
+  // Cart/Search/Discover/Squares should stay one tap away from home.
+  immersive?: boolean
+  // Desktop hero landing: makes .main-scroll a scroll-snap container so the
+  // first full-viewport child (HomeHero, which declares snap-start) acts as
+  // a distinct "cover" page before the real feed content scrolls into view.
+  snapHero?: boolean
+  // MinimalHome (mobile, default) owns a richer Find/Verify modal and used to
+  // render its own duplicate search icon to open it — two magnifying-glass
+  // buttons stacked on one screen. When true, the header's search icon opens
+  // that modal instead (via the useHomeSearch singleton) rather than this
+  // layout's own generic SearchOverlay, so there's exactly one entry point.
+  useCustomSearch?: boolean
 }>()
+const { immersive } = toRefs(props)
 
 const isSellerRoute = computed(() => route.path.startsWith('/seller'))
 
@@ -332,7 +376,13 @@ const contentWidthClass = computed(() => {
   return ''
 })
 
-const showFeedReelsTabs = computed(() => route.name === 'index')
+// Also suppressed when snapHero is active: that tab bar slides up to fill the
+// header's spot rather than fully hiding (fine for the normal scroll-hide
+// behavior elsewhere), which would overlap the hero instead of disappearing
+// behind it during its "no navs" phase.
+const showFeedReelsTabs = computed(
+  () => route.name === 'index' && !immersive.value && !props.snapHero,
+)
 
 const showRightSidebar = computed(() => {
   if (props.hideRightSidebar) return false
@@ -350,10 +400,18 @@ const mainContentClasses = computed(() => {
 // ─── Scroll / Nav-hide Behavior ─────────────────────────────────────────────
 const mainScrollRef = ref<HTMLElement | null>(null)
 const hasScrolled = ref(false)
-const { mobileNavVisible } = useNavVisibility()
-const _bottomNavVisible = ref(true)
+const { mobileNavVisible, bottomNavVisible: _bottomNavVisible } =
+  useNavVisibility()
 
-// Always hide bottom nav on reels page (full-screen TikTok-style scroll)
+// Desktop sidebars aren't covered by mobileNavVisible (that's mobile-only,
+// md:hidden chrome) — snapHero drives this separately so both sidebars slide
+// away while the hero fills the viewport, same "no navs" intent.
+const desktopHeroInView = ref(false)
+
+// Always hide bottom nav on reels (full-screen TikTok-style scroll). The
+// immersive home keeps it — Squares/Discover/Account are reached through it,
+// and MinimalHome's own internal scroll doesn't fire the scroll listeners
+// below, so it just stays put rather than auto-hiding.
 const bottomNavVisible = computed(
   () => route.name !== 'reels' && _bottomNavVisible.value,
 )
@@ -385,6 +443,19 @@ const onMainScroll = () => {
   if (!el) return
   const y = el.scrollTop
   hasScrolled.value = y > 20
+
+  // While the hero (h-[100dvh], the container's own clientHeight) still fills
+  // the viewport, nav stays hidden regardless of scroll direction/delta —
+  // "no navs" is a property of the hero, not of scroll momentum. Once past
+  // it, hand off to the normal delta-based auto-hide below unchanged.
+  if (props.snapHero && y < el.clientHeight) {
+    lastDivScrollY = y
+    hideNav()
+    desktopHeroInView.value = true
+    return
+  }
+  desktopHeroInView.value = false
+
   const delta = y - lastDivScrollY
   lastDivScrollY = y
   if (!shouldAutoHideNav.value) {
@@ -437,6 +508,13 @@ const showPostModal = ref(false)
 const showStoryModal = ref(false)
 const showQuickProductModal = ref(false)
 const showSearchOverlay = ref(false)
+const onOpenSearch = () => {
+  if (props.useCustomSearch) {
+    useHomeSearch().searchOpen.value = true
+    return
+  }
+  showSearchOverlay.value = true
+}
 const showNotificationOverlay = ref(false)
 const { isOpen: showAI } = useDassaPanel()
 // Shared so pages (e.g. product page "View cart") can open the drawer too.
@@ -475,6 +553,14 @@ onMounted(() => {
   // Persist banner dismiss
   dismissSellerBanner.value =
     localStorage.getItem('dismissedSellerBanner') === 'true'
+
+  // onMainScroll only fires once the user actually scrolls — without this,
+  // nav/sidebars would show over the hero on first paint until that first
+  // scroll event.
+  if (props.snapHero) {
+    hideNav()
+    desktopHeroInView.value = true
+  }
 
   // Window scroll — catches document-level scroll (desktop fallback)
   window.addEventListener('scroll', onWindowScroll, { passive: true })

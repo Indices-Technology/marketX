@@ -23,7 +23,10 @@ test.describe('desktop SideNav — guest', () => {
   test.use({ viewport: { width: 1440, height: 900 } })
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('/', { waitUntil: 'networkidle' })
+    // MinimalHome's autoplaying/looping video slides keep the network busy
+    // indefinitely, same as SSE/WS pages elsewhere in this suite — never
+    // reaches 'networkidle'.
+    await page.goto('/', { waitUntil: 'domcontentloaded' })
   })
 
   test('sidebar is visible', async ({ page }) => {
@@ -88,7 +91,10 @@ test.describe('desktop SideNav — active state', () => {
   test.use({ viewport: { width: 1440, height: 900 } })
 
   test('Home link has active class when on /', async ({ page }) => {
-    await page.goto('/', { waitUntil: 'networkidle' })
+    // MinimalHome's autoplaying/looping video slides keep the network busy
+    // indefinitely, same as SSE/WS pages elsewhere in this suite — never
+    // reaches 'networkidle'.
+    await page.goto('/', { waitUntil: 'domcontentloaded' })
     // Two a[href="/"] exist: logo + nav-button. Target only the nav-button.
     await expect(sideNav(page).locator('a.nav-button[href="/"]')).toHaveClass(
       /active/,
@@ -119,7 +125,10 @@ test.describe('mobile BottomNav — guest', () => {
   test.use({ viewport: { width: 390, height: 844 } })
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('/', { waitUntil: 'networkidle' })
+    // MinimalHome's autoplaying/looping video slides keep the network busy
+    // indefinitely, same as SSE/WS pages elsewhere in this suite — never
+    // reaches 'networkidle'.
+    await page.goto('/', { waitUntil: 'domcontentloaded' })
   })
 
   test('bottom nav bar is visible', async ({ page }) => {
@@ -153,7 +162,10 @@ test.describe('mobile header — aria-labels', () => {
   test.use({ viewport: { width: 390, height: 844 } })
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('/', { waitUntil: 'networkidle' })
+    // MinimalHome's autoplaying/looping video slides keep the network busy
+    // indefinitely, same as SSE/WS pages elsewhere in this suite — never
+    // reaches 'networkidle'.
+    await page.goto('/', { waitUntil: 'domcontentloaded' })
   })
 
   test('Cart button has aria-label="Cart"', async ({ page }) => {
@@ -176,7 +188,10 @@ test.describe('mobile BottomNav — aria-labels', () => {
   test.use({ viewport: { width: 390, height: 844 } })
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('/', { waitUntil: 'networkidle' })
+    // MinimalHome's autoplaying/looping video slides keep the network busy
+    // indefinitely, same as SSE/WS pages elsewhere in this suite — never
+    // reaches 'networkidle'.
+    await page.goto('/', { waitUntil: 'domcontentloaded' })
   })
 
   test('Home link has aria-label="Home"', async ({ page }) => {
@@ -242,14 +257,21 @@ test.describe('page meta tags', () => {
     { route: '/squares', label: 'squares' },
   ]) {
     test(`${label} page has a non-empty <title>`, async ({ page }) => {
-      await page.goto(route, { waitUntil: 'networkidle' })
+      // Home's MinimalHome video slides never reach 'networkidle'; the other
+      // two routes are fine with it.
+      await page.goto(route, {
+        waitUntil: route === '/' ? 'domcontentloaded' : 'networkidle',
+      })
       const title = await page.title()
       expect(title.trim().length).toBeGreaterThan(0)
     })
   }
 
   test('home page has meta description', async ({ page }) => {
-    await page.goto('/', { waitUntil: 'networkidle' })
+    // MinimalHome's autoplaying/looping video slides keep the network busy
+    // indefinitely, same as SSE/WS pages elsewhere in this suite — never
+    // reaches 'networkidle'.
+    await page.goto('/', { waitUntil: 'domcontentloaded' })
     const content = await page
       .locator('meta[name="description"]')
       .getAttribute('content')
@@ -259,10 +281,15 @@ test.describe('page meta tags', () => {
 
 // ── VISUAL SNAPSHOTS ──────────────────────────────────────────────────────────
 
+// NOTE: after the TrustMarketHome/SocialFeed → MinimalHome default-home
+// switch, both baselines below must be regenerated — run with --update-snapshots.
+
 test('desktop SideNav — visual snapshot', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
-  await page.goto('/', { waitUntil: 'networkidle' })
-  await expect(page.getByText("Today's deals")).toBeVisible(T)
+  await page.goto('/', { waitUntil: 'domcontentloaded' })
+  await expect(
+    page.getByRole('button', { name: /search or verify a seller/i }),
+  ).toBeVisible({ timeout: 30000 })
   const box = await sideNav(page).boundingBox()
   await expect(page).toHaveScreenshot('desktop-sidenav.png', {
     maxDiffPixelRatio: 0.05,
@@ -272,8 +299,10 @@ test('desktop SideNav — visual snapshot', async ({ page }) => {
 
 test('mobile BottomNav — visual snapshot', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/', { waitUntil: 'networkidle' })
-  await expect(page.getByText("Today's deals")).toBeVisible(T)
+  await page.goto('/', { waitUntil: 'domcontentloaded' })
+  await expect(
+    page.getByRole('button', { name: /search or verify a seller/i }),
+  ).toBeVisible({ timeout: 30000 })
   const box = await bottomNav(page).boundingBox()
   await expect(page).toHaveScreenshot('mobile-bottomnav.png', {
     maxDiffPixelRatio: 0.05,

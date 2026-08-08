@@ -30,7 +30,7 @@ const EMBED_CSP = [
   "img-src 'self' data: https://res.cloudinary.com",
   "media-src 'self' https://res.cloudinary.com",
   "connect-src 'self'",
-  "frame-ancestors *",
+  'frame-ancestors *',
   "base-uri 'self'",
   "object-src 'none'",
 ].join('; ')
