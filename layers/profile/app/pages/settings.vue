@@ -155,6 +155,14 @@
         </div>
 
         <SettingToggle
+          icon="solar:widget-5-linear"
+          label="Detailed Home View"
+          description="Classic scrolling feed instead of the full-screen swipe view (off by default)"
+          :value="settings.feedDisplayStyle === 'detailed'"
+          :border="true"
+          @change="update('feedDisplayStyle', $event ? 'detailed' : 'minimal')"
+        />
+        <SettingToggle
           icon="solar:posts-carousel-vertical-linear"
           label="Compact Feed"
           description="Show smaller post cards"

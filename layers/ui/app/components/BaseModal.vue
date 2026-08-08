@@ -3,22 +3,36 @@
     <Transition name="modal-backdrop">
       <div
         v-if="modelValue"
-        class="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+        class="fixed inset-0 z-50 flex justify-center bg-black/50 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+        :class="anchor === 'top' ? 'items-start' : 'items-end'"
         @click.self="onBackdropClick"
       >
-        <Transition name="modal-panel">
+        <Transition
+          :name="anchor === 'top' ? 'modal-panel-top' : 'modal-panel'"
+        >
           <div
             v-if="modelValue"
             :class="[
               'relative flex w-full flex-col bg-white dark:bg-neutral-900',
-              'rounded-t-3xl sm:rounded-2xl',
+              anchor === 'top'
+                ? 'rounded-b-3xl sm:rounded-2xl'
+                : 'rounded-t-3xl sm:rounded-2xl',
               maxWidthClass,
               heightClass,
             ]"
           >
-            <!-- Drag handle (mobile only) -->
-            <div class="flex justify-center pb-1 pt-3 sm:hidden" aria-hidden="true">
-              <div class="h-1 w-10 rounded-full bg-gray-200 dark:bg-neutral-700" />
+            <!-- Drag handle (mobile only) — omitted when top-anchored: the
+                 drag-to-dismiss affordance this implies (pull toward the
+                 anchor edge) doesn't read correctly for a sheet dropping
+                 from the top. -->
+            <div
+              v-if="anchor !== 'top'"
+              class="flex justify-center pb-1 pt-3 sm:hidden"
+              aria-hidden="true"
+            >
+              <div
+                class="h-1 w-10 rounded-full bg-gray-200 dark:bg-neutral-700"
+              />
             </div>
 
             <!-- Header -->
@@ -28,10 +42,7 @@
             >
               <div class="min-w-0 flex-1">
                 <slot name="header">
-                  <h2
-                    v-if="title"
-                    class="truncate t-heading text-base"
-                  >
+                  <h2 v-if="title" class="t-heading truncate text-base">
                     {{ title }}
                   </h2>
                 </slot>
@@ -80,6 +91,14 @@ const props = withDefaults(
     hideClose?: boolean
     persistent?: boolean
     noPadding?: boolean
+    // Mobile sheet edge. 'bottom' (default) is the existing behavior used
+    // everywhere else in the app — kept as-is. 'top' is opt-in, for cases
+    // where a bottom sheet doesn't fit the content's own shape (e.g. a
+    // search dock whose results grow downward — anchoring it to the bottom
+    // pushes the input itself toward the middle of the screen with little
+    // room left below for those results before hitting the viewport edge).
+    // Desktop (sm:items-center, centered scale-in) is unaffected either way.
+    anchor?: 'bottom' | 'top'
   }>(),
   {
     maxWidth: 'md',
@@ -87,6 +106,7 @@ const props = withDefaults(
     hideClose: false,
     persistent: false,
     noPadding: false,
+    anchor: 'bottom',
   },
 )
 
@@ -94,14 +114,15 @@ const emit = defineEmits<{
   'update:modelValue': [value: boolean]
 }>()
 
-const maxWidthClass = computed(() =>
-  ({
-    sm: 'sm:max-w-sm',
-    md: 'sm:max-w-md',
-    lg: 'sm:max-w-lg',
-    xl: 'sm:max-w-xl',
-    full: 'sm:max-w-full sm:w-full',
-  })[props.maxWidth],
+const maxWidthClass = computed(
+  () =>
+    ({
+      sm: 'sm:max-w-sm',
+      md: 'sm:max-w-md',
+      lg: 'sm:max-w-lg',
+      xl: 'sm:max-w-xl',
+      full: 'sm:max-w-full sm:w-full',
+    })[props.maxWidth],
 )
 
 const heightClass = computed(() =>
@@ -126,10 +147,14 @@ const onBackdropClick = () => {
 }
 
 .modal-panel-enter-active {
-  transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.2s ease;
+  transition:
+    transform 0.28s cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 0.2s ease;
 }
 .modal-panel-leave-active {
-  transition: transform 0.2s ease-in, opacity 0.15s ease;
+  transition:
+    transform 0.2s ease-in,
+    opacity 0.15s ease;
 }
 
 /* Mobile: slide up from bottom */
@@ -149,6 +174,39 @@ const onBackdropClick = () => {
     opacity: 0;
   }
   .modal-panel-leave-to {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+}
+
+/* Top-anchored variant (anchor="top") — same timing/easing as the default
+   bottom-sheet transition above, mirrored to slide down from the top
+   instead of up from the bottom. Desktop centering/scale-in is identical
+   to the default variant since anchor only affects the mobile sheet edge. */
+.modal-panel-top-enter-active {
+  transition:
+    transform 0.28s cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 0.2s ease;
+}
+.modal-panel-top-leave-active {
+  transition:
+    transform 0.2s ease-in,
+    opacity 0.15s ease;
+}
+.modal-panel-top-enter-from {
+  transform: translateY(-100%);
+  opacity: 0;
+}
+.modal-panel-top-leave-to {
+  transform: translateY(-60px);
+  opacity: 0;
+}
+@media (min-width: 640px) {
+  .modal-panel-top-enter-from {
+    transform: scale(0.95) translateY(0);
+    opacity: 0;
+  }
+  .modal-panel-top-leave-to {
     transform: scale(0.95);
     opacity: 0;
   }

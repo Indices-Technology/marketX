@@ -17,6 +17,7 @@ export interface AppSettings {
   currency: string
   theme: string
   language: string
+  feedDisplayStyle: 'minimal' | 'detailed'
 }
 
 const defaults: AppSettings = {
@@ -32,6 +33,7 @@ const defaults: AppSettings = {
   currency: 'NGN',
   theme: 'system',
   language: 'en',
+  feedDisplayStyle: 'minimal',
 }
 
 const settings = ref<AppSettings>({ ...defaults })
@@ -51,6 +53,7 @@ const DB_KEY_MAP: Record<keyof AppSettings, string> = {
   currency: 'currency',
   theme: 'theme',
   language: 'language',
+  feedDisplayStyle: 'feed_display_style',
 }
 
 interface DbSettings {
@@ -66,6 +69,7 @@ interface DbSettings {
   currency: string
   theme: string
   language: string
+  feed_display_style: 'minimal' | 'detailed'
 }
 
 // Map DB snake_case → camelCase
@@ -82,6 +86,7 @@ const fromDb = (db: Partial<DbSettings>): Partial<AppSettings> => ({
   currency: db.currency ?? defaults.currency,
   theme: db.theme ?? defaults.theme,
   language: db.language ?? defaults.language,
+  feedDisplayStyle: db.feed_display_style ?? defaults.feedDisplayStyle,
 })
 
 const load = () => {

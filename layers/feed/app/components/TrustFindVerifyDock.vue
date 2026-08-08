@@ -1,5 +1,5 @@
 <!--
-  TrustFindVerifyDock — the "Find a trader / Verify any seller" search dock.
+  TrustFindVerifyDock — the "Find a seller / Verify any seller" search dock.
   Extracted from TrustMarketHome so the logged-in feed (SocialFeed) and the
   logged-out home share ONE implementation. Find → /discover, Verify → /verify.
 -->
@@ -27,7 +27,7 @@
           @click="activeHeroTab = 'search'"
         >
           <Icon name="solar:magnifer-linear" size="15" />
-          Find a trader
+          Find a seller
         </button>
         <button
           type="button"
@@ -56,15 +56,15 @@
           size="20"
           class="shrink-0 text-gray-400"
         />
-        <label class="sr-only" for="find-verify-search"
-          >Search markets, traders or goods</label
+        <label class="sr-only" :for="searchInputId"
+          >Search sellers, products or markets</label
         >
         <input
-          id="find-verify-search"
+          :id="searchInputId"
           v-model="searchQuery"
           type="text"
           autocomplete="off"
-          placeholder="Search markets, traders or goods…"
+          placeholder="Search sellers, products or markets…"
           class="w-full bg-transparent text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:outline-none dark:text-white dark:placeholder:text-neutral-500"
           @focus="searchFocused = true"
           @keydown.enter="submitSearch"
@@ -99,11 +99,11 @@
           size="20"
           class="shrink-0 text-gray-600 dark:text-neutral-400"
         />
-        <label class="sr-only" for="find-verify-verify"
+        <label class="sr-only" :for="verifyInputId"
           >Enter a seller's phone, handle or link</label
         >
         <input
-          id="find-verify-verify"
+          :id="verifyInputId"
           v-model="verifyQuery"
           type="text"
           autocomplete="off"
@@ -119,18 +119,47 @@
       </form>
     </div>
 
-    <!-- Dropdown: suggestions (empty query) -->
+    <!-- Dropdown: suggestions (empty query). Boxed (default) — floats,
+         absolutely positioned, its own bounded scroll — for contexts where
+         this dock overlays other content behind it (the desktop/dense
+         hero) and the usual "just scroll the page" escape hatch doesn't
+         reliably reach it (see the pointer-events-none hero comment below).
+         Unboxed (`boxed-dropdown="false"`) — for contexts that already
+         provide their own scrollable, empty real estate below the dock
+         (MinimalHome's search BaseModal, top-anchored specifically so
+         there's room to grow into) — flows in place instead of floating in
+         its own bordered box, no nested scroll region. -->
     <div
       v-if="activeHeroTab === 'search' && searchFocused && !searchQuery.trim()"
-      class="absolute inset-x-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-gray-200 bg-white p-2 dark:border-neutral-800 dark:bg-neutral-900"
+      ref="dropdownRef"
+      :class="
+        boxedDropdown
+          ? 'absolute inset-x-0 top-full z-50 mt-2 max-h-[70vh] overflow-y-auto rounded-xl border border-gray-200 bg-white p-2 dark:border-neutral-800 dark:bg-neutral-900'
+          : 'mt-2'
+      "
+      :style="
+        boxedDropdown && dropdownMaxHeight
+          ? { maxHeight: dropdownMaxHeight }
+          : undefined
+      "
     >
       <SearchSuggestions @search="onSuggestion" @close="closeSearch" />
     </div>
 
-    <!-- Dropdown: live results -->
+    <!-- Dropdown: live results — same boxed/unboxed split as above. -->
     <div
       v-else-if="activeHeroTab === 'search' && showLiveResults"
-      class="absolute inset-x-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
+      ref="dropdownRef"
+      :class="
+        boxedDropdown
+          ? 'absolute inset-x-0 top-full z-50 mt-2 overflow-y-auto rounded-xl border border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900'
+          : 'mt-2'
+      "
+      :style="
+        boxedDropdown && dropdownMaxHeight
+          ? { maxHeight: dropdownMaxHeight }
+          : undefined
+      "
     >
       <div
         v-if="searchLoading && !liveHasHits"
@@ -148,12 +177,15 @@
       >
         No results for "{{ searchQuery }}"
       </div>
-      <div v-else class="max-h-80 overflow-y-auto py-1">
+      <div
+        v-else
+        :class="boxedDropdown ? 'max-h-80 overflow-y-auto py-1' : 'py-1'"
+      >
         <template v-if="liveResults.stores.length">
           <p
             class="px-3 pb-1 pt-2.5 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-neutral-500"
           >
-            Traders
+            Sellers
           </p>
           <NuxtLink
             v-for="s in liveResults.stores.slice(0, 3)"
@@ -200,7 +232,11 @@
                 v-else
                 class="flex h-full w-full items-center justify-center"
               >
-                <Icon name="solar:bag-4-linear" size="14" class="text-gray-400" />
+                <Icon
+                  name="solar:bag-4-linear"
+                  size="14"
+                  class="text-gray-400"
+                />
               </div>
             </div>
             <div class="min-w-0 flex-1">
@@ -245,7 +281,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import {
+  ref,
+  computed,
+  watch,
+  onMounted,
+  onUnmounted,
+  nextTick,
+  useId,
+} from 'vue'
 import { navigateTo } from '#imports'
 
 import SearchSuggestions from '~~/layers/commerce/app/components/discover/SearchSuggestions.vue'
@@ -258,13 +302,25 @@ import type { User } from '~~/layers/core/app/types/user'
 import type { Product } from '~~/shared/types/product'
 
 defineOptions({ name: 'TrustFindVerifyDock' })
-withDefaults(defineProps<{ showSellerCta?: boolean }>(), {
-  showSellerCta: true,
-})
+const props = withDefaults(
+  defineProps<{ showSellerCta?: boolean; boxedDropdown?: boolean }>(),
+  {
+    showSellerCta: true,
+    boxedDropdown: true,
+  },
+)
 
 const { formatPrice } = useCurrency()
 const searchApi = useSearchApi()
 const recentSearches = useRecentSearches()
+
+// This dock can be mounted more than once at a time (e.g. the mobile hero's
+// own copy alongside MinimalHome's search modal) — static ids collided,
+// breaking the label/input association on whichever instance mounted
+// second. useId() gives each instance its own.
+const instanceId = useId()
+const searchInputId = computed(() => `find-verify-search-${instanceId}`)
+const verifyInputId = computed(() => `find-verify-verify-${instanceId}`)
 
 const activeHeroTab = ref<'search' | 'verify'>('search')
 const searchRoot = ref<HTMLElement | null>(null)
@@ -272,7 +328,23 @@ const searchQuery = ref('')
 const verifyQuery = ref('')
 const searchFocused = ref(false)
 const searchLoading = ref(false)
+const dropdownRef = ref<HTMLElement | null>(null)
+// Set only in the no-safely-scrollable-ancestor fallback below — caps the
+// dropdown to whatever vertical space is actually left in the viewport
+// instead of a flat 70vh, which can still overflow when the dock itself
+// already sits far down the screen (e.g. below a headline + subhead).
+const dropdownMaxHeight = ref<string | undefined>(undefined)
 
+// When this dock lives inside HomeHero's `position: fixed` hero, a viewport-
+// relative max-height on the dropdown isn't enough — the dock's own vertical
+// position can already sit far down the screen (it shifts with how the
+// headline wraps at different widths), so there may be little room left
+// below it regardless of how the dropdown itself is capped. Scrolling it
+// into view on open sidesteps that entirely. `scrollIntoView` walks up the
+// real DOM scroll-chain (main-scroll, or the hero's own overflow-y-auto),
+// which works even though the hero is `pointer-events-none` — that only
+// affects hit-testing for user-driven pointer/wheel input, not the scroll
+// API called from script.
 interface LiveResults {
   products: Product[]
   stores: User[]
@@ -283,11 +355,66 @@ const liveResults = ref<LiveResults>({ ...empty })
 
 const liveHasHits = computed(
   () =>
-    liveResults.value.products.length > 0 || liveResults.value.stores.length > 0,
+    liveResults.value.products.length > 0 ||
+    liveResults.value.stores.length > 0,
 )
 const showLiveResults = computed(
   () => searchFocused.value && searchQuery.value.trim().length >= 2,
 )
+
+const scrollDropdownIntoView = async () => {
+  // Unboxed dropdowns flow in normal document flow inside an ancestor
+  // that's already scrollable with real room below (e.g. MinimalHome's
+  // top-anchored search modal) — none of the absolute-positioning-specific
+  // nudge/cap logic below applies, and forcing a max-height here would
+  // reintroduce the "no need to box it" nested-scroll chrome this mode
+  // exists to avoid.
+  if (!props.boxedDropdown) return
+  await nextTick()
+  // dropdownRef, not searchRoot: the dropdown is `position: absolute` and
+  // doesn't contribute to searchRoot's own layout height, so scrolling
+  // searchRoot into view wouldn't necessarily reveal it.
+  const el = dropdownRef.value
+  if (!el) return
+  // Prefer computing the scroll manually over a plain `scrollIntoView`:
+  // its default `block: 'nearest'` scrolls to a flush, zero-margin fit —
+  // technically all in-viewport, but visually reads as cut off with content
+  // right against the edge. `[data-hero-scroll]` is the HomeHero fixed
+  // section when this dock is used there; elsewhere (SocialFeed, MinimalHome)
+  // it's absent and we fall back to the browser default.
+  const scroller = el.closest<HTMLElement>('[data-hero-scroll]')
+  if (!scroller) {
+    // No safely-scrollable ancestor to reveal more room by scrolling it —
+    // notably, the mobile dense hero sits inside MinimalHome's
+    // snap-mandatory slide container, where any scroll attempt snaps to the
+    // *next slide* entirely rather than nudging the view, so scrollIntoView
+    // there was silently doing nothing useful. Cap the dropdown to whatever
+    // space is actually left below it instead, so it's self-contained and
+    // scrolls internally rather than running off the bottom of the screen.
+    dropdownMaxHeight.value = undefined
+    const margin = 16
+    const available =
+      window.innerHeight - el.getBoundingClientRect().top - margin
+    dropdownMaxHeight.value = `${Math.max(160, available)}px`
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    return
+  }
+  dropdownMaxHeight.value = undefined
+  const margin = 16
+  const overflowBelow =
+    el.getBoundingClientRect().bottom - scroller.getBoundingClientRect().bottom
+  if (overflowBelow > 0) {
+    scroller.scrollBy({ top: overflowBelow + margin, behavior: 'smooth' })
+  }
+}
+watch(searchFocused, (focused) => {
+  if (focused) scrollDropdownIntoView()
+})
+// Also re-check when switching from suggestions to live results (typing) —
+// a different dropdown, often a different height.
+watch(showLiveResults, (showing) => {
+  if (showing) scrollDropdownIntoView()
+})
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
 watch(searchQuery, (val) => {

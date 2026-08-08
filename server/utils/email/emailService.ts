@@ -5,6 +5,7 @@
  */
 
 import { Resend } from 'resend'
+import { resolveFrom, resolveReplyTo } from './addresses'
 
 let resendInstance: Resend | null = null
 
@@ -41,25 +42,17 @@ export async function sendEmail(
   options: EmailOptions,
 ): Promise<{ id: string }> {
   const resend = getResendClient()
-  const config = useRuntimeConfig()
-  const senderEmail = config.public.senderEmail as string
-  const siteName = (config.public.siteName as string) || 'MarketX'
-
-  // Give the sender a friendly display name so recipients (and spam filters) see
-  // "MarketX <noreply@…>" rather than a bare address. If SENDER_EMAIL already
-  // includes a display name (contains "<"), respect it as-is.
-  const from = senderEmail.includes('<')
-    ? senderEmail
-    : `${siteName} <${senderEmail}>`
 
   try {
     const response = await resend.emails.send({
-      from,
+      // From/Reply-To live in one place so this path and the BullMQ worker in
+      // server/queues/email.queue.ts can never drift apart. See addresses.ts.
+      from: resolveFrom(),
       to: options.to,
       subject: options.subject,
       html: options.html,
       text: options.text,
-      replyTo: options.replyTo,
+      replyTo: resolveReplyTo(undefined, options.replyTo),
     })
 
     if (response.error) {

@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>MarketX — Email Signature Builder</title>
+<style>
+  :root {
+    --bg: #F8FAFC; --panel: #FFFFFF; --ink: #0B0B0F; --muted: #64748B;
+    --line: #E2E8F0; --brand: #F43F5E;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 32px 20px 64px;
+    font-family: 'Manrope', 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: var(--bg); color: var(--ink);
+  }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; color: var(--brand); margin: 0 0 6px; }
+  h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.4px; margin: 0 0 6px; }
+  .sub { color: var(--muted); font-size: 14px; margin: 0 0 28px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+  .panel h2 { font-size: 13px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; color: var(--muted); margin: 0 0 14px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+  label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 5px; }
+  input {
+    width: 100%; padding: 9px 11px; font: inherit; font-size: 14px;
+    border: 1px solid var(--line); border-radius: 4px; background: #fff; color: var(--ink);
+  }
+  input:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px rgba(244,63,94,.12); }
+  .stage { border: 1px solid var(--line); border-radius: 6px; padding: 22px; background: #fff; }
+  .stage.dark { background: #0F172A; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+  button {
+    font: inherit; font-size: 13px; font-weight: 600; padding: 8px 14px;
+    border-radius: 4px; border: 1px solid var(--line); background: #fff; color: var(--ink); cursor: pointer;
+  }
+  button:hover { border-color: #CBD5E1; }
+  button.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+  button.primary:hover { background: #E11D48; border-color: #E11D48; }
+  .hint { font-size: 12px; color: var(--muted); line-height: 1.6; margin: 14px 0 0; }
+  code { background: #F1F5F9; padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+  textarea { width: 100%; height: 150px; font-family: ui-monospace, Consolas, monospace; font-size: 11px; line-height: 1.5; border: 1px solid var(--line); border-radius: 4px; padding: 10px; background: #F8FAFC; color: #334155; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Brand assets</p>
+  <h1>Email signature builder</h1>
+  <p class="sub">Fill in your details, hit <strong>Copy signature</strong>, then paste straight into Gmail, Outlook, or Apple Mail. Nothing leaves this page.</p>
+
+  <div class="panel">
+    <h2>Your details</h2>
+    <div class="grid">
+      <div><label for="f_name">Full name</label><input id="f_name" value="Ada Okonkwo" /></div>
+      <div><label for="f_role">Role</label><input id="f_role" value="Head of Seller Growth" /></div>
+      <div><label for="f_email">Email</label><input id="f_email" value="ada@marketx.africa" /></div>
+      <div><label for="f_phone">Phone (display)</label><input id="f_phone" value="+234 806 683 8217" /></div>
+      <div><label for="f_wa">WhatsApp number (digits only)</label><input id="f_wa" value="2348066838217" /></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="row">
+      <h2 style="margin:0">Full signature — new emails</h2>
+      <div>
+        <button type="button" data-theme-toggle="full">Dark background</button>
+        <button type="button" class="primary" data-copy="full">Copy signature</button>
+      </div>
+    </div>
+    <div class="stage" id="stage-full"></div>
+    <p class="hint">Use this on first contact. The mark loads from <code>marketx.africa/icons/icon-180.png</code> — if a recipient blocks images they see the alt text "MarketX" and the rest still holds.</p>
+  </div>
+
+  <div class="panel">
+    <div class="row">
+      <h2 style="margin:0">Compact — replies &amp; threads</h2>
+      <div>
+        <button type="button" data-theme-toggle="compact">Dark background</button>
+        <button type="button" class="primary" data-copy="compact">Copy signature</button>
+      </div>
+    </div>
+    <div class="stage" id="stage-compact"></div>
+    <p class="hint">No image, one brand accent. Set this as your reply signature so threads don't stack logos.</p>
+  </div>
+
+  <div class="panel">
+    <div class="row">
+      <h2 style="margin:0">Plain text</h2>
+      <button type="button" data-copy="text">Copy plain text</button>
+    </div>
+    <textarea id="out-text" readonly></textarea>
+  </div>
+</div>
+
+<script>
+const TPL_FULL = `
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-family:'Manrope','Segoe UI',Helvetica,Arial,sans-serif;color:#0B0B0F;">
+  <tr>
+    <td width="58" style="width:58px;padding:2px 16px 0 0;vertical-align:top;">
+      <img src="https://marketx.africa/icons/icon-180.png" width="44" height="44" alt="MarketX" style="display:block;width:44px;height:44px;border:0;outline:none;text-decoration:none;" />
+    </td>
+    <td style="vertical-align:top;padding:0 0 0 16px;border-left:1px solid #E2E8F0;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+        <tr><td style="font-family:'Archivo','Manrope','Segoe UI',Helvetica,Arial,sans-serif;font-size:16px;line-height:20px;font-weight:700;letter-spacing:-0.2px;color:#0B0B0F;padding:0 0 3px 0;">{{FULL_NAME}}</td></tr>
+        <tr><td style="font-size:13px;line-height:18px;color:#64748B;padding:0 0 9px 0;">{{ROLE}} &nbsp;&middot;&nbsp; <span style="color:#0B0B0F;font-weight:600;">MarketX</span></td></tr>
+        <tr><td style="padding:0 0 10px 0;">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;"><tr>
+            <td width="28" height="2" style="width:28px;height:2px;background-color:#F43F5E;font-size:0;line-height:0;">&nbsp;</td>
+          </tr></table>
+        </td></tr>
+        <tr><td style="font-size:13px;line-height:20px;color:#475569;padding:0 0 2px 0;"><a href="mailto:{{EMAIL}}" style="color:#0B0B0F;text-decoration:none;">{{EMAIL}}</a></td></tr>
+        <tr><td style="font-size:13px;line-height:20px;color:#475569;padding:0 0 2px 0;"><a href="tel:{{PHONE_E164}}" style="color:#475569;text-decoration:none;">{{PHONE}}</a><span style="color:#CBD5E1;">&nbsp;&middot;&nbsp;</span><a href="https://wa.me/{{WHATSAPP}}" style="color:#475569;text-decoration:none;">WhatsApp</a></td></tr>
+        <tr><td style="font-size:13px;line-height:20px;padding:0 0 10px 0;"><a href="https://marketx.africa" style="color:#F43F5E;text-decoration:none;font-weight:600;">marketx.africa</a></td></tr>
+        <tr><td style="font-size:11px;line-height:15px;font-weight:600;letter-spacing:0.6px;text-transform:uppercase;color:#94A3B8;">Trade with trust &nbsp;&middot;&nbsp; Escrow-protected payments</td></tr>
+      </table>
+    </td>
+  </tr>
+</table>`.trim();
+
+const TPL_COMPACT = `
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-family:'Manrope','Segoe UI',Helvetica,Arial,sans-serif;">
+  <tr><td style="padding:0 0 6px 0;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;"><tr>
+      <td width="24" height="2" style="width:24px;height:2px;background-color:#F43F5E;font-size:0;line-height:0;">&nbsp;</td>
+    </tr></table>
+  </td></tr>
+  <tr><td style="font-size:13px;line-height:19px;color:#64748B;">
+    <span style="font-weight:700;color:#0B0B0F;">{{FULL_NAME}}</span> &nbsp;&middot;&nbsp; {{ROLE}}, MarketX<br />
+    <a href="mailto:{{EMAIL}}" style="color:#64748B;text-decoration:none;">{{EMAIL}}</a><span style="color:#CBD5E1;">&nbsp;&middot;&nbsp;</span><a href="tel:{{PHONE_E164}}" style="color:#64748B;text-decoration:none;">{{PHONE}}</a><span style="color:#CBD5E1;">&nbsp;&middot;&nbsp;</span><a href="https://marketx.africa" style="color:#F43F5E;text-decoration:none;font-weight:600;">marketx.africa</a>
+  </td></tr>
+</table>`.trim();
+
+const TPL_TEXT = `--
+{{FULL_NAME}}
+{{ROLE}} · MarketX
+
+{{EMAIL}}
+{{PHONE}} · WhatsApp: https://wa.me/{{WHATSAPP}}
+https://marketx.africa
+
+Trade with trust · Escrow-protected payments`;
+
+const fields = ['name', 'role', 'email', 'phone', 'wa'];
+const $ = (id) => document.getElementById(id);
+
+function tokens() {
+  const phone = $('f_phone').value.trim();
+  return {
+    FULL_NAME: $('f_name').value.trim(),
+    ROLE: $('f_role').value.trim(),
+    EMAIL: $('f_email').value.trim(),
+    PHONE: phone,
+    PHONE_E164: phone.replace(/[^\d+]/g, ''),
+    WHATSAPP: $('f_wa').value.replace(/\D/g, ''),
+  };
+}
+
+function fill(tpl) {
+  const t = tokens();
+  return tpl.replace(/\{\{(\w+)\}\}/g, (_, k) => t[k] ?? '');
+}
+
+function render() {
+  $('stage-full').innerHTML = fill(TPL_FULL);
+  $('stage-compact').innerHTML = fill(TPL_COMPACT);
+  $('out-text').value = fill(TPL_TEXT);
+}
+
+fields.forEach((f) => $('f_' + f).addEventListener('input', render));
+
+document.querySelectorAll('[data-theme-toggle]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const stage = $('stage-' + btn.dataset.themeToggle);
+    stage.classList.toggle('dark');
+    btn.textContent = stage.classList.contains('dark') ? 'Light background' : 'Dark background';
+  });
+});
+
+document.querySelectorAll('[data-copy]').forEach((btn) => {
+  btn.addEventListener('click', async () => {
+    const kind = btn.dataset.copy;
+    const label = btn.textContent;
+    try {
+      if (kind === 'text') {
+        await navigator.clipboard.writeText(fill(TPL_TEXT));
+      } else {
+        const html = fill(kind === 'full' ? TPL_FULL : TPL_COMPACT);
+        const item = new ClipboardItem({
+          'text/html': new Blob([html], { type: 'text/html' }),
+          'text/plain': new Blob([fill(TPL_TEXT)], { type: 'text/plain' }),
+        });
+        await navigator.clipboard.write([item]);
+      }
+      btn.textContent = 'Copied ✓';
+    } catch {
+      // Fallback for browsers without async clipboard write: select the rendered node.
+      const stage = kind === 'text' ? $('out-text') : $('stage-' + kind);
+      if (kind === 'text') {
+        stage.select();
+        btn.textContent = document.execCommand('copy') ? 'Copied ✓' : 'Press Ctrl+C';
+        setTimeout(() => { btn.textContent = label; }, 1800);
+        return;
+      }
+      const range = document.createRange();
+      range.selectNodeContents(stage);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      btn.textContent = document.execCommand('copy') ? 'Copied ✓' : 'Press Ctrl+C';
+    }
+    setTimeout(() => { btn.textContent = label; }, 1800);
+  });
+});
+
+render();
+</script>
+</body>
+</html>

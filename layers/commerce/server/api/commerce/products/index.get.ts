@@ -52,6 +52,22 @@ export default defineEventHandler(async (event) => {
       },
       { limit: query.limit, offset: query.offset },
     )
+
+    // Browser/CDN caching for the PUBLIC listing only. The service already
+    // caches server-side (remember(), 60s), but without this header every
+    // client hit still made a round trip — noticeable when a UI switches
+    // between tabs backed by this endpoint. Matches the feed endpoints'
+    // existing policy. Deliberately NOT set for seller-scoped DRAFT/ARCHIVED
+    // views: those are private to one seller and must never land in a shared
+    // cache.
+    if (status === 'PUBLISHED') {
+      setHeader(
+        event,
+        'Cache-Control',
+        'public, max-age=60, stale-while-revalidate=120',
+      )
+    }
+
     return { success: true, data: result }
   } catch (error: unknown) {
     if (error instanceof UserError)

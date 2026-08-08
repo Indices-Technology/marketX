@@ -173,17 +173,25 @@
           <div
             class="mt-2 flex items-center gap-1.5 text-[11px] text-gray-400 dark:text-neutral-500"
           >
-            <span class="flex items-center gap-1">
-              <Icon name="solar:shop-2-linear" size="13" />
-              {{ formattedMemberCount }} traders
-            </span>
-            <span v-if="square.productCount != null">
-              · {{ square.productCount }} goods
-            </span>
+            <!-- A brand-new square with 0 traders/goods is real, but showing
+                 "0" reads as broken/empty rather than authentic — especially
+                 in a marketing context. Hide the counts entirely rather than
+                 print a zero. -->
+            <template v-if="hasStats">
+              <span v-if="square.memberCount" class="flex items-center gap-1">
+                <Icon name="solar:shop-2-linear" size="13" />
+                {{ formattedMemberCount }} traders
+              </span>
+              <span v-if="square.productCount">
+                {{ square.memberCount ? '·' : '' }} {{ square.productCount }}
+                goods
+              </span>
+            </template>
             <span
-              class="ml-auto inline-flex items-center gap-1 font-semibold text-gray-700 transition-colors group-hover:text-brand dark:text-neutral-300"
+              class="inline-flex items-center gap-1 font-semibold text-gray-700 transition-colors group-hover:text-brand dark:text-neutral-300"
+              :class="hasStats ? 'ml-auto' : ''"
             >
-              Visit
+              {{ hasStats ? 'Visit' : 'Explore market' }}
               <Icon
                 name="solar:arrow-right-linear"
                 size="12"
@@ -441,6 +449,11 @@ const formattedMemberCount = computed(() =>
   Intl.NumberFormat('en', { notation: 'compact' }).format(
     props.square.memberCount ?? 0,
   ),
+)
+
+const hasStats = computed(
+  () =>
+    (props.square.memberCount ?? 0) > 0 || (props.square.productCount ?? 0) > 0,
 )
 
 const formattedFollowerCount = computed(() =>

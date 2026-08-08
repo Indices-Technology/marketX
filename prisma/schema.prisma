@@ -1141,6 +1141,7 @@ model UserSettings {
   show_shop_today     Boolean  @default(true)
   show_stories        Boolean  @default(false)
   reduce_motion       Boolean  @default(false)
+  feed_display_style  String   @default("minimal")
   created_at          DateTime @default(now())
   updated_at          DateTime @updatedAt
 

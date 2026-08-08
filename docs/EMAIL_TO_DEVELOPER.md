@@ -38,7 +38,7 @@ like to flag up front so nothing surprises us mid-build:
   payment schedule, IP, and the dependency schedule) — for your review.
 - **API technical pack:** route map, mobile integration guide, the OpenAPI contract, and
   the API Readiness Matrix.
-- **Staging API access:** `https://marketx.indicestech.com/api` — interactive docs and
+- **Staging API access:** `https://staging.marketx.africa/api` — interactive docs and
   test-account details to follow in a separate, secure message.
 
 **Suggested next steps:**

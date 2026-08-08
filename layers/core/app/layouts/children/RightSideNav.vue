@@ -177,6 +177,7 @@
             >
               <NuxtLink
                 :to="`/sellers/profile/${seller.store_slug}`"
+                :aria-label="seller.store_name || seller.store_slug"
                 class="relative shrink-0"
               >
                 <StoreAvatar

@@ -18,6 +18,9 @@ export interface IFeedItem {
     username: string
     avatar?: string | null | undefined
     role: 'user' | 'seller'
+    // Seller-authored content only (null otherwise). The real store slug —
+    // never derive this from `username`, which is a separate field.
+    storeSlug?: string | null
   }
 
   // Media (primary display — first non-music item, kept for backward compat)

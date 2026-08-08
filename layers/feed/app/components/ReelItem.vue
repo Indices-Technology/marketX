@@ -49,13 +49,17 @@
       <button
         v-if="showUnmuteHint"
         class="absolute inset-0 z-30 flex flex-col items-center justify-center gap-3 bg-transparent"
-        @click.stop="tapToUnmute"
         aria-label="Tap to enable sound"
+        @click.stop="tapToUnmute"
       >
         <div class="unmute-pill">
           <Icon name="solar:muted-linear" size="18" class="text-white" />
           <span class="text-[13px] font-bold text-white">Tap for sound</span>
-          <Icon name="solar:alt-arrow-right-linear" size="16" class="text-white/70" />
+          <Icon
+            name="solar:alt-arrow-right-linear"
+            size="16"
+            class="text-white/70"
+          />
         </div>
       </button>
     </Transition>
@@ -64,7 +68,7 @@
     <Transition name="product-float">
       <div
         v-if="showProductFloat && taggedProduct"
-        class="pointer-events-auto absolute bottom-36 left-4 z-25 flex max-w-[220px] items-center gap-3 rounded-2xl border border-white/20 bg-black/60 px-3 py-2.5 shadow-2xl backdrop-blur-xl"
+        class="z-25 pointer-events-auto absolute bottom-36 left-4 flex max-w-[220px] items-center gap-3 rounded-2xl border border-white/20 bg-black/60 px-3 py-2.5 shadow-2xl backdrop-blur-xl"
         @click.stop
       >
         <!-- Product image thumbnail -->
@@ -82,8 +86,12 @@
         </div>
         <!-- Info -->
         <div class="min-w-0 flex-1">
-          <p class="line-clamp-1 text-[12px] font-bold text-white">{{ taggedProduct.title }}</p>
-          <p class="text-[13px] font-black text-brand">{{ formatPrice(taggedProduct.price || 0) }}</p>
+          <p class="line-clamp-1 text-[12px] font-bold text-white">
+            {{ taggedProduct.title }}
+          </p>
+          <p class="text-[13px] font-black text-brand">
+            {{ formatPrice(taggedProduct.price || 0) }}
+          </p>
         </div>
         <!-- Shop arrow -->
         <NuxtLink
@@ -97,21 +105,37 @@
     </Transition>
 
     <!-- ─── RIGHT ACTION BAR ─────────────────────────────────────────── -->
+    <!-- bottom-36, not bottom-28: the global "Messages & AI" FAB is fixed at
+         right-4 with a 56px box whose top edge measured at 528px on a 664px
+         viewport, while a bottom-28 bar ends at 552 — so the bar's last item
+         sat *under* the FAB. Same pre-existing clipping FeedSlide.vue had.
+         gap-3 rather than FeedSlide's gap-5: this bar carries six controls
+         (avatar+follow, like, comment, share, trust, mute) instead of five,
+         and at gap-5 the extra height pushed the avatar up to y=78 — behind
+         MinimalHome's tab pill, which ends at y=102 (gap-4 only reached 98,
+         still 4px short). gap-3 keeps all six inside the ~426px window
+         between that pill and the FAB. -->
     <div
-      class="absolute bottom-28 right-3 z-20 flex flex-col items-center gap-5"
+      class="absolute bottom-36 right-3 z-20 flex flex-col items-center gap-3"
     >
       <!-- Avatar & Follow -->
       <div class="relative mb-2">
-        <NuxtLink :to="reel.author?.role === 'seller'
-          ? `/sellers/profile/${reel.product?.seller?.store_slug || reel.author?.username}`
-          : `/profile/${reel.author?.username}`">
+        <NuxtLink
+          :to="
+            reel.author?.role === 'seller'
+              ? `/sellers/profile/${reel.product?.seller?.store_slug || reel.author?.username}`
+              : `/profile/${reel.author?.username}`
+          "
+        >
           <img
             :src="authorAvatar"
+            :alt="reel.author?.username || 'User'"
             class="h-12 w-12 rounded-full border-2 border-white bg-neutral-800 object-cover shadow-lg"
           />
         </NuxtLink>
         <!-- Quick Follow Button -->
         <button
+          aria-label="Follow"
           class="absolute -bottom-2 left-1/2 flex h-6 w-6 -translate-x-1/2 items-center justify-center rounded-full border-2 border-black bg-brand transition-transform hover:scale-110"
         >
           <Icon name="solar:add-circle-linear" size="14" class="text-white" />
@@ -120,8 +144,8 @@
 
       <!-- Like -->
       <button
-        @click.stop="handleLike"
         class="group flex flex-col items-center gap-1"
+        @click.stop="handleLike"
       >
         <div
           class="flex h-10 w-10 items-center justify-center rounded-full bg-black/20 backdrop-blur-md transition-colors group-hover:bg-black/40"
@@ -144,8 +168,8 @@
 
       <!-- Comment -->
       <button
-        @click.stop="$emit('open-comments', reel)"
         class="group flex flex-col items-center gap-1"
+        @click.stop="$emit('open-comments', reel)"
       >
         <div
           class="flex h-10 w-10 items-center justify-center rounded-full bg-black/20 backdrop-blur-md transition-colors group-hover:bg-black/40"
@@ -163,8 +187,8 @@
 
       <!-- Share -->
       <button
-        @click.stop="handleShare"
         class="group flex flex-col items-center gap-1"
+        @click.stop="handleShare"
       >
         <div
           class="flex h-10 w-10 items-center justify-center rounded-full bg-black/20 backdrop-blur-md transition-colors group-hover:bg-black/40"
@@ -180,11 +204,36 @@
         }}</span>
       </button>
 
+      <!-- Trust Card — seller content only, gated on a REAL store slug
+           (author.storeSlug) rather than role alone: without a genuine slug
+           the card can't be loaded, and guessing one from `username` would
+           404 or open a different seller's card. Sits with the social
+           actions, above the mute control (a media control, not a social
+           one). Same treatment as FeedSlide.vue. -->
+      <button
+        v-if="storeSlug"
+        aria-label="View seller's Trust Card"
+        class="group flex flex-col items-center gap-1"
+        @click.stop="trustCardOpen = true"
+      >
+        <div
+          class="flex h-10 w-10 items-center justify-center rounded-full bg-black/20 backdrop-blur-md transition-colors group-hover:bg-black/40"
+        >
+          <Icon
+            name="solar:shield-check-bold"
+            size="24"
+            class="text-emerald-400 transition-transform group-active:scale-75"
+          />
+        </div>
+        <span class="text-shadow text-[11px] font-bold text-white">Trust</span>
+      </button>
+
       <!-- Mute Toggle — hidden when bg music owns the audio -->
       <button
         v-if="!reel.bgMusic"
-        @click.stop="soundEnabled = !soundEnabled"
+        :aria-label="isMuted ? 'Unmute' : 'Mute'"
         class="mt-2 flex flex-col items-center gap-1"
+        @click.stop="soundEnabled = !soundEnabled"
       >
         <div
           class="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-black/20 backdrop-blur-md"
@@ -199,16 +248,26 @@
     </div>
 
     <!-- ─── BOTTOM INFO OVERLAY ──────────────────────────────────────── -->
-    <div class="absolute bottom-6 left-4 right-16 z-20 flex flex-col gap-2.5">
+    <!-- Same BottomNavMobile clearance as FeedSlide.vue's bottom info block
+         — a flat bottom-6 measured as genuinely overlapping the nav. -->
+    <div
+      class="absolute bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] left-4 right-16 z-20 flex flex-col gap-2.5"
+    >
       <!-- Author Info -->
       <div class="flex items-center gap-2">
         <NuxtLink
-          :to="reel.author?.role === 'seller'
-            ? `/sellers/profile/${reel.product?.seller?.store_slug || reel.author?.username}`
-            : `/profile/${reel.author?.username}`"
+          :to="
+            reel.author?.role === 'seller'
+              ? `/sellers/profile/${reel.product?.seller?.store_slug || reel.author?.username}`
+              : `/profile/${reel.author?.username}`
+          "
           class="text-shadow text-[15px] font-bold text-white hover:underline"
         >
-          {{ reel.author?.role === 'seller' ? reel.author?.username : `@${reel.author?.username || 'User'}` }}
+          {{
+            reel.author?.role === 'seller'
+              ? reel.author?.username
+              : `@${reel.author?.username || 'User'}`
+          }}
         </NuxtLink>
       </div>
 
@@ -253,6 +312,8 @@
         />
       </div>
     </div>
+
+    <TrustCardOverlay v-model="trustCardOpen" :store-slug="storeSlug" />
   </div>
 </template>
 
@@ -260,6 +321,7 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useState } from '#imports'
 import type { IFeedItem } from '~~/layers/feed/app/types/feed.types'
+import TrustCardOverlay from '~~/layers/feed/app/components/TrustCardOverlay.vue'
 import { useProduct } from '~~/layers/commerce/app/composables/useProduct'
 import { useLikedProducts } from '~~/layers/commerce/app/composables/useLikedProducts'
 import { useViewTracker } from '~~/layers/core/app/composables/useViewTracker'
@@ -288,7 +350,7 @@ const progress = ref(0)
 // Global sound state — same key as VideoPlayer; unmuting once carries across all reels
 const soundEnabled = useState('feed-sound-enabled', () => false)
 // Reels with bgMusic keep the video track silent (audio is the separate <audio> element)
-const isMuted = computed(() => !!(props.reel.bgMusic) || !soundEnabled.value)
+const isMuted = computed(() => !!props.reel.bgMusic || !soundEnabled.value)
 
 // Reels are PRODUCTS — likes & views target the product APIs, not the post system.
 const { likeProduct, unlikeProduct } = useProduct()
@@ -329,7 +391,9 @@ const videoUrl = computed(() => {
       ? props.reel.media.url
       : ''
   if (!raw) return ''
-  return watermarkLabel.value ? videoWatermarkUrl(raw, watermarkLabel.value) : raw
+  return watermarkLabel.value
+    ? videoWatermarkUrl(raw, watermarkLabel.value)
+    : raw
 })
 const taggedProduct = computed(
   () => props.reel.taggedProducts?.[0] ?? props.reel.product ?? null,
@@ -351,6 +415,18 @@ const productThumb = computed(() => {
 })
 
 // Author avatar — prefer store_logo for seller reels
+// ── Trust Card ───────────────────────────────────────────────────────
+const trustCardOpen = ref(false)
+// Real slug only — author.storeSlug (seller-authored posts + products), or
+// the product's own seller. Deliberately no `author.username` fallback: it's
+// a different field, so falling back would open the wrong store or 404.
+const storeSlug = computed(
+  () =>
+    props.reel.author?.storeSlug ||
+    props.reel.product?.seller?.store_slug ||
+    null,
+)
+
 const authorAvatar = computed(() => {
   const raw =
     (props.reel.author?.role === 'seller'
@@ -370,7 +446,9 @@ const scheduleProductFloat = () => {
   clearTimeout(floatHideTimer ?? 0)
   floatTimer = setTimeout(() => {
     showProductFloat.value = true
-    floatHideTimer = setTimeout(() => { showProductFloat.value = false }, 4500)
+    floatHideTimer = setTimeout(() => {
+      showProductFloat.value = false
+    }, 4500)
   }, 3000)
 }
 
@@ -395,7 +473,9 @@ const scheduleUnmuteHint = () => {
   showUnmuteHint.value = isMuted.value
   if (isMuted.value) {
     // Auto-hide after 5s so it doesn't stay forever
-    unmuteHintTimer = setTimeout(() => { showUnmuteHint.value = false }, 5000)
+    unmuteHintTimer = setTimeout(() => {
+      showUnmuteHint.value = false
+    }, 5000)
   }
 }
 
@@ -404,7 +484,9 @@ const playVideo = () => {
   if (!videoEl.value) return
   videoEl.value
     .play()
-    .then(() => { isPlaying.value = true })
+    .then(() => {
+      isPlaying.value = true
+    })
     .catch((err) => {
       console.warn('Autoplay prevented:', err)
       isPlaying.value = false
@@ -561,10 +643,14 @@ const { formatPrice } = useCurrency()
 
 /* ─── Product float-up transition ─────────────────────────────────────── */
 .product-float-enter-active {
-  transition: transform 0.45s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.3s ease;
+  transition:
+    transform 0.45s cubic-bezier(0.34, 1.4, 0.64, 1),
+    opacity 0.3s ease;
 }
 .product-float-leave-active {
-  transition: transform 0.3s ease-in, opacity 0.25s ease;
+  transition:
+    transform 0.3s ease-in,
+    opacity 0.25s ease;
 }
 .product-float-enter-from,
 .product-float-leave-to {
@@ -574,22 +660,35 @@ const { formatPrice } = useCurrency()
 
 /* ─── Tap-to-unmute pill ──────────────────────────────────────────────── */
 .unmute-pill {
-  display: flex; align-items: center; gap: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 10px 18px;
   border-radius: 9999px;
   background: rgba(0, 0, 0, 0.65);
-  border: 1px solid rgba(255,255,255,0.2);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(16px);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
   animation: unmutePulse 2s ease-in-out infinite;
 }
 @keyframes unmutePulse {
-  0%, 100% { transform: scale(1); }
-  50%       { transform: scale(1.04); }
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.04);
+  }
 }
 
-.unmute-fade-enter-active { transition: opacity 0.3s ease; }
-.unmute-fade-leave-active { transition: opacity 0.25s ease; }
+.unmute-fade-enter-active {
+  transition: opacity 0.3s ease;
+}
+.unmute-fade-leave-active {
+  transition: opacity 0.25s ease;
+}
 .unmute-fade-enter-from,
-.unmute-fade-leave-to { opacity: 0; }
+.unmute-fade-leave-to {
+  opacity: 0;
+}
 </style>

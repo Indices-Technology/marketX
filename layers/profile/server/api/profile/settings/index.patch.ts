@@ -19,6 +19,7 @@ const ALLOWED = new Set([
   'show_shop_today',
   'show_stories',
   'reduce_motion',
+  'feed_display_style',
 ])
 
 export default defineEventHandler(async (event) => {
