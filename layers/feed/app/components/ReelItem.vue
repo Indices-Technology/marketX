@@ -105,8 +105,18 @@
     </Transition>
 
     <!-- ─── RIGHT ACTION BAR ─────────────────────────────────────────── -->
+    <!-- bottom-36, not bottom-28: the global "Messages & AI" FAB is fixed at
+         right-4 with a 56px box whose top edge measured at 528px on a 664px
+         viewport, while a bottom-28 bar ends at 552 — so the bar's last item
+         sat *under* the FAB. Same pre-existing clipping FeedSlide.vue had.
+         gap-3 rather than FeedSlide's gap-5: this bar carries six controls
+         (avatar+follow, like, comment, share, trust, mute) instead of five,
+         and at gap-5 the extra height pushed the avatar up to y=78 — behind
+         MinimalHome's tab pill, which ends at y=102 (gap-4 only reached 98,
+         still 4px short). gap-3 keeps all six inside the ~426px window
+         between that pill and the FAB. -->
     <div
-      class="absolute bottom-28 right-3 z-20 flex flex-col items-center gap-5"
+      class="absolute bottom-36 right-3 z-20 flex flex-col items-center gap-3"
     >
       <!-- Avatar & Follow -->
       <div class="relative mb-2">
@@ -194,6 +204,30 @@
         }}</span>
       </button>
 
+      <!-- Trust Card — seller content only, gated on a REAL store slug
+           (author.storeSlug) rather than role alone: without a genuine slug
+           the card can't be loaded, and guessing one from `username` would
+           404 or open a different seller's card. Sits with the social
+           actions, above the mute control (a media control, not a social
+           one). Same treatment as FeedSlide.vue. -->
+      <button
+        v-if="storeSlug"
+        aria-label="View seller's Trust Card"
+        class="group flex flex-col items-center gap-1"
+        @click.stop="trustCardOpen = true"
+      >
+        <div
+          class="flex h-10 w-10 items-center justify-center rounded-full bg-black/20 backdrop-blur-md transition-colors group-hover:bg-black/40"
+        >
+          <Icon
+            name="solar:shield-check-bold"
+            size="24"
+            class="text-emerald-400 transition-transform group-active:scale-75"
+          />
+        </div>
+        <span class="text-shadow text-[11px] font-bold text-white">Trust</span>
+      </button>
+
       <!-- Mute Toggle — hidden when bg music owns the audio -->
       <button
         v-if="!reel.bgMusic"
@@ -278,6 +312,8 @@
         />
       </div>
     </div>
+
+    <TrustCardOverlay v-model="trustCardOpen" :store-slug="storeSlug" />
   </div>
 </template>
 
@@ -285,6 +321,7 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useState } from '#imports'
 import type { IFeedItem } from '~~/layers/feed/app/types/feed.types'
+import TrustCardOverlay from '~~/layers/feed/app/components/TrustCardOverlay.vue'
 import { useProduct } from '~~/layers/commerce/app/composables/useProduct'
 import { useLikedProducts } from '~~/layers/commerce/app/composables/useLikedProducts'
 import { useViewTracker } from '~~/layers/core/app/composables/useViewTracker'
@@ -378,6 +415,18 @@ const productThumb = computed(() => {
 })
 
 // Author avatar — prefer store_logo for seller reels
+// ── Trust Card ───────────────────────────────────────────────────────
+const trustCardOpen = ref(false)
+// Real slug only — author.storeSlug (seller-authored posts + products), or
+// the product's own seller. Deliberately no `author.username` fallback: it's
+// a different field, so falling back would open the wrong store or 404.
+const storeSlug = computed(
+  () =>
+    props.reel.author?.storeSlug ||
+    props.reel.product?.seller?.store_slug ||
+    null,
+)
+
 const authorAvatar = computed(() => {
   const raw =
     (props.reel.author?.role === 'seller'

@@ -43,36 +43,25 @@
       <div
         class="scrollbar-hide flex gap-1 overflow-x-auto rounded-full bg-black/40 p-1 backdrop-blur-md"
       >
+        <!-- Commerce-first ordering (Products leads), and a hard split
+             between commerce tabs and the social one: "Feed" is user posts
+             ONLY, where the old "For You" was a posts+products blend. Tabs
+             are defined locally (HOME_TABS) rather than in the shared
+             FEED_TABS/useFeedTab singleton on purpose — that singleton is
+             consumed by SocialFeed.vue's own tab bar, so editing it would
+             change SocialFeed's UI without touching the file. -->
         <button
           v-for="t in visibleTabs"
           :key="t.id"
           class="shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors"
           :class="
-            feedTab === t.id && !productsOnly
+            activeHomeTab === t.id
               ? 'bg-white text-black'
               : 'text-white/80 hover:text-white'
           "
-          @click="setTab(t.id)"
+          @click="activeHomeTab = t.id"
         >
           {{ t.label }}
-        </button>
-        <!-- "Products" — a client-side view filter, not a real server tab
-             (unlike the ones above): useHomeFeed already splits whichever
-             tab's fetched data into posts vs products pools to interleave
-             them, so this just shows the products pool on its own instead
-             of re-fetching anything. Kept local to MinimalHome rather than
-             folded into FEED_TABS/useFeedTab, since that singleton is
-             shared with SocialFeed.vue, which must not change. -->
-        <button
-          class="shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors"
-          :class="
-            productsOnly
-              ? 'bg-white text-black'
-              : 'text-white/80 hover:text-white'
-          "
-          @click="productsOnly = !productsOnly"
-        >
-          Products
         </button>
       </div>
     </div>
@@ -169,10 +158,19 @@
       </div>
     </BaseModal>
 
+    <!-- Posts → normal comment thread. -->
     <PostDetailModal
       v-if="selectedPost"
       :post="selectedPost"
       @close="selectedPost = null"
+    />
+    <!-- Products & product reels → reviews, buyer-gated. Previously these
+         also opened PostDetailModal, which showed a post comment thread for
+         something that isn't a post. -->
+    <ProductReviewModal
+      :is-open="!!reviewProduct"
+      :product="reviewProduct"
+      @close="reviewProduct = null"
     />
     <ProductDetailModal
       v-if="sheetProduct"
@@ -191,9 +189,9 @@ import HomeHero from '~~/layers/feed/app/components/HomeHero.vue'
 import TrustFindVerifyDock from '~~/layers/feed/app/components/TrustFindVerifyDock.vue'
 import BaseModal from '~~/layers/ui/app/components/BaseModal.vue'
 import ProductDetailModal from '~~/layers/commerce/app/components/modals/ProductDetailModal.vue'
+import ProductReviewModal from '~~/layers/commerce/app/components/modals/ProductReviewModal.vue'
 import PostDetailModal from '~~/layers/social/app/components/modals/PostDetailModal.vue'
 import { useHomeFeed } from '~~/layers/feed/app/composables/useHomeFeed'
-import { useFeedTab } from '~~/layers/feed/app/composables/useFeedTab'
 import { useSquareApi } from '~~/layers/square/app/services/square.api'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import { useNavVisibility } from '~~/layers/core/app/composables/useNavVisibility'
@@ -205,20 +203,41 @@ import type { MarketSquare } from '~~/layers/square/app/components/SquareCard.vu
 defineOptions({ name: 'MinimalHome' })
 
 const profileStore = useProfileStore()
-const { pending, products, reelIdSet, load, interleave } = useHomeFeed()
+const {
+  pending,
+  posts,
+  products,
+  catalogProducts,
+  reelIdSet,
+  load,
+  loadCatalogProducts,
+  interleave,
+} = useHomeFeed()
 
+/**
+ * MinimalHome's own tab set — deliberately NOT the shared FEED_TABS from
+ * useFeedTab, which SocialFeed.vue's tab bar renders from: changing that
+ * singleton would silently restyle SocialFeed's UI even without editing the
+ * file, and SocialFeed is off-limits. Local state keeps the two independent.
+ *
+ * Commerce-first ordering. Each tab maps to a genuinely different source:
+ *   products  → /api/commerce/products (real catalogue + server filtering)
+ *   deals     → /api/feed/deals
+ *   following → /api/feed/following (auth only)
+ *   feed      → /api/feed/home, posts only (no products mixed in)
+ */
+type HomeTab = 'products' | 'deals' | 'following' | 'feed'
+const HOME_TABS: { id: HomeTab; label: string; authOnly?: boolean }[] = [
+  { id: 'products', label: 'Products' },
+  { id: 'deals', label: 'Deals' },
+  { id: 'following', label: 'Following', authOnly: true },
+  { id: 'feed', label: 'Feed' },
+]
+const activeHomeTab = ref<HomeTab>('products')
 // Following requires auth — hide it for guests rather than let it 401.
-const { activeTab: feedTab, setTab, FEED_TABS } = useFeedTab()
 const visibleTabs = computed(() =>
-  profileStore.isLoggedIn
-    ? FEED_TABS
-    : FEED_TABS.filter((t) => t.id !== 'following'),
+  HOME_TABS.filter((t) => !t.authOnly || profileStore.isLoggedIn),
 )
-
-// Client-side filter over whichever tab's data is already loaded — see the
-// template comment by the "Products" button for why this isn't a real
-// FEED_TABS entry.
-const productsOnly = ref(false)
 
 type Slot =
   | { kind: 'item'; item: IFeedItem }
@@ -254,7 +273,16 @@ const containerRef = ref<HTMLElement | null>(null)
 const { searchOpen } = useHomeSearch()
 
 const selectedPost = ref<IFeedItem | null>(null)
+const reviewProduct = ref<Partial<IProduct> | null>(null)
+// One "comment" affordance, two destinations by content type: a post gets its
+// comment thread, a product (including product reels) gets its review record,
+// which only a confirmed buyer can write to. Routing on `type` rather than on
+// which component emitted, so FeedSlide and ReelItem behave identically.
 const openComments = (item: IFeedItem) => {
+  if (item.type === 'PRODUCT' && item.product) {
+    reviewProduct.value = item.product
+    return
+  }
   selectedPost.value = item
 }
 
@@ -306,20 +334,25 @@ const setupObserver = () => {
 // afterward rebuilds the item list but never re-inserts it.
 const heroShown = ref(false)
 
+const byRecency = (a: IFeedItem, b: IFeedItem) =>
+  new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+
 const buildSlots = (): Slot[] => {
-  // "Products" shows the already-fetched products pool on its own instead
-  // of interleaving it with posts — no separate fetch, see the template
-  // comment by the button.
-  const feedItems = productsOnly.value
-    ? [...products.value].sort(
-        (a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-      )
-    : interleave({
-        postsPerProduct: 2,
-        reelEvery: 4,
-        withReels: true,
-      })
+  // Each tab renders from its own pool rather than re-slicing one blended
+  // feed page — see HOME_TABS for the source mapping.
+  const tab = activeHomeTab.value
+  const feedItems =
+    tab === 'products'
+      ? catalogProducts.value
+      : // "Feed" is user posts only — the whole point of splitting it out
+        // from the commerce tabs, so no products get interleaved back in.
+        tab === 'feed'
+        ? [...posts.value].sort(byRecency)
+        : // Deals returns products only; showing them straight keeps the
+          // urgency ordering the endpoint already applies.
+          tab === 'deals'
+          ? [...products.value].sort(byRecency)
+          : interleave({ postsPerProduct: 2, reelEvery: 4, withReels: true })
   const slots: Slot[] = feedItems.map((item) => ({ kind: 'item', item }))
   if (
     squareSpotlight.value.length &&
@@ -343,7 +376,18 @@ const applySlots = async () => {
 }
 
 const loadTab = async () => {
-  await load(feedTab.value)
+  const tab = activeHomeTab.value
+  if (tab === 'products') {
+    // Own endpoint — don't spend a feed fetch it would ignore.
+    await loadCatalogProducts()
+  } else if (tab === 'deals') {
+    await load('deals')
+  } else if (tab === 'following') {
+    await load('following')
+  } else {
+    // "Feed" pulls the home feed but renders only its posts pool.
+    await load('for-you')
+  }
   await applySlots()
 }
 
@@ -353,10 +397,8 @@ onMounted(async () => {
   window.addEventListener('keydown', onKeydown)
 })
 
-watch(feedTab, loadTab)
-// No fetch needed — Products just re-slices data the current tab already
-// loaded.
-watch(productsOnly, applySlots)
+// Every tab switch swaps data source, so each needs a real fetch.
+watch(activeHomeTab, loadTab)
 
 watch(items, async () => {
   await nextTick()

@@ -135,8 +135,14 @@
     />
 
     <!-- ─── RIGHT ACTION BAR ─────────────────────────────────────────── -->
+    <!-- bottom-36, not bottom-28: the global "Messages & AI" FAB is fixed at
+         right-4 with a 56px box whose top edge measured at 528px on a 664px
+         viewport, while a bottom-28 bar ends at 552 — so the bar's last item
+         sat *under* the FAB. That already clipped the share count before the
+         Trust button existed; adding a fifth item made it hide a whole
+         control. 144px puts the bar's bottom at 520, clearing the FAB. -->
     <div
-      class="absolute bottom-28 right-3 z-20 flex flex-col items-center gap-5"
+      class="absolute bottom-36 right-3 z-20 flex flex-col items-center gap-5"
     >
       <NuxtLink :to="authorLink" class="mb-1">
         <img
@@ -195,7 +201,33 @@
           formatCount(item.shareCount || 0)
         }}</span>
       </button>
+
+      <!-- Trust Card — seller content only. Gated on a REAL store slug
+           (author.storeSlug, populated from sellerProfile.store_slug) rather
+           than on role alone: without a genuine slug the card can't be
+           loaded, and guessing one from `username` would 404 or, worse, open
+           a different seller's card. Regular users' posts simply don't show
+           this. -->
+      <button
+        v-if="storeSlug"
+        aria-label="View seller's Trust Card"
+        class="group flex flex-col items-center gap-1"
+        @click.stop="trustCardOpen = true"
+      >
+        <div
+          class="flex h-10 w-10 items-center justify-center rounded-full bg-black/20 backdrop-blur-md"
+        >
+          <Icon
+            name="solar:shield-check-bold"
+            size="24"
+            class="text-emerald-400"
+          />
+        </div>
+        <span class="text-shadow text-[11px] font-bold text-white">Trust</span>
+      </button>
     </div>
+
+    <TrustCardOverlay v-model="trustCardOpen" :store-slug="storeSlug" />
 
     <!-- ─── BOTTOM INFO ───────────────────────────────────────────────── -->
     <!-- bottom offset clears BottomNavMobile (h-16 + safe-area), which sits
@@ -254,6 +286,7 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import type { IFeedItem } from '~~/layers/feed/app/types/feed.types'
 import type { IProduct } from '~~/layers/social/app/types/post.types'
+import TrustCardOverlay from '~~/layers/feed/app/components/TrustCardOverlay.vue'
 import { usePost } from '~~/layers/social/app/composables/usePost'
 import { usePostStore } from '~~/layers/social/app/store/post.store'
 import { useProduct } from '~~/layers/commerce/app/composables/useProduct'
@@ -355,6 +388,18 @@ const syncVideoPlayback = () => {
 }
 watch([() => props.isActive, carouselIndex], syncVideoPlayback)
 onMounted(syncVideoPlayback)
+
+// ── Trust Card ───────────────────────────────────────────────────────
+const trustCardOpen = ref(false)
+// Real slug only — author.storeSlug (seller-authored posts + products), or
+// the product's own seller. Deliberately no `author.username` fallback: it's
+// a different field, so falling back would open the wrong store or 404.
+const storeSlug = computed(
+  () =>
+    props.item.author?.storeSlug ||
+    props.item.product?.seller?.store_slug ||
+    null,
+)
 
 // ── Author ───────────────────────────────────────────────────────────
 const authorLink = computed(() =>

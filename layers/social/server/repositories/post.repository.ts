@@ -9,7 +9,11 @@ const authorSelect = {
   avatar: true,
   role: true,
   sellerProfile: {
-    select: { store_logo: true },
+    // store_slug (not just the logo) so consumers can link to / load the
+    // seller's real store — e.g. the feed's Trust Card overlay, which needs a
+    // genuine slug and must not guess one from `username` (they're separate
+    // fields and routinely differ).
+    select: { store_logo: true, store_slug: true },
   },
 } as const
 
@@ -73,23 +77,34 @@ export const postRepository = {
     if (!text) return []
     // Matches #tag at word boundary; tag must start with a letter, max 30 chars
     const matches = [...text.matchAll(/(?<!\w)#([a-zA-Z][a-zA-Z0-9_]{0,29})/g)]
-    return [...new Set(matches.map(m => m[1]!.toLowerCase()))]
+    return [...new Set(matches.map((m) => m[1]!.toLowerCase()))]
   },
 
-  async linkHashtags(postId: string, caption?: string | null, content?: string | null) {
-    const names = [...new Set([
-      ...postRepository.extractHashtags(caption),
-      ...postRepository.extractHashtags(content),
-    ])]
+  async linkHashtags(
+    postId: string,
+    caption?: string | null,
+    content?: string | null,
+  ) {
+    const names = [
+      ...new Set([
+        ...postRepository.extractHashtags(caption),
+        ...postRepository.extractHashtags(content),
+      ]),
+    ]
     if (!names.length) return
 
     const tags = await Promise.all(
-      names.map(name =>
-        prisma.tag.upsert({ where: { name }, create: { name }, update: {}, select: { id: true } }),
+      names.map((name) =>
+        prisma.tag.upsert({
+          where: { name },
+          create: { name },
+          update: {},
+          select: { id: true },
+        }),
       ),
     )
     await prisma.postTags.createMany({
-      data: tags.map(t => ({ postId, tagId: t.id })),
+      data: tags.map((t) => ({ postId, tagId: t.id })),
       skipDuplicates: true,
     })
   },
@@ -109,7 +124,9 @@ export const postRepository = {
       visibility: data.visibility || 'PUBLIC',
       contentType: data.contentType || 'COMMERCE',
       mentions: data.mentions?.length ? data.mentions : undefined,
-      ...(sellerProfile?.primarySquareId && { squareId: sellerProfile.primarySquareId }),
+      ...(sellerProfile?.primarySquareId && {
+        squareId: sellerProfile.primarySquareId,
+      }),
     }
 
     if (data.allowComments !== undefined) {
@@ -159,7 +176,9 @@ export const postRepository = {
     })
 
     // Fire-and-forget — never block the response for tag linking
-    postRepository.linkHashtags(post.id, data.caption, data.content).catch(() => {})
+    postRepository
+      .linkHashtags(post.id, data.caption, data.content)
+      .catch(() => {})
 
     return post
   },
@@ -233,7 +252,11 @@ export const postRepository = {
     return await prisma.post.findMany({
       take: options.take,
       skip: options.skip,
-      where: { moderationStatus: 'ACTIVE', wallTargetType: null, ...options.where },
+      where: {
+        moderationStatus: 'ACTIVE',
+        wallTargetType: null,
+        ...options.where,
+      },
       orderBy: options.orderBy,
       include: postInclude,
     })

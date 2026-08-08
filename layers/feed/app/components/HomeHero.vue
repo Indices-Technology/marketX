@@ -97,16 +97,16 @@
                 : 'max-w-xl text-4xl sm:text-5xl lg:text-[3.25rem] lg:leading-[1.1]'
             "
           >
-            Buy safely from trusted Nigerian businesses.
+            Find trusted sellers. <br class="hidden sm:block" /> Buy with confidence.
           </h1>
 
-          <p
+          <!-- <p
             class="leading-relaxed text-gray-500 dark:text-neutral-400"
             :class="dense ? 'mt-2 text-sm' : 'mt-3 max-w-lg text-base'"
           >
             Search sellers, verify who you're buying from, and pay with escrow
             protection.
-          </p>
+          </p> -->
 
           <!-- Search / CTA dock — kept right under the headline/subhead (not
                after the trust indicators) so its results dropdown, which

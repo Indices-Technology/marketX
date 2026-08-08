@@ -1,5 +1,10 @@
 import { ref, computed } from 'vue'
 import { useFeedApi } from '~~/layers/feed/app/services/feed.api'
+import { useProductApi } from '~~/layers/commerce/app/services/product.api'
+import {
+  normalizeProductToFeedItem,
+  type RawProductRow,
+} from '~~/layers/feed/app/utils/normalizeProduct'
 import type { IFeedItem } from '~~/layers/feed/app/types/feed.types'
 import type { FeedTab } from '~~/layers/feed/app/composables/useFeedTab'
 
@@ -11,10 +16,12 @@ import type { FeedTab } from '~~/layers/feed/app/composables/useFeedTab'
  */
 export const useHomeFeed = () => {
   const feedApi = useFeedApi()
+  const productApi = useProductApi()
   const pending = ref(true)
   const posts = ref<IFeedItem[]>([])
   const products = ref<IFeedItem[]>([])
   const reels = ref<IFeedItem[]>([])
+  const catalogProducts = ref<IFeedItem[]>([])
 
   // Mirrors SocialFeed.vue's fetchFeedForTab — same endpoint-per-tab mapping.
   const fetchTabItems = async (tab: FeedTab): Promise<IFeedItem[]> => {
@@ -28,14 +35,59 @@ export const useHomeFeed = () => {
     }
     if (tab === 'deals') {
       const res = (await feedApi.getDealsFeed({ limit: 50 })) as {
-        data?: Record<string, unknown>[]
+        data?: RawProductRow[]
       }
-      return (res.data ?? []).map(
-        (p) => ({ ...p, type: 'PRODUCT', product: p }) as unknown as IFeedItem,
-      )
+      // Normalized, not spread: /api/feed/deals returns raw product rows whose
+      // `media` is an array, which is NOT the IFeedItem shape (single `media`
+      // + `mediaItems[]`). Spreading them produced feed items that render a
+      // blank/broken slide — see normalizeProductToFeedItem's own comment.
+      return (res.data ?? []).map(normalizeProductToFeedItem)
     }
     const res = await feedApi.getHomeFeed({ limit: 50 })
     return res.items ?? []
+  }
+
+  /**
+   * Real server-side product listing for the "Products" filter.
+   *
+   * The home/following/trending feeds are post-first by design — `getHomeFeed`
+   * only injects products from PREMIUM sellers with `showInFeed: true`, at one
+   * slot per four posts, so the products present in an already-fetched feed
+   * page are a tiny, non-representative slice (0 of 12 items in dev). Filtering
+   * that pool client-side therefore showed an empty or near-empty result no
+   * matter how many products the catalogue actually has. `/api/commerce/products`
+   * is the real catalogue endpoint, with genuine server-side filtering
+   * (search / category / square / store / price range / min discount / sort)
+   * and its own pagination + caching — so "Products" queries it directly
+   * instead of re-slicing whatever the feed happened to return.
+   */
+  const loadCatalogProducts = async (
+    opts: {
+      categorySlug?: string
+      squareSlug?: string
+      search?: string
+      sortBy?: 'newest' | 'price_asc' | 'price_desc' | 'popular'
+      limit?: number
+    } = {},
+  ) => {
+    pending.value = true
+    try {
+      const res = (await productApi.getProducts({
+        status: 'PUBLISHED',
+        limit: opts.limit ?? 50,
+        sortBy: opts.sortBy ?? 'newest',
+        ...(opts.categorySlug ? { categorySlug: opts.categorySlug } : {}),
+        ...(opts.squareSlug ? { squareSlug: opts.squareSlug } : {}),
+        ...(opts.search ? { search: opts.search } : {}),
+      })) as { data?: { products?: RawProductRow[] } }
+      catalogProducts.value = (res.data?.products ?? []).map(
+        normalizeProductToFeedItem,
+      )
+    } catch {
+      catalogProducts.value = []
+    } finally {
+      pending.value = false
+    }
   }
 
   const load = async (tab: FeedTab = 'for-you') => {
@@ -104,9 +156,11 @@ export const useHomeFeed = () => {
     pending,
     posts,
     products,
+    catalogProducts,
     reels,
     reelIdSet,
     load,
+    loadCatalogProducts,
     interleave,
   }
 }

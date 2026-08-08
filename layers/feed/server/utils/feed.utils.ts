@@ -11,6 +11,20 @@ export const normalizePost = (post: IPost): IFeedItem => {
   const bgMusicItem = allMedia.find((m) => m.isBgMusic)
   const primaryMedia = contentMedia[0]
 
+  // Seller profile isn't on IPost's author type but is selected by the
+  // repository (authorSelect). Narrowed once here rather than casting at each
+  // use site.
+  const sellerProfile = (
+    post.author as unknown as
+      | {
+          sellerProfile?: Array<{
+            store_logo?: string | null
+            store_slug?: string | null
+          }>
+        }
+      | undefined
+  )?.sellerProfile?.[0]
+
   return {
     id: post.id,
     type: 'POST',
@@ -18,8 +32,12 @@ export const normalizePost = (post: IPost): IFeedItem => {
     author: {
       id: post.authorId,
       username: post.author?.username || 'Unknown',
-      avatar: post.author?.avatar || (post.author as any)?.sellerProfile?.[0]?.store_logo || null,
+      avatar: post.author?.avatar || sellerProfile?.store_logo || null,
       role: (post.author?.role as 'user' | 'seller' | 'admin') ?? 'user',
+      // Real store slug for seller-authored posts (null for regular users).
+      // Consumers must not fall back to `username` here — it's a different
+      // field and often differs from the slug.
+      storeSlug: sellerProfile?.store_slug ?? null,
     },
     // Primary media (first content item, for legacy consumers)
     media: primaryMedia
@@ -78,6 +96,7 @@ export const normalizeProduct = (product: IProduct): IFeedItem => {
         product.seller?.store_name || product.seller?.store_slug || 'Unknown',
       avatar: product.seller?.store_logo || null || undefined,
       role: 'seller',
+      storeSlug: product.seller?.store_slug ?? null,
     },
     media: primaryMedia
       ? {
@@ -93,7 +112,11 @@ export const normalizeProduct = (product: IProduct): IFeedItem => {
       type: m.type as 'IMAGE' | 'VIDEO' | 'AUDIO',
     })),
     bgMusic: bgMusicItem
-      ? { id: bgMusicItem.id, url: bgMusicItem.url, name: bgMusicItem.altText ?? undefined }
+      ? {
+          id: bgMusicItem.id,
+          url: bgMusicItem.url,
+          name: bgMusicItem.altText ?? undefined,
+        }
       : undefined,
     caption: product.title,
     content: product.description,

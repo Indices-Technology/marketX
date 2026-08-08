@@ -38,16 +38,25 @@
     <!-- Find a trader / Verify any seller — same dock as the logged-out home. -->
     <TrustFindVerifyDock :show-seller-cta="false" class="mb-4" />
 
-    <!-- Feed filter (For You · Following · Trending · Deals) + card/list toggle.
-         Filter drives which feed loads; toggle switches post layout. -->
-    <div class="mb-3 flex items-center justify-between gap-3">
+    <!-- Feed filter (Products · Deals · Following · Feed) + card/list toggle.
+         Filter drives which feed loads; toggle switches post layout.
+         Sticky at top-0 with pt-4, NOT top-4: the tabs still sit 16px down
+         (lining up with the right rail's Discover / MarketX AI bar, whose
+         aside is p-4), but the background now starts at the container's very
+         top. With top-4 the 16px above the bar stayed transparent and feed
+         images scrolled through it — a visible gap above the pill row.
+         Full-bleed via -mx-2/px-2 so the background spans the column's
+         padding too, otherwise content showed through at the edges. -->
+    <div
+      class="sticky top-0 z-30 -mx-2 mb-3 flex items-center justify-between gap-3 bg-white px-2 pb-2 pt-4 dark:bg-neutral-950"
+    >
       <BaseTabs
-        :model-value="activeTab"
+        :model-value="activeHomeTab"
         :tabs="feedTabs"
         variant="underline"
         aria-label="Feed filter"
         class="min-w-0 flex-1"
-        @update:model-value="(v) => setTab(v as FeedTab)"
+        @update:model-value="(v) => (activeHomeTab = v as HomeTab)"
       />
 
       <div
@@ -362,6 +371,7 @@
           <ShopProductCard
             v-if="item.type === 'PRODUCT' && item.product"
             :product="item.product"
+            compact
             @mouseenter="prefetchProduct(item.product.id)"
             @touchstart.passive="prefetchProduct(item.product.id)"
             @open-detail="openProduct"
@@ -400,7 +410,7 @@
     <!-- Empty following feed — shown only when user has no follows yet -->
     <BaseEmptyState
       v-if="
-        activeTab === 'following' &&
+        activeHomeTab === 'following' &&
         !feedStore.isLoading &&
         mainFeed.length === 0
       "
@@ -409,7 +419,7 @@
       description="Follow traders and stores to see their latest posts here."
     >
       <template #actions>
-        <BaseButton variant="primary" size="sm" @click="setTab('for-you')">
+        <BaseButton variant="primary" size="sm" @click="activeHomeTab = 'feed'">
           Explore For You
         </BaseButton>
         <BaseButton
@@ -449,7 +459,9 @@
     </div>
 
     <!-- Modals -->
-    <ProductCommentModal
+    <!-- Products open REVIEWS, not comments — only a confirmed buyer
+         (DELIVERED order) can write one. See ProductReviewModal. -->
+    <ProductReviewModal
       :is-open="!!commentProduct"
       :product="commentProduct"
       @close="commentProduct = null"
@@ -493,7 +505,7 @@ import StoryUploadModal from '~~/layers/feed/app/components/modals/StoryUploadMo
 import ProductDetailModal from '~~/layers/commerce/app/components/modals/ProductDetailModal.vue'
 import PostDetailModal from '~~/layers/social/app/components/modals/PostDetailModal.vue'
 import ProductMarketModal from '~~/layers/commerce/app/components/modals/ProductMarketModal.vue'
-import ProductCommentModal from '~~/layers/commerce/app/components/modals/ProductCommentModal.vue'
+import ProductReviewModal from '~~/layers/commerce/app/components/modals/ProductReviewModal.vue'
 import ShopProductCard from '~~/layers/commerce/app/components/ShopProductCard.vue'
 import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 import BaseSkeleton from '~~/layers/ui/app/components/BaseSkeleton.vue'
@@ -508,10 +520,11 @@ import TrustFindVerifyDock from '~~/layers/feed/app/components/TrustFindVerifyDo
 
 import { getCachedLocation } from '~~/layers/map/app/composables/useMapSellers'
 import type { IMapSeller } from '~~/layers/map/app/types/map.types'
+import { useProductApi } from '~~/layers/commerce/app/services/product.api'
 import {
-  useFeedTab,
-  type FeedTab,
-} from '~~/layers/feed/app/composables/useFeedTab'
+  normalizeProductToFeedItem,
+  type RawProductRow,
+} from '~~/layers/feed/app/utils/normalizeProduct'
 import { useSettings } from '~~/layers/profile/app/composables/useSettings'
 import { useFeedApi } from '~~/layers/feed/app/services/feed.api'
 import { useMapApi } from '~~/layers/map/app/services/map.api'
@@ -535,12 +548,38 @@ const profileStore = useProfileStore()
 const { settings } = useSettings()
 const { checkFollowingBatch } = useFollow()
 const { stories, fetchStories } = useStory()
-const { activeTab, setTab, FEED_TABS } = useFeedTab()
-const feedTabs = FEED_TABS.map((t) => ({
+/**
+ * Desktop feed tabs — same set and order as MinimalHome's mobile bar so the
+ * two surfaces agree: commerce first, and "Feed" means user posts only (the
+ * old "For You" was a posts+products blend).
+ *
+ * Defined locally rather than read from the shared FEED_TABS/useFeedTab
+ * singleton: MinimalHome now owns its own set too, and the singleton is still
+ * consumed elsewhere (TopMobileCategory), so keeping this local avoids one
+ * surface silently restyling another.
+ */
+type HomeTab = 'products' | 'deals' | 'following' | 'feed'
+const HOME_TABS: { id: HomeTab; label: string; icon: string }[] = [
+  { id: 'products', label: 'Products', icon: 'solar:bag-4-linear' },
+  { id: 'deals', label: 'Deals', icon: 'solar:tag-linear' },
+  { id: 'following', label: 'Following', icon: 'solar:user-heart-linear' },
+  { id: 'feed', label: 'Feed', icon: 'solar:home-linear' },
+]
+const activeHomeTab = ref<HomeTab>('products')
+const feedTabs = HOME_TABS.map((t) => ({
   label: t.label,
   value: t.id,
   icon: t.icon,
 }))
+// Which real feed endpoint a tab maps to. 'products' has none — it reads the
+// catalogue directly (see loadTabFeed).
+const dataTab = computed(() =>
+  activeHomeTab.value === 'deals'
+    ? 'deals'
+    : activeHomeTab.value === 'following'
+      ? 'following'
+      : 'for-you',
+)
 const { isEnrolled, fetchAffiliateStatus: fetchAffiliate } = useAffiliate()
 
 // States
@@ -577,6 +616,29 @@ const scrollStories = (dir: 'left' | 'right') => {
 }
 
 // Feed loading
+/** Real catalogue for the Products tab, shaped like a feed page. */
+const fetchCatalogueProducts = async (opts: {
+  limit: number
+  offset?: number
+}) => {
+  const res = (await useProductApi().getProducts({
+    status: 'PUBLISHED',
+    sortBy: 'newest',
+    limit: opts.limit,
+    offset: opts.offset ?? 0,
+  })) as { data?: { products?: RawProductRow[]; total?: number } }
+  const rows = res.data?.products ?? []
+  return {
+    items: rows.map(normalizeProductToFeedItem),
+    meta: {
+      total: res.data?.total ?? rows.length,
+      limit: opts.limit,
+      offset: opts.offset ?? 0,
+      hasMore: rows.length >= opts.limit,
+    },
+  }
+}
+
 const fetchFeedForTab = async (
   tab: string,
   opts: { limit: number; offset?: number } = { limit: 20 },
@@ -619,7 +681,15 @@ const loadTabFeed = async () => {
   error.value = null
   feedStore.setLoading(true)
   try {
-    const result = await fetchFeedForTab(activeTab.value, { limit: 20 })
+    // Products reads the real catalogue rather than a feed endpoint — the
+    // feeds are post-first by design (getHomeFeed only injects PREMIUM
+    // sellers' products, 1 slot per 4 posts), so a "Products" tab fed from
+    // them shows almost nothing. Normalized into feed items so the existing
+    // PRODUCT branch renders them as full-width ShopProductCards.
+    const result =
+      activeHomeTab.value === 'products'
+        ? await fetchCatalogueProducts({ limit: 20 })
+        : await fetchFeedForTab(dataTab.value, { limit: 20 })
     feedStore.setInitialFeed(result.items, result.meta, 'main')
     if (profileStore.userId && result.items.length) {
       const authorIds: string[] = []
@@ -643,13 +713,23 @@ const loadTabFeed = async () => {
 
 const refresh = () => loadTabFeed()
 
-watch(activeTab, () => {
-  feedStore.setInitialFeed(
-    [],
-    { total: 0, hasMore: false, limit: 20, offset: 0 } as any,
-    'main',
-  )
-  loadTabFeed()
+// Switching tabs used to blank the feed first and load after. That collapsed
+// the column's height, so .main-scroll clamped scrollTop to 0, which brought
+// the hero's scroll-flow spacer back into view — every tab switch bounced the
+// user through the landing hero before showing the new tab. Now the outgoing
+// items stay mounted until the new page arrives (loadTabFeed swaps them via
+// setInitialFeed on success), so the container never collapses. scrollTop is
+// still captured and restored as a safety net for the case where the new tab
+// is genuinely shorter than the old scroll offset.
+watch(activeHomeTab, async () => {
+  const scroller = document.querySelector<HTMLElement>('.main-scroll')
+  const keep = scroller?.scrollTop ?? 0
+  await loadTabFeed()
+  await nextTick()
+  if (scroller && keep > 0) {
+    const max = scroller.scrollHeight - scroller.clientHeight
+    scroller.scrollTop = Math.min(keep, Math.max(0, max))
+  }
 })
 
 const mainFeed = computed(() => feedStore.mainFeed ?? [])
@@ -658,7 +738,13 @@ const sortMode = ref<'new' | 'best' | 'hot' | 'top' | 'rising'>('new')
 const viewMode = ref<'card' | 'list'>('card')
 
 const sortedFeed = computed(() => {
-  const items = mainFeed.value.slice()
+  // "Feed" is user posts only — the tab exists precisely to separate social
+  // content from commerce, so products injected by the home feed are dropped
+  // here rather than blended back in.
+  const items =
+    activeHomeTab.value === 'feed'
+      ? mainFeed.value.filter((i) => i.type === 'POST')
+      : mainFeed.value.slice()
   switch (sortMode.value) {
     case 'top':
       return items.sort((a, b) => (b.likeCount || 0) - (a.likeCount || 0))
@@ -821,10 +907,16 @@ const loadMore = async () => {
   if (!feedStore.canLoadMore || feedStore.isLoading) return
   feedStore.setLoading(true)
   try {
-    const result = await fetchFeedForTab(activeTab.value, {
-      limit: 20,
-      offset: feedStore.currentOffset,
-    })
+    const result =
+      activeHomeTab.value === 'products'
+        ? await fetchCatalogueProducts({
+            limit: 20,
+            offset: feedStore.currentOffset,
+          })
+        : await fetchFeedForTab(dataTab.value, {
+            limit: 20,
+            offset: feedStore.currentOffset,
+          })
     const items = result?.items ?? []
     const meta = {
       ...(result?.meta ?? {}),
@@ -849,10 +941,10 @@ onMounted(() => {
     : 0
   if (
     profileStore.isLoggedIn &&
-    activeTab.value === 'for-you' &&
+    activeHomeTab.value === 'feed' &&
     myFollowingCount > 0
   ) {
-    setTab('following')
+    activeHomeTab.value = 'following'
     // watcher will call loadTabFeed() — skip the explicit call below
   } else {
     loadTabFeed()

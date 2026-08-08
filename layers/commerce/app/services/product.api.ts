@@ -1,14 +1,26 @@
-import { BaseApiClient } from "~~/layers/core/app/services/base.api"
+import { BaseApiClient } from '~~/layers/core/app/services/base.api'
 import type { ProductDetail } from '../types/product'
 
-
 export class ProductApiClient extends BaseApiClient {
+  /**
+   * Public product listing with real server-side filtering.
+   * Params mirror what `GET /api/commerce/products` actually supports —
+   * squareSlug/storeSlug/price/discount/sortBy were already handled by the
+   * endpoint and its service but were missing from this signature, so callers
+   * couldn't reach them without bypassing the typed client.
+   */
   async getProducts(params?: {
     status?: string
     search?: string
     sellerId?: string
     isThrift?: boolean
     categorySlug?: string
+    squareSlug?: string
+    storeSlug?: string
+    minDiscount?: number
+    minPrice?: number
+    maxPrice?: number
+    sortBy?: 'newest' | 'price_asc' | 'price_desc' | 'popular'
     limit?: number
     offset?: number
   }) {
@@ -23,7 +35,9 @@ export class ProductApiClient extends BaseApiClient {
     return this.request(`/api/commerce/products${query}`, { method: 'GET' })
   }
 
-  async getProductBySlug(slug: string): Promise<{ success: boolean; data: ProductDetail }> {
+  async getProductBySlug(
+    slug: string,
+  ): Promise<{ success: boolean; data: ProductDetail }> {
     return this.request(`/api/commerce/products/by-slug/${slug}`, {
       method: 'GET',
       skipAuth: true,
@@ -31,7 +45,9 @@ export class ProductApiClient extends BaseApiClient {
     })
   }
 
-  async getProductById(id: number): Promise<{ success: boolean; data: ProductDetail }> {
+  async getProductById(
+    id: number,
+  ): Promise<{ success: boolean; data: ProductDetail }> {
     return this.request(`/api/commerce/products/${id}`, { method: 'GET' })
   }
 

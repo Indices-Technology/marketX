@@ -2,18 +2,30 @@
   <div
     ref="cardRef"
     class="group flex cursor-pointer flex-col"
+    :class="compact ? 'mx-auto w-full max-w-[480px]' : ''"
     @click="$emit('open-detail', product)"
   >
     <!-- ─── MEDIA BLOCK (Single Relative Container) ───────────────────── -->
+    <!-- Default 4/5 portrait is a tall hero treatment; at the feed column's
+         600px that renders ~750px of image per card, so only one listing
+         fits on screen at a time. `compact` narrows the card to 480px and
+         gives it a 6/7 portrait (480x560) — noticeably less dominant than
+         the default 4/5 at full column width (600x750), while keeping enough
+         image height to show the product. Opt-in rather than a changed default
+         — the share-card surface and the component's spec both rely on 4/5. -->
     <div
-      class="relative aspect-[4/5] w-full overflow-hidden rounded-2xl bg-gray-100 dark:bg-neutral-800"
+      class="relative w-full overflow-hidden rounded-2xl bg-gray-100 dark:bg-neutral-800"
+      :class="compact ? 'aspect-[6/7]' : 'aspect-[4/5]'"
     >
       <!-- VIDEO (takes priority over image collage) -->
       <template v-if="videoItem">
         <!-- LQIP blur while video poster loads -->
         <div
           class="absolute inset-0 scale-110 bg-cover bg-center"
-          :style="{ backgroundImage: `url(${imgLqip(videoItem.url)})`, filter: 'blur(12px)' }"
+          :style="{
+            backgroundImage: `url(${imgLqip(videoItem.url)})`,
+            filter: 'blur(12px)',
+          }"
           aria-hidden="true"
         />
         <video
@@ -47,7 +59,10 @@
         <template v-else-if="imageItems.length === 1">
           <div
             class="absolute inset-0 scale-110 bg-cover bg-center"
-            :style="{ backgroundImage: `url(${imgLqip(imageItems[0]!.url)})`, filter: 'blur(12px)' }"
+            :style="{
+              backgroundImage: `url(${imgLqip(imageItems[0]!.url)})`,
+              filter: 'blur(12px)',
+            }"
             aria-hidden="true"
           />
           <img
@@ -174,7 +189,11 @@
             <p
               class="mb-[2px] text-[8px] font-medium uppercase leading-none tracking-widest text-white/50"
             >
-              <Icon name="solar:music-note-2-bold" size="8" class="-mt-0.5 inline" />
+              <Icon
+                name="solar:music-note-2-bold"
+                size="8"
+                class="-mt-0.5 inline"
+              />
               Music
             </p>
             <span
@@ -216,14 +235,14 @@
     <div class="flex flex-1 flex-col justify-between px-1 pb-1 pt-2.5">
       <div>
         <h3
-          class="line-clamp-2 t-card-title text-[13px] transition-colors group-hover:text-brand"
+          class="t-card-title line-clamp-2 text-[13px] transition-colors group-hover:text-brand"
         >
           {{ product.title }}
         </h3>
         <NuxtLink
           v-if="product.seller?.store_name"
           :to="`/sellers/profile/${product.seller.store_slug}`"
-          class="mt-1 flex items-center gap-1 truncate text-xs ink-faint hover:text-brand"
+          class="ink-faint mt-1 flex items-center gap-1 truncate text-xs hover:text-brand"
         >
           {{ product.seller.store_name }}
         </NuxtLink>
@@ -233,17 +252,14 @@
         <span class="t-price">{{ formatPrice(discountedPrice) }}</span>
         <span
           v-if="discountPercent > 0"
-          class="text-xs ink-faint line-through"
+          class="ink-faint text-xs line-through"
           >{{ formatPrice(product.price) }}</span
         >
       </div>
     </div>
 
     <!-- ─── ACTION BAR ────────────────────────────────────────────────── -->
-    <div
-      class="flex items-center justify-between px-1 pb-1 pt-1"
-      @click.stop
-    >
+    <div class="flex items-center justify-between px-1 pb-1 pt-1" @click.stop>
       <div class="flex items-center gap-1">
         <!-- Like -->
         <div
@@ -329,7 +345,12 @@
           class="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-semibold transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-50"
           @click="handleAddToCart"
         >
-          <Icon :name="cartAdded ? 'solar:check-circle-linear' : 'solar:cart-plus-linear'" size="14" />
+          <Icon
+            :name="
+              cartAdded ? 'solar:check-circle-linear' : 'solar:cart-plus-linear'
+            "
+            size="14"
+          />
           <span class="xs:inline hidden">{{
             !product.variants?.length
               ? 'N/A'
@@ -344,7 +365,7 @@
     </div>
   </div>
 
-  <ModalsLikesModal
+  <LikesModal
     :is-open="showLikes"
     type="product"
     :target-id="product.id"
@@ -355,9 +376,20 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import type { IProduct } from '../types/commerce.types'
+// Explicit import: the `ModalsLikesModal` auto-import name did not resolve
+// ("Failed to resolve component"), so the likes modal silently never
+// rendered. Latent until now — the feed showed almost no products, so this
+// card rarely mounted; it surfaced once the guest preview started rendering
+// real listings.
+import LikesModal from '~~/layers/social/app/components/modals/LikesModal.vue'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import { notify } from '@kyvg/vue3-notification'
-import { imgThumb, videoFeedUrl, videoThumb, imgLqip } from '~~/layers/core/app/utils/cloudinary'
+import {
+  imgThumb,
+  videoFeedUrl,
+  videoThumb,
+  imgLqip,
+} from '~~/layers/core/app/utils/cloudinary'
 import { useFeedSound } from '~~/layers/feed/app/composables/useFeedSound'
 import { useShareModal } from '~~/layers/social/app/composables/useShareModal'
 // Eslint can't find these without a relative path, might be a workspace config issue
@@ -366,7 +398,11 @@ import { useCart } from '../composables/useCart'
 import { useProduct } from '../composables/useProduct'
 import { useCurrency } from '~~/layers/core/app/composables/useCurrency'
 
-const props = defineProps<{ product: IProduct }>()
+const props = defineProps<{
+  product: IProduct
+  /** Shorter 4/3 media so more than one card fits the viewport in a feed. */
+  compact?: boolean
+}>()
 const emit = defineEmits<{
   'open-detail': [product: IProduct]
   'open-comments': [product: IProduct]
@@ -496,7 +532,8 @@ onUnmounted(() => {
 })
 
 // ── Pricing ──────────────────────────────────────────────────────────────────
-const { formatPrice = (val: number) => `$${Number(val).toLocaleString()}` } = useCurrency?.() || {}
+const { formatPrice = (val: number) => `$${Number(val).toLocaleString()}` } =
+  useCurrency?.() || {}
 const discountPercent = computed(() => props.product.discount ?? 0)
 const discountedPrice = computed(() =>
   discountPercent.value > 0
