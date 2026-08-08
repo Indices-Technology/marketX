@@ -1,49 +1,53 @@
 <template>
-  <div class="relative min-h-screen overflow-hidden">
-    <!-- Background -->
-    <div class="absolute inset-0 z-0">
-      <img
-        src="https://res.cloudinary.com/dcci05bzj/image/upload/q_auto/f_auto/v1775835271/freepik_horizontal-site-backgroun_2758965030_gtxztq.png"
-        alt="Background"
-        class="h-full w-full object-cover object-center brightness-[0.78] contrast-[1.08] saturate-[1.15]"
-      />
-      <div
-        class="absolute inset-0 bg-gradient-to-t from-black/65 via-black/45 to-black/30"
-      />
-    </div>
-
+  <!-- Plain surface, no background image and no glass — same reasoning as
+       user-login.vue: the stock photo forced every element on top of it into
+       translucency + white text, so contrast depended on the artwork behind
+       it. Solid page + solid cards instead. -->
+  <div class="min-h-screen bg-gray-50 dark:bg-neutral-950">
     <div
-      class="relative z-10 flex min-h-screen flex-col items-center justify-center px-5 py-10 sm:px-6 md:py-12 lg:px-8"
+      class="flex min-h-screen flex-col items-center justify-center px-5 py-10 sm:px-6 md:py-12 lg:px-8"
     >
       <!-- ── STEP 0: Choose path ─────────────────────────────────────────────── -->
       <div v-if="step === 0" class="fade-in w-full max-w-xl">
         <div class="mb-8 text-center">
-          <h1 class="text-3xl font-black tracking-tight text-white sm:text-4xl">
+          <h1
+            class="text-3xl font-black tracking-tight text-gray-900 sm:text-4xl dark:text-white"
+          >
             Join MarketX
           </h1>
-          <p class="mt-2 text-base text-white/70">What brings you here?</p>
+          <p class="mt-2 text-base text-gray-600 dark:text-neutral-400">
+            What brings you here?
+          </p>
         </div>
 
         <div class="grid gap-4 sm:grid-cols-2">
           <!-- Buyer card -->
           <button
-            class="group flex flex-col items-center gap-4 rounded-2xl border-2 border-white/10 bg-white/10 p-8 text-left backdrop-blur-md transition-all hover:border-brand hover:bg-white/15 hover:shadow-2xl"
+            class="group flex flex-col items-center gap-4 rounded-2xl border-2 border-gray-200 bg-white p-8 text-left transition-all hover:border-brand hover:shadow-lg dark:border-neutral-800 dark:bg-neutral-900"
             @click="chooseType('buyer')"
           >
             <div
-              class="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 text-3xl transition-all group-hover:scale-110 group-hover:bg-brand/20"
+              class="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 text-3xl transition-all group-hover:scale-110 group-hover:bg-brand/15 dark:bg-neutral-800"
             >
-              <icon name="solar:bag-4-linear" class="text-white" size="22" />
+              <icon
+                name="solar:bag-4-linear"
+                class="text-gray-900 dark:text-white"
+                size="22"
+              />
             </div>
             <div>
-              <p class="text-lg font-black text-white">I'm a Buyer</p>
-              <p class="mt-1 text-sm leading-relaxed text-white/60">
+              <p class="text-lg font-black text-gray-900 dark:text-white">
+                I'm a Buyer
+              </p>
+              <p
+                class="mt-1 text-sm leading-relaxed text-gray-600 dark:text-neutral-400"
+              >
                 Browse the feed, discover products, and buy directly from
                 African creators.
               </p>
             </div>
             <div
-              class="mt-auto flex w-full items-center justify-end text-[11px] font-black uppercase tracking-widest text-white/40 transition-colors group-hover:text-brand"
+              class="mt-auto flex w-full items-center justify-end text-[11px] font-black uppercase tracking-widest text-gray-400 transition-colors group-hover:text-brand dark:text-neutral-500"
             >
               Get started →
             </div>
@@ -51,34 +55,42 @@
 
           <!-- Seller card -->
           <button
-            class="group flex flex-col items-center gap-4 rounded-2xl border-2 border-white/10 bg-white/10 p-8 text-left backdrop-blur-md transition-all hover:border-brand hover:bg-white/15 hover:shadow-2xl"
+            class="group flex flex-col items-center gap-4 rounded-2xl border-2 border-gray-200 bg-white p-8 text-left transition-all hover:border-brand hover:shadow-lg dark:border-neutral-800 dark:bg-neutral-900"
             @click="chooseType('seller')"
           >
             <div
-              class="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 text-3xl transition-all group-hover:scale-110 group-hover:bg-brand/20"
+              class="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 text-3xl transition-all group-hover:scale-110 group-hover:bg-brand/15 dark:bg-neutral-800"
             >
-              <icon name="solar:shop-2-linear" class="text-white" size="22" />
+              <icon
+                name="solar:shop-2-linear"
+                class="text-gray-900 dark:text-white"
+                size="22"
+              />
             </div>
             <div>
-              <p class="text-lg font-black text-white">I want to Sell</p>
-              <p class="mt-1 text-sm leading-relaxed text-white/60">
+              <p class="text-lg font-black text-gray-900 dark:text-white">
+                I want to Sell
+              </p>
+              <p
+                class="mt-1 text-sm leading-relaxed text-gray-600 dark:text-neutral-400"
+              >
                 Open your store, list products, and sell to buyers across Africa
                 and beyond.
               </p>
             </div>
             <div
-              class="mt-auto flex w-full items-center justify-end text-[11px] font-black uppercase tracking-widest text-white/40 transition-colors group-hover:text-brand"
+              class="mt-auto flex w-full items-center justify-end text-[11px] font-black uppercase tracking-widest text-gray-400 transition-colors group-hover:text-brand dark:text-neutral-500"
             >
               Open a store →
             </div>
           </button>
         </div>
 
-        <p class="mt-6 text-center text-sm text-white/50">
+        <p class="mt-6 text-center text-sm text-gray-600 dark:text-neutral-400">
           Already have an account?
           <NuxtLink
             to="/user-login"
-            class="font-semibold text-white transition hover:text-brand"
+            class="font-semibold text-gray-900 transition hover:text-brand dark:text-white"
             >Sign in</NuxtLink
           >
         </p>
@@ -87,7 +99,7 @@
       <!-- ── STEP 1: Account details ─────────────────────────────────────────── -->
       <div
         v-else-if="step === 1"
-        class="fade-in bg-white/88 dark:bg-neutral-900/82 w-full max-w-xl rounded-2xl p-6 shadow-2xl backdrop-blur-xl sm:p-8 md:p-10 dark:shadow-black/40"
+        class="fade-in w-full max-w-xl rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8 md:p-10 dark:border-neutral-800 dark:bg-neutral-900"
       >
         <!-- Step indicator (seller only) -->
         <div
@@ -157,7 +169,7 @@
             :disabled="isBusy"
             :title="$t('auth.register.continueWithGoogle')"
             :aria-label="$t('auth.register.continueWithGoogle')"
-            class="flex flex-1 items-center justify-center rounded-xl border border-gray-300 bg-white/80 py-3 shadow-sm transition hover:bg-gray-50 disabled:opacity-60 dark:border-neutral-600 dark:bg-neutral-800/60 dark:hover:bg-neutral-700"
+            class="flex flex-1 items-center justify-center rounded-xl border border-gray-300 bg-white py-3 shadow-sm transition hover:bg-gray-50 disabled:opacity-60 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700"
             @click="handleSocial('google')"
           >
             <Icon name="simple-icons:google" class="h-6 w-6 text-[#4285F4]" />
@@ -167,7 +179,7 @@
             :disabled="isBusy"
             title="Continue with TikTok"
             aria-label="Continue with TikTok"
-            class="flex flex-1 items-center justify-center rounded-xl border border-gray-300 bg-white/80 py-3 shadow-sm transition hover:bg-gray-50 disabled:opacity-60 dark:border-neutral-600 dark:bg-neutral-800/60 dark:hover:bg-neutral-700"
+            class="flex flex-1 items-center justify-center rounded-xl border border-gray-300 bg-white py-3 shadow-sm transition hover:bg-gray-50 disabled:opacity-60 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700"
             @click="handleSocial('tiktok')"
           >
             <Icon
@@ -314,7 +326,7 @@
       <!-- ── STEP 2: Store setup (seller only) ──────────────────────────────── -->
       <div
         v-else-if="step === 2"
-        class="fade-in bg-white/88 dark:bg-neutral-900/82 w-full max-w-xl rounded-2xl p-6 shadow-2xl backdrop-blur-xl sm:p-8 md:p-10 dark:shadow-black/40"
+        class="fade-in w-full max-w-xl rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8 md:p-10 dark:border-neutral-800 dark:bg-neutral-900"
       >
         <!-- Step indicator -->
         <div class="mb-5 flex items-center gap-2">
@@ -712,25 +724,29 @@
               class="text-white"
             />
           </div>
-          <h1 class="text-3xl font-black text-white sm:text-4xl">
+          <h1
+            class="text-3xl font-black text-gray-900 sm:text-4xl dark:text-white"
+          >
             Your store is live!
           </h1>
-          <p class="mt-2 text-base text-white/70">
+          <p class="mt-2 text-base text-gray-600 dark:text-neutral-400">
             Welcome to MarketX, {{ form.username }}.
           </p>
         </div>
 
         <!-- Store link card -->
         <div
-          class="mb-6 overflow-hidden rounded-2xl border border-white/10 bg-white/10 backdrop-blur-md"
+          class="mb-6 overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
         >
-          <div class="border-b border-white/10 px-6 py-4">
+          <div
+            class="border-b border-gray-200 px-6 py-4 dark:border-neutral-800"
+          >
             <p
-              class="text-[10px] font-black uppercase tracking-widest text-white/50"
+              class="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-neutral-400"
             >
               Your store URL
             </p>
-            <p class="mt-1 text-lg font-black text-white">
+            <p class="mt-1 text-lg font-black text-gray-900 dark:text-white">
               {{ $config.public.brandDomain || 'marketx.africa' }}/<span
                 class="text-brand"
                 >{{ createdStoreSlug }}</span
@@ -738,7 +754,7 @@
             </p>
           </div>
           <button
-            class="flex w-full items-center justify-center gap-2 px-6 py-3.5 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white"
+            class="flex w-full items-center justify-center gap-2 px-6 py-3.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 hover:text-gray-900 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:hover:text-white"
             @click="copyStoreLink"
           >
             <Icon
@@ -762,7 +778,7 @@
           </NuxtLink>
           <NuxtLink
             to="/discover"
-            class="flex flex-1 items-center justify-center gap-2 rounded-2xl border-2 border-white/20 px-6 py-4 font-bold text-white transition hover:border-white/40 hover:bg-white/10"
+            class="flex flex-1 items-center justify-center gap-2 rounded-2xl border-2 border-gray-300 px-6 py-4 font-bold text-gray-900 transition hover:border-gray-400 hover:bg-gray-50 dark:border-neutral-700 dark:text-white dark:hover:bg-neutral-800"
           >
             Browse the feed
           </NuxtLink>
@@ -770,7 +786,7 @@
 
         <NuxtLink
           :to="`/${createdStoreSlug}`"
-          class="mt-4 block text-sm text-white/50 transition hover:text-white"
+          class="mt-4 block text-sm text-gray-500 transition hover:text-gray-900 dark:text-neutral-400 dark:hover:text-white"
         >
           Preview your store →
         </NuxtLink>

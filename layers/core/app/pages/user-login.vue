@@ -1,23 +1,16 @@
 <template>
-  <div class="relative min-h-screen overflow-hidden">
-    <!-- Full-screen Background -->
-    <div class="absolute inset-0 z-0">
-      <img
-        src="https://res.cloudinary.com/dcci05bzj/image/upload/q_auto/f_auto/v1775835271/freepik_horizontal-site-backgroun_2758965030_gtxztq.png"
-        alt="Background"
-        class="h-full w-full object-cover object-center brightness-[0.78] contrast-[1.08] saturate-[1.15]"
-      />
-      <div
-        class="absolute inset-0 bg-gradient-to-t from-black/65 via-black/45 to-black/30"
-      />
-    </div>
-
-    <!-- Main Content – centered glassmorphism card -->
+  <!-- Plain surface, no background image and no glass. The stock photo cost a
+       ~1MB Cloudinary fetch on the auth path and forced every element on top
+       of it to be translucent + backdrop-blurred to stay readable; on a
+       sign-in screen that's decoration competing with a form. Solid page +
+       solid card instead, so contrast is fixed rather than dependent on
+       whatever pixels sit behind it. -->
+  <div class="min-h-screen bg-gray-50 dark:bg-neutral-950">
     <div
-      class="relative z-10 flex min-h-screen flex-col items-center justify-center px-5 py-10 sm:px-6 md:py-12 lg:px-8"
+      class="flex min-h-screen flex-col items-center justify-center px-5 py-10 sm:px-6 md:py-12 lg:px-8"
     >
       <div
-        class="fade-in bg-white/88 dark:bg-neutral-900/82 w-full max-w-md rounded-2xl p-6 shadow-2xl backdrop-blur-xl sm:p-8 md:max-w-lg md:p-10 dark:shadow-black/40"
+        class="fade-in w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8 md:max-w-lg md:p-10 dark:border-neutral-800 dark:bg-neutral-900"
       >
         <!-- Header -->
         <div class="mb-7 text-center">
@@ -42,7 +35,7 @@
         <div v-if="error || localMessage" class="mb-5 space-y-3">
           <div
             v-if="error"
-            class="rounded-xl border border-red-200/80 bg-red-50/70 p-4 text-sm text-red-700 dark:border-red-800/40 dark:bg-red-950/25 dark:text-red-300"
+            class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300"
           >
             <p>{{ error }}</p>
             <button
@@ -82,7 +75,7 @@
           </div>
           <div
             v-if="localMessage"
-            class="rounded-xl border border-blue-200/70 bg-blue-50/60 p-4 text-sm text-blue-800 dark:border-blue-800/40 dark:bg-blue-950/20 dark:text-blue-300"
+            class="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300"
           >
             {{ localMessage }}
           </div>
@@ -95,7 +88,7 @@
             :disabled="isBusy"
             title="Continue with Google"
             aria-label="Continue with Google"
-            class="flex flex-1 items-center justify-center rounded-xl border border-gray-300 bg-white/80 py-3 shadow-sm transition hover:bg-gray-50 disabled:opacity-60 dark:border-neutral-600 dark:bg-neutral-800/60 dark:hover:bg-neutral-700"
+            class="flex flex-1 items-center justify-center rounded-xl border border-gray-300 bg-white py-3 shadow-sm transition hover:bg-gray-50 disabled:opacity-60 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700"
             @click="handleSocial('google')"
           >
             <Icon name="simple-icons:google" class="h-6 w-6 text-[#4285F4]" />
@@ -105,7 +98,7 @@
             :disabled="isBusy"
             title="Continue with TikTok"
             aria-label="Continue with TikTok"
-            class="flex flex-1 items-center justify-center rounded-xl border border-gray-300 bg-white/80 py-3 shadow-sm transition hover:bg-gray-50 disabled:opacity-60 dark:border-neutral-600 dark:bg-neutral-800/60 dark:hover:bg-neutral-700"
+            class="flex flex-1 items-center justify-center rounded-xl border border-gray-300 bg-white py-3 shadow-sm transition hover:bg-gray-50 disabled:opacity-60 dark:border-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-700"
             @click="handleSocial('tiktok')"
           >
             <Icon
@@ -118,7 +111,7 @@
             :disabled="isBusy"
             title="Continue with Facebook"
             aria-label="Continue with Facebook"
-            class="flex flex-1 items-center justify-center rounded-xl border border-[#1877F2] bg-[#1877F2]/90 py-3 shadow-sm transition hover:bg-[#1877F2] disabled:opacity-60"
+            class="flex flex-1 items-center justify-center rounded-xl border border-[#1877F2] bg-[#1877F2] py-3 shadow-sm transition hover:bg-[#1877F2] disabled:opacity-60"
             @click="handleSocial('facebook')"
           >
             <Icon name="simple-icons:facebook" class="h-6 w-6 text-white" />
