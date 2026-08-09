@@ -97,7 +97,8 @@
                 : 'max-w-xl text-4xl sm:text-5xl lg:text-[3.25rem] lg:leading-[1.1]'
             "
           >
-            Find trusted sellers. <br class="hidden sm:block" /> Buy with confidence.
+            Find trusted sellers. <br class="hidden sm:block" />
+            Buy with confidence.
           </h1>
 
           <!-- <p
@@ -226,7 +227,10 @@
               v-if="heroProducts[0]"
               class="absolute -bottom-6 -right-5 w-36 rotate-6 transform shadow-2xl sm:w-40"
             >
-              <ProductCardMini :product="heroProducts[0]" />
+              <!-- contain: this card is a marketing showcase, and product
+                   photos here are often spec infographics where a cover-crop
+                   cuts off the very text that sells them. -->
+              <ProductCardMini :product="heroProducts[0]" contain-image />
             </div>
           </div>
 

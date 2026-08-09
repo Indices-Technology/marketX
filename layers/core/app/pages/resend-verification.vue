@@ -1,24 +1,23 @@
 <!-- layers/auth/pages/resend-verification.vue -->
 <template>
-  <div class="relative min-h-screen overflow-hidden">
-    <!-- Full-screen Background -->
-    <div class="absolute inset-0 z-0">
-      <img
-        src="https://www.bellanaijastyle.com/wp-content/uploads/2024/03/Lagos-Fashion-Week-Street-Style-March-2024-12.jpg"
-        alt="Trendy Lagos street style group in colorful modern African fashion"
-        class="h-full w-full object-cover object-center brightness-[0.78] contrast-[1.08] saturate-[1.15]"
-      />
-      <div
-        class="absolute inset-0 bg-gradient-to-t from-black/65 via-black/45 to-black/30"
-      />
-    </div>
-
+  <!-- Plain surface, no background image and no glass — matches the rest
+       of the auth flow. -->
+  <div class="min-h-screen bg-gray-50 dark:bg-neutral-950">
     <!-- Main Content – centered glassmorphism card -->
     <div
-      class="relative z-10 flex min-h-screen flex-col items-center justify-center px-5 py-10 sm:px-6 md:py-12 lg:px-8"
+      class="flex min-h-screen flex-col items-center justify-center px-5 py-10 sm:px-6 md:py-12 lg:px-8"
     >
+      <!-- Brand — identical lockup, size and link on every auth screen. -->
+      <NuxtLink
+        to="/"
+        class="mb-8 flex justify-center"
+        aria-label="MarketX home"
+      >
+        <BrandLogo variant="full" class="h-10 w-auto" />
+      </NuxtLink>
+
       <div
-        class="fade-in bg-white/88 dark:bg-neutral-900/82 w-full max-w-md rounded-2xl p-6 shadow-2xl backdrop-blur-xl sm:p-8 md:max-w-lg md:p-10 lg:max-w-md dark:shadow-black/40"
+        class="fade-in w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8 md:max-w-lg md:p-10 lg:max-w-md dark:border-neutral-800 dark:bg-neutral-900"
       >
         <!-- Header & Motivational Copy -->
         <div class="mb-7 text-center">
@@ -39,7 +38,7 @@
         <!-- Status / Info Messages -->
         <div v-if="verificationState === 'sent'" class="mb-6 space-y-4">
           <div
-            class="rounded-xl border border-green-200/80 bg-green-50/70 p-5 dark:border-green-800/40 dark:bg-green-950/25"
+            class="rounded-xl border border-green-200 bg-green-50 p-5 dark:border-green-800 dark:bg-green-950/40"
           >
             <div class="flex gap-3">
               <Icon
@@ -87,7 +86,7 @@
         <!-- Pending state info (before sending) -->
         <div
           v-else-if="verificationState === 'pending' && email"
-          class="mb-6 rounded-xl border border-blue-200/70 bg-blue-50/60 p-4 text-sm dark:border-blue-800/40 dark:bg-blue-950/20 dark:text-blue-300"
+          class="mb-6 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300"
         >
           <div class="flex gap-3">
             <Icon
@@ -104,7 +103,7 @@
         <!-- Error -->
         <div
           v-if="error"
-          class="mb-6 rounded-xl border border-red-200/80 bg-red-50/70 p-4 text-sm text-red-700 dark:border-red-800/40 dark:bg-red-950/25 dark:text-red-300"
+          class="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300"
         >
           {{ error }}
         </div>
@@ -188,6 +187,7 @@
 </template>
 
 <script setup lang="ts">
+import BrandLogo from '~~/layers/ui/app/components/BrandLogo.vue'
 import { ref, reactive, computed, onMounted } from 'vue'
 import { definePageMeta } from '#imports'
 import { useSeo } from '~~/layers/core/app/composables/useSeo'

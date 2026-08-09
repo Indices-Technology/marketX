@@ -13,12 +13,16 @@
     :hide-right-sidebar="false"
     :custom-padding="true"
     :immersive="!useHeroSibling"
-    :snap-hero="useHeroSibling"
+    :snap-hero="showHero"
     :use-custom-search="!useHeroSibling"
   >
     <ClientOnly>
       <template v-if="useHeroSibling">
-        <HomeHero :dense="!isDesktop" />
+        <!-- Landing hero is a first-impression surface: it answers "what is
+             MarketX?" for someone who hasn't signed up. A signed-in user has
+             already answered that, so making them scroll past a marketing
+             page to reach their own feed is friction, not onboarding. -->
+        <HomeHero v-if="showHero" :dense="!isDesktop" />
         <SocialFeed
           v-if="profileStore.isLoggedIn"
           :trust-spotlight="showTrust"
@@ -27,18 +31,18 @@
       </template>
       <MinimalHome v-else />
       <!-- Fallback during SSR/hydration so the page isn't blank on first paint.
-           A lightweight placeholder, NOT a second live feed instance —
+           SplashScreen, not a bare spinner: the branded splash is what every
+           other boot path already shows (SocialFeed renders it while its feed
+           loads), so a black screen with a lone spinner here made a refresh
+           flash unbranded chrome before the real splash appeared.
+           Still a lightweight placeholder, NOT a second live feed instance —
            mounting two real instances back-to-back raced clicks on the
            fallback's button against the swap to the post-hydration instance,
-           silently dropping them (e.g. the search/verify sheet not opening). -->
+           silently dropping them (e.g. the search/verify sheet not opening).
+           SplashScreen is purely presentational (no buttons, no stores), so
+           it cannot reintroduce that race. -->
       <template #fallback>
-        <div
-          class="fixed inset-0 z-0 flex items-center justify-center bg-black"
-        >
-          <div
-            class="h-10 w-10 animate-spin rounded-full border-4 border-brand border-t-transparent"
-          />
-        </div>
+        <SplashScreen />
       </template>
     </ClientOnly>
   </HomeLayout>
@@ -52,6 +56,7 @@ import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import SocialFeed from '~~/layers/feed/app/components/SocialFeed.vue'
 import MinimalHome from '~~/layers/feed/app/components/MinimalHome.vue'
 import HomeHero from '~~/layers/feed/app/components/HomeHero.vue'
+import SplashScreen from '~~/layers/feed/app/components/SplashScreen.vue'
 import GuestFeedPreview from '~~/layers/feed/app/components/GuestFeedPreview.vue'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import { useSettings } from '~~/layers/profile/app/composables/useSettings'
@@ -74,6 +79,13 @@ const showDetailed = computed(
     profileStore.isLoggedIn && settings.value.feedDisplayStyle === 'detailed',
 )
 const useHeroSibling = computed(() => isDesktop.value || showDetailed.value)
+// Hero is for guests only — see the template comment. This also switches off
+// HomeLayout's snap-hero (scroll-snap + the scroll-threshold nav hiding),
+// which exists purely to serve the hero and would otherwise leave the feed
+// snapping against a section that no longer renders.
+const showHero = computed(
+  () => useHeroSibling.value && !profileStore.isLoggedIn,
+)
 
 // SocialFeed's trust-spotlight interleave stays gated to dev / demo builds so
 // seeded reputation numbers never reach real production visitors.

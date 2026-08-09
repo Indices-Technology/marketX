@@ -9,6 +9,18 @@
     <div
       class="flex min-h-screen flex-col items-center justify-center px-5 py-10 sm:px-6 md:py-12 lg:px-8"
     >
+      <!-- Brand — identical lockup, size and link on every auth screen.
+           Previously only verify-email showed a logo (via AuthLayout); the
+           centered-card pages showed none, so the brand appeared, vanished
+           and reappeared as you moved through sign-up → verify → reset. -->
+      <NuxtLink
+        to="/"
+        class="mb-8 flex justify-center"
+        aria-label="MarketX home"
+      >
+        <BrandLogo variant="full" class="h-10 w-auto" />
+      </NuxtLink>
+
       <div
         class="fade-in w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8 md:max-w-lg md:p-10 dark:border-neutral-800 dark:bg-neutral-900"
       >
@@ -79,6 +91,24 @@
           >
             {{ localMessage }}
           </div>
+        </div>
+
+        <!-- WhatsApp phone login — primary entry point for this market -->
+        <NuxtLink
+          to="/phone-login"
+          class="mb-4 flex w-full items-center justify-center gap-2 rounded-xl border border-[#25D366] bg-[#25D366] py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#20bd5a]"
+        >
+          <Icon name="simple-icons:whatsapp" size="18" />
+          Continue with WhatsApp
+        </NuxtLink>
+
+        <div class="my-6 flex items-center justify-center space-x-4">
+          <span class="h-px w-full bg-gray-300 dark:bg-neutral-700"></span>
+          <span
+            class="whitespace-nowrap text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-neutral-400"
+            >Or</span
+          >
+          <span class="h-px w-full bg-gray-300 dark:bg-neutral-700"></span>
         </div>
 
         <!-- Social Logins -->
@@ -189,6 +219,7 @@
 </template>
 
 <script setup lang="ts">
+import BrandLogo from '~~/layers/ui/app/components/BrandLogo.vue'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { definePageMeta, useRoute } from '#imports'

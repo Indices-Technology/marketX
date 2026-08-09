@@ -64,9 +64,30 @@ export function cloudinaryUrl(
   return `${before}${transforms}/${after}`
 }
 
-/** Preset: tiny square thumbnail for grid cards (mobile-first) */
+/**
+ * True for anything that is a video rather than a still. Cloudinary serves
+ * video from a `/video/upload/` path, but non-Cloudinary and legacy URLs are
+ * only identifiable by extension, so check both.
+ */
+export const isVideoUrl = (url: string | null | undefined): boolean =>
+  !!url &&
+  (/\/video\/upload\//.test(url) ||
+    /\.(mp4|webm|mov|m4v|ogv|ogg|avi|mkv)(\?|$)/i.test(url))
+
+/**
+ * Preset: tiny square thumbnail for grid cards (mobile-first).
+ *
+ * Video-aware: a video URL cannot be rendered by an `<img>`, so it is routed
+ * through `videoThumb` to produce a real poster frame. Several callers used to
+ * hand-roll `type === 'VIDEO' ? videoThumb(u) : imgThumb(u)`, and every caller
+ * that forgot (search results, the profile Posts/Media/Likes/Saved/Orders
+ * tabs) rendered a broken image for video content. Handling it here fixes them
+ * all and makes the manual guards redundant rather than required.
+ */
 export const imgThumb = (url: string | null | undefined) =>
-  cloudinaryUrl(url, { width: 400, height: 400, crop: 'fill' })
+  isVideoUrl(url)
+    ? videoThumb(url, { width: 400, height: 400 })
+    : cloudinaryUrl(url, { width: 400, height: 400, crop: 'fill' })
 
 /** Preset: feed/post image — wider but still compressed */
 export const imgFeed = (url: string | null | undefined) =>

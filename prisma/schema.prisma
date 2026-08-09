@@ -19,6 +19,12 @@ model Profile {
   updated_at        DateTime       @updatedAt @db.Timestamptz(6)
   email_verified_at DateTime?      @db.Timestamptz(6)
   email_verified    Boolean        @default(false)
+  /// E.164. Nullable + unique — a second identity a Profile can sign in with,
+  /// alongside email. NOT the same as SellerProfile.store_phone/shipFromPhone
+  /// (business contact info, unrelated to login identity).
+  phone             String?        @unique
+  phone_verified_at DateTime?      @db.Timestamptz(6)
+  phone_verified    Boolean        @default(false)
   bio               String?
   location          String?
   links             Json?

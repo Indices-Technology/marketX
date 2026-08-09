@@ -8,6 +8,7 @@
 import { UserError } from '../types/user.types'
 import { notificationRepository } from '../repositories/notification.repository'
 import { sseConnections } from '~~/server/utils/connections'
+import { whatsappQueue } from '~~/server/queues/whatsapp.queue'
 
 // Define the interface for the Create Notification object
 export interface CreateNotificationArgs {
@@ -47,6 +48,25 @@ const typeMap: Record<string, string> = {
   SUPPORT: 'SUPPORT',
 }
 
+// Notification types worth a WhatsApp ping — deliberately narrow. Only
+// account/business-critical events, not social engagement noise (likes,
+// follows, comments, mentions) — those stay in-app-only to avoid spamming a
+// seller's WhatsApp and burning template-message budget on low-value pings.
+const WHATSAPP_ELIGIBLE_TYPES = new Set([
+  'ORDER',
+  'PRODUCT_REVIEW',
+  'SUPPORT',
+  'SQUARE_MEMBERSHIP_APPROVED',
+  'SQUARE_MEMBERSHIP_REJECTED',
+])
+
+// Recreated 2026-08-09 as "mx_account_update" with language explicitly set to
+// English (US) / en_US — the original "marketx_account_upd" template was
+// created under plain "English" (en), which caused Graph API send failures
+// against en_US. Keep this name/language pair in sync with whatever's actually
+// approved in WhatsApp Manager.
+const WHATSAPP_NOTIFICATION_TEMPLATE = 'mx_account_update'
+
 export const notificationService = {
   /**
    * Creates a notification. Uses an object to avoid positional argument errors.
@@ -85,6 +105,34 @@ export const notificationService = {
       // This is fire-and-forget — if they're offline the notification is
       // still in the DB and will appear next time they load the app
       sseConnections.send(userId, 'notification', notification)
+
+      // WhatsApp delivery — only for curated business-critical types, and only
+      // for users with a verified phone. Best-effort: failures here must never
+      // block or roll back the in-app notification (which already succeeded).
+      if (WHATSAPP_ELIGIBLE_TYPES.has(type)) {
+        prisma.profile
+          .findUnique({
+            where: { id: userId },
+            select: { phone: true, phone_verified: true },
+          })
+          .then((profile) => {
+            if (profile?.phone && profile.phone_verified) {
+              whatsappQueue.enqueue({
+                to: profile.phone,
+                templateName: WHATSAPP_NOTIFICATION_TEMPLATE,
+                languageCode: 'en_US',
+                params: [message || `New ${type} notification`],
+                type: 'UTILITY',
+              })
+            }
+          })
+          .catch((e) =>
+            logger.warn('[notification.service] WhatsApp lookup failed', {
+              userId,
+              error: e instanceof Error ? e.message : String(e),
+            }),
+          )
+      }
 
       return notification
     } catch (error: unknown) {
