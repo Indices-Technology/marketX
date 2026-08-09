@@ -7,13 +7,25 @@
     <div
       class="flex min-h-screen flex-col items-center justify-center px-5 py-10 sm:px-6 md:py-12 lg:px-8"
     >
+      <!-- Brand — identical lockup, size and link on every auth screen.
+           Previously only verify-email showed a logo (via AuthLayout); the
+           centered-card pages showed none, so the brand appeared, vanished
+           and reappeared as you moved through sign-up → verify → reset. -->
+      <NuxtLink
+        to="/"
+        class="mb-8 flex justify-center"
+        aria-label="MarketX home"
+      >
+        <BrandLogo variant="full" class="h-10 w-auto" />
+      </NuxtLink>
+
       <!-- ── STEP 0: Choose path ─────────────────────────────────────────────── -->
       <div v-if="step === 0" class="fade-in w-full max-w-xl">
         <div class="mb-8 text-center">
           <h1
             class="text-3xl font-black tracking-tight text-gray-900 sm:text-4xl dark:text-white"
           >
-            Join MarketX
+            Join {{ $config.public.siteName || 'MarketX' }}
           </h1>
           <p class="mt-2 text-base text-gray-600 dark:text-neutral-400">
             What brings you here?
@@ -160,6 +172,30 @@
           >
             {{ message }}
           </div>
+        </div>
+
+        <!-- WhatsApp phone signup. Seller path passes ?intent=seller so
+             phone-login.vue redirects back into step 2 (store setup) after
+             verifying, instead of stranding a seller with a bare account. -->
+        <NuxtLink
+          :to="
+            accountType === 'seller'
+              ? '/phone-login?intent=seller'
+              : '/phone-login'
+          "
+          class="mb-4 flex w-full items-center justify-center gap-2 rounded-xl border border-[#25D366] bg-[#25D366] py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#20bd5a]"
+        >
+          <Icon name="simple-icons:whatsapp" size="18" />
+          Continue with WhatsApp
+        </NuxtLink>
+
+        <div class="my-6 flex items-center justify-center space-x-4">
+          <span class="h-px w-full bg-gray-300 dark:bg-neutral-700"></span>
+          <span
+            class="whitespace-nowrap text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-neutral-400"
+            >Or</span
+          >
+          <span class="h-px w-full bg-gray-300 dark:bg-neutral-700"></span>
         </div>
 
         <!-- Social logins -->
@@ -796,8 +832,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, onUnmounted } from 'vue'
-import { definePageMeta, useSeoMeta } from '#imports'
+import BrandLogo from '~~/layers/ui/app/components/BrandLogo.vue'
+import { computed, reactive, ref, onMounted, onUnmounted } from 'vue'
+import { definePageMeta, useRoute, useSeoMeta } from '#imports'
 import { useAuth } from '../composables/useAuth'
 import PasswordStrengthMeter from '../components/PasswordStrengthMeter.vue'
 import { useMediaUpload } from '~~/layers/core/app/composables/useMediaUpload'
@@ -824,13 +861,30 @@ const {
   error: authError,
   message: authMessage,
 } = useAuth()
-const { checkSlugAvailability, suggestSlugs } = useSellerManagement()
+const { checkSlugAvailability, suggestSlugs, createSeller } =
+  useSellerManagement()
 const { uploadMedia } = useMediaUpload()
 
 // ── Wizard state ──────────────────────────────────────────────────────────────
 const step = ref<0 | 1 | 2 | 3>(0)
 const accountType = ref<'buyer' | 'seller'>('buyer')
 const createdStoreSlug = ref('')
+
+// Post-phone-verify seller handoff — see guest.ts middleware's matching
+// exception. The account already exists and is logged in; skip straight to
+// store setup instead of showing the email/password step again. Tracked
+// separately from step/accountType so handleSellerSubmit knows to call the
+// authenticated "create a store for my account" endpoint instead of
+// registerSeller (which creates a brand-new account + store together and
+// would be wrong here — this user already has an account).
+const isPhoneHandoff = ref(false)
+onMounted(() => {
+  if (useRoute().query.step === '2') {
+    isPhoneHandoff.value = true
+    accountType.value = 'seller'
+    step.value = 2
+  }
+})
 
 const chooseType = (type: 'buyer' | 'seller') => {
   accountType.value = type
@@ -1080,6 +1134,23 @@ const handleSellerSubmit = async () => {
 
   storeSubmitting.value = true
   try {
+    if (isPhoneHandoff.value) {
+      // Already authenticated via phone OTP — attach a store to THIS account
+      // rather than registering a new one. createSeller() handles its own
+      // navigation (into product-creation onboarding), so no step/slug
+      // bookkeeping needed here. Shipping origin isn't collected by this
+      // endpoint — settable later from seller settings.
+      await createSeller({
+        store_name: storeForm.name.trim(),
+        store_slug: storeForm.slug.trim().toLowerCase(),
+        store_description: storeForm.description || undefined,
+        store_location: storeForm.location || undefined,
+        store_logo: storeForm.logo || undefined,
+        default_currency: storeForm.currency,
+      })
+      return
+    }
+
     const res = await registerSeller({
       email: form.email.trim(),
       username: form.username.trim(),

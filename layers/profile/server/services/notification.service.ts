@@ -60,7 +60,12 @@ const WHATSAPP_ELIGIBLE_TYPES = new Set([
   'SQUARE_MEMBERSHIP_REJECTED',
 ])
 
-const WHATSAPP_NOTIFICATION_TEMPLATE = 'marketx_account_update'
+// Recreated 2026-08-09 as "mx_account_update" with language explicitly set to
+// English (US) / en_US — the original "marketx_account_upd" template was
+// created under plain "English" (en), which caused Graph API send failures
+// against en_US. Keep this name/language pair in sync with whatever's actually
+// approved in WhatsApp Manager.
+const WHATSAPP_NOTIFICATION_TEMPLATE = 'mx_account_update'
 
 export const notificationService = {
   /**

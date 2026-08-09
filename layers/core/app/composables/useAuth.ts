@@ -158,6 +158,7 @@ export const useAuth = () => {
         .catch(() => {})
 
       authStore.setMessage('Logged in successfully!')
+      notifyWelcome()
 
       // Redirect to dashboard after 1 second
       setTimeout(() => {
@@ -173,6 +174,28 @@ export const useAuth = () => {
     }
   }
 
+  /**
+   * Confirms a *fresh* sign-in. Logout already toasts; login didn't, so the
+   * one moment the user most needs reassurance ("am I actually in?") was the
+   * only silent one.
+   *
+   * Deliberately NOT placed inside syncUserToProfile(): that also runs on
+   * initializeUser(), the passive session-restore path, so it would fire a
+   * welcome on every page reload. Only real sign-in entry points call this.
+   */
+  const notifyWelcome = () => {
+    const name = profileStore.me?.username
+    notify({
+      type: 'success',
+      text: name
+        ? `Welcome back, ${name} — you're signed in.`
+        : "You're signed in.",
+    })
+  }
+
+  /** Set before an OAuth redirect; consumed on return — see initializeUser. */
+  const PENDING_WELCOME_KEY = 'mx_pending_welcome'
+
   // ==================== SOCIAL LOGIN ====================
 
   const socialLogin = async (
@@ -184,6 +207,14 @@ export const useAuth = () => {
 
     try {
       if (!import.meta.client) return
+      // Social sign-in leaves the SPA entirely (server redirect), so it can't
+      // toast inline — leave a marker for initializeUser() to pick up on the
+      // way back. sessionStorage, not local: it must not leak into new tabs.
+      try {
+        sessionStorage.setItem(PENDING_WELCOME_KEY, '1')
+      } catch {
+        /* private mode — worst case the welcome is skipped */
+      }
       const target = `/api/auth/oauth/${provider}?redirectTo=${encodeURIComponent(redirectTo)}`
       window.location.assign(target)
     } catch (e: unknown) {
@@ -303,6 +334,16 @@ export const useAuth = () => {
 
     try {
       await syncUserToProfile()
+      // Only greet if this load is the return leg of an OAuth sign-in —
+      // a plain reload must stay silent.
+      try {
+        if (sessionStorage.getItem(PENDING_WELCOME_KEY)) {
+          sessionStorage.removeItem(PENDING_WELCOME_KEY)
+          notifyWelcome()
+        }
+      } catch {
+        /* ignore */
+      }
       console.log('✅ User initialized via API Service')
     } catch (error) {
       console.error('Initialization failed:', error)
@@ -449,5 +490,6 @@ export const useAuth = () => {
     refreshAccessToken,
     initializeUser,
     syncUserToProfile,
+    notifyWelcome,
   }
 }

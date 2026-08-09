@@ -2,20 +2,22 @@
   <div
     ref="cardRef"
     class="group flex cursor-pointer flex-col"
-    :class="compact ? 'mx-auto w-full max-w-[480px]' : ''"
+    :class="compact ? 'mx-auto w-full max-w-[400px]' : ''"
     @click="$emit('open-detail', product)"
   >
     <!-- ─── MEDIA BLOCK (Single Relative Container) ───────────────────── -->
     <!-- Default 4/5 portrait is a tall hero treatment; at the feed column's
          600px that renders ~750px of image per card, so only one listing
          fits on screen at a time. `compact` narrows the card to 480px and
-         gives it a 6/7 portrait (480x560) — noticeably less dominant than
+         narrows it to 400px and lets the media box take the image's own
+         shape (400x533 for a typical tall product shot) — noticeably less dominant than
          the default 4/5 at full column width (600x750), while keeping enough
          image height to show the product. Opt-in rather than a changed default
          — the share-card surface and the component's spec both rely on 4/5. -->
     <div
       class="relative w-full overflow-hidden rounded-2xl bg-gray-100 dark:bg-neutral-800"
-      :class="compact ? 'aspect-[6/7]' : 'aspect-[4/5]'"
+      :class="mediaAspectClass"
+      :style="mediaAspectStyle"
     >
       <!-- VIDEO (takes priority over image collage) -->
       <template v-if="videoItem">
@@ -65,11 +67,17 @@
             }"
             aria-hidden="true"
           />
+          <!-- object-contain, not cover: product photos here are often
+               infographics (spec callouts, price banners) where cropping
+               removes the actual information. The blurred LQIP backdrop
+               above fills the letterbox, so the whole frame shows without
+               black bars — same treatment PostMediaGallery already uses. -->
           <img
             :src="imageItems[0]!.url"
             :alt="product.title"
             loading="lazy"
-            class="relative h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            class="relative h-full w-full object-contain transition-transform duration-500 group-hover:scale-105"
+            @load="onHeroImageLoad"
           />
         </template>
 
@@ -386,6 +394,7 @@ import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import { notify } from '@kyvg/vue3-notification'
 import {
   imgThumb,
+  imgFeed,
   videoFeedUrl,
   videoThumb,
   imgLqip,
@@ -429,11 +438,52 @@ const bgMusicItem = computed(
       (m) => m.isBgMusic || m.type === 'AUDIO',
     ) ?? null,
 )
-const imageItems = computed(() =>
-  (props.product.media ?? [])
-    .filter((m) => !m.isBgMusic && m.type === 'IMAGE')
-    .map((m) => ({ ...m, url: imgThumb(m.url) ?? m.url })),
+// ── Media box shape ──────────────────────────────────────────────────────────
+// A fixed 6/7 box letterboxed tall product shots badly: the image painted at
+// ~320px inside a 480px box, leaving ~160px of blurred gutter, which reads as
+// a bigger, emptier card even though the box never changed size. Instead let
+// the box take the image's OWN ratio (same approach PostMediaGallery uses for
+// feed media), clamped so an extreme panorama or a very tall poster can't
+// produce an absurd card.
+const heroNaturalW = ref(0)
+const heroNaturalH = ref(0)
+const onHeroImageLoad = (e: Event) => {
+  const img = e.target as HTMLImageElement
+  heroNaturalW.value = img.naturalWidth
+  heroNaturalH.value = img.naturalHeight
+}
+const mediaAspectStyle = computed(() => {
+  if (!heroNaturalW.value || !heroNaturalH.value) return undefined
+  const natural = heroNaturalW.value / heroNaturalH.value
+  // 0.75 (4:5 portrait) … 1.25 (5:4 landscape) — keeps the card in a
+  // predictable band while still hugging most real product photos.
+  const clamped = Math.min(1.25, Math.max(0.75, natural))
+  return { aspectRatio: String(clamped) }
+})
+// Tailwind fallback until the image reports its size (and for the
+// multi-image/video cases, which keep the fixed editorial ratio).
+const mediaAspectClass = computed(() =>
+  mediaAspectStyle.value ? '' : compactAspect.value,
 )
+const compactAspect = computed(() =>
+  props.compact ? 'aspect-[6/7]' : 'aspect-[4/5]',
+)
+
+const imageItems = computed(() => {
+  const imgs = (props.product.media ?? []).filter(
+    (m) => !m.isBgMusic && m.type === 'IMAGE',
+  )
+  // A single image is the card's hero: serve it aspect-preserved (imgFeed =
+  // width-only transform) so nothing is lost before it reaches the browser.
+  // imgThumb is `400x400 c_fill` — a centre-crop — which was silently slicing
+  // the top off portrait shots and cutting the text out of the spec-sheet
+  // images most listings use. object-contain in the template cannot recover
+  // that: the pixels were already gone server-side.
+  // Collage cells keep the square crop — they ARE square boxes, so c_fill is
+  // correct there and avoids letterboxing every tile.
+  const transform = imgs.length === 1 ? imgFeed : imgThumb
+  return imgs.map((m) => ({ ...m, url: transform(m.url) ?? m.url }))
+})
 // A product has audio if it has a dedicated music track OR a video
 const hasAudio = computed(() => !!bgMusicItem.value || !!videoItem.value)
 

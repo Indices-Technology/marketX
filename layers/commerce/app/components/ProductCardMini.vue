@@ -17,7 +17,8 @@
         :src="coverImage"
         :alt="product.title"
         loading="lazy"
-        class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+        class="h-full w-full transition-transform duration-500 group-hover:scale-105"
+        :class="containImage ? 'object-contain' : 'object-cover'"
       />
       <div v-else class="absolute inset-0 flex items-center justify-center">
         <Icon
@@ -51,7 +52,7 @@
         class="absolute right-2 top-2 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 shadow-sm backdrop-blur-sm transition-all hover:scale-110 active:scale-95 dark:bg-black/40"
         :class="
           calm && !localLiked
-            ? 'opacity-0 group-hover:opacity-100 focus:opacity-100'
+            ? 'opacity-0 focus:opacity-100 group-hover:opacity-100'
             : ''
         "
         aria-label="Like"
@@ -60,7 +61,9 @@
         <Icon
           :name="localLiked ? 'solar:heart-bold' : 'solar:heart-linear'"
           size="16"
-          :class="localLiked ? 'text-brand' : 'text-gray-600 dark:text-gray-300'"
+          :class="
+            localLiked ? 'text-brand' : 'text-gray-600 dark:text-gray-300'
+          "
         />
       </button>
 
@@ -97,7 +100,7 @@
               ? `/sellers/profile/${product.seller.store_slug}`
               : undefined
           "
-          class="flex min-w-0 items-center gap-1 truncate text-[11px] ink-faint transition-colors hover:text-brand"
+          class="ink-faint flex min-w-0 items-center gap-1 truncate text-[11px] transition-colors hover:text-brand"
           @click.stop
         >
           <span class="truncate">{{ product.seller.store_name }}</span>
@@ -119,7 +122,7 @@
           <!-- Like count as subtle social proof -->
           <span
             v-if="localLikeCount > 0"
-            class="flex items-center gap-0.5 text-[10px] ink-faint"
+            class="ink-faint flex items-center gap-0.5 text-[10px]"
           >
             <Icon name="solar:heart-linear" size="10" />
             {{ localLikeCount }}
@@ -140,7 +143,7 @@
       <!-- Rating · trader location — shown when the feed provides trust data -->
       <div
         v-if="product.averageRating || product.seller?.locationLabel"
-        class="flex items-center gap-1.5 text-[10px] ink-soft"
+        class="ink-soft flex items-center gap-1.5 text-[10px]"
       >
         <span
           v-if="product.averageRating"
@@ -148,7 +151,7 @@
         >
           <Icon name="solar:star-bold" size="11" />
           {{ product.averageRating.toFixed(1) }}
-          <span class="font-normal ink-faint"
+          <span class="ink-faint font-normal"
             >({{ product.totalReviews ?? 0 }})</span
           >
         </span>
@@ -170,12 +173,12 @@
         <div class="flex flex-col">
           <span
             v-if="discountPercent > 0"
-            class="text-[9px] leading-none ink-faint line-through"
+            class="ink-faint text-[9px] leading-none line-through"
           >
             {{ formatPrice(product.price) }}
           </span>
           <span
-            class="font-display font-bold leading-none ink-strong"
+            class="ink-strong font-display font-bold leading-none"
             :class="featured ? 'text-base' : 'text-[13px]'"
           >
             {{ formatPrice(discountedPrice) }}
@@ -202,7 +205,11 @@
             size="13"
             class="animate-spin"
           />
-          <Icon v-else-if="cartAdded" name="solar:check-circle-linear" size="13" />
+          <Icon
+            v-else-if="cartAdded"
+            name="solar:check-circle-linear"
+            size="13"
+          />
           <Icon v-else name="solar:cart-plus-linear" size="13" />
         </button>
       </div>
@@ -222,6 +229,9 @@ const props = defineProps<{
   product: IProduct
   /** Tailwind aspect-ratio class e.g. "aspect-[3/4]". Defaults to portrait. */
   aspectClass?: string
+  /** Show the whole image (letterboxed) instead of cropping to fill. For
+      listings whose photo carries text/spec detail that cropping destroys. */
+  containImage?: boolean
   /** Show relative timestamp — intended for Fresh Drops context */
   showAge?: boolean
   /** Fill parent height (bento grid cells) instead of using a fixed aspect ratio. */
@@ -297,7 +307,10 @@ const handleLike = async () => {
     const status = err?.response?.status ?? err?.statusCode
     notify({
       type: status === 401 || status === 403 ? 'warn' : 'error',
-      text: status === 401 || status === 403 ? 'Sign in to like products' : 'Could not like product',
+      text:
+        status === 401 || status === 403
+          ? 'Sign in to like products'
+          : 'Could not like product',
     })
   }
 }
@@ -315,7 +328,9 @@ const handleAddToCart = async () => {
     await addToCart(firstVariantId.value, 1)
     cartAdded.value = true
     emit('quick-add', props.product)
-    setTimeout(() => { cartAdded.value = false }, 2000)
+    setTimeout(() => {
+      cartAdded.value = false
+    }, 2000)
   } catch {
     //
   } finally {

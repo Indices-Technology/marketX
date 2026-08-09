@@ -116,7 +116,9 @@ async function _sendWhatsApp(data: WhatsAppJob): Promise<void> {
       },
       body: JSON.stringify({
         messaging_product: 'whatsapp',
-        to: data.to,
+        // Meta's "to" field wants digits only — strip a leading "+" that
+        // callers commonly pass through from normalizePhone()'s E.164 output.
+        to: data.to.replace(/^\+/, ''),
         type: 'template',
         template: {
           name: data.templateName,
@@ -131,6 +133,13 @@ async function _sendWhatsApp(data: WhatsAppJob): Promise<void> {
     const body = await res.text().catch(() => '')
     throw new Error(`WhatsApp send failed (${res.status}): ${body}`)
   }
+
+  const result = await res.json().catch(() => null)
+  console.log('[whatsapp.queue] sent', {
+    to: data.to,
+    templateName: data.templateName,
+    messageId: result?.messages?.[0]?.id,
+  })
 }
 
 // ─── Consumer (Worker) ───────────────────────────────────────────────────────

@@ -264,6 +264,35 @@ export class AuthApiClient extends BaseApiClient {
       silent: true,
     })
   }
+
+  // ==================== PHONE / WHATSAPP OTP ====================
+
+  async sendPhoneOtp(phone: string): Promise<{ success: boolean; isNewUser: boolean }> {
+    return this.request('/api/auth/phone/send-otp', {
+      method: 'POST',
+      body: { phone },
+      skipAuth: true,
+      silent: true,
+    })
+  }
+
+  async verifyPhoneOtp(
+    phone: string,
+    code: string,
+  ): Promise<{
+    success: boolean
+    isNewUser: boolean
+    accessToken: string
+    refreshToken: string
+    user: IAuthUser & { phone: string; phoneVerified: boolean }
+  }> {
+    return this.request('/api/auth/phone/verify-otp', {
+      method: 'POST',
+      body: { phone, code },
+      skipAuth: true,
+      silent: true,
+    })
+  }
 }
 
 /**

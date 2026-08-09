@@ -1,24 +1,28 @@
 <!-- layers/auth/pages/reset-password.vue -->
 <template>
-  <div class="relative min-h-screen overflow-hidden">
-    <!-- Full-screen Background -->
-    <div class="absolute inset-0 z-0">
-      <img
-        src="https://www.bellanaijastyle.com/wp-content/uploads/2024/02/Lagos-Fashion-Week-Street-Style-2024-1.jpg"
-        alt="Stylish group at Lagos Fashion Week street style in vibrant outfits"
-        class="h-full w-full object-cover object-center brightness-[0.78] contrast-[1.08] saturate-[1.15]"
-      />
-      <div
-        class="absolute inset-0 bg-gradient-to-t from-black/65 via-black/45 to-black/30"
-      />
-    </div>
-
+  <!-- Plain surface, no background image and no glass — matches
+       user-login.vue / user-register.vue. Each auth page previously
+       shipped its OWN stock photo from a different host, so the
+       backdrop changed on every step of the same flow. -->
+  <div class="min-h-screen bg-gray-50 dark:bg-neutral-950">
     <!-- Main Content – centered glassmorphism card -->
     <div
-      class="relative z-10 flex min-h-screen flex-col items-center justify-center px-5 py-10 sm:px-6 md:py-12 lg:px-8"
+      class="flex min-h-screen flex-col items-center justify-center px-5 py-10 sm:px-6 md:py-12 lg:px-8"
     >
+      <!-- Brand — identical lockup, size and link on every auth screen.
+           Previously only verify-email showed a logo (via AuthLayout); the
+           centered-card pages showed none, so the brand appeared, vanished
+           and reappeared as you moved through sign-up → verify → reset. -->
+      <NuxtLink
+        to="/"
+        class="mb-8 flex justify-center"
+        aria-label="MarketX home"
+      >
+        <BrandLogo variant="full" class="h-10 w-auto" />
+      </NuxtLink>
+
       <div
-        class="fade-in bg-white/88 dark:bg-neutral-900/82 w-full max-w-md rounded-2xl p-6 shadow-2xl backdrop-blur-xl sm:p-8 md:max-w-lg md:p-10 lg:max-w-md dark:shadow-black/40"
+        class="fade-in w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8 md:max-w-lg md:p-10 lg:max-w-md dark:border-neutral-800 dark:bg-neutral-900"
       >
         <!-- Header & Motivational Copy -->
         <div class="mb-7 text-center">
@@ -39,7 +43,7 @@
         <!-- Token Invalid State -->
         <div
           v-if="tokenInvalid"
-          class="mb-6 rounded-xl border border-red-200/80 bg-red-50/70 p-5 dark:border-red-800/40 dark:bg-red-950/25"
+          class="mb-6 rounded-xl border border-red-200 bg-red-50 p-5 dark:border-red-800 dark:bg-red-950/40"
         >
           <div class="flex gap-3">
             <Icon
@@ -68,7 +72,7 @@
         <!-- General Error (non-token) -->
         <div
           v-else-if="error && !success"
-          class="mb-6 rounded-xl border border-red-200/80 bg-red-50/70 p-4 text-sm text-red-700 dark:border-red-800/40 dark:bg-red-950/25 dark:text-red-300"
+          class="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300"
         >
           {{ error }}
         </div>
@@ -122,7 +126,7 @@
         <!-- Success State -->
         <div v-if="success" class="space-y-6">
           <div
-            class="rounded-xl border border-green-200/80 bg-green-50/70 p-5 text-sm dark:border-green-800/40 dark:bg-green-950/25"
+            class="rounded-xl border border-green-200 bg-green-50 p-5 text-sm dark:border-green-800 dark:bg-green-950/40"
           >
             <div class="flex gap-3">
               <Icon
@@ -172,6 +176,7 @@
 </template>
 
 <script setup lang="ts">
+import BrandLogo from '~~/layers/ui/app/components/BrandLogo.vue'
 import { reactive, ref, onMounted, computed } from 'vue'
 import { definePageMeta } from '#imports'
 import { useSeo } from '~~/layers/core/app/composables/useSeo'

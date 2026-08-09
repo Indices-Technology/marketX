@@ -83,6 +83,11 @@ export interface VerifyPhoneOtpResult {
     username: string
     phoneVerified: boolean
     role: string
+    // Included so this shape is a drop-in IAuthUser on the client (which
+    // requires email/emailVerified) without widening that shared type —
+    // email is the placeholder, real for phone-only accounts.
+    email: string
+    emailVerified: boolean
   }
 }
 
@@ -181,6 +186,8 @@ export async function verifyPhoneOtp(
       username: user.username ?? '',
       phoneVerified: user.phone_verified,
       role: user.role,
+      email: user.email,
+      emailVerified: user.email_verified,
     },
   }
 }
