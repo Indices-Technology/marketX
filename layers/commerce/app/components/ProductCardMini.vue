@@ -222,7 +222,11 @@ import { ref, computed } from 'vue'
 import type { IProduct } from '~~/layers/commerce/app/types/commerce.types'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import { notify } from '@kyvg/vue3-notification'
-import { imgThumb, videoThumb } from '~~/layers/core/app/utils/cloudinary'
+import {
+  imgFeed,
+  imgThumb,
+  videoThumb,
+} from '~~/layers/core/app/utils/cloudinary'
 import { timeAgo } from '~~/layers/core/app/utils/formatters'
 
 const props = defineProps<{
@@ -264,6 +268,15 @@ const coverImage = computed(() => {
   )
   const first = media[0]
   if (!first) return null
+  // containImage means "show the whole frame" — so the SOURCE has to keep its
+  // aspect ratio too. imgThumb/videoThumb are 400x400 c_fill centre-crops, so
+  // asking for object-contain on top of one just letterboxes an
+  // already-cropped square: the lost pixels never reach the browser.
+  if (props.containImage) {
+    return first.type === 'VIDEO'
+      ? videoThumb(first.url, { width: 720, crop: 'limit' })
+      : imgFeed(first.url)
+  }
   return first.type === 'VIDEO' ? videoThumb(first.url) : imgThumb(first.url)
 })
 
