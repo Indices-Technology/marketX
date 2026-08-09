@@ -27,6 +27,22 @@ async function hasOpenDispute(orderId: number): Promise<boolean> {
   return n > 0
 }
 
+type OrderWithSellerItems = {
+  orderItem: {
+    variant: { product: { seller: { profileId: string } | null } | null } | null
+  }[]
+}
+
+/** Distinct seller profileIds with a stake in this order — an order can span multiple sellers. */
+function sellerIdsOf(order: OrderWithSellerItems): string[] {
+  const ids = new Set<string>()
+  for (const it of order.orderItem) {
+    const sid = it.variant?.product?.seller?.profileId
+    if (sid) ids.add(sid)
+  }
+  return [...ids]
+}
+
 function notifyBuyerShipped(
   orderId: number,
   buyerUserId: string,
@@ -179,6 +195,17 @@ export async function applyCarrierStatus(
       data: { status: 'SHIPPED', shippedAt: new Date() },
     })
     notifyBuyerShipped(orderId, order.userId, order.waybill, order.shipper)
+    for (const sid of sellerIdsOf(order)) {
+      notificationQueue.enqueue(
+        {
+          userId: sid,
+          type: 'ORDER',
+          orderId,
+          message: `Order #${orderId} has shipped${order.waybill ? ` · Tracking: ${order.waybill}` : ''}.`,
+        },
+        { dedupeKey: `ship:${orderId}:SHIPPED:seller:${sid}` },
+      )
+    }
   }
 
   if (plan.toDelivered) {
@@ -211,16 +238,24 @@ export async function applyCarrierStatus(
       },
       { dedupeKey: `ship:${orderId}:DELIVERED` },
     )
+    for (const sid of sellerIdsOf(order)) {
+      notificationQueue.enqueue(
+        {
+          userId: sid,
+          type: 'ORDER',
+          orderId,
+          message: disputed
+            ? `Order #${orderId} was delivered. Payment is on hold while the buyer's dispute is reviewed.`
+            : `Order #${orderId} has been delivered${base.fundsReleased ? ' and funds released to your wallet' : ''}.`,
+        },
+        { dedupeKey: `ship:${orderId}:DELIVERED:seller:${sid}` },
+      )
+    }
   }
 
   // Returned / failed delivery — money must NOT release; alert the seller(s).
   if (plan.failed) {
-    const sellerIds = new Set<string>()
-    for (const it of order.orderItem) {
-      const sid = it.variant?.product?.seller?.profileId
-      if (sid) sellerIds.add(sid)
-    }
-    for (const sid of sellerIds) {
+    for (const sid of sellerIdsOf(order)) {
       notificationQueue.enqueue(
         {
           userId: sid,

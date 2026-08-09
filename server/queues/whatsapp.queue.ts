@@ -25,6 +25,12 @@ export interface WhatsAppJob {
   languageCode?: string
   /** Body variable substitutions, in template placeholder order (e.g. {{1}}, {{2}}) */
   params?: string[]
+  /**
+   * Fills a template's Copy Code / URL button (index 0). Authentication templates
+   * with a Copy Code button need the OTP passed here TOO, in addition to `params`
+   * — the button and body are separate components even when the value is the same.
+   */
+  buttonParam?: string
   /** Template category — informational only (for logs); the template itself is what Meta actually enforces */
   type: 'AUTHENTICATION' | 'UTILITY' | 'MARKETING'
 }
@@ -84,6 +90,22 @@ async function _sendWhatsApp(data: WhatsAppJob): Promise<void> {
     return
   }
 
+  const components: Record<string, unknown>[] = []
+  if (data.params?.length) {
+    components.push({
+      type: 'body',
+      parameters: data.params.map((text) => ({ type: 'text', text })),
+    })
+  }
+  if (data.buttonParam) {
+    components.push({
+      type: 'button',
+      sub_type: 'url',
+      index: '0',
+      parameters: [{ type: 'text', text: data.buttonParam }],
+    })
+  }
+
   const res = await fetch(
     `https://graph.facebook.com/${GRAPH_API_VERSION}/${phoneNumberId}/messages`,
     {
@@ -99,17 +121,7 @@ async function _sendWhatsApp(data: WhatsAppJob): Promise<void> {
         template: {
           name: data.templateName,
           language: { code: data.languageCode || 'en_US' },
-          components: data.params?.length
-            ? [
-                {
-                  type: 'body',
-                  parameters: data.params.map((text) => ({
-                    type: 'text',
-                    text,
-                  })),
-                },
-              ]
-            : undefined,
+          components: components.length ? components : undefined,
         },
       }),
     },
