@@ -95,12 +95,53 @@
         </span>
       </div>
     </div>
+
+    <!-- Facebook Page picker — only shown when the seller administers more
+         than one Page (a single Page connects automatically, no picker needed) -->
+    <BaseModal
+      v-if="showPagePicker"
+      :model-value="true"
+      title="Choose a Facebook Page"
+      @update:model-value="(v) => !v && (showPagePicker = false)"
+    >
+      <p class="mb-4 text-sm text-gray-500 dark:text-neutral-400">
+        You manage more than one Page — pick the one to connect to this store.
+      </p>
+      <div class="space-y-2">
+        <button
+          v-for="page in facebookPageCandidates"
+          :key="page.pageId"
+          type="button"
+          class="flex w-full items-center justify-between rounded-xl border border-gray-100 p-3 text-left transition hover:border-brand dark:border-neutral-800"
+          :disabled="selectingPage"
+          @click="onSelectPage(page.pageId)"
+        >
+          <div class="min-w-0">
+            <p class="font-semibold text-gray-900 dark:text-neutral-100">
+              {{ page.displayName || page.pageId }}
+            </p>
+            <p
+              v-if="page.category"
+              class="truncate text-xs text-gray-400 dark:text-neutral-500"
+            >
+              {{ page.category }}
+            </p>
+          </div>
+          <Icon
+            name="solar:alt-arrow-right-linear"
+            size="18"
+            class="shrink-0 text-gray-400"
+          />
+        </button>
+      </div>
+    </BaseModal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { notify } from '@kyvg/vue3-notification'
 import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
+import BaseModal from '~~/layers/ui/app/components/BaseModal.vue'
 import { useConnections } from '~~/layers/growth/app/composables/useConnections'
 
 definePageMeta({ middleware: 'auth', layout: 'store-layout' })
@@ -112,12 +153,19 @@ const storeSlug = computed(() => route.params.storeSlug as string)
 const {
   connections,
   connecting,
+  facebookPageCandidates,
   refresh,
   forPlatform,
   connectTikTok,
   connectGoogleBusiness,
+  connectFacebook,
+  loadFacebookPageCandidates,
+  selectFacebookPage,
   disconnect,
 } = useConnections()
+
+const showPagePicker = ref(false)
+const selectingPage = ref(false)
 
 const platforms = computed(() => [
   {
@@ -146,8 +194,8 @@ const platforms = computed(() => [
     icon: 'mdi:facebook',
     iconBg: 'bg-[#1877F2]/10',
     iconColor: 'text-[#1877F2]',
-    available: false,
-    blurb: '',
+    available: true,
+    blurb: 'Post cards to your Page and import your posts',
     connection: forPlatform('META_FB'),
   },
   {
@@ -170,6 +218,8 @@ function onConnect(platform: string) {
     connectTikTok(back)
   } else if (platform === 'GOOGLE_GBP') {
     connectGoogleBusiness(back)
+  } else if (platform === 'META_FB') {
+    connectFacebook(back)
   }
 }
 
@@ -178,12 +228,29 @@ async function onDisconnect(id: string) {
   notify({ type: 'success', text: 'Disconnected' })
 }
 
+async function onSelectPage(pageId: string) {
+  selectingPage.value = true
+  try {
+    await selectFacebookPage(pageId)
+    showPagePicker.value = false
+    notify({ type: 'success', text: 'Facebook Page connected' })
+  } catch {
+    notify({ type: 'error', text: "Couldn't connect that Page. Try again." })
+  } finally {
+    selectingPage.value = false
+  }
+}
+
 onMounted(async () => {
   // Handle the OAuth return, then clean the query out of the URL. Each provider
   // redirects back with `?<provider>=connected|error` + an optional `reason`.
-  const returns: Array<{ key: 'tiktok' | 'google'; label: string }> = [
+  const returns: Array<{
+    key: 'tiktok' | 'google' | 'facebook'
+    label: string
+  }> = [
     { key: 'tiktok', label: 'TikTok' },
     { key: 'google', label: 'Google Business Profile' },
+    { key: 'facebook', label: 'Facebook' },
   ]
   let handled = false
   for (const { key, label } of returns) {
@@ -199,6 +266,21 @@ onMounted(async () => {
       handled = true
     }
   }
+
+  // Facebook found more than one Page — show the picker instead of a toast.
+  if (route.query.facebook === 'choose') {
+    handled = true
+    try {
+      await loadFacebookPageCandidates()
+      showPagePicker.value = true
+    } catch {
+      notify({
+        type: 'error',
+        text: "Couldn't load your Facebook Pages. Try connecting again.",
+      })
+    }
+  }
+
   if (handled) router.replace(`/seller/${storeSlug.value}/connections`)
 
   await refresh()

@@ -46,13 +46,20 @@
 
     <!-- ─── TAP-TO-UNMUTE OVERLAY (mobile autoplay UX) ───────────────── -->
     <Transition name="unmute-fade">
-      <button
+      <!-- pointer-events-none on the FULL-SCREEN layer, auto only on the pill
+           itself: this used to be a full-bleed <button>, so while the hint was
+           visible every tap anywhere hit "unmute" and tap-to-pause silently
+           did nothing. Now the hint is a target, not a trap — taps outside it
+           fall through to the video's own togglePlay. -->
+      <div
         v-if="showUnmuteHint"
-        class="absolute inset-0 z-30 flex flex-col items-center justify-center gap-3 bg-transparent"
-        aria-label="Tap to enable sound"
-        @click.stop="tapToUnmute"
+        class="pointer-events-none absolute inset-0 z-30 flex flex-col items-center justify-center gap-3"
       >
-        <div class="unmute-pill">
+        <button
+          class="unmute-pill pointer-events-auto"
+          aria-label="Tap to enable sound"
+          @click.stop="tapToUnmute"
+        >
           <Icon name="solar:muted-linear" size="18" class="text-white" />
           <span class="text-[13px] font-bold text-white">Tap for sound</span>
           <Icon
@@ -60,8 +67,8 @@
             size="16"
             class="text-white/70"
           />
-        </div>
-      </button>
+        </button>
+      </div>
     </Transition>
 
     <!-- ─── PRODUCT FLOAT-UP CARD (appears 3s after play) ─────────────── -->
@@ -225,21 +232,22 @@
             class="text-emerald-400 transition-transform group-active:scale-75"
           />
         </div>
-        <span class="text-shadow text-[11px] font-bold text-white">Trust</span>
+        <span class="text-shadow text-[12px] font-bold text-white">Trust</span>
       </button>
 
       <!-- Mute Toggle — hidden when bg music owns the audio -->
       <button
-        v-if="!reel.bgMusic"
-        :aria-label="isMuted ? 'Unmute' : 'Mute'"
+        :aria-label="soundEnabled ? 'Mute' : 'Unmute'"
         class="mt-2 flex flex-col items-center gap-1"
-        @click.stop="soundEnabled = !soundEnabled"
+        @click.stop="toggleSound"
       >
         <div
           class="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-black/20 backdrop-blur-md"
         >
           <Icon
-            :name="isMuted ? 'solar:muted-linear' : 'solar:volume-loud-linear'"
+            :name="
+              soundEnabled ? 'solar:volume-loud-linear' : 'solar:muted-linear'
+            "
             size="16"
             class="text-white"
           />
@@ -465,6 +473,22 @@ let unmuteHintTimer: ReturnType<typeof setTimeout> | null = null
 const tapToUnmute = () => {
   soundEnabled.value = true
   showUnmuteHint.value = false
+}
+
+/**
+ * The mute control is shown on every reel now, so it has to work for both
+ * audio sources: a plain reel plays sound off the video track, while a reel
+ * with bgMusic keeps the video silent and plays a separate <audio>. Muting
+ * previously only existed for the first kind, which is why the button
+ * appeared on some reels and not others.
+ */
+const toggleSound = () => {
+  soundEnabled.value = !soundEnabled.value
+  const music = musicEl.value
+  if (music) {
+    music.muted = !soundEnabled.value
+    if (soundEnabled.value && props.isActive) music.play().catch(() => {})
+  }
 }
 
 const scheduleUnmuteHint = () => {

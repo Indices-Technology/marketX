@@ -628,7 +628,7 @@
                 v-for="product in products"
                 :key="product.id"
                 :product="product"
-                @open-detail="selectedProduct = product"
+                @open-detail="openProduct(product)"
                 @quick-add="quickAdd"
                 @market="marketProduct = $event"
               />
@@ -894,10 +894,6 @@
     </div>
 
     <!-- ── MODALS ─────────────────────────────────────────────────────── -->
-    <ProductDetailModal
-      :product="selectedProduct"
-      @close="selectedProduct = null"
-    />
     <ProductMarketModal
       :is-open="!!marketProduct"
       :product="marketProduct"
@@ -918,7 +914,7 @@ import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { useRoute } from 'vue-router'
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import ProductCardMini from '~~/layers/commerce/app/components/ProductCardMini.vue'
-import ProductDetailModal from '~~/layers/commerce/app/components/modals/ProductDetailModal.vue'
+import { useProductDetail } from '~~/layers/commerce/app/composables/useProductDetail'
 import { imgAvatar, cloudinaryUrl } from '~~/layers/core/app/utils/cloudinary'
 import { safeExternalUrl } from '~~/shared/utils/safeUrl'
 import { useRuntimeConfig } from '#imports'
@@ -1032,7 +1028,10 @@ const offset = ref(0)
 const LIMIT = 24
 const hasMore = computed(() => products.value.length < total.value)
 
-const selectedProduct = ref<IProduct | null>(null)
+// Tapping a product goes to the product page — see useProductDetail; this
+// storefront grid used to open a detail modal instead, which on mobile meant
+// a full-screen sheet with no shareable URL and no back-gesture target.
+const { openProduct } = useProductDetail()
 const marketProduct = ref<IProduct | null>(null)
 const showCard = ref(false)
 const trigger = ref<HTMLElement | null>(null)
@@ -1154,8 +1153,10 @@ const toggleFollow = async () => {
 
 const quickAdd = async (product: IProduct) => {
   const variant = product.variants?.[0]
+  // Multi-variant (or variant-less) products can't be added blind — send the
+  // buyer to the product page to pick.
   if (!variant) {
-    selectedProduct.value = product
+    openProduct(product)
     return
   }
   try {

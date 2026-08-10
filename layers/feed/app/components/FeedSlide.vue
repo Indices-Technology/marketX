@@ -144,11 +144,14 @@
     <div
       class="absolute bottom-36 right-3 z-20 flex flex-col items-center gap-5"
     >
-      <NuxtLink :to="authorLink" class="mb-1">
+      <!-- Sized to match the icon buttons below (40px circle) so the rail
+           reads as one column of equal controls rather than an avatar plus a
+           differently-scaled set of buttons. -->
+      <NuxtLink :to="authorLink" class="mb-1 block">
         <img
           :src="authorAvatar"
           :alt="item.author?.username || 'User'"
-          class="h-11 w-11 rounded-full border-2 border-white bg-neutral-800 object-cover shadow-lg"
+          class="h-10 w-10 rounded-full border-2 border-white bg-neutral-800 object-cover shadow-lg"
         />
       </NuxtLink>
 
@@ -223,7 +226,7 @@
             class="text-emerald-400"
           />
         </div>
-        <span class="text-shadow text-[11px] font-bold text-white">Trust</span>
+        <span class="text-shadow text-[12px] font-bold text-white">Trust</span>
       </button>
     </div>
 
@@ -267,17 +270,24 @@
         {{ item.caption }}
       </p>
 
-      <!-- Standalone product slide: whole slide IS the product -->
-      <button
+      <!-- Standalone product slide: whole slide IS the product.
+           A real link to the product page, not a detail modal — same
+           destination and markup as ReelItem's own Shop Now CTA, so a product
+           opens the same way whichever slide type it arrives on. The modal
+           was especially wrong on mobile, where a full-screen sheet stacked
+           over a full-screen feed slide has no visible "page" behind it and
+           swallows the back gesture. -->
+      <NuxtLink
         v-if="item.type === 'PRODUCT' && item.product"
+        :to="`/product/${item.product.slug || item.product.id}`"
         class="mt-1 inline-flex w-max items-center gap-2 rounded-full border border-white/50 bg-white/95 px-5 py-2.5 text-sm font-bold text-black shadow-xl backdrop-blur-md transition-transform active:scale-95"
-        @click.stop="$emit('open-product-sheet', item.product)"
+        @click.stop
       >
         <div class="rounded-full bg-brand/10 p-1 text-brand">
           <Icon name="solar:bag-4-bold" size="16" />
         </div>
         Shop Now • {{ formatPrice(item.product.price || 0) }}
-      </button>
+      </NuxtLink>
     </div>
   </div>
 </template>
@@ -285,7 +295,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import type { IFeedItem } from '~~/layers/feed/app/types/feed.types'
-import type { IProduct } from '~~/layers/social/app/types/post.types'
 import TrustCardOverlay from '~~/layers/feed/app/components/TrustCardOverlay.vue'
 import { usePost } from '~~/layers/social/app/composables/usePost'
 import { usePostStore } from '~~/layers/social/app/store/post.store'
@@ -298,7 +307,6 @@ import { useShareModal } from '~~/layers/social/app/composables/useShareModal'
 const props = defineProps<{ item: IFeedItem; isActive: boolean }>()
 defineEmits<{
   'open-comments': [item: IFeedItem]
-  'open-product-sheet': [product: Partial<IProduct>]
 }>()
 
 const { formatPrice } = useCurrency()

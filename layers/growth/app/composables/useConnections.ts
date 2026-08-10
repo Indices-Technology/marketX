@@ -6,6 +6,7 @@
 import {
   useConnectionsApi,
   type SocialConnection,
+  type FacebookPageCandidate,
 } from '~~/layers/growth/app/services/connections.api'
 
 export function useConnections() {
@@ -13,6 +14,7 @@ export function useConnections() {
   const connections = ref<SocialConnection[]>([])
   const loading = ref(false)
   const connecting = ref(false)
+  const facebookPageCandidates = ref<FacebookPageCandidate[]>([])
 
   async function refresh() {
     loading.value = true
@@ -59,6 +61,33 @@ export function useConnections() {
     }
   }
 
+  /**
+   * Kick off the Facebook Page connect flow: ask the server for the authorize
+   * URL (sets the state cookie), then navigate the whole page to Facebook.
+   */
+  async function connectFacebook(redirectTo: string) {
+    connecting.value = true
+    try {
+      const res = await api.startFacebook(redirectTo)
+      window.location.href = res.data.authorizeUrl
+    } catch {
+      connecting.value = false
+    }
+  }
+
+  /** Load the Pages awaiting a pick after a multi-Page Facebook connect. */
+  async function loadFacebookPageCandidates() {
+    const res = await api.getFacebookPageCandidates()
+    facebookPageCandidates.value = res.data
+  }
+
+  /** Finalize the picker for the chosen Page, then refresh connections. */
+  async function selectFacebookPage(pageId: string) {
+    await api.selectFacebookPage(pageId)
+    facebookPageCandidates.value = []
+    await refresh()
+  }
+
   async function disconnect(id: string) {
     await api.disconnect(id)
     connections.value = connections.value.filter((c) => c.id !== id)
@@ -68,10 +97,14 @@ export function useConnections() {
     connections,
     loading,
     connecting,
+    facebookPageCandidates,
     refresh,
     forPlatform,
     connectTikTok,
     connectGoogleBusiness,
+    connectFacebook,
+    loadFacebookPageCandidates,
+    selectFacebookPage,
     disconnect,
   }
 }

@@ -89,16 +89,25 @@
           class="flex flex-col justify-center"
           :class="dense ? 'items-center text-center' : ''"
         >
+          <!-- Rotating value prop. Same promise said several ways — a static
+               line has to be the one perfect sentence, whereas cycling lets
+               the page cover discovery, verification and safe payment in
+               turn. Fixed min-height so the swap never reflows the dock
+               below it, and rotation is skipped entirely under
+               prefers-reduced-motion (a looping animation is exactly what
+               that setting exists to stop). -->
           <h1
-            class="font-semibold tracking-tight text-gray-900 dark:text-white"
+            class="flex items-center justify-center font-semibold tracking-tight text-gray-900 dark:text-white"
             :class="
               dense
-                ? 'text-[1.75rem] leading-[1.15]'
-                : 'max-w-xl text-4xl sm:text-5xl lg:text-[3.25rem] lg:leading-[1.1]'
+                ? 'min-h-[4.2rem] text-[1.75rem] leading-[1.15]'
+                : 'min-h-[7rem] max-w-xl text-4xl sm:text-5xl lg:min-h-[8rem] lg:text-[3.25rem] lg:leading-[1.1]'
             "
+            :style="dense ? undefined : { justifyContent: 'flex-start' }"
           >
-            Find trusted sellers. <br class="hidden sm:block" />
-            Buy with confidence.
+            <Transition name="tagline" mode="out-in">
+              <span :key="taglineIndex">{{ taglines[taglineIndex] }}</span>
+            </Transition>
           </h1>
 
           <!-- <p
@@ -115,6 +124,31 @@
                the bottom of the viewport. -->
           <div class="pointer-events-auto mt-5 w-full max-w-xl">
             <TrustFindVerifyDock :show-seller-cta="!dense" />
+          </div>
+
+          <!-- Guest actions for the MOBILE hero. The desktop hero has its own
+               top bar; the dense slide deliberately dropped it, which left a
+               first-time visitor on this screen with a search box and no way
+               to sign in or start selling. Kept text-weight (not two filled
+               buttons) so it stays a hint, not a second CTA competing with
+               the dock above. -->
+          <div
+            v-if="dense && !profileStore.isLoggedIn"
+            class="pointer-events-auto mt-4 flex items-center justify-center gap-2 text-sm"
+          >
+            <NuxtLink
+              to="/user-login"
+              class="font-semibold text-gray-900 underline underline-offset-4 dark:text-white"
+            >
+              Log in
+            </NuxtLink>
+            <span class="text-gray-300 dark:text-neutral-700">·</span>
+            <NuxtLink
+              to="/sellers/create"
+              class="font-semibold text-brand underline underline-offset-4"
+            >
+              Start selling
+            </NuxtLink>
           </div>
 
           <!-- Trust indicators — minimal, horizontal -->
@@ -308,6 +342,19 @@ const props = withDefaults(defineProps<{ dense?: boolean }>(), {
 
 const profileStore = useProfileStore()
 
+// Same promise, several angles — discovery, verification, safe payment.
+const taglines = [
+  'Find trusted sellers. Buy with confidence.',
+  'Discover trusted businesses. Shop with confidence.',
+  'Shop confidently from trusted businesses across social media.',
+  'Turn social discoveries into safe purchases.',
+  'Shop from trusted sellers, wherever they sell.',
+  'Discover. Verify. Buy with confidence.',
+  'Buy safely from sellers you can trust.',
+]
+const taglineIndex = ref(0)
+let taglineTimer: ReturnType<typeof setInterval> | null = null
+
 const heroProducts = ref<IProduct[]>([])
 const spotlightSquare = ref<MarketSquare | null>(null)
 
@@ -331,6 +378,18 @@ const inView = ref(true)
 let observer: IntersectionObserver | null = null
 
 onMounted(() => {
+  // Honour the OS/user reduced-motion preference — a perpetual loop is the
+  // clearest case of decorative motion, so don't start the timer at all.
+  const reduced =
+    import.meta.client &&
+    (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ||
+      document.documentElement.classList.contains('reduce-motion'))
+  if (!reduced) {
+    taglineTimer = setInterval(() => {
+      taglineIndex.value = (taglineIndex.value + 1) % taglines.length
+    }, 4000)
+  }
+
   // Attach the scroll-visibility observer immediately, synchronously — don't
   // let it wait on the card data fetches below. They now take a couple of
   // chained API calls (featured seller → full trust-card data), and nothing
@@ -408,5 +467,28 @@ onMounted(() => {
     })
 })
 
-onUnmounted(() => observer?.disconnect())
+onUnmounted(() => {
+  observer?.disconnect()
+  if (taglineTimer) clearInterval(taglineTimer)
+})
 </script>
+
+<style scoped>
+/* Cross-fade between taglines — short and subtle. `mode="out-in"` keeps only
+   one line in the DOM at a time, so the fixed min-height on the h1 is what
+   stops the swap from reflowing the search dock beneath it. */
+.tagline-enter-active,
+.tagline-leave-active {
+  transition:
+    opacity 0.45s ease,
+    transform 0.45s ease;
+}
+.tagline-enter-from {
+  opacity: 0;
+  transform: translateY(6px);
+}
+.tagline-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+</style>

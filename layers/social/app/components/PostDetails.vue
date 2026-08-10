@@ -12,13 +12,6 @@
       @close="showShareModal = false"
     />
 
-    <!-- Tagged Product Detail Modal -->
-    <ProductDetailModal
-      v-if="selectedProduct"
-      :product="selectedProduct"
-      @close="selectedProduct = null"
-    />
-
     <!-- Author Header -->
     <div
       class="flex shrink-0 items-center gap-3 border-b border-gray-200 px-4 py-3.5 dark:border-neutral-800"
@@ -429,6 +422,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { usePost } from '../composables/usePost'
 import { useComment } from '../composables/useComment'
@@ -440,7 +434,6 @@ import PostCaption from './PostCaption.vue'
 import Avatar from '~~/layers/profile/app/components/Avatar.vue'
 import AudioPlayer from './AudioPlayer.vue'
 import TextEditor from './TextEditor.vue'
-import ProductDetailModal from '~~/layers/commerce/app/components/modals/ProductDetailModal.vue'
 import ShareModal from '~~/layers/social/app/components/modals/ShareModal.vue'
 import LikesModal from '~~/layers/social/app/components/modals/LikesModal.vue'
 import { notify } from '@kyvg/vue3-notification'
@@ -547,15 +540,25 @@ const taggedProducts = computed(() =>
 
 const hasTaggedProducts = computed(() => taggedProducts.value.length > 0)
 
-// Open Tagged Product
-const selectedProduct = ref<any>(null)
+// Open Tagged Product — navigate to the product page rather than stacking a
+// product modal on top of this post modal (two full-screen sheets deep on
+// mobile, with no URL for the product and no back-gesture target).
+// taggedProducts usually carries the slug already; only fall back to a fetch
+// when the tag row didn't include one, since /product/:slug is slug-only.
 const productApi = useProductApi()
+const router = useRouter()
 
 const openTaggedProduct = async (id: number) => {
-  try {
-    const res = await productApi.getProductById(id)
-    selectedProduct.value = res?.data ?? res
-  } catch {}
+  let slug = taggedProducts.value.find((p) => p.id === id)?.slug
+  if (!slug) {
+    try {
+      const res: any = await productApi.getProductById(id)
+      slug = (res?.data ?? res)?.slug
+    } catch {}
+  }
+  if (!slug) return
+  emit('close')
+  router.push(`/product/${slug}`)
 }
 
 // Load Comments

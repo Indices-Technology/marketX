@@ -87,15 +87,28 @@ export const isVideoUrl = (url: string | null | undefined): boolean =>
 export const imgThumb = (url: string | null | undefined) =>
   isVideoUrl(url)
     ? videoThumb(url, { width: 400, height: 400 })
-    : cloudinaryUrl(url, { width: 400, height: 400, crop: 'fill' })
+    : cloudinaryUrl(url, {
+        width: 400,
+        height: 400,
+        crop: 'fill',
+        // g_auto, not the default centre crop. Tiles genuinely must fill their
+        // cell — the bento grid uses fixed `grid-auto-rows`, so letterboxing
+        // would leave holes — but a blind centre crop was slicing subjects out
+        // of frame (heads cut off, product cropped away from a spec sheet).
+        // Auto-gravity keeps the salient region instead, so tiles stay uniform
+        // AND keep what matters. Same treatment two other presets here already
+        // use for square avatars/banners.
+        gravity: 'auto',
+      })
 
 /** Preset: feed/post image — wider but still compressed */
 export const imgFeed = (url: string | null | undefined) =>
   cloudinaryUrl(url, { width: 720 })
 
-/** Preset: small avatar */
+/** Preset: small avatar. g_auto so a portrait keeps the face in frame — a
+    blind centre crop on a full-body or off-centre shot cuts the head off. */
 export const imgAvatar = (url: string | null | undefined) =>
-  cloudinaryUrl(url, { width: 96, height: 96, crop: 'fill' })
+  cloudinaryUrl(url, { width: 96, height: 96, crop: 'fill', gravity: 'auto' })
 
 /**
  * Preset: a logo/avatar that gets rasterised into a downloadable or printed
@@ -140,7 +153,12 @@ export const imgDetail = (url: string | null | undefined) =>
 export function catThumb(url: string | null | undefined, size = 64): string {
   if (!url) return ''
   if (url.includes('cloudinary.com')) {
-    return cloudinaryUrl(url, { width: size, height: size, crop: 'fill' })
+    return cloudinaryUrl(url, {
+      width: size,
+      height: size,
+      crop: 'fill',
+      gravity: 'auto',
+    })
   }
   if (url.includes('unsplash.com')) {
     try {
@@ -267,6 +285,9 @@ export function videoThumb(
   if (opts.width) parts.push(`w_${opts.width}`)
   if (opts.height) parts.push(`h_${opts.height}`)
   if (opts.width || opts.height) parts.push(`c_${crop}`)
+  // Only meaningful when cropping to fill — `limit` scales, it never discards
+  // pixels, so gravity has nothing to choose between.
+  if (crop === 'fill' && (opts.width || opts.height)) parts.push('g_auto')
   parts.push('f_jpg', 'q_auto:good')
 
   // Replace video extension with .jpg
@@ -292,6 +313,7 @@ export function productThumb(
       width: size,
       height: size,
       crop: 'fill',
+      gravity: 'auto',
     })
   const m = product?.media?.[0]
   if (!m?.url) return ''
@@ -300,5 +322,10 @@ export function productThumb(
     /\.(mp4|webm|mov|m4v|ogg)(\?|$)/i.test(m.url)
   return isVideo
     ? videoThumb(m.url, { width: size, height: size })
-    : cloudinaryUrl(m.url, { width: size, height: size, crop: 'fill' })
+    : cloudinaryUrl(m.url, {
+        width: size,
+        height: size,
+        crop: 'fill',
+        gravity: 'auto',
+      })
 }
