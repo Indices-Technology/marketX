@@ -163,9 +163,7 @@ export class AuthApiClient extends BaseApiClient {
    * Sign out other devices, keeping this one. Pass `includeCurrent` to sign out
    * everywhere — `signedOutCurrent` then comes back true.
    */
-  async revokeOtherSessions(
-    includeCurrent = false,
-  ): Promise<{
+  async revokeOtherSessions(includeCurrent = false): Promise<{
     success: boolean
     message: string
     count: number
@@ -267,7 +265,9 @@ export class AuthApiClient extends BaseApiClient {
 
   // ==================== PHONE / WHATSAPP OTP ====================
 
-  async sendPhoneOtp(phone: string): Promise<{ success: boolean; isNewUser: boolean }> {
+  async sendPhoneOtp(
+    phone: string,
+  ): Promise<{ success: boolean; isNewUser: boolean }> {
     return this.request('/api/auth/phone/send-otp', {
       method: 'POST',
       body: { phone },
@@ -290,6 +290,22 @@ export class AuthApiClient extends BaseApiClient {
       method: 'POST',
       body: { phone, code },
       skipAuth: true,
+      silent: true,
+    })
+  }
+
+  /**
+   * Verify a phone OTP and attach it as the LOGGED-IN user's verified phone
+   * (used for login + WhatsApp notifications). Unlike verifyPhoneOtp above,
+   * this requires an existing session — call sendPhoneOtp first to get the code.
+   */
+  async verifyPhoneAttach(
+    phone: string,
+    code: string,
+  ): Promise<{ success: boolean; phone: string; phoneVerified: boolean }> {
+    return this.request('/api/auth/phone/verify-attach', {
+      method: 'POST',
+      body: { phone, code },
       silent: true,
     })
   }
