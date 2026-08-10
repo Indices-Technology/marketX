@@ -415,7 +415,13 @@ const bannerSrc = computed(() => {
       : props.variant === 'spotlight'
         ? { width: 480, height: 224 }
         : { width: 600, height: 96 }
-  return cloudinaryUrl(props.square.bannerUrl, { ...dims, crop: 'fill' })
+  // g_auto: these are wide letterbox crops (600x96 is 6:1), so a blind centre
+  // crop routinely slices the market's signage or stall out of the banner.
+  return cloudinaryUrl(props.square.bannerUrl, {
+    ...dims,
+    crop: 'fill',
+    gravity: 'auto',
+  })
 })
 
 const iconSrc = computed(() => {

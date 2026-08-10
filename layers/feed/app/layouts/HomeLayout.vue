@@ -167,6 +167,7 @@
     <!-- ─── FLOATING ACTION BUTTONS & BANNERS ────────────────────────────────── -->
     <MobileAIChatButton
       :is-open="showAI"
+      :side-left="immersive"
       :banner-visible="
         !dismissSellerBanner &&
         profileStore.isLoggedIn &&

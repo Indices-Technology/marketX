@@ -3,8 +3,14 @@
     <!-- ── Floating trigger button ────────────────────────────────────────── -->
     <button
       v-if="!isOpen"
-      class="fixed right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-all duration-300 active:scale-95 md:hidden"
+      class="fixed z-40 flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-all duration-300 active:scale-95 md:hidden"
       :class="[
+        // The immersive feed owns the right-hand column with its own action
+        // rail (like/comment/share/trust/mute). Sitting at right-4 there left
+        // only ~8px between this button and the rail above it and ~15px to the
+        // bottom nav — not technically overlapping, but visually crowded and
+        // easy to mis-tap. Move to the left edge on that surface instead.
+        sideLeft ? 'left-4' : 'right-4',
         bannerVisible || buyBarVisible ? 'bottom-36' : 'bottom-20',
         unreadMessages > 0
           ? 'bg-brand text-white'
@@ -139,7 +145,11 @@
                 v-else-if="filteredConversations.length === 0"
                 class="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-neutral-500"
               >
-                <Icon name="solar:chat-round-line-linear" size="48" class="mb-3" />
+                <Icon
+                  name="solar:chat-round-line-linear"
+                  size="48"
+                  class="mb-3"
+                />
                 <p class="text-sm">No messages yet</p>
                 <NuxtLink
                   to="/messages/new"
@@ -308,7 +318,13 @@ import {
   ticketRef,
 } from '~~/layers/support/app/composables/useSupport'
 
-const props = defineProps<{ isOpen: boolean; bannerVisible?: boolean }>()
+const props = defineProps<{
+  isOpen: boolean
+  bannerVisible?: boolean
+  /** Park the button on the left — for surfaces whose right edge is already
+      occupied (the full-screen feed's action rail). */
+  sideLeft?: boolean
+}>()
 const emit = defineEmits(['open', 'close'])
 
 // Pages with a mobile sticky action bar (e.g. the product buy bar) set this so

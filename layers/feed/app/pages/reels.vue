@@ -108,10 +108,21 @@
     </div>
 
     <!-- ─── MODALS ─────────────────────────────────────────────────── -->
-    <ProductDetailModal
-      v-if="activeCommentReel"
-      :product="activeCommentReel.product ?? null"
-      @close="activeCommentReel = null"
+    <!-- The comment button routes by content type (see useFeedComments) —
+         same pair MinimalHome renders. It previously opened a
+         ProductDetailModal here, i.e. the product's sales page off a comment
+         tap; a product reel's comment equivalent is its review record.
+         Tapping the product itself goes to /product/:slug via ReelItem's
+         Shop Now link, not to a modal. -->
+    <PostDetailModal
+      v-if="selectedPost"
+      :post="selectedPost"
+      @close="selectedPost = null"
+    />
+    <ProductReviewModal
+      :is-open="!!reviewProduct"
+      :product="reviewProduct"
+      @close="reviewProduct = null"
     />
   </HomeLayout>
 </template>
@@ -120,9 +131,11 @@
 import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import ReelItem from '~~/layers/feed/app/components/ReelItem.vue'
-import ProductDetailModal from '~~/layers/commerce/app/components/modals/ProductDetailModal.vue'
+import ProductReviewModal from '~~/layers/commerce/app/components/modals/ProductReviewModal.vue'
+import PostDetailModal from '~~/layers/social/app/components/modals/PostDetailModal.vue'
 import type { IFeedItem } from '~~/layers/feed/app/types/feed.types'
 import { useFeed } from '~~/layers/feed/app/composables/useFeed'
+import { useFeedComments } from '~~/layers/feed/app/composables/useFeedComments'
 import { useLikedProducts } from '~~/layers/commerce/app/composables/useLikedProducts'
 
 // ─── SEO ──────────────────────────────────────────────────────────────
@@ -138,7 +151,7 @@ const LIMIT = 10
 
 const reels = ref<IFeedItem[]>([])
 const activeIndex = ref(0)
-const activeCommentReel = ref<IFeedItem | null>(null)
+const { selectedPost, reviewProduct, openComments } = useFeedComments()
 
 // DOM Refs
 const containerRef = ref<HTMLElement | null>(null)
@@ -198,10 +211,6 @@ const fetchReels = async (reset = false) => {
 const refresh = () => {
   pending.value = true
   fetchReels(true)
-}
-
-const openComments = (reel: IFeedItem) => {
-  activeCommentReel.value = reel
 }
 
 // ─── OBSERVERS (Auto-play & Infinite Scroll) ──────────────────────────

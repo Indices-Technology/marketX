@@ -112,7 +112,6 @@
             :item="slot.item"
             :is-active="index === activeIndex"
             @open-comments="openComments"
-            @open-product-sheet="openProductSheet"
           />
         </div>
       </template>
@@ -172,11 +171,10 @@
       :product="reviewProduct"
       @close="reviewProduct = null"
     />
-    <ProductDetailModal
-      v-if="sheetProduct"
-      :product="sheetProduct as any"
-      @close="sheetProduct = null"
-    />
+    <!-- No product-detail sheet here: a product slide's Shop Now is a real
+         link to /product/:slug (FeedSlide/ReelItem), so tapping a product
+         navigates to the product page instead of stacking a full-screen
+         modal over the full-screen feed. -->
   </div>
 </template>
 
@@ -188,16 +186,15 @@ import SquareSpotlightSlide from '~~/layers/feed/app/components/SquareSpotlightS
 import HomeHero from '~~/layers/feed/app/components/HomeHero.vue'
 import TrustFindVerifyDock from '~~/layers/feed/app/components/TrustFindVerifyDock.vue'
 import BaseModal from '~~/layers/ui/app/components/BaseModal.vue'
-import ProductDetailModal from '~~/layers/commerce/app/components/modals/ProductDetailModal.vue'
 import ProductReviewModal from '~~/layers/commerce/app/components/modals/ProductReviewModal.vue'
 import PostDetailModal from '~~/layers/social/app/components/modals/PostDetailModal.vue'
 import { useHomeFeed } from '~~/layers/feed/app/composables/useHomeFeed'
+import { useFeedComments } from '~~/layers/feed/app/composables/useFeedComments'
 import { useSquareApi } from '~~/layers/square/app/services/square.api'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import { useNavVisibility } from '~~/layers/core/app/composables/useNavVisibility'
 import { useHomeSearch } from '~~/layers/core/app/composables/useHomeSearch'
 import type { IFeedItem } from '~~/layers/feed/app/types/feed.types'
-import type { IProduct } from '~~/layers/social/app/types/post.types'
 import type { MarketSquare } from '~~/layers/square/app/components/SquareCard.vue'
 
 defineOptions({ name: 'MinimalHome' })
@@ -272,24 +269,9 @@ const containerRef = ref<HTMLElement | null>(null)
 // rather than a local ref.
 const { searchOpen } = useHomeSearch()
 
-const selectedPost = ref<IFeedItem | null>(null)
-const reviewProduct = ref<Partial<IProduct> | null>(null)
-// One "comment" affordance, two destinations by content type: a post gets its
-// comment thread, a product (including product reels) gets its review record,
-// which only a confirmed buyer can write to. Routing on `type` rather than on
-// which component emitted, so FeedSlide and ReelItem behave identically.
-const openComments = (item: IFeedItem) => {
-  if (item.type === 'PRODUCT' && item.product) {
-    reviewProduct.value = item.product
-    return
-  }
-  selectedPost.value = item
-}
-
-const sheetProduct = ref<Partial<IProduct> | null>(null)
-const openProductSheet = (product: Partial<IProduct>) => {
-  sheetProduct.value = product
-}
+// Post → comment thread, product (including product reels) → review record.
+// Shared with /reels so both reel surfaces route a comment tap identically.
+const { selectedPost, reviewProduct, openComments } = useFeedComments()
 
 const goTo = (index: number) => {
   if (!containerRef.value || index < 0 || index >= items.value.length) return
@@ -300,7 +282,7 @@ const goTo = (index: number) => {
 }
 
 const onKeydown = (e: KeyboardEvent) => {
-  if (selectedPost.value || sheetProduct.value || searchOpen.value) return
+  if (selectedPost.value || reviewProduct.value || searchOpen.value) return
   if (e.key === 'ArrowDown' || e.key === 'PageDown') {
     e.preventDefault()
     goTo(activeIndex.value + 1)
