@@ -14,6 +14,7 @@ import { startEmailWorker } from '../queues/email.queue'
 import { startPodReminderCron } from '../queues/pod-reminder.queue'
 import { startReputationWorker } from '../queues/reputation.queue'
 import { startWhatsAppWorker } from '../queues/whatsapp.queue'
+import { alertOnFinalFailure } from '../utils/monitoring/queueAlerts'
 
 // Guard against double-start. In dev, Nitro HMR can re-evaluate this plugin
 // module and re-run the bootstrap, stacking duplicate Workers on the SHARED
@@ -30,6 +31,15 @@ export default defineNitroPlugin(() => {
   const email = startEmailWorker()
   const reputation = startReputationWorker()
   const whatsapp = startWhatsAppWorker()
+
+  // User-facing delivery queues (a permanent failure here means a real person
+  // never got their order update) alert at 'critical'; internal bookkeeping
+  // queues alert at 'warning' since nothing customer-visible is blocked.
+  if (audit) alertOnFinalFailure(audit, 'audit', 'warning')
+  if (notification) alertOnFinalFailure(notification, 'notification')
+  if (email) alertOnFinalFailure(email, 'email')
+  if (reputation) alertOnFinalFailure(reputation, 'reputation', 'warning')
+  if (whatsapp) alertOnFinalFailure(whatsapp, 'whatsapp')
 
   if (audit || notification || email || reputation || whatsapp) {
     console.log(

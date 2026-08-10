@@ -16,7 +16,7 @@
     <div class="nav-scroll min-h-0 flex-1 overflow-y-auto">
       <!-- Primary Navigation -->
       <p class="nav-group-label">Shop</p>
-      <nav class="flex flex-col space-y-4">
+      <nav class="flex flex-col space-y-2">
         <NuxtLink to="/" class="nav-button group" :class="{ active: isHome }">
           <AppIcon name="home" :active="isHome" size="24" />
           <span class="nav-text">Home</span>

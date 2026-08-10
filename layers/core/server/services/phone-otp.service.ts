@@ -17,6 +17,7 @@ import { authRepository } from '../repositories/auth.repository'
 import { createUniqueUsername } from './checkout-otp.service'
 import { phoneOtpStore } from '~~/server/utils/auth/phoneOtpStore'
 import { whatsappQueue } from '~~/server/queues/whatsapp.queue'
+import { bust } from '~~/server/utils/cache'
 
 const OTP_RATE_KEY = 'phone-otp'
 const WHATSAPP_OTP_TEMPLATE = 'marketx_verification'
@@ -190,4 +191,67 @@ export async function verifyPhoneOtp(
       emailVerified: user.email_verified,
     },
   }
+}
+
+// ── Attach a verified phone to an already-authenticated account ──────────────
+//
+// Unlike verifyPhoneOtp above (a login/signup door that mints a session and
+// can auto-register a new account), this is for a logged-in user adding or
+// re-verifying their own phone from account/seller settings. It never creates
+// a Profile row or a session — it only ever updates the caller's own row, and
+// 409s if the number is already claimed by someone else (Profile.phone is
+// @unique). This becomes the SAME phone/phone_verified fields everything else
+// (login, WhatsApp notifications) reads — by design there's one verified phone
+// per account, not a separate notification-only number.
+
+export interface AttachPhoneResult {
+  phone: string
+  phoneVerified: boolean
+}
+
+export async function attachVerifiedPhone(
+  userId: string,
+  phone: string,
+  code: string,
+  ipAddress: string,
+  userAgent: string,
+): Promise<AttachPhoneResult> {
+  const entry = await phoneOtpStore.verify(phone, code)
+  if (!entry) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Invalid or expired verification code',
+    })
+  }
+
+  const existing = await prisma.profile.findUnique({
+    where: { phone },
+    select: { id: true },
+  })
+  if (existing && existing.id !== userId) {
+    throw createError({
+      statusCode: 409,
+      statusMessage: 'This phone number is already linked to another account',
+    })
+  }
+
+  const user = await prisma.profile.update({
+    where: { id: userId },
+    data: { phone, phone_verified: true, phone_verified_at: new Date() },
+    select: { email: true, phone: true, phone_verified: true },
+  })
+
+  await bust(`profile:own:${userId}`)
+
+  await authRepository.createAuditLog({
+    userId,
+    email: user.email,
+    eventType: 'PHONE_VERIFIED_ATTACH',
+    reason: 'Verified phone attached to existing account from settings',
+    ipAddress,
+    userAgent,
+    success: true,
+  })
+
+  return { phone: user.phone!, phoneVerified: user.phone_verified }
 }

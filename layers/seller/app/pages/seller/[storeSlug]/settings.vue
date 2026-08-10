@@ -256,10 +256,27 @@
               />
             </div>
             <div data-field="store_phone">
-              <label
-                class="mb-1.5 block text-[12px] font-semibold text-gray-600 dark:text-neutral-400"
-                >Phone</label
-              >
+              <div class="mb-1.5 flex items-center justify-between">
+                <label
+                  class="block text-[12px] font-semibold text-gray-600 dark:text-neutral-400"
+                  >Phone</label
+                >
+                <span
+                  v-if="isStorePhoneVerified"
+                  class="inline-flex items-center gap-1 text-[11px] font-semibold text-green-600 dark:text-green-400"
+                >
+                  <Icon name="solar:check-circle-bold" size="13" />
+                  Verified
+                </span>
+                <button
+                  v-else-if="form.store_phone"
+                  type="button"
+                  class="text-[11px] font-semibold text-brand hover:underline"
+                  @click="showPhoneVerifyModal = true"
+                >
+                  Verify (enables WhatsApp alerts)
+                </button>
+              </div>
               <input
                 v-model="form.store_phone"
                 type="tel"
@@ -849,6 +866,12 @@
         </button>
       </form>
     </template>
+
+    <PhoneVerifyModal
+      v-model="showPhoneVerifyModal"
+      :initial-phone="form.store_phone"
+      @verified="onPhoneVerified"
+    />
   </div>
 </template>
 
@@ -863,6 +886,8 @@ import { NIGERIA_STATES } from '~~/shared/utils/locations'
 import { normalizePhone, validatePhone } from '~~/shared/utils/phone'
 import { useFormFocus } from '~~/layers/core/app/composables/useFormFocus'
 import { notify } from '@kyvg/vue3-notification'
+import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
+import PhoneVerifyModal from '~~/layers/core/app/components/PhoneVerifyModal.vue'
 
 const { reverseGeocode } = useGeocode()
 
@@ -963,6 +988,23 @@ const normalizePhoneField = (field: 'store_phone' | 'shipFromPhone') => {
   if (err) return
   const normalized = normalizePhone(form[field])
   if (normalized) form[field] = normalized
+}
+
+// WhatsApp order alerts read Profile.phone/phone_verified (the account's one
+// verified phone, same as login) — not this store_phone display field, which
+// is unverified and only ever shown to buyers. Show a Verify affordance here
+// so setting a contact phone is also the entry point for turning alerts on.
+const profileStore = useProfileStore()
+const showPhoneVerifyModal = ref(false)
+const isStorePhoneVerified = computed(() => {
+  const accountPhone = profileStore.me?.phone
+  if (!accountPhone || !profileStore.me?.phone_verified) return false
+  const typed = normalizePhone(form.store_phone)
+  return !!typed && typed === accountPhone
+})
+const onPhoneVerified = (phone: string) => {
+  form.store_phone = phone
+  phoneErrors.store_phone = ''
 }
 
 // Non-phone field errors (store name required, website URL). Kept separate from
