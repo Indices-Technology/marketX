@@ -379,6 +379,10 @@ model Orders {
   purchaseGroupId   String?         @db.Uuid
   /// The chosen shipping option for this seller's parcel { carrier, service, amount, estimatedDays }.
   shippingBreakdown Json?
+  /// True when the buyer chose "Pickup from seller" at checkout — derived from
+  /// the signed shipping-quote token (tamper-proof), not client-sent text. Gates
+  /// which status transitions/messages apply (READY_FOR_PICKUP vs SHIPPED).
+  isPickup          Boolean         @default(false)
   paymentStatus     PaymentStatus   @default(UNPAID)
   name              String
   address           String
@@ -1572,6 +1576,10 @@ enum OrderStatus {
   CANCELED
   PAID
   SHIPPED
+  /// Self-fulfillment "pickup from seller" orders only — parallel to SHIPPED,
+  /// never both. Seller marks this when the item is ready to collect; buyer
+  /// collecting it moves the order to DELIVERED, same as a shipped order.
+  READY_FOR_PICKUP
   DELIVERED
   RETURNED
 }

@@ -532,7 +532,21 @@ export const supportService = {
       await walletService.reverseOrderCredit(orderId)
       const order = await prisma.orders.findUnique({
         where: { id: orderId },
-        include: { orderItem: { select: { variantId: true, quantity: true } } },
+        include: {
+          orderItem: {
+            select: {
+              variantId: true,
+              quantity: true,
+              variant: {
+                select: {
+                  product: {
+                    select: { seller: { select: { profileId: true } } },
+                  },
+                },
+              },
+            },
+          },
+        },
       })
       if (order && !['CANCELLED', 'RETURNED'].includes(order.status)) {
         await prisma.orders.update({
@@ -540,6 +554,29 @@ export const supportService = {
           data: { status: 'CANCELLED' },
         })
         await orderRepository.restoreStock(order.orderItem)
+
+        // Order-level notification, distinct from the SUPPORT-type "dispute
+        // resolved" message sent in resolveTicket — this is what surfaces the
+        // cancellation in each party's order feed/history, not just the ticket.
+        notificationQueue.enqueue({
+          userId: order.userId,
+          type: 'ORDER',
+          message: `Order #${orderId} was cancelled and refunded following a dispute resolution.`,
+          orderId,
+        })
+        const sellerIds = new Set<string>()
+        for (const item of order.orderItem) {
+          const sellerId = item.variant?.product?.seller?.profileId
+          if (sellerId) sellerIds.add(sellerId)
+        }
+        for (const sellerId of sellerIds) {
+          notificationQueue.enqueue({
+            userId: sellerId,
+            type: 'ORDER',
+            message: `Order #${orderId} was cancelled following a dispute resolution in the buyer's favor.`,
+            orderId,
+          })
+        }
       }
     }
     // PARTIAL_REFUND: the intended amount is recorded on the ticket (refundAmount);

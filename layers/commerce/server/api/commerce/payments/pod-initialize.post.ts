@@ -25,7 +25,8 @@ const schema = z.object({
     .min(1),
   name: z.string().min(1),
   address: z.string().min(1),
-  zipcode: z.string().min(1),
+  // Optional for the same reason as the card flow — see initialize.post.ts
+  zipcode: z.string().optional().default(''),
   county: z.string().optional().default(''),
   shipState: z.string().max(100).optional(),
   shipPhone: z.string().max(30).optional(),

@@ -16,6 +16,7 @@ type Status =
   | 'PENDING'
   | 'CONFIRMED'
   | 'SHIPPED'
+  | 'READY_FOR_PICKUP'
   | 'DELIVERED'
   | 'CANCELLED'
   | 'RETURNED'
@@ -31,6 +32,7 @@ const ORDER_STATUS_MAP: Record<string, Status> = {
   PENDING: 'PENDING',
   CONFIRMED: 'CONFIRMED',
   SHIPPED: 'SHIPPED',
+  READY_FOR_PICKUP: 'READY_FOR_PICKUP',
   DELIVERED: 'DELIVERED',
   CANCELLED: 'CANCELLED',
   CANCELED: 'CANCELLED',
@@ -65,6 +67,10 @@ const colorMap: Record<Status, { bg: string; text: string }> = {
   SHIPPED: {
     bg: 'bg-sky-100 dark:bg-sky-900/30',
     text: 'text-sky-700 dark:text-sky-400',
+  },
+  READY_FOR_PICKUP: {
+    bg: 'bg-teal-100 dark:bg-teal-900/30',
+    text: 'text-teal-700 dark:text-teal-400',
   },
   DELIVERED: {
     bg: 'bg-green-100 dark:bg-green-900/30',
@@ -109,6 +115,7 @@ const dotColorMap: Record<Status, string> = {
   PENDING: 'bg-yellow-500',
   CONFIRMED: 'bg-blue-500',
   SHIPPED: 'bg-sky-500',
+  READY_FOR_PICKUP: 'bg-teal-500',
   DELIVERED: 'bg-green-500',
   CANCELLED: 'bg-red-500',
   RETURNED: 'bg-orange-500',

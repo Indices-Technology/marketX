@@ -21,6 +21,10 @@ export interface ShippingQuoteClaims {
    *  arrival — signed so the order records the real amount, not a client value.
    *  Present only for the pay-the-rider option; the platform never collects it. */
   d?: number
+  /** true when this is the "Pickup from seller" rate (self provider,
+   *  rateRef 'pickup') — signed so Orders.isPickup can't be spoofed by a
+   *  client-sent carrier/service string. */
+  p?: boolean
 }
 
 function secret(): string {

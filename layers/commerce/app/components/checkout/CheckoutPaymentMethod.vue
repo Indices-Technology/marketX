@@ -22,6 +22,7 @@
         Card
       </button>
       <button
+        v-if="PAYPAL_ENABLED"
         type="button"
         :class="
           modelValue === 'paypal'
@@ -33,6 +34,16 @@
       >
         <Icon name="logos:paypal" size="18" />
         PayPal
+      </button>
+      <button
+        v-else
+        type="button"
+        disabled
+        class="flex cursor-not-allowed items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-gray-200 px-4 py-3 text-sm font-semibold text-gray-400 dark:border-neutral-800 dark:text-neutral-600"
+      >
+        <Icon name="logos:paypal" size="18" class="opacity-40" />
+        PayPal
+        <span class="text-[10px] font-normal opacity-70">(soon)</span>
       </button>
       <!-- POD — disabled until GIG exposes a COD endpoint (POD_ENABLED flag) -->
       <button
@@ -142,6 +153,9 @@ const emit = defineEmits<{
 // Pay-on-Delivery is gated by a runtime flag (paused). Set
 // NUXT_PUBLIC_POD_ENABLED=true to re-enable across the app.
 const POD_ENABLED = useRuntimeConfig().public.podEnabled === true
+
+// PayPal is paused (untested end-to-end) — shown disabled as "coming soon".
+const PAYPAL_ENABLED = false
 
 const { formatProductNGN } = useCurrency()
 const fmtPNGN = (majorNGN: number) => formatProductNGN(majorNGN)

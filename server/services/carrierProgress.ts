@@ -97,7 +97,7 @@ function notifyBuyerShipped(
     })
     .then((order) => {
       const email = order?.user?.email
-      if (!order || !email) return
+      if (!order || !email || email.includes('@checkout.marketx.')) return
       const { subject, html, text } = buildOrderStatusEmail(orderId, 'SHIPPED', {
         trackingNumber: waybill ?? undefined,
         shipper: shipper ?? undefined,

@@ -23,7 +23,9 @@ const schema = z.object({
   name: z.string().min(1),
   email: z.string().email().optional(),
   address: z.string().min(1),
-  zipcode: z.string().min(1),
+  // Postal codes are not in practical use across most of Nigeria and the
+  // checkout form never requires one — don't fail the payment over a blank.
+  zipcode: z.string().optional().default(''),
   county: z.string().optional().default(''),
   shipState: z.string().max(100).optional(),
   shipPhone: z.string().max(30).optional(),
@@ -143,6 +145,7 @@ export default defineEventHandler(async (event) => {
       throw createError({
         statusCode: 400,
         statusMessage: 'Invalid request body',
+        data: error.errors,
       })
     if (error instanceof UserError)
       throw createError({

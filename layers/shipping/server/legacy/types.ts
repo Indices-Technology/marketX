@@ -54,6 +54,9 @@ export interface IShipmentRate {
   /** Signed quote token (storeSlug + amount). Echoed back at checkout so the
    *  order re-derives the shipping charge from the server, not the client. */
   token?: string
+  /** True for the "Pickup from seller" rate (self provider, rateRef 'pickup').
+   *  Informational on the client; the trustworthy copy travels inside `token`. */
+  isPickup?: boolean
 }
 
 // ─── Create Shipment ──────────────────────────────────────────────────────────

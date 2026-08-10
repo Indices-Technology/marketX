@@ -9,7 +9,13 @@ import { emitOrderCompleted } from '~~/layers/reputation/server/utils/emitOrderS
 import { buildOrderStatusEmail } from '~~/server/utils/email/emailService'
 
 const schema = z.object({
-  status: z.enum(['CONFIRMED', 'SHIPPED', 'DELIVERED', 'CANCELLED']),
+  status: z.enum([
+    'CONFIRMED',
+    'SHIPPED',
+    'READY_FOR_PICKUP',
+    'DELIVERED',
+    'CANCELLED',
+  ]),
   trackingNumber: z.string().optional(),
   shipper: z.string().optional(),
   // GIG Waybill entered after a drop-off. Unlike trackingNumber (display only)
@@ -65,14 +71,33 @@ export default defineEventHandler(async (event) => {
     if (statusChanging) {
       const VALID_TRANSITIONS: Partial<Record<string, string[]>> = {
         PENDING: ['CONFIRMED', 'CANCELLED'],
-        CONFIRMED: ['SHIPPED', 'CANCELLED'],
+        CONFIRMED: ['SHIPPED', 'READY_FOR_PICKUP', 'CANCELLED'],
         SHIPPED: ['DELIVERED'],
+        READY_FOR_PICKUP: ['DELIVERED'],
       }
       const allowed = VALID_TRANSITIONS[order.status] ?? []
       if (!allowed.includes(body.status)) {
         throw new UserError(
           'INVALID_TRANSITION',
           `Cannot move order from ${order.status} to ${body.status}`,
+          400,
+        )
+      }
+
+      // A pickup order never "ships" (nothing is carried anywhere) and a
+      // regular delivery order was never "ready for pickup" — catch the mix-up
+      // at the API boundary rather than letting either label stick.
+      if (body.status === 'SHIPPED' && order.isPickup) {
+        throw new UserError(
+          'WRONG_STATUS_FOR_PICKUP',
+          'This is a pickup order — use "Ready for pickup" instead of "Shipped"',
+          400,
+        )
+      }
+      if (body.status === 'READY_FOR_PICKUP' && !order.isPickup) {
+        throw new UserError(
+          'NOT_A_PICKUP_ORDER',
+          'This order is not a pickup order',
           400,
         )
       }
@@ -85,8 +110,12 @@ export default defineEventHandler(async (event) => {
         ...(body.trackingNumber ? { trackingNumber: body.trackingNumber } : {}),
         ...(body.waybill ? { waybill: body.waybill } : {}),
         ...(body.shipper ? { shipper: body.shipper } : {}),
-        // Record when first shipped so auto-release cron can use it
-        ...(body.status === 'SHIPPED' && statusChanging ? { shippedAt: new Date() } : {}),
+        // Record when first shipped/ready-for-pickup so the auto-release cron's
+        // 7-day window works the same way for both (see releaseShippedOrders.ts).
+        ...((body.status === 'SHIPPED' || body.status === 'READY_FOR_PICKUP') &&
+        statusChanging
+          ? { shippedAt: new Date() }
+          : {}),
       },
     })
 
@@ -95,7 +124,10 @@ export default defineEventHandler(async (event) => {
       const buyerMessages: Partial<Record<string, string>> = {
         CONFIRMED: `Your order #${id} has been confirmed by the seller and is being prepared.`,
         SHIPPED: `Your order #${id} has been shipped${body.trackingNumber ? ` · Tracking: ${body.trackingNumber}` : ''}. Funds will be released in 7 days if not confirmed.`,
-        DELIVERED: `Your order #${id} has been marked as delivered.`,
+        READY_FOR_PICKUP: `Your order #${id} is ready for pickup — arrange collection with the seller. Funds will be released in 7 days if not confirmed.`,
+        DELIVERED: order.isPickup
+          ? `Your order #${id} has been marked as picked up.`
+          : `Your order #${id} has been marked as delivered.`,
         CANCELLED: `Your order #${id} has been cancelled by the seller.`,
       }
       const buyerMsg = buyerMessages[body.status]
@@ -115,7 +147,7 @@ export default defineEventHandler(async (event) => {
         )
         prisma.profile.findUnique({ where: { id: order.userId }, select: { email: true } })
           .then((buyer) => {
-            if (!buyer?.email) return
+            if (!buyer?.email || buyer.email.includes('@checkout.marketx.')) return
             const { subject, html, text } = buildOrderStatusEmail(id, body.status, {
               // GIG drop-off sets `waybill`; self-delivery sets `trackingNumber`.
               trackingNumber: body.trackingNumber ?? body.waybill,
