@@ -1,6 +1,6 @@
 /**
  * Scheduled task: auto-release seller funds for orders that have been
- * in SHIPPED status for 7+ days with no buyer confirmation.
+ * in SHIPPED or READY_FOR_PICKUP status for 7+ days with no buyer confirmation.
  *
  * Runs every 6 hours via Nitro scheduled tasks.
  * Register in nuxt.config.ts:
@@ -24,16 +24,18 @@ export default defineTask({
     const cutoff = new Date()
     cutoff.setDate(cutoff.getDate() - AUTO_RELEASE_DAYS)
 
-    // Find all SHIPPED, PAID orders where shippedAt is older than 7 days
+    // Find all SHIPPED/READY_FOR_PICKUP, PAID orders where shippedAt is older
+    // than 7 days (shippedAt doubles as "ready since" for pickup orders).
     const overdueOrders = await prisma.orders.findMany({
       where: {
-        status: 'SHIPPED',
+        status: { in: ['SHIPPED', 'READY_FOR_PICKUP'] },
         paymentStatus: 'PAID',
         shippedAt: { lte: cutoff },
       },
       select: {
         id: true,
         userId: true,
+        isPickup: true,
         orderItem: {
           select: {
             variant: {
@@ -75,25 +77,16 @@ export default defineTask({
             userId: order.userId,
             type: 'ORDER',
             actorId: order.userId,
-            message: `Order #${order.id} has been automatically marked as delivered and payment released to the seller after 7 days.`,
+            message: order.isPickup
+              ? `Order #${order.id} has been automatically marked as picked up and payment released to the seller after 7 days.`
+              : `Order #${order.id} has been automatically marked as delivered and payment released to the seller after 7 days.`,
           })
           .catch(() => {})
 
-        // Notify each unique seller
-        const seen = new Set<string>()
-        for (const item of order.orderItem) {
-          const sellerId = item.variant?.product?.seller?.profileId
-          if (!sellerId || seen.has(sellerId)) continue
-          seen.add(sellerId)
-          notificationService
-            .createNotification({
-              userId: sellerId,
-              type: 'ORDER',
-              actorId: sellerId,
-              message: `Order #${order.id} auto-confirmed after 7 days. Funds have been released to your wallet.`,
-            })
-            .catch(() => {})
-        }
+        // Seller notification: `releaseFundsOnDelivery` above already sends the
+        // seller a "₦X released to your wallet" message (+ email) when it performs
+        // a real release. Sending a second "auto-confirmed" message here duplicated
+        // that for every auto-release — removed rather than kept in sync.
 
         released++
       } catch (e) {

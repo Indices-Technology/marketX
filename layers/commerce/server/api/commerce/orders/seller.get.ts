@@ -32,6 +32,7 @@ export default defineEventHandler(async (event) => {
       'CONFIRMED',
       'PAID',
       'SHIPPED',
+      'READY_FOR_PICKUP',
       'DELIVERED',
       'COMPLETED',
       'RETURNED',

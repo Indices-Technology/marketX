@@ -448,7 +448,7 @@ ${img}
 
 export function buildOrderStatusEmail(
   orderId: number,
-  status: 'CONFIRMED' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED',
+  status: 'CONFIRMED' | 'SHIPPED' | 'READY_FOR_PICKUP' | 'DELIVERED' | 'CANCELLED',
   options: OrderStatusEmailOptions = {},
 ): { subject: string; html: string; text: string } {
   const {
@@ -481,6 +481,13 @@ export function buildOrderStatusEmail(
         ? `It's been shipped${shipper ? ` with ${shipper}` : ''}. Track its progress any time — and funds release to the seller in 7 days unless you confirm delivery sooner.`
         : `It's been shipped. Funds release to the seller in 7 days unless you confirm delivery sooner.`,
       cta: 'Track order',
+    },
+    READY_FOR_PICKUP: {
+      emoji: '🏬',
+      headline: 'Ready for pickup',
+      detail:
+        'Your order is ready to collect from the seller. Arrange a pickup time with them — funds release to the seller in 7 days unless you confirm receipt sooner.',
+      cta: 'View order',
     },
     DELIVERED: {
       emoji: '🎉',

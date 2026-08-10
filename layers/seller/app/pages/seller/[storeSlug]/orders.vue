@@ -123,25 +123,56 @@
               </BaseButton>
             </template>
 
-            <!-- Regular (non-GIG) orders: manual status update -->
+            <!-- Regular (non-GIG, non-pickup) orders: manual status update -->
             <select
-              v-if="!isGigOrder(order) && order.paymentMethod !== 'pay_on_delivery' && order.status === 'CONFIRMED'"
-              @change="(e) => updateStatus(order.id, (e.target as HTMLSelectElement).value)"
+              v-if="!isGigOrder(order) && order.paymentMethod !== 'pay_on_delivery' && !order.isPickup && order.status === 'CONFIRMED'"
               class="rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs text-gray-700 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
+              @change="(e) => updateStatus(order.id, (e.target as HTMLSelectElement).value)"
             >
               <option value="" disabled selected>Update status</option>
               <option value="SHIPPED">Mark Shipped</option>
               <option value="CANCELLED">Cancel</option>
             </select>
 
+            <!-- Pickup orders: seller marks ready, never "shipped" — nothing ships -->
+            <select
+              v-if="order.isPickup && order.status === 'CONFIRMED'"
+              class="rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs text-gray-700 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
+              @change="(e) => updateStatus(order.id, (e.target as HTMLSelectElement).value)"
+            >
+              <option value="" disabled selected>Update status</option>
+              <option value="READY_FOR_PICKUP">Mark Ready for Pickup</option>
+              <option value="CANCELLED">Cancel</option>
+            </select>
+
+            <!-- Pickup orders: seller confirms the buyer collected it -->
+            <BaseButton
+              v-if="order.isPickup && order.status === 'READY_FOR_PICKUP'"
+              variant="success"
+              size="sm"
+              @click="updateStatus(order.id, 'DELIVERED')"
+            >
+              Mark Picked Up
+            </BaseButton>
+
             <!-- POD confirmed: ship it -->
             <select
-              v-if="order.paymentMethod === 'pay_on_delivery' && order.status === 'CONFIRMED'"
-              @change="(e) => updateStatus(order.id, (e.target as HTMLSelectElement).value)"
+              v-if="order.paymentMethod === 'pay_on_delivery' && !order.isPickup && order.status === 'CONFIRMED'"
               class="rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs text-gray-700 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
+              @change="(e) => updateStatus(order.id, (e.target as HTMLSelectElement).value)"
             >
               <option value="" disabled selected>Ship it</option>
               <option value="SHIPPED">Mark Shipped</option>
+            </select>
+
+            <!-- POD + pickup: same ready-for-pickup path, cash collected in person -->
+            <select
+              v-if="order.paymentMethod === 'pay_on_delivery' && order.isPickup && order.status === 'CONFIRMED'"
+              class="rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs text-gray-700 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
+              @change="(e) => updateStatus(order.id, (e.target as HTMLSelectElement).value)"
+            >
+              <option value="" disabled selected>Ready it</option>
+              <option value="READY_FOR_PICKUP">Mark Ready for Pickup</option>
             </select>
           </div>
         </div>
@@ -609,6 +640,7 @@ const STATUS_TABS = [
   { value: 'PENDING', label: 'Pending' },
   { value: 'CONFIRMED', label: 'Confirmed' },
   { value: 'SHIPPED', label: 'Shipped' },
+  { value: 'READY_FOR_PICKUP', label: 'Ready for Pickup' },
   { value: 'DELIVERED', label: 'Delivered' },
   { value: 'RETURNED', label: 'Returned' },
 ]

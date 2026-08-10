@@ -299,11 +299,15 @@ export const orderService = {
         // (kobo). Re-derived from the signed token so it's the real amount, not a
         // client value. NOT added to shippingCost — the platform never collects it.
         let codAmount = 0
+        // Pickup flag — from the SIGNED token only, never the client-sent
+        // carrier/service text (which is display copy, not to be trusted).
+        let isPickup = false
         if (hasBreakdown) {
           const claims = verifyShippingQuote(bd?.token)
           if (claims && claims.s === storeSlug) {
             groupShipping = claims.a
             codAmount = claims.d ?? 0
+            isPickup = claims.p === true
           } else {
             groupShipping = bd?.amount ?? 0
             if (bd?.token || groupShipping > 0)
@@ -340,6 +344,7 @@ export const orderService = {
             country,
             totalAmount: groupTotal,
             shippingCost: groupShipping,
+            isPickup,
             ...(shippingZone ? { shippingZone } : {}),
             ...(bd?.estimatedDays ? { estimatedDays: bd.estimatedDays } : {}),
             ...(storedBd

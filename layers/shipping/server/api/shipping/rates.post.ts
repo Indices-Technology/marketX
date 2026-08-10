@@ -190,6 +190,7 @@ export default defineEventHandler(async (event) => {
             q.codAmountMinor != null ? q.codAmountMinor / 100 : undefined,
           estimatedDays: q.etaText,
           provider: q.carrierId as IShipmentRate['provider'],
+          isPickup: q.rateRef === 'pickup',
         })
       }
     } catch (err) {
@@ -228,6 +229,7 @@ export default defineEventHandler(async (event) => {
         ...(r.codAmountNGN != null
           ? { d: Math.round(r.codAmountNGN * 100) }
           : {}),
+        ...(r.isPickup ? { p: true } : {}),
       })
     }
   }
