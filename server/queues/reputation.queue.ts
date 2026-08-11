@@ -14,6 +14,7 @@ import { Queue, Worker, type Job } from 'bullmq'
 import { queueConnection } from '../utils/queue'
 import { prisma } from '../utils/db'
 import type { ReputationSignalInput } from '../../layers/reputation/server/utils/signals'
+import { invalidateProfile } from '../../layers/reputation/server/utils/reputationEngine'
 
 const QUEUE_NAME = 'reputation'
 
@@ -41,6 +42,11 @@ async function writeSignal(input: ReputationSignalInput): Promise<void> {
         observedAt: new Date(input.observedAt),
       },
     })
+
+    // New evidence invalidates the cached ReputationProfile snapshot, so the
+    // Trust Card/tab reflect this sale on the next read instead of after the
+    // 6h TTL. Only on a real append — the idempotent skip above changed nothing.
+    await invalidateProfile(input.sellerId)
   } catch (e) {
     // Resilient: table not migrated yet, or a transient error. Never throw into
     // the caller's request path.

@@ -50,7 +50,7 @@
 
 ## 4. Background Workers & Notifications 🟡
 
-- [ ] 🔴 **Scheduled jobs actually fire in prod** — 3 money-/fulfillment-critical tasks depend solely on Nitro `scheduledTasks` (`releaseExpiredOrders` = lost-webhook backstop, `releaseShippedOrders` = seller auto-payout, `pollCarrierTracking` = GIG progression). Serverless hosts don't run them. Deploy to a single always-on Node host and confirm the `[task:*] fired` logs. **See `docs/JOBS.md` (high-stakes; migration deferred).**
+- [ ] 🔴 **Scheduled jobs actually fire in prod** — 3 money-/fulfillment-critical tasks (`releaseExpiredOrders` = lost-webhook backstop, `releaseShippedOrders` = seller auto-payout, `pollCarrierTracking` = GIG progression). Set `TASKS_SHARED_SECRET`, point a scheduler at `POST /api/internal/tasks/:name`, then confirm `GET /api/internal/tasks` returns `healthy: true` with an empty `staleCritical`. **See `docs/JOBS.md`.**
 - [ ] BullMQ workers **deployed and running** in prod (not only dev machines)
 - [ ] Notification delivery tested per-type (order, message, support, square) — no mis-typing from queue contention
 - [ ] Resend prod key; email deliverability set up (SPF, DKIM, DMARC on send domain)

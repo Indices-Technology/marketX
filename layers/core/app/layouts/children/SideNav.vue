@@ -338,6 +338,7 @@ import { useNotificationStore } from '~~/layers/profile/app/stores/notification.
 import { useSellerStore } from '~~/layers/seller/app/store/seller.store'
 import { useChatStore } from '~~/layers/profile/app/stores/chat.store'
 import { useChat } from '~~/layers/profile/app/composables/useChat'
+import { useAuth } from '~~/layers/core/app/composables/useAuth'
 import Avatar from '~~/layers/profile/app/components/Avatar.vue'
 import AppIcon from '~~/layers/ui/app/components/AppIcon.vue'
 import BrandLogo from '~~/layers/ui/app/components/BrandLogo.vue'
