@@ -76,6 +76,7 @@ export default defineEventHandler(async (event): Promise<IFeedResponse> => {
                 store_logo: true,
                 store_name: true,
                 default_currency: true,
+                trustTier: true,
               },
             },
             media: {

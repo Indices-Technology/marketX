@@ -157,6 +157,59 @@
         <!-- Loading creator info -->
         <div v-else class="text-sm text-gray-400">Checking TikTok…</div>
       </div>
+
+      <!-- Facebook -->
+      <div class="rounded-xl border border-gray-100 p-3 dark:border-neutral-800">
+        <div class="mb-2 flex items-center gap-2">
+          <Icon name="logos:facebook" size="18" />
+          <span class="font-semibold text-gray-900 dark:text-neutral-100">Post to Facebook</span>
+        </div>
+
+        <!-- Not connected -->
+        <div v-if="facebookState === 'disconnected'" class="space-y-2">
+          <p class="text-sm text-gray-500 dark:text-neutral-400">
+            Connect your Facebook Page to post this card directly.
+          </p>
+          <BaseButton variant="primary" size="sm" :loading="connecting" @click="onConnectFacebook">
+            Connect Facebook
+          </BaseButton>
+        </div>
+
+        <!-- Connected -->
+        <div v-else-if="facebookState === 'ready'" class="space-y-2">
+          <div class="flex items-center justify-between gap-2">
+            <p v-if="facebookConn?.displayName" class="text-xs text-gray-500 dark:text-neutral-400">
+              Posting to <span class="font-semibold">{{ facebookConn.displayName }}</span>
+            </p>
+            <button
+              type="button"
+              class="text-[11px] font-medium text-gray-400 hover:text-red-500 disabled:opacity-50 dark:text-neutral-500"
+              :disabled="disconnectingFacebook"
+              @click="onDisconnectFacebook"
+            >
+              Disconnect
+            </button>
+          </div>
+
+          <textarea
+            v-model="facebookCaption"
+            rows="2"
+            placeholder="Caption…"
+            class="w-full rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-sm text-gray-900 focus:border-brand focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
+          />
+
+          <BaseButton variant="primary" size="sm" :loading="facebookPosting || uploading" @click="onPostFacebook">
+            Post to Facebook
+          </BaseButton>
+
+          <p v-if="facebookPostResult" class="text-xs text-green-600 dark:text-green-400">
+            Posted to your Facebook Page.
+          </p>
+        </div>
+
+        <!-- Loading connection state -->
+        <div v-else class="text-sm text-gray-400">Checking Facebook…</div>
+      </div>
     </div>
   </BaseModal>
 </template>
@@ -182,6 +235,7 @@ const {
   trackedUrl,
   uploading,
   posting,
+  facebookPosting,
   creatorInfo,
   tiktokPostStatus,
   tiktokFailReason,
@@ -189,10 +243,17 @@ const {
   loadTikTokCreatorInfo,
   postToTikTok,
   postToTikTokDraft,
+  postToFacebook,
 } = useGrowthAsset()
 const { capture, shareImage, capturing } = useCardCapture()
-const { connectTikTok, connecting, refresh: refreshConnections, forPlatform, disconnect } =
-  useConnections()
+const {
+  connectTikTok,
+  connectFacebook,
+  connecting,
+  refresh: refreshConnections,
+  forPlatform,
+  disconnect,
+} = useConnections()
 
 /**
  * Connect without leaving the product the seller was promoting — round-trips
@@ -230,6 +291,42 @@ const isPromotional = ref(false)
 const brandOrganic = ref(false)
 const brandContent = ref(false)
 const copied = ref<string | null>(null)
+
+const facebookState = ref<'loading' | 'ready' | 'disconnected'>('loading')
+const facebookCaption = ref('')
+const facebookPostResult = ref<{ postId: string } | null>(null)
+const disconnectingFacebook = ref(false)
+const facebookConn = computed(() => forPlatform('META_FB'))
+
+function onConnectFacebook() {
+  if (!props.product) return
+  connectFacebook(`${route.path}?promote=${props.product.id}`)
+}
+
+async function onDisconnectFacebook() {
+  const conn = forPlatform('META_FB')
+  if (!conn) return
+  disconnectingFacebook.value = true
+  try {
+    await disconnect(conn.id)
+    facebookState.value = 'disconnected'
+    notify({ type: 'success', text: 'Facebook disconnected' })
+  } finally {
+    disconnectingFacebook.value = false
+  }
+}
+
+async function onPostFacebook() {
+  try {
+    const res = await postToFacebook(cardRef.value?.rootEl, { caption: facebookCaption.value })
+    if (res) {
+      facebookPostResult.value = res
+      notify({ type: 'success', text: 'Posted to Facebook' })
+    }
+  } catch (e) {
+    notify({ type: 'error', text: (e as Error)?.message || 'Facebook post failed' })
+  }
+}
 
 async function onCopy(text: string | null | undefined, label: string) {
   if (!text) return
@@ -355,20 +452,35 @@ watch(
     isPromotional.value = false
     brandOrganic.value = false
     brandContent.value = false
+    facebookState.value = 'loading'
+    facebookCaption.value = p.title ?? ''
+    facebookPostResult.value = null
     try {
       await prepare(p.id)
     } catch (e) {
-      // Asset creation failed — don't hang the modal on "Checking TikTok".
+      // Asset creation failed — don't hang the modal on "Checking TikTok"/"Checking Facebook".
       tiktokState.value = 'disconnected'
+      facebookState.value = 'disconnected'
       notify({ type: 'error', text: (e as Error)?.message || 'Could not prepare the card' })
       return
     }
     try {
-      await Promise.all([loadTikTokCreatorInfo(), refreshConnections()])
+      await refreshConnections()
+    } catch {
+      tiktokState.value = 'disconnected'
+      facebookState.value = 'disconnected'
+      return
+    }
+    // TikTok requires creator-info before it can post (its privacy options come
+    // from there); Facebook doesn't — a connection alone is enough — so the two
+    // checks run independently and a TikTok failure can't strand Facebook's state.
+    try {
+      await loadTikTokCreatorInfo()
       tiktokState.value = 'ready'
     } catch {
       tiktokState.value = 'disconnected'
     }
+    facebookState.value = forPlatform('META_FB') ? 'ready' : 'disconnected'
   },
   { immediate: true },
 )

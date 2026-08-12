@@ -33,6 +33,7 @@ const typeMap: Record<string, string> = {
   COMMENT_REPLY: 'REPLY',
   FOLLOW: 'NEW_FOLLOWER',
   MESSAGE: 'GENERAL',
+  GENERAL: 'GENERAL',
   PRODUCT: 'PRODUCT',
   PRODUCT_SHARE: 'PRODUCT_SHARE',
   PRODUCT_REVIEW: 'REVIEW',
@@ -49,15 +50,18 @@ const typeMap: Record<string, string> = {
 }
 
 // Notification types worth a WhatsApp ping — deliberately narrow. Only
-// account/business-critical events, not social engagement noise (likes,
-// follows, comments, mentions) — those stay in-app-only to avoid spamming a
-// seller's WhatsApp and burning template-message budget on low-value pings.
+// account/business-critical events plus direct, addressed social actions
+// (a shoutout is written to you by name, unlike passive engagement noise
+// like likes/follows/comments/mentions) — those stay in-app-only to avoid
+// spamming a seller's WhatsApp and burning template-message budget on
+// low-value pings.
 const WHATSAPP_ELIGIBLE_TYPES = new Set([
   'ORDER',
   'PRODUCT_REVIEW',
   'SUPPORT',
   'SQUARE_MEMBERSHIP_APPROVED',
   'SQUARE_MEMBERSHIP_REJECTED',
+  'WALL_SHOUTOUT',
 ])
 
 // Recreated 2026-08-09 as "mx_account_update" with language explicitly set to

@@ -27,6 +27,8 @@ export function useGrowthAsset() {
   const preparing = ref(false)
   const uploading = ref(false)
   const posting = ref(false)
+  /** Separate from `posting` (TikTok) so the two channels' buttons/loading states don't couple. */
+  const facebookPosting = ref(false)
   const creatorInfo = ref<TikTokCreatorInfoDTO | null>(null)
   /** Live status of the most recent TikTok post, polled after posting. */
   const tiktokPostStatus = ref<string | null>(null)
@@ -132,7 +134,11 @@ export function useGrowthAsset() {
    * actually complete rather than trusting a fire-and-forget "sent" toast.
    * Stops on a terminal status or after ~30s.
    */
-  async function pollTikTokStatus(assetId: string, publishId: string, attempt = 0) {
+  async function pollTikTokStatus(
+    assetId: string,
+    publishId: string,
+    attempt = 0,
+  ) {
     tiktokPostStatus.value = 'PROCESSING_DOWNLOAD'
     try {
       const res = await api.tiktokPostStatus(assetId, publishId)
@@ -141,10 +147,34 @@ export function useGrowthAsset() {
       tiktokFailReason.value = failReason ?? null
       const terminal = status === 'PUBLISH_COMPLETE' || status === 'FAILED'
       if (!terminal && attempt < 10) {
-        setTimeout(() => pollTikTokStatus(assetId, publishId, attempt + 1), 3000)
+        setTimeout(
+          () => pollTikTokStatus(assetId, publishId, attempt + 1),
+          3000,
+        )
       }
     } catch {
       // Non-fatal — the post likely still went through; just stop polling.
+    }
+  }
+
+  /**
+   * Post the card to the seller's connected Facebook Page. Captures+uploads
+   * first if the card isn't hosted yet (Facebook fetches it from our public
+   * /growth/cards/:id URL). Synchronous — the Graph API returns the post id
+   * immediately, no polling like TikTok's async processing.
+   */
+  async function postToFacebook(
+    el: HTMLElement | null | undefined,
+    opts: { caption?: string } = {},
+  ) {
+    if (!asset.value) return null
+    facebookPosting.value = true
+    try {
+      if (!hasCard.value) await captureAndAttach(el)
+      const res = await api.postToFacebook(asset.value.id, opts)
+      return res.data
+    } finally {
+      facebookPosting.value = false
     }
   }
 
@@ -156,6 +186,7 @@ export function useGrowthAsset() {
     preparing,
     uploading,
     posting,
+    facebookPosting,
     creatorInfo,
     tiktokPostStatus,
     tiktokFailReason,
@@ -164,5 +195,6 @@ export function useGrowthAsset() {
     loadTikTokCreatorInfo,
     postToTikTok,
     postToTikTokDraft,
+    postToFacebook,
   }
 }

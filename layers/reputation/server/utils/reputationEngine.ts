@@ -278,6 +278,41 @@ function emptyProfile(seller: SellerBasic): ReputationComputed {
   }
 }
 
+/**
+ * Retire a seller's cached snapshot because new evidence landed.
+ *
+ * Without this the engine serves a snapshot for up to SNAPSHOT_TTL_MS, so the
+ * sale that finally crosses MIN_EVIDENCE stays invisible on the Trust Card for
+ * hours after the buyer confirmed it — the seller sees "Building trust" while
+ * the ledger already says otherwise. Called by the signal writer, so evidence
+ * and presentation can't drift apart. Best-effort: never throws at the writer.
+ */
+export async function invalidateProfile(sellerId: string): Promise<void> {
+  try {
+    await prisma.reputationProfile.updateMany({
+      where: { sellerId, isCurrent: true },
+      data: { isCurrent: false },
+    })
+  } catch {
+    // Table not migrated yet — there is no snapshot to retire.
+  }
+
+  try {
+    const seller = await prisma.sellerProfile.findUnique({
+      where: { id: sellerId },
+      select: { store_slug: true },
+    })
+    await bust(
+      ...(seller?.store_slug
+        ? [`reputation:profile:v1:${seller.store_slug}`]
+        : []),
+      'reputation:spotlight:v1:*',
+    )
+  } catch {
+    // Short-TTL read caches self-heal; a bust blip must not fail the write.
+  }
+}
+
 /** Best-effort snapshot write; keeps history (isCurrent flips on the old row). */
 async function persistSnapshot(sellerId: string, c: ReputationComputed) {
   try {
@@ -298,6 +333,14 @@ async function persistSnapshot(sellerId: string, c: ReputationComputed) {
           } as object,
           dimensions: c.dimensions as unknown as object,
         },
+      }),
+      // Denormalised mirror on the seller row. Every surface that already loads
+      // a seller (feed, tiles, map, search) can then show the tier with no
+      // extra query. In the same transaction as the snapshot so the column and
+      // the snapshot it mirrors can never disagree.
+      prisma.sellerProfile.update({
+        where: { id: sellerId },
+        data: { trustTier: c.tier },
       }),
     ])
   } catch {

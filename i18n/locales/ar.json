@@ -201,7 +201,7 @@
     "products": "المنتجات",
     "unitsSold": "الوحدات المباعة",
     "commissionOut": "العمولة المدفوعة",
-    "commission": "{rate}٪ عمولة",
+    "commission": "{amount} لكل عملية بيع",
     "promoters": "البائعون الذين يروجون لمنتجاتي",
     "promotersHint": "المحيلون الذين قدّموا مشترين لمتجرك",
     "noPromoters": "لا يوجد بائعو إحالة بعد",

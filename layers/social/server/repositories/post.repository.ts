@@ -13,7 +13,11 @@ const authorSelect = {
     // seller's real store — e.g. the feed's Trust Card overlay, which needs a
     // genuine slug and must not guess one from `username` (they're separate
     // fields and routinely differ).
-    select: { store_logo: true, store_slug: true },
+    //
+    // trustTier rides along on a row already being joined, so the feed's trust
+    // affordance can name the seller's earned rank without a second request
+    // per slide.
+    select: { store_logo: true, store_slug: true, trustTier: true },
   },
 } as const
 

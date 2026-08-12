@@ -644,7 +644,14 @@
           </template>
         </div>
 
-        <!-- Carrier Delivery — GIG Logistics -->
+        <!-- Carrier Delivery — GIG Logistics.
+             Paused: our GIG API access isn't live, so GIG is not quoted or
+             booked anywhere (server gate: isGigEnabled / NUXT_PUBLIC_GIG_ENABLED).
+             Shown as "Coming soon" rather than removed so sellers know it's
+             planned, and the toggle is hidden rather than merely disabled — a
+             switch you can flip that changes nothing is worse than no switch.
+             Same treatment as Pay on Delivery above. Each seller's saved
+             gigEnabled value is left alone, so preferences survive the pause. -->
         <div class="space-y-4 rounded-2xl border border-gray-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900">
           <div class="flex items-center justify-between gap-4">
             <div>
@@ -653,10 +660,16 @@
                 <span class="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-green-700 dark:bg-green-900/30 dark:text-green-400">Nationwide</span>
               </div>
               <p class="mt-0.5 text-[12px] text-gray-400 dark:text-neutral-500">
-                Offer GIG doorstep delivery at checkout — priced live and collected from your Shipping Origin. On by default.
+                <template v-if="GIG_ENABLED">
+                  Offer GIG doorstep delivery at checkout — priced live and collected from your Shipping Origin. On by default.
+                </template>
+                <template v-else>
+                  Live carrier rates and doorstep delivery, booked from your Shipping Origin. We're finishing the carrier integration — until then, set up <strong>Self / Own Delivery</strong> or <strong>Pickup</strong> below so buyers have a way to get their orders.
+                </template>
               </p>
             </div>
             <button
+              v-if="GIG_ENABLED"
               type="button"
               @click="form.gig_enabled = !form.gig_enabled"
               class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors"
@@ -669,10 +682,16 @@
                 :class="form.gig_enabled ? 'translate-x-6' : 'translate-x-1'"
               />
             </button>
+            <span
+              v-else
+              class="shrink-0 rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+            >
+              Coming soon
+            </span>
           </div>
 
           <p
-            v-if="form.gig_enabled && (!form.shipFromAddress || !form.shipFromCity || !form.shipFromState)"
+            v-if="GIG_ENABLED && form.gig_enabled && (!form.shipFromAddress || !form.shipFromCity || !form.shipFromState)"
             class="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-[12px] text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-400"
           >
             <Icon name="solar:danger-triangle-linear" size="15" class="mt-0.5 shrink-0" />
@@ -926,6 +945,11 @@ const storeSlug = computed(() => route.params.storeSlug as string)
 const { loadPublicSeller, updateSeller, currentSeller, error, isLoading } =
   useSellerManagement()
 const { uploadMedia } = useMediaUpload()
+
+// GIG is paused platform-wide until our carrier API access is live — same flag
+// the server gates quoting/booking on, so the settings UI can't advertise an
+// option checkout will never show. NUXT_PUBLIC_GIG_ENABLED=true re-enables both.
+const GIG_ENABLED = useRuntimeConfig().public.gigEnabled === true
 
 const pageLoading = ref(true)
 const isSaving = ref(false)

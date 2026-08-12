@@ -36,10 +36,34 @@ export function gigConfig(): GigConfig {
   }
 }
 
+/**
+ * Platform kill-switch — GIG is PAUSED ("coming soon") until our carrier API
+ * access is live. Off unless NUXT_PUBLIC_GIG_ENABLED=true, which is also what
+ * `runtimeConfig.public.gigEnabled` reads, so server and client agree. Read
+ * from process.env directly because this module is imported outside a request
+ * context (provider registry, cron tasks).
+ *
+ * Deliberately a platform flag rather than a data migration: every seller's own
+ * `gigEnabled` preference stays exactly as they set it, so flipping this back on
+ * restores their choices instead of resetting them.
+ */
+export function isGigEnabled(): boolean {
+  return process.env.NUXT_PUBLIC_GIG_ENABLED === 'true'
+}
+
 /** Only email + password are required — CustomerCode/Type are derived from login. */
-export function isGigConfigured(): boolean {
+export function hasGigCredentials(): boolean {
   const c = gigConfig()
   return Boolean(c.email && c.password)
+}
+
+/**
+ * Usable right now: credentials present AND the platform switch on. Every GIG
+ * quote/book path already gates on this, so the switch closes all of them at
+ * once — including any path added later that follows the same convention.
+ */
+export function isGigConfigured(): boolean {
+  return isGigEnabled() && hasGigCredentials()
 }
 
 // Customer code/type derived from the login response (UserChannelCode / CustomerType),

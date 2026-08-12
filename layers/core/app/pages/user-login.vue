@@ -223,7 +223,10 @@ import BrandLogo from '~~/layers/ui/app/components/BrandLogo.vue'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { definePageMeta, useRoute } from '#imports'
-import { useAuth } from '~~/layers/core/app/composables/useAuth'
+import {
+  useAuth,
+  resolvePostLoginPath,
+} from '~~/layers/core/app/composables/useAuth'
 import { useAuthApi } from '~~/layers/core/app/services/auth.api'
 import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 import BaseInput from '~~/layers/ui/app/components/BaseInput.vue'
@@ -317,7 +320,9 @@ const handleSubmit = async () => {
 const handleSocial = async (provider: 'google' | 'facebook' | 'tiktok') => {
   localMessage.value = ''
   isSocialLoading.value = true
-  await socialLogin(provider, '/')
+  // Social sign-in leaves the SPA, so the return URL has to travel with the
+  // OAuth request rather than being read back off the route afterwards.
+  await socialLogin(provider, resolvePostLoginPath(route.query.redirect))
 }
 
 onMounted(() => {

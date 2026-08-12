@@ -12,8 +12,21 @@
       <BrandLogo v-else variant="mark" class="h-7 w-auto" />
     </NuxtLink>
 
-    <!-- Scrollable nav area — profile stays pinned below this -->
-    <div class="nav-scroll min-h-0 flex-1 overflow-y-auto">
+    <!-- Scrollable nav area — More + profile stay pinned below this.
+         `nav-scroll-wrap` carries the bottom fade: the scrollbar is hidden (see
+         the style block), so without a visual cue an overflowing rail cuts items
+         off with NOTHING indicating more exists below. -->
+    <div class="nav-scroll-wrap relative min-h-0 flex-1">
+    <div
+      ref="scrollEl"
+      class="nav-scroll h-full overflow-y-auto"
+      @scroll="updateOverflow"
+    >
+      <!-- Single content wrapper so a ResizeObserver can watch the rail's real
+           height. Rows are added after first paint (auth hydration, seller
+           group), and those change scrollHeight without resizing the scroller
+           itself — observing the scroller alone would miss them. -->
+      <div ref="scrollContentEl">
       <!-- Primary Navigation -->
       <p class="nav-group-label">Shop</p>
       <nav class="flex flex-col space-y-2">
@@ -30,11 +43,6 @@
         <NuxtLink to="/reels" class="nav-button group" active-class="active">
           <AppIcon name="reels" :active="isReels" size="24" />
           <span class="nav-text">Reels</span>
-        </NuxtLink>
-
-        <NuxtLink to="/map" class="nav-button group" active-class="active">
-          <AppIcon name="nearby" :active="isNearby" size="24" />
-          <span class="nav-text">Near Me</span>
         </NuxtLink>
 
         <NuxtLink to="/squares" class="nav-button group" active-class="active">
@@ -267,8 +275,44 @@
           <span class="nav-text">{{ $t('nav.cart') }}</span>
         </button>
       </nav>
+      </div>
+    </div>
+
+      <!-- Overflow affordance — only painted when there is actually more below,
+           so the rail stays flat and unfaded at normal viewport heights. -->
+      <div
+        v-show="hasOverflow"
+        aria-hidden="true"
+        class="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-white to-transparent dark:from-neutral-900"
+      />
     </div>
     <!-- end scrollable nav area -->
+
+    <!-- More — app-level secondary destinations, pinned so it never scrolls away.
+         Rendered for guests too: it holds Near Me and Help, which a logged-out
+         visitor needs and which AccountMenu (avatar-only, signed-in-only) can't
+         carry for them. -->
+    <div ref="moreRef" class="relative shrink-0">
+      <button
+        class="nav-button group w-full"
+        :class="{ 'bg-gray-100 dark:bg-neutral-800': moreOpen }"
+        :aria-expanded="moreOpen"
+        aria-haspopup="menu"
+        aria-label="More"
+        @click="moreOpen = !moreOpen"
+      >
+        <Icon name="solar:hamburger-menu-linear" size="24" />
+        <span class="nav-text">More</span>
+      </button>
+
+      <Transition name="menu-pop">
+        <MoreMenu
+          v-if="moreOpen"
+          class="absolute bottom-full left-0 z-50 mb-2"
+          @close="moreOpen = false"
+        />
+      </Transition>
+    </div>
 
     <!-- Profile — always pinned to bottom, never scrolls away -->
     <div class="relative shrink-0 pb-2 pt-1">
@@ -338,10 +382,12 @@ import { useNotificationStore } from '~~/layers/profile/app/stores/notification.
 import { useSellerStore } from '~~/layers/seller/app/store/seller.store'
 import { useChatStore } from '~~/layers/profile/app/stores/chat.store'
 import { useChat } from '~~/layers/profile/app/composables/useChat'
+import { useAuth } from '~~/layers/core/app/composables/useAuth'
 import Avatar from '~~/layers/profile/app/components/Avatar.vue'
 import AppIcon from '~~/layers/ui/app/components/AppIcon.vue'
 import BrandLogo from '~~/layers/ui/app/components/BrandLogo.vue'
 import AccountMenu from './AccountMenu.vue'
+import MoreMenu from './MoreMenu.vue'
 
 defineEmits(['create', 'open-notifications', 'open-cart'])
 
@@ -359,7 +405,6 @@ const { cartCount } = useCart()
 const isHome = computed(() => route.path === '/')
 const isDiscover = computed(() => route.path === '/discover')
 const isReels = computed(() => route.path.startsWith('/reels'))
-const isNearby = computed(() => route.path.startsWith('/map'))
 const isInbox = computed(() => route.path.startsWith('/messages'))
 const isSquares = computed(() => route.path.startsWith('/squares'))
 const isSellerRoute = computed(() => route.path.startsWith('/seller'))
@@ -369,6 +414,26 @@ const messageCount = computed(() => chatStore.totalUnread)
 
 const menuOpen = ref(false)
 const storePickerOpen = ref(false)
+const moreOpen = ref(false)
+const moreRef = ref<HTMLElement | null>(null)
+
+// ── Overflow affordance ────────────────────────────────────────────────────────
+// The rail's scrollbar is hidden by design, so we detect overflow ourselves and
+// paint a bottom fade only when there is genuinely more content below. Recomputed
+// on scroll, on resize, and whenever the rail's own content changes height (auth
+// hydration and the seller group both add rows after first paint).
+const scrollEl = ref<HTMLElement | null>(null)
+const scrollContentEl = ref<HTMLElement | null>(null)
+const hasOverflow = ref(false)
+
+const updateOverflow = () => {
+  const el = scrollEl.value
+  if (!el) return
+  // 1px tolerance — sub-pixel layout rounding otherwise leaves the fade stuck on.
+  hasOverflow.value = el.scrollHeight - el.scrollTop - el.clientHeight > 1
+}
+
+let resizeObserver: ResizeObserver | null = null
 
 const onClickOutside = (e: MouseEvent) => {
   const profileMenu = document.querySelector('.bottom-profile-menu')
@@ -377,14 +442,28 @@ const onClickOutside = (e: MouseEvent) => {
   const pickerEl = document.querySelector('.store-picker-anchor')
   if (pickerEl && !pickerEl.contains(e.target as Node))
     storePickerOpen.value = false
+  if (moreRef.value && !moreRef.value.contains(e.target as Node))
+    moreOpen.value = false
 }
 
 const { fetchUnreadCount } = useChat()
 onMounted(() => {
   document.addEventListener('click', onClickOutside, true)
   if (profileStore.isLoggedIn) fetchUnreadCount()
+
+  updateOverflow()
+  if (typeof ResizeObserver !== 'undefined') {
+    resizeObserver = new ResizeObserver(updateOverflow)
+    // Scroller = viewport height (window resize); content = total height (rows
+    // added on hydration). Both must be watched for the fade to stay honest.
+    if (scrollEl.value) resizeObserver.observe(scrollEl.value)
+    if (scrollContentEl.value) resizeObserver.observe(scrollContentEl.value)
+  }
 })
-onUnmounted(() => document.removeEventListener('click', onClickOutside, true))
+onUnmounted(() => {
+  document.removeEventListener('click', onClickOutside, true)
+  resizeObserver?.disconnect()
+})
 </script>
 
 <style scoped>

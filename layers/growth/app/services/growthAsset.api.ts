@@ -124,11 +124,17 @@ export class GrowthAssetApiClient extends BaseApiClient {
   }
 
   /** Upload the asset's card to the seller's TikTok inbox as a draft (MEDIA_UPLOAD) — no audit required. */
-  async postToTikTokDraft(id: string, opts: { caption?: string; title?: string } = {}) {
+  async postToTikTokDraft(
+    id: string,
+    opts: { caption?: string; title?: string } = {},
+  ) {
     return this.request(`/api/growth/assets/${id}/post/tiktok/draft`, {
       method: 'POST',
       body: opts,
-    }) as Promise<{ success: boolean; data: { publishId: string; trackedUrl: string } }>
+    }) as Promise<{
+      success: boolean
+      data: { publishId: string; trackedUrl: string }
+    }>
   }
 
   /** Poll a Direct Post's processing status. */
@@ -137,7 +143,21 @@ export class GrowthAssetApiClient extends BaseApiClient {
       method: 'GET',
       params: { publishId },
       silent: true,
-    }) as Promise<{ success: boolean; data: { status: string; failReason?: string } }>
+    }) as Promise<{
+      success: boolean
+      data: { status: string; failReason?: string }
+    }>
+  }
+
+  /** Publish the asset's card directly to the connected Facebook Page. Synchronous — no polling. */
+  async postToFacebook(id: string, opts: { caption?: string } = {}) {
+    return this.request(`/api/growth/assets/${id}/post/facebook`, {
+      method: 'POST',
+      body: opts,
+    }) as Promise<{
+      success: boolean
+      data: { postId: string; trackedUrl: string }
+    }>
   }
 }
 

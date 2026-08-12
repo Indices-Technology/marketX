@@ -13,6 +13,10 @@
 import { useMediaUpload } from '~~/layers/core/app/composables/useMediaUpload'
 import { useProductApi } from '~~/layers/commerce/app/services/product.api'
 import { useAiApi } from '~~/layers/core/app/services/ai.api'
+import {
+  useFacebookImportApi,
+  type FacebookImportPost,
+} from '~~/layers/growth/app/services/facebookImport.api'
 
 export interface StagedMedia {
   url: string
@@ -27,7 +31,7 @@ export interface StagedRow {
   /** Local-only id for list keys and selection. */
   localId: string
   media: StagedMedia[]
-  /** Object URLs for instant preview while the real upload is in flight. */
+  /** Object URLs (or, for an imported post, its own hosted URLs) for instant preview. */
   previews: string[]
   title: string
   description: string
@@ -37,6 +41,19 @@ export interface StagedRow {
   aiStatus: AiStatus
   /** Upload or commit error for this row. */
   error?: string
+  /** Where this row's media came from — device gallery or an imported FB post. */
+  source: 'gallery' | 'facebook'
+}
+
+/**
+ * Derive a starting title from a Facebook post's caption — just the first
+ * line, truncated. Blank captions (photo with no text) leave it blank, same
+ * "don't pre-fill junk" rule as deriveTitle for filenames.
+ */
+export function deriveTitleFromCaption(message: string | null): string {
+  if (!message) return ''
+  const firstLine = message.split('\n')[0]?.trim() ?? ''
+  return firstLine.length > 80 ? `${firstLine.slice(0, 80)}…` : firstLine
 }
 
 let _idSeq = 0
@@ -78,6 +95,7 @@ export function useBulkImport(storeSlug: string) {
   const { uploadMedia } = useMediaUpload()
   const productApi = useProductApi()
   const aiApi = useAiApi()
+  const facebookImportApi = useFacebookImportApi()
 
   const uploadingCount = computed(
     () => rows.value.filter((r) => r.status === 'uploading').length,
@@ -105,6 +123,7 @@ export function useBulkImport(storeSlug: string) {
         price: null,
         status: 'uploading',
         aiStatus: 'idle',
+        source: 'gallery',
       })
 
       // Upload without blocking the loop, so many photos upload concurrently.
@@ -124,6 +143,40 @@ export function useBulkImport(storeSlug: string) {
           r.status = 'error'
           r.error = e instanceof Error ? e.message : 'Upload failed'
         })
+    }
+  }
+
+  /**
+   * Stage a row from a connected Facebook Page's own post — re-uploads its
+   * photo(s) to Cloudinary server-side (see /api/growth/facebook/import) so
+   * the row ends up in the exact same StagedMedia shape as a device upload.
+   * One post = one row, same as one file = one row for addFiles.
+   */
+  async function addFromFacebookPost(post: FacebookImportPost) {
+    const id = localId()
+    rows.value.push({
+      localId: id,
+      media: [],
+      previews: post.images,
+      title: deriveTitleFromCaption(post.message),
+      description: '',
+      price: null,
+      status: 'uploading',
+      aiStatus: 'idle',
+      source: 'facebook',
+    })
+
+    try {
+      const res = await facebookImportApi.importImages(post.images)
+      const r = rows.value.find((x) => x.localId === id)
+      if (!r) return
+      r.media = res.data.media
+      r.status = 'ready'
+    } catch (e: unknown) {
+      const r = rows.value.find((x) => x.localId === id)
+      if (!r) return
+      r.status = 'error'
+      r.error = e instanceof Error ? e.message : 'Import failed'
     }
   }
 
@@ -264,6 +317,7 @@ export function useBulkImport(storeSlug: string) {
     canCommit,
     aiGeneratingCount,
     addFiles,
+    addFromFacebookPost,
     removeRow,
     combineRows,
     updateRow,

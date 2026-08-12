@@ -24,6 +24,7 @@ import { gigRateNGN } from './rates'
 import { gigPolicy } from './policy'
 import {
   isGigConfigured,
+  isGigEnabled,
   gigCustomerCode,
   gigCustomerType,
   fetchPrice,
@@ -289,6 +290,12 @@ export const gigProvider: IShippingProvider = {
   policy: gigPolicy,
 
   canHandle(req: ShipmentRequest): boolean {
+    // Platform pause (see isGigEnabled). This is the registry-level gate — the
+    // orchestrator filters on canHandle, so no caller can surface a GIG quote
+    // while it's off. Necessary because `quote()` below falls back to the
+    // static rate card when the API is unreachable: without this, a caller that
+    // asked for GIG would still get priced options for a carrier we can't book.
+    if (!isGigEnabled()) return false
     const domestic =
       req.origin.country?.toUpperCase() === 'NG' &&
       req.destination.country?.toUpperCase() === 'NG'

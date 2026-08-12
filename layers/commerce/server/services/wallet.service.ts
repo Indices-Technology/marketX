@@ -4,7 +4,10 @@ import { walletRepository } from '../repositories/wallet.repository'
 import { buyerWalletRepository } from '../repositories/buyer-wallet.repository'
 import { notificationQueue } from '~~/server/queues/notification.queue'
 import { emailQueue } from '~~/server/queues/email.queue'
-import { buildFundsReleasedEmail } from '~~/server/utils/email/emailService'
+import {
+  buildAffiliateCommissionEmail,
+  buildFundsReleasedEmail,
+} from '~~/server/utils/email/emailService'
 import { verifyShippingQuote } from '~~/layers/shipping/server/utils/quoteToken'
 
 /**
@@ -115,6 +118,41 @@ export const walletService = {
         })
       }
     }
+
+    // Tell the referrer their link converted. This is the only hook every payment
+    // path shares (card → paymentConfirmation, PayPal capture, POD confirm-cash),
+    // so it lives here rather than in any one endpoint. Non-blocking: a failed
+    // notification must never fail a confirmed payment.
+    this.notifyAffiliateOfConversion(orderId).catch((e) =>
+      logger.logError('[wallet] affiliate conversion notification', e, { orderId }),
+    )
+  },
+
+  /**
+   * Notify the referring affiliate that an order placed through their link has
+   * been paid for. Fires at payment, NOT delivery — the commission is still
+   * pending at this point, but waiting until release means the affiliate learns
+   * about a sale days later (or a week, via the auto-release cron), which is far
+   * too late to reinforce the sharing that produced it.
+   */
+  async notifyAffiliateOfConversion(orderId: number) {
+    const order = await prisma.orders.findUnique({
+      where: { id: orderId },
+      select: { affiliateUserId: true, affiliateCut: true },
+    })
+    if (!order?.affiliateUserId || order.affiliateCut <= 0) return
+
+    const amount = `₦${(order.affiliateCut / 100).toLocaleString('en-NG')}`
+    notificationQueue.enqueue(
+      {
+        userId: order.affiliateUserId,
+        type: 'ORDER',
+        orderId,
+        message: `Your referral converted — ${amount} commission pending on Order #${orderId}. It's released to you once the buyer receives the order.`,
+      },
+      // Idempotent: POD re-confirms and webhook/verify races must not double-ping.
+      { dedupeKey: `affiliate-conversion:${orderId}` },
+    )
   },
 
   /**
@@ -164,8 +202,15 @@ export const walletService = {
       return totals
     })
 
-    // Lost the race (already released) or nothing to release.
+    // Lost the race (already released) or nothing to release TO A SELLER. The
+    // affiliate credit is deliberately NOT gated on that: an order whose whole
+    // line total went to commission (the clamp in placeOrder can make the seller
+    // net exactly 0, so no CREDIT_PENDING row is ever written) would otherwise
+    // bail here and the affiliate would never be paid for money the buyer did
+    // pay. `creditAffiliate` carries its own idempotency guard, so it is safe to
+    // run on the losing side of the race too.
     if (!byWallet) {
+      await this.creditAffiliate(orderId)
       return
     }
 
@@ -200,65 +245,95 @@ export const walletService = {
       }
     }).catch(() => {})
 
-    // Credit affiliate wallet if this order had a referral
+    await this.creditAffiliate(orderId)
+  },
+
+  /**
+   * Credit the referring affiliate's wallet for a delivered order.
+   * Split out of `releaseFundsOnDelivery` so it runs on every delivery path,
+   * including ones where no seller CREDIT_PENDING row exists. Idempotent: an
+   * existing AFFILIATE_CREDIT transaction for this order is a no-op.
+   */
+  async creditAffiliate(orderId: number) {
     const order = await prisma.orders.findUnique({
       where: { id: orderId },
       select: { affiliateUserId: true, affiliateCut: true },
     })
 
-    if (order?.affiliateUserId && order.affiliateCut > 0) {
-      // Affiliate must have a seller profile to receive a wallet credit
-      const sellerProfile = await prisma.sellerProfile.findFirst({
-        where: { profileId: order.affiliateUserId },
-        select: { id: true },
-      })
+    if (!order?.affiliateUserId || order.affiliateCut <= 0) return
+    const affiliateUserId = order.affiliateUserId
+    const amountKobo = order.affiliateCut
 
-      if (sellerProfile) {
-        const wallet = await walletRepository.getOrCreateWallet(
-          sellerProfile.id,
-        )
-        // Idempotency: don't double-credit if called again
-        const existingAffiliate = await prisma.transaction.findFirst({
-          where: { walletId: wallet.id, orderId, type: 'AFFILIATE_CREDIT' },
+    /** In-app + WhatsApp (via the ORDER type) + email, mirroring what the seller
+     *  gets on the same release. Called only inside the idempotency guards below,
+     *  so a repeat release never re-sends. */
+    const announce = (isSellerWallet: boolean) => {
+      notificationQueue.enqueue({
+        userId: affiliateUserId,
+        type: 'ORDER',
+        message: `You earned ₦${(amountKobo / 100).toLocaleString('en-NG')} affiliate commission from Order #${orderId}`,
+        orderId,
+      })
+      prisma.profile
+        .findUnique({ where: { id: affiliateUserId }, select: { email: true } })
+        .then((p) => {
+          // Skip synthetic guest-checkout addresses — they route nowhere.
+          if (!p?.email || p.email.includes('@checkout.marketx.')) return
+          const base = useRuntimeConfig().public.baseURL
+          const { subject, html, text } = buildAffiliateCommissionEmail(
+            orderId,
+            amountKobo,
+            {
+              isSellerWallet,
+              walletUrl: base ? `${base}/profile/me?tab=wallet` : undefined,
+            },
+          )
+          emailQueue.enqueue({ to: p.email, subject, html, text, type: 'GENERAL' })
         })
-        if (!existingAffiliate) {
-          await walletRepository.incrementBalance(wallet.id, order.affiliateCut)
-          await walletRepository.createTransaction(wallet.id, {
-            amount: order.affiliateCut,
-            type: 'AFFILIATE_CREDIT',
-            description: `Affiliate commission — Order #${orderId}`,
-            orderId,
-          })
-          notificationQueue.enqueue({
-            userId: order.affiliateUserId,
-            type: 'ORDER',
-            message: `You earned ₦${(order.affiliateCut / 100).toLocaleString('en-NG')} affiliate commission from Order #${orderId}`,
-            orderId,
-          })
-        }
-      } else {
-        // Non-seller affiliate — credit their BuyerWallet
-        const buyerWallet = await buyerWalletRepository.getOrCreate(order.affiliateUserId)
-        const existingBuyerCredit = await buyerWalletRepository.findExistingCredit(
-          buyerWallet.id,
-          orderId,
-          'AFFILIATE_CREDIT',
+        .catch((e) =>
+          logger.logError('[wallet] affiliate commission email', e, { orderId }),
         )
-        if (!existingBuyerCredit) {
-          await buyerWalletRepository.incrementBalance(buyerWallet.id, order.affiliateCut)
-          await buyerWalletRepository.createTransaction(buyerWallet.id, {
-            amount: order.affiliateCut,
-            type: 'AFFILIATE_CREDIT',
-            description: `Affiliate commission — Order #${orderId}`,
-            orderId,
-          })
-          notificationQueue.enqueue({
-            userId: order.affiliateUserId,
-            type: 'ORDER',
-            message: `You earned ₦${(order.affiliateCut / 100).toLocaleString('en-NG')} affiliate commission from Order #${orderId}`,
-            orderId,
-          })
-        }
+    }
+
+    // Affiliate must have a seller profile to receive a seller-wallet credit
+    const sellerProfile = await prisma.sellerProfile.findFirst({
+      where: { profileId: affiliateUserId },
+      select: { id: true },
+    })
+
+    if (sellerProfile) {
+      const wallet = await walletRepository.getOrCreateWallet(sellerProfile.id)
+      // Idempotency: don't double-credit if called again
+      const existingAffiliate = await prisma.transaction.findFirst({
+        where: { walletId: wallet.id, orderId, type: 'AFFILIATE_CREDIT' },
+      })
+      if (!existingAffiliate) {
+        await walletRepository.incrementBalance(wallet.id, amountKobo)
+        await walletRepository.createTransaction(wallet.id, {
+          amount: amountKobo,
+          type: 'AFFILIATE_CREDIT',
+          description: `Affiliate commission — Order #${orderId}`,
+          orderId,
+        })
+        announce(true)
+      }
+    } else {
+      // Non-seller affiliate — credit their BuyerWallet
+      const buyerWallet = await buyerWalletRepository.getOrCreate(affiliateUserId)
+      const existingBuyerCredit = await buyerWalletRepository.findExistingCredit(
+        buyerWallet.id,
+        orderId,
+        'AFFILIATE_CREDIT',
+      )
+      if (!existingBuyerCredit) {
+        await buyerWalletRepository.incrementBalance(buyerWallet.id, amountKobo)
+        await buyerWalletRepository.createTransaction(buyerWallet.id, {
+          amount: amountKobo,
+          type: 'AFFILIATE_CREDIT',
+          description: `Affiliate commission — Order #${orderId}`,
+          orderId,
+        })
+        announce(false)
       }
     }
   },

@@ -17,7 +17,11 @@ import type {
   IShipmentRate,
 } from '~~/layers/shipping/server/legacy/types'
 import { getQuotes } from '~~/layers/shipping/server/services/orchestrator.service'
-import { isGigConfigured } from '~~/layers/shipping/server/providers/gig/client'
+import {
+  isGigConfigured,
+  isGigEnabled,
+  hasGigCredentials,
+} from '~~/layers/shipping/server/providers/gig/client'
 import type {
   ShipmentRequest,
   SellerShippingConfig,
@@ -113,15 +117,17 @@ export default defineEventHandler(async (event) => {
   // GIG did or didn't reach checkout — this is what tells us whether a missing
   // GIG option was a gate (config/origin/opt-out) or a live quote failure.
   if (body.storeSlug && !allowed.includes('gig')) {
-    const reason = !isGigConfigured()
-      ? 'GIG credentials not configured (GIG_EMAIL/GIG_PASSWORD)'
-      : toCountry !== 'NG'
-        ? `destination country is ${toCountry}, not NG`
-        : !hasOrigin
-          ? 'seller has no ship-from state set'
-          : gigOptedOut
-            ? 'seller disabled GIG in settings'
-            : 'unknown'
+    const reason = !isGigEnabled()
+      ? 'GIG is paused platform-wide (NUXT_PUBLIC_GIG_ENABLED is not "true")'
+      : !hasGigCredentials()
+        ? 'GIG credentials not configured (GIG_EMAIL/GIG_PASSWORD)'
+        : toCountry !== 'NG'
+          ? `destination country is ${toCountry}, not NG`
+          : !hasOrigin
+            ? 'seller has no ship-from state set'
+            : gigOptedOut
+              ? 'seller disabled GIG in settings'
+              : 'unknown'
     logger.info(
       `[shipping/rates] GIG not offered for "${body.storeSlug}": ${reason}`,
     )

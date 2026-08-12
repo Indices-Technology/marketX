@@ -89,30 +89,42 @@
       </div>
 
       <template v-else>
+        <!-- h-[100dvh] on the WRAPPER, not just the slide components inside it.
+             Every child here is already full-height, so this changes nothing
+             visually — but it means the wrapper keeps its height when the child
+             is unmounted below, which is what lets the feed be windowed without
+             the scroll height collapsing. -->
         <div
           v-for="(slot, index) in items"
           :key="slot.kind === 'item' ? slot.item.id : slot.kind"
-          class="feed-slide relative mx-auto flex w-full max-w-[560px] snap-start snap-always justify-center bg-black"
+          class="feed-slide relative mx-auto flex h-[100dvh] w-full max-w-[560px] snap-start snap-always justify-center bg-black"
           :data-index="index"
         >
-          <HomeHero v-if="slot.kind === 'hero'" dense />
-          <SquareSpotlightSlide
-            v-else-if="slot.kind === 'squares'"
-            :squares="squareSpotlight"
-          />
-          <ReelItem
-            v-else-if="reelIdSet.has(slot.item.id)"
-            :reel="slot.item"
-            :is-active="index === activeIndex"
-            :index="index"
-            @open-comments="openComments"
-          />
-          <FeedSlide
-            v-else
-            :item="slot.item"
-            :is-active="index === activeIndex"
-            @open-comments="openComments"
-          />
+          <!-- Only slides near the active one stay mounted. The wrapper always
+               renders, so snap points, scroll height, and the data-index the
+               IntersectionObserver reads are all untouched. -->
+          <template v-if="isNear(index)">
+            <HomeHero v-if="slot.kind === 'hero'" dense />
+            <SquareSpotlightSlide
+              v-else-if="slot.kind === 'squares'"
+              :squares="squareSpotlight"
+            />
+            <ReelItem
+              v-else-if="reelIdSet.has(slot.item.id)"
+              :reel="slot.item"
+              :is-active="index === activeIndex"
+              :index="index"
+              :distance="Math.abs(index - activeIndex)"
+              @open-comments="openComments"
+            />
+            <FeedSlide
+              v-else
+              :item="slot.item"
+              :is-active="index === activeIndex"
+              :distance="Math.abs(index - activeIndex)"
+              @open-comments="openComments"
+            />
+          </template>
         </div>
       </template>
     </div>
@@ -246,6 +258,14 @@ const activeIndex = ref(0)
 const isHeroSlide = computed(
   () => items.value[activeIndex.value]?.kind === 'hero',
 )
+
+// How many slides either side of the active one stay mounted. The feed renders
+// its whole pool — there is no pagination window — so without this every item
+// ever loaded keeps a mounted component tree (and, for video items, a live
+// <video>) for the rest of the session. Two covers a fast flick either way.
+const RENDER_WINDOW = 2
+const isNear = (index: number) =>
+  Math.abs(index - activeIndex.value) <= RENDER_WINDOW
 
 // One Squares spotlight woven into the scroll — reachable without a swipe-
 // through gate, but still visible early rather than nav-only.

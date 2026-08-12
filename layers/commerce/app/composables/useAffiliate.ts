@@ -52,7 +52,17 @@ export const useAffiliate = () => {
     store.setError(null)
     try {
       const result: { data: AffiliateEnrollment } = await api.enroll()
-      await fetchAffiliateStatus()
+      // Refresh stats, then re-assert identity from the enroll response. The
+      // enroll response is authoritative and synchronous; the status read is
+      // cached server-side, so it must never be what unlocks the dashboard —
+      // otherwise a stale snapshot leaves the user enrolled but still staring
+      // at the "join" CTA with no link.
+      await fetchAffiliateStatus().catch(() => {
+        /* stats are non-critical — enrollment already succeeded */
+      })
+      if (result.data?.affiliateCode) {
+        store.setStatus(true, result.data.affiliateCode, {})
+      }
       return result.data
     } catch (e: unknown) {
       store.setError(

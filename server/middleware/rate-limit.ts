@@ -86,6 +86,10 @@ export default defineEventHandler(async (event) => {
     if (path.startsWith('/api/auth/')) return
     if (path.startsWith('/api/oauth/')) return
     if (path.startsWith('/api/commerce/payments/webhook')) return
+    // Scheduled-task trigger — authenticated by TASKS_SHARED_SECRET. An external
+    // scheduler shares one egress IP across every job, so IP limits would throttle
+    // money-critical runs; the shared secret is the gate here.
+    if (path.startsWith('/api/internal/tasks')) return
     // Internal Dassah endpoints — authenticated by X-Dassah-Internal key, not rate-limited
     if (path.startsWith('/api/ai/context/')) return
     if (path.startsWith('/api/ai/embeddings/')) return

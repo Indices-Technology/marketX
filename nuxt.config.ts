@@ -1,5 +1,9 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 
+// Canonical job schedule, shared with the internal task endpoints and docs.
+// Imported by relative path: config evaluation runs before aliases exist.
+import { toNitroScheduledTasks } from './server/utils/taskSchedule'
+
 // Relaxed CSP for the OpenAPI doc routes only (/_scalar, /_swagger). These
 // pages load their UI bundle from jsdelivr; the spec is fetched same-origin.
 // Scoped via routeRules so the app-wide CSP stays strict.
@@ -302,18 +306,24 @@ export default defineNuxtConfig({
         version: '1.0.0',
       },
     },
-    scheduledTasks: {
-      '* * * * *': ['processQueues'],
-      '0 */6 * * *': ['releaseShippedOrders'],
-      '*/15 * * * *': ['releaseExpiredOrders'],
-      // Pull-only carrier tracking (GIG has no webhook): advance shipped orders.
-      '*/30 * * * *': ['pollCarrierTracking'],
-      // Reputation reconciliation. Live emission is best-effort (fire-and-forget
-      // from each completion path); this replay guarantees eventual correctness
-      // so a missed signal can never hold a seller below min-evidence. Idempotent
-      // on (sourceRef, signalKey), so re-running is free.
-      '*/20 * * * *': ['reputationBackfill'],
-    },
+    // In-process cron is OPT-IN (NITRO_INPROCESS_CRON=true) and off by default.
+    //
+    // The schedule is owned by an EXTERNAL scheduler hitting
+    // POST /api/internal/tasks/:name, so the jobs are not tied to any host's
+    // capabilities — see docs/JOBS.md. Nitro's runner only fires on a long-lived
+    // Node process (never on serverless), so leaving it on by default would mean
+    // "works here, silently dead there", which is exactly what we're removing.
+    //
+    // Enable it only on an always-on single-instance host that is NOT also being
+    // driven externally; running both just duplicates work (tasks are idempotent,
+    // so it is safe, only wasteful).
+    //
+    // Task list + cron expressions: server/utils/taskSchedule.ts (single source
+    // of truth, shared with GET /api/internal/tasks and the docs).
+    scheduledTasks:
+      process.env.NITRO_INPROCESS_CRON === 'true'
+        ? toNitroScheduledTasks()
+        : {},
     routeRules: {
       '/**': {
         headers: {
@@ -435,6 +445,12 @@ export default defineNuxtConfig({
       paystackPk: process.env.PAYSTACK_PUBLIC_KEY,
       // Pay on Delivery — off by default (paused); set NUXT_PUBLIC_POD_ENABLED=true to re-enable.
       podEnabled: process.env.NUXT_PUBLIC_POD_ENABLED === 'true',
+      // GIG Logistics — off by default (paused): our carrier API access isn't
+      // live yet, so GIG must not be quoted or booked. Sellers run their own
+      // shipping (BYOS / pickup) meanwhile. Set NUXT_PUBLIC_GIG_ENABLED=true to
+      // turn it back on platform-wide; per-seller `gigEnabled` preferences are
+      // left untouched so they survive the pause.
+      gigEnabled: process.env.NUXT_PUBLIC_GIG_ENABLED === 'true',
       // Trust homepage (hero Trust Card + spotlight rail). The reputation engine
       // is live and every figure is computed from real rows (orders / reviews /
       // dispute tickets — see server/utils/trustFacts.ts); nothing is seeded.

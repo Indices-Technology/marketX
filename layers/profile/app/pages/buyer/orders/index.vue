@@ -93,7 +93,7 @@
                   :to="`/seller/${order._storeSlug}/orders`"
                   class="text-[11px] font-semibold text-amber-700 hover:underline dark:text-amber-400"
                 >
-                  {{ order.status }} →
+                  {{ orderStatusLabel(order.status) }} →
                 </NuxtLink>
               </div>
             </div>
@@ -222,7 +222,11 @@
                 <BaseBadge v-if="order.paymentMethod === 'pay_on_delivery'" status="success">POD</BaseBadge>
                 <BaseBadge
                   :status="confirmedIds.has(order.id) ? 'DELIVERED' : order.status"
-                  :label="confirmedIds.has(order.id) ? 'DELIVERED' : order.status"
+                  :label="
+                    orderStatusLabel(
+                      confirmedIds.has(order.id) ? 'DELIVERED' : order.status,
+                    )
+                  "
                 />
               </div>
             </div>
@@ -279,9 +283,10 @@
             Have <strong class="mx-0.5">{{ formatPrice(order.totalAmount) }}</strong> ready to pay in cash on delivery
           </div>
 
-          <!-- Confirm Receipt bar — shown only for SHIPPED orders -->
+          <!-- Confirm Receipt bar — SHIPPED, or READY_FOR_PICKUP for a
+               collect-in-person order (see canConfirmReceipt). -->
           <div
-            v-if="order.status === 'SHIPPED' && !confirmedIds.has(order.id)"
+            v-if="canConfirmReceipt(order.status) && !confirmedIds.has(order.id)"
             class="border-t border-amber-100 bg-amber-50 px-5 py-3 dark:border-amber-900/30 dark:bg-amber-900/10"
           >
             <div class="flex items-center justify-between gap-3">
@@ -301,9 +306,9 @@
                 class="shrink-0"
                 :loading="confirmingIds.has(order.id)"
                 :disabled="confirmingIds.has(order.id)"
-                @click.prevent="confirmReceipt(order.id)"
+                @click.prevent="confirmReceipt(order.id, order.isPickup)"
               >
-                Confirm Receipt
+                {{ order.isPickup ? 'Confirm Pickup' : 'Confirm Receipt' }}
               </BaseButton>
             </div>
           </div>
@@ -336,8 +341,12 @@
         </div>
         <p class="font-medium text-gray-900 dark:text-neutral-100">
           No
-          {{ activeStatus !== 'ALL' ? activeStatus.toLowerCase() : '' }} orders
-          yet
+          {{
+            activeStatus !== 'ALL'
+              ? orderStatusLabel(activeStatus).toLowerCase()
+              : ''
+          }}
+          orders yet
         </p>
         <NuxtLink
           to="/discover"
@@ -360,6 +369,11 @@ import { imgThumb } from '~~/layers/core/app/utils/cloudinary'
 import RightSideNavBuyerOrders from '~~/layers/core/app/layouts/children/RightSideNavBuyerOrders.vue'
 import { useOrder } from '~~/layers/commerce/app/composables/useOrder'
 import { useOrderApi } from '~~/layers/commerce/app/services/order.api'
+import {
+  orderStatusLabel,
+  canConfirmReceipt,
+  confirmReceiptPrompt,
+} from '~~/layers/commerce/utils/orderStatus'
 import { useSellerManagement } from '~~/layers/seller/app/composables/useSellerManagement'
 import { extractErrorMessage } from '~~/layers/core/app/utils/errors'
 import { notify } from '@kyvg/vue3-notification'
@@ -418,13 +432,8 @@ const fetchPendingSellerOrders = async () => {
 const confirmingIds = ref<Set<number>>(new Set())
 const confirmedIds = ref<Set<number>>(new Set())
 
-const confirmReceipt = async (orderId: number) => {
-  if (
-    !confirm(
-      'Confirm you have received this order? This will release payment to the seller.',
-    )
-  )
-    return
+const confirmReceipt = async (orderId: number, isPickup?: boolean) => {
+  if (!confirm(confirmReceiptPrompt(isPickup))) return
   confirmingIds.value = new Set([...confirmingIds.value, orderId])
   try {
     await orderApi.confirmReceipt(orderId)
@@ -526,6 +535,9 @@ const STATUS_TABS = [
   { value: 'PENDING', label: 'Pending' },
   { value: 'CONFIRMED', label: 'Confirmed' },
   { value: 'SHIPPED', label: 'Shipped' },
+  // Without this tab a pickup order awaiting collection is invisible in every
+  // filter but "All".
+  { value: 'READY_FOR_PICKUP', label: 'Ready for pickup' },
   { value: 'DELIVERED', label: 'Delivered' },
   { value: 'CANCELLED', label: 'Cancelled' },
 ]

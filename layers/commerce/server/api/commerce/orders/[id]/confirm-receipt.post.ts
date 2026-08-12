@@ -41,17 +41,26 @@ export default defineEventHandler(async (event) => {
       )
     if (order.status === 'DELIVERED')
       return { success: true, data: { message: 'Already delivered' } }
-    // Allow SHIPPED or CONFIRMED (seller may have skipped SHIPPED step)
-    if (!['SHIPPED', 'CONFIRMED'].includes(order.status))
+    // Allow SHIPPED, READY_FOR_PICKUP (the pickup-order equivalent — the buyer
+    // collects in person, so they are the only party who can confirm it
+    // happened), or CONFIRMED (seller may have skipped the SHIPPED step).
+    if (!['SHIPPED', 'READY_FOR_PICKUP', 'CONFIRMED'].includes(order.status))
       throw new UserError(
         'INVALID_STATE',
         `Cannot confirm receipt for an order with status: ${order.status}`,
         400,
       )
 
+    // Stamp deliveredAt too: it was previously written only by carrier scans,
+    // so a buyer-confirmed order — and every pickup order, which has no carrier
+    // at all — sat at status DELIVERED with a null deliveredAt. Reputation reads
+    // that field for the "delivered as described" count, and the signal it emits
+    // below is idempotent, so leaving it null would permanently record the sale
+    // as undelivered. Buyer confirmation is the strongest delivery evidence we
+    // have; it belongs in the same field.
     await prisma.orders.update({
       where: { id },
-      data: { status: 'DELIVERED' },
+      data: { status: 'DELIVERED', deliveredAt: new Date() },
     })
 
     // Release funds non-blocking — wallet errors must not fail the receipt confirmation
@@ -75,7 +84,9 @@ export default defineEventHandler(async (event) => {
           userId: sellerId,
           type: 'ORDER',
           actorId: user.id,
-          message: `Buyer confirmed receipt of order #${id}. Funds have been released to your wallet.`,
+          message: order.isPickup
+            ? `Buyer confirmed they collected order #${id}. Funds have been released to your wallet.`
+            : `Buyer confirmed receipt of order #${id}. Funds have been released to your wallet.`,
         })
         .catch((e) => logger.logError('[notify seller receipt]', e))
     }

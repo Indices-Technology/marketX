@@ -48,13 +48,18 @@
             >
               Status
             </p>
-            <BaseBadge :status="order.status" :label="order.status" size="sm" />
+            <BaseBadge
+              :status="order.status"
+              :label="orderStatusLabel(order.status)"
+              size="sm"
+            />
           </div>
 
-          <!-- Progress bar -->
+          <!-- Progress bar — pickup orders get their own step labels (they
+               never ship; step 3 is "Ready", step 4 is "Collected"). -->
           <div class="flex items-center gap-0">
             <div
-              v-for="(step, i) in ORDER_STEPS"
+              v-for="(step, i) in steps"
               :key="step"
               class="flex flex-1 flex-col items-center"
             >
@@ -72,7 +77,7 @@
               <p class="mt-1 text-center text-[9px] text-gray-400">
                 {{ step }}
               </p>
-              <div v-if="i < ORDER_STEPS.length - 1" class="hidden" />
+              <div v-if="i < steps.length - 1" class="hidden" />
             </div>
           </div>
         </BaseCard>
@@ -126,8 +131,27 @@
           </div>
         </BaseCard>
 
-        <!-- Delivery info -->
-        <BaseCard title="Delivery">
+        <!-- Delivery info — "Pickup" for collect-in-person orders, where
+             nothing is being delivered to the address below. -->
+        <BaseCard :title="isPickup ? 'Pickup' : 'Delivery'">
+          <!-- The seller has it boxed and waiting — say so here too, not just
+               in the status badge, and point at the one action that closes
+               the order out. -->
+          <div
+            v-if="order.status === 'READY_FOR_PICKUP'"
+            class="mb-3 flex items-start gap-2 rounded-lg bg-teal-50 px-3 py-2 text-[12px] leading-relaxed text-teal-800 dark:bg-teal-500/10 dark:text-teal-300"
+          >
+            <Icon name="solar:box-linear" size="15" class="mt-px shrink-0" />
+            <span>
+              <strong>Ready to collect.</strong> Arrange a time with the seller,
+              then tap “{{ confirmReceiptLabel(true) }}” at the bottom of this
+              page once you have it —
+              <NuxtLink to="/messages/new" class="font-semibold underline"
+                >message the seller</NuxtLink
+              >
+              if you need directions.
+            </span>
+          </div>
           <div class="space-y-1.5 text-sm text-gray-600 dark:text-neutral-400">
             <p class="font-medium text-gray-900 dark:text-neutral-100">
               {{ order.name }}
@@ -307,24 +331,43 @@
           </div>
         </BaseCard>
 
-        <!-- Confirm receipt (buyer releases funds early, only while SHIPPED) -->
-        <BaseButton
-          v-if="order.status === 'SHIPPED' && !received"
-          variant="primary"
-          size="lg"
-          class="w-full"
-          :loading="confirming"
-          :disabled="confirming"
-          @click="confirmReceipt"
-        >
-          {{ confirming ? 'Confirming…' : 'Confirm receipt' }}
-        </BaseButton>
+        <!-- Confirm receipt — the buyer's own completion action, which
+             releases funds early. Available once the order has left the
+             seller's hands: SHIPPED, or READY_FOR_PICKUP for a pickup order,
+             where the buyer collecting it is the ONLY signal anyone has that
+             the handover happened. -->
+        <div v-if="showConfirmReceipt" class="space-y-2">
+          <BaseButton
+            variant="primary"
+            size="lg"
+            class="w-full"
+            :loading="confirming"
+            :disabled="confirming"
+            @click="confirmReceipt"
+          >
+            {{ confirming ? 'Confirming…' : confirmReceiptLabel(isPickup) }}
+          </BaseButton>
+          <p class="text-center text-xs text-gray-400 dark:text-neutral-500">
+            <template v-if="isPickup">
+              Only tap this once the item is in your hands — it releases payment
+              to the seller.
+            </template>
+            <template v-else>
+              This releases payment to the seller. Otherwise it auto-releases 7
+              days after dispatch.
+            </template>
+          </p>
+        </div>
         <div
           v-else-if="received || order.status === 'DELIVERED'"
           class="flex items-center justify-center gap-2 rounded-xl bg-green-50 px-4 py-3 text-sm font-medium text-green-700 dark:bg-green-900/20 dark:text-green-400"
         >
           <Icon name="solar:check-circle-linear" size="18" />
-          Delivery confirmed — thank you!
+          {{
+            isPickup
+              ? 'Pickup confirmed — thank you!'
+              : 'Delivery confirmed — thank you!'
+          }}
         </div>
 
         <!-- Cancel button (only if PENDING) -->
@@ -372,6 +415,14 @@
 import BaseImage from '~~/layers/ui/app/components/BaseImage.vue'
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import { variantLabel } from '~~/layers/commerce/utils/variants'
+import {
+  orderStatusLabel,
+  orderSteps,
+  orderStepIndex,
+  canConfirmReceipt,
+  confirmReceiptLabel,
+  confirmReceiptPrompt,
+} from '~~/layers/commerce/utils/orderStatus'
 import { useOrderApi } from '~~/layers/commerce/app/services/order.api'
 import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { extractErrorMessage } from '~~/layers/core/app/utils/errors'
@@ -398,18 +449,19 @@ const confirming = ref(false)
 const received = ref(false)
 
 const confirmReceipt = async () => {
-  if (
-    !confirm(
-      'Confirm you have received this order? This releases payment to the seller.',
-    )
-  )
-    return
+  if (!confirm(confirmReceiptPrompt(order.value?.isPickup))) return
   confirming.value = true
   try {
     await orderApi.confirmReceipt(orderId.value)
     received.value = true
+    const wasPickup = !!order.value?.isPickup
     if (order.value) order.value.status = 'DELIVERED'
-    notify({ type: 'success', text: 'Delivery confirmed. Thank you!' })
+    notify({
+      type: 'success',
+      text: wasPickup
+        ? 'Pickup confirmed. Thank you!'
+        : 'Delivery confirmed. Thank you!',
+    })
   } catch (e: any) {
     notify({ type: 'error', text: extractErrorMessage(e, 'Failed to confirm receipt') })
   } finally {
@@ -440,14 +492,12 @@ function onHelpCreated(id: string) {
   if (id) navigateTo(`/support/${id}`)
 }
 
-const ORDER_STEPS = ['Pending', 'Confirmed', 'Shipped', 'Delivered']
-const STEP_MAP: Record<string, number> = {
-  PENDING: 0,
-  CONFIRMED: 1,
-  SHIPPED: 2,
-  DELIVERED: 3,
-}
-const stepIndex = computed(() => STEP_MAP[order.value?.status] ?? 0)
+const isPickup = computed((): boolean => !!order.value?.isPickup)
+const steps = computed(() => orderSteps(isPickup.value))
+const stepIndex = computed(() => orderStepIndex(order.value?.status))
+const showConfirmReceipt = computed(
+  () => canConfirmReceipt(order.value?.status) && !received.value,
+)
 
 // ── Live carrier tracking ────────────────────────────────────────────────────
 const trackingEvents = ref<

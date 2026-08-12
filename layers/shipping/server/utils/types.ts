@@ -62,9 +62,13 @@ export interface SellerShippingConfig {
   /** Seller handles delivery themselves (offer self-shipping options). */
   selfEnabled: boolean
   /**
-   * Offer GIG Logistics as a carrier option at checkout. Defaults to ENABLED:
-   * only an explicit `false` removes GIG, so existing sellers (no flag set) keep
-   * getting GIG quotes. Read via gigOptedOut() so the default lives in one place.
+   * Offer GIG Logistics as a carrier option at checkout. Defaults to ENABLED at
+   * the SELLER level: only an explicit `false` removes GIG for that seller.
+   *
+   * Currently moot — GIG is paused platform-wide (isGigEnabled /
+   * NUXT_PUBLIC_GIG_ENABLED) until our carrier API access is live, and that gate
+   * wins regardless of what a seller has set here. This field is still read and
+   * written so each seller's preference survives the pause intact.
    */
   gigEnabled?: boolean
   /** Flat delivery fee in minor units (default when no zone match). */

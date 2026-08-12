@@ -1,6 +1,7 @@
 // layers/core/middleware/guest.ts
 
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
+import { resolvePostLoginPath } from '~~/layers/core/app/composables/useAuth'
 
 /**
  * Guest Middleware
@@ -22,8 +23,10 @@ export default defineNuxtRouteMiddleware((to) => {
   // already authenticated at this point, so don't bounce them back to home.
   if (to.path === '/user-register' && to.query.step === '2') return
 
-  // If already logged in, redirect away from auth pages
+  // If already logged in, redirect away from auth pages — to the return URL
+  // they were bounced here with, if any, so an expired-session round trip
+  // still lands on the page that was clicked.
   if (profileStore.isLoggedIn) {
-    return navigateTo('/')
+    return navigateTo(resolvePostLoginPath(to.query.redirect))
   }
 })

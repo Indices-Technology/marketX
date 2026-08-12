@@ -38,10 +38,11 @@ export default defineEventHandler(async (event) => {
   }
 
   const query = getQuery(event)
-  const redirectTo =
-    typeof query.redirectTo === 'string' && query.redirectTo.startsWith('/')
-      ? query.redirectTo
-      : '/'
+  // `startsWith('/')` alone is not enough: a protocol-relative `//evil.com`
+  // satisfies it and browsers resolve it as an absolute cross-origin URL, so
+  // the post-login redirect becomes an open redirect. Require a single leading
+  // slash, and reject backslashes (some parsers normalise `/\` to `//`).
+  const redirectTo = isSafeRedirectPath(query.redirectTo) ? query.redirectTo : '/'
 
   const clientIdByProvider: Record<OAuthProvider, string | undefined> = {
     google: process.env.OAUTH_GOOGLE_CLIENT_ID,

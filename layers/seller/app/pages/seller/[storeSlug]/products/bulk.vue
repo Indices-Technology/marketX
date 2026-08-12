@@ -54,7 +54,7 @@
       </p>
       <ul class="divide-y divide-gray-100 rounded-2xl border border-gray-100 dark:divide-neutral-800 dark:border-neutral-800">
         <li
-          v-for="s in socialSources"
+          v-for="s in comingSoonSources"
           :key="s.id"
           class="flex items-center justify-between px-4 py-3"
         >
@@ -66,8 +66,110 @@
             Coming soon
           </span>
         </li>
+        <li>
+          <button
+            type="button"
+            class="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-neutral-800/60"
+            :disabled="connecting"
+            @click="onFacebookClick"
+          >
+            <span class="flex items-center gap-2.5 text-sm font-medium text-gray-700 dark:text-neutral-300">
+              <Icon name="mdi:facebook" size="18" />
+              Facebook
+            </span>
+            <span
+              class="flex items-center gap-1 text-xs font-semibold"
+              :class="fbConnection ? 'text-mint' : 'text-brand'"
+            >
+              {{ fbConnection ? 'Import from your posts' : 'Connect' }}
+              <Icon name="solar:alt-arrow-right-linear" size="14" />
+            </span>
+          </button>
+        </li>
       </ul>
     </div>
+
+    <!-- Facebook Page picker — only when the seller administers more than one Page -->
+    <BaseModal
+      v-if="showPagePicker"
+      :model-value="true"
+      title="Choose a Facebook Page"
+      @update:model-value="(v) => !v && (showPagePicker = false)"
+    >
+      <p class="mb-4 text-sm text-gray-500 dark:text-neutral-400">
+        You manage more than one Page — pick the one to import from.
+      </p>
+      <div class="space-y-2">
+        <button
+          v-for="page in facebookPageCandidates"
+          :key="page.pageId"
+          type="button"
+          class="flex w-full items-center justify-between rounded-xl border border-gray-100 p-3 text-left transition hover:border-brand dark:border-neutral-800"
+          :disabled="selectingPage"
+          @click="onSelectPage(page.pageId)"
+        >
+          <div class="min-w-0">
+            <p class="font-semibold text-gray-900 dark:text-neutral-100">
+              {{ page.displayName || page.pageId }}
+            </p>
+            <p v-if="page.category" class="truncate text-xs text-gray-400 dark:text-neutral-500">
+              {{ page.category }}
+            </p>
+          </div>
+          <Icon name="solar:alt-arrow-right-linear" size="18" class="shrink-0 text-gray-400" />
+        </button>
+      </div>
+    </BaseModal>
+
+    <!-- Facebook post picker -->
+    <BaseModal
+      v-if="showFbPostPicker"
+      :model-value="true"
+      title="Import from Facebook"
+      @update:model-value="(v) => !v && (showFbPostPicker = false)"
+    >
+      <div v-if="fbPosts.loading.value" class="flex justify-center py-10">
+        <Icon name="svg-spinners:ring-resize" size="24" class="text-gray-400" />
+      </div>
+      <p v-else-if="fbPosts.error.value" class="py-6 text-center text-sm text-brand">
+        {{ fbPosts.error.value }}
+      </p>
+      <p
+        v-else-if="fbPosts.posts.value.length === 0"
+        class="py-6 text-center text-sm text-gray-400 dark:text-neutral-500"
+      >
+        No photo posts found on your Page yet.
+      </p>
+      <ul v-else class="space-y-2">
+        <li
+          v-for="post in fbPosts.posts.value"
+          :key="post.id"
+          class="flex items-center gap-3 rounded-xl border border-gray-100 p-2.5 dark:border-neutral-800"
+        >
+          <div class="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-neutral-800">
+            <img :src="post.images[0]" alt="" class="h-full w-full object-cover" />
+            <span
+              v-if="post.images.length > 1"
+              class="absolute bottom-0 right-0 rounded-tl-md bg-black/70 px-1 text-[10px] font-semibold text-white"
+            >
+              {{ post.images.length }}
+            </span>
+          </div>
+          <p class="min-w-0 flex-1 truncate text-sm text-gray-700 dark:text-neutral-300">
+            {{ post.message || 'No caption' }}
+          </p>
+          <BaseButton
+            variant="secondary"
+            size="sm"
+            :disabled="addedFbPostIds.has(post.id)"
+            @click="onImportFbPost(post)"
+          >
+            <Icon v-if="addedFbPostIds.has(post.id)" name="solar:check-circle-bold" size="16" />
+            <template v-else>Add</template>
+          </BaseButton>
+        </li>
+      </ul>
+    </BaseModal>
 
     <!-- ── Review grid ───────────────────────────────────────────────────────── -->
     <div v-if="rows.length" class="mt-8">
@@ -280,11 +382,15 @@
 <script setup lang="ts">
 import { notify } from '@kyvg/vue3-notification'
 import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
+import BaseModal from '~~/layers/ui/app/components/BaseModal.vue'
 import {
   useBulkImport,
   rowIssue,
   type StagedRow,
 } from '~~/layers/seller/app/composables/useBulkImport'
+import { useConnections } from '~~/layers/growth/app/composables/useConnections'
+import { useFacebookImport } from '~~/layers/growth/app/composables/useFacebookImport'
+import type { FacebookImportPost } from '~~/layers/growth/app/services/facebookImport.api'
 
 definePageMeta({ middleware: 'auth', layout: 'store-layout' })
 
@@ -300,6 +406,7 @@ const {
   canCommit,
   aiGeneratingCount,
   addFiles,
+  addFromFacebookPost,
   removeRow,
   combineRows,
   updateRow,
@@ -323,11 +430,85 @@ function toggleDesc(id: string) {
 const fileInput = ref<HTMLInputElement | null>(null)
 const selected = ref<Set<string>>(new Set())
 
-const socialSources = [
+const comingSoonSources = [
   { id: 'ig', name: 'Instagram', icon: 'mdi:instagram' },
   { id: 'tt', name: 'TikTok', icon: 'ic:baseline-tiktok' },
-  { id: 'fb', name: 'Facebook', icon: 'mdi:facebook' },
 ]
+
+// ── Facebook: connect + import from Page posts ─────────────────────────────
+const {
+  connections,
+  connecting,
+  facebookPageCandidates,
+  refresh: refreshConnections,
+  forPlatform,
+  connectFacebook,
+  loadFacebookPageCandidates,
+  selectFacebookPage,
+} = useConnections()
+const fbConnection = computed(() => {
+  void connections // stay reactive to the connections list
+  return forPlatform('META_FB')
+})
+
+const showPagePicker = ref(false)
+const selectingPage = ref(false)
+const showFbPostPicker = ref(false)
+const addedFbPostIds = ref<Set<string>>(new Set())
+const fbPosts = useFacebookImport()
+
+function onFacebookClick() {
+  if (fbConnection.value) {
+    showFbPostPicker.value = true
+    fbPosts.load()
+  } else {
+    connectFacebook(route.path)
+  }
+}
+
+async function onSelectPage(pageId: string) {
+  selectingPage.value = true
+  try {
+    await selectFacebookPage(pageId)
+    showPagePicker.value = false
+    showFbPostPicker.value = true
+    fbPosts.load()
+  } catch {
+    notify({ type: 'error', text: "Couldn't connect that Page. Try again." })
+  } finally {
+    selectingPage.value = false
+  }
+}
+
+function onImportFbPost(post: FacebookImportPost) {
+  addedFbPostIds.value = new Set(addedFbPostIds.value).add(post.id)
+  addFromFacebookPost(post)
+}
+
+onMounted(async () => {
+  if (route.query.facebook === 'connected') {
+    notify({ type: 'success', text: 'Facebook connected' })
+  } else if (route.query.facebook === 'error') {
+    notify({
+      type: 'error',
+      text: `Couldn't connect Facebook${route.query.reason ? `: ${route.query.reason}` : ''}`,
+    })
+  } else if (route.query.facebook === 'choose') {
+    try {
+      await loadFacebookPageCandidates()
+      showPagePicker.value = true
+    } catch {
+      notify({
+        type: 'error',
+        text: "Couldn't load your Facebook Pages. Try connecting again.",
+      })
+    }
+  }
+  if (route.query.facebook) {
+    router.replace(`/seller/${storeSlug.value}/products/bulk`)
+  }
+  await refreshConnections()
+})
 
 function pickFiles() {
   fileInput.value?.click()

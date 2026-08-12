@@ -219,7 +219,8 @@
                 v-if="product.affiliateCommission"
                 class="absolute bottom-2 left-2 rounded-full bg-brand/90 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm"
               >
-                {{ product.affiliateCommission }}% affiliate
+                <!-- Flat ₦ per unit, not a percentage — see docs/AFFILIATE.md §2 -->
+                {{ formatPrice(product.affiliateCommission) }} per sale
               </div>
             </div>
             <!-- Info -->
@@ -283,7 +284,7 @@ const {
   isLoading: postsLoading,
   normalizePost,
 } = usePost()
-const { formatKobo } = useCurrency()
+const { formatKobo, formatPrice } = useCurrency()
 
 const activeView = ref<'posts' | 'products'>('posts')
 const views = [

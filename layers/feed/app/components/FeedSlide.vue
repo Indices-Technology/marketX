@@ -32,6 +32,7 @@
           v-if="m.type === 'VIDEO'"
           :ref="(el) => setVideoRef(el, i)"
           :src="m.url"
+          :preload="videoPreload(i)"
           class="h-full w-full object-cover"
           loop
           playsinline
@@ -226,7 +227,9 @@
             class="text-emerald-400"
           />
         </div>
-        <span class="text-shadow text-[12px] font-bold text-white">Trust</span>
+        <span class="text-shadow text-[12px] font-bold text-white">{{
+          trustLabel
+        }}</span>
       </button>
     </div>
 
@@ -296,6 +299,10 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import type { IFeedItem } from '~~/layers/feed/app/types/feed.types'
 import TrustCardOverlay from '~~/layers/feed/app/components/TrustCardOverlay.vue'
+import {
+  useSellerTier,
+  TIER_LABELS,
+} from '~~/layers/reputation/app/composables/useSellerTier'
 import { usePost } from '~~/layers/social/app/composables/usePost'
 import { usePostStore } from '~~/layers/social/app/store/post.store'
 import { useProduct } from '~~/layers/commerce/app/composables/useProduct'
@@ -304,7 +311,12 @@ import { avatarSrc } from '~~/layers/core/app/utils/cloudinary'
 import { useCurrency } from '~~/layers/core/app/composables/useCurrency'
 import { useShareModal } from '~~/layers/social/app/composables/useShareModal'
 
-const props = defineProps<{ item: IFeedItem; isActive: boolean }>()
+const props = defineProps<{
+  item: IFeedItem
+  isActive: boolean
+  /** Slides away from the active one. Drives how much video is prefetched. */
+  distance?: number
+}>()
 defineEmits<{
   'open-comments': [item: IFeedItem]
 }>()
@@ -397,6 +409,23 @@ const syncVideoPlayback = () => {
 watch([() => props.isActive, carouselIndex], syncVideoPlayback)
 onMounted(syncVideoPlayback)
 
+// Without an explicit preload, a <video> with a src defaults to "metadata" in
+// every major browser: each mounted slide opened a connection and pulled the
+// file header regardless of where it sat in the feed. A slide can hold a whole
+// carousel of media, so that multiplied per item, not just per slide.
+//
+// Only the media actually on screen in the active slide buffers. The carousel
+// item either side of it keeps metadata so a sideways swipe doesn't stall, as
+// does the slide immediately above/below. Everything else loads nothing until
+// it comes near — play() ignores this attribute, so activation still works.
+const distance = computed(() => props.distance ?? (props.isActive ? 0 : 2))
+const videoPreload = (i: number) => {
+  if (distance.value > 1) return 'none'
+  if (distance.value === 1) return 'metadata'
+  if (i === carouselIndex.value) return 'auto'
+  return Math.abs(i - carouselIndex.value) === 1 ? 'metadata' : 'none'
+}
+
 // ── Trust Card ───────────────────────────────────────────────────────
 const trustCardOpen = ref(false)
 // Real slug only — author.storeSlug (seller-authored posts + products), or
@@ -408,6 +437,23 @@ const storeSlug = computed(
     props.item.product?.seller?.store_slug ||
     null,
 )
+
+// The rail label states the seller's EARNED rank rather than the generic word
+// "Trust" — a tier is a claim the ledger can back.
+//
+// The tier normally arrives ON the feed item (denormalised onto SellerProfile,
+// so it rides a row the query already joins and costs nothing). The batched
+// lookup is only for payloads that predate that field — a cached feed page, or
+// a caller that builds items from a slimmer select. Reading `author.tier`
+// first means the common path fires no request at all.
+const { tierLabelFor } = useSellerTier()
+const trustLabel = computed(() => {
+  const fromPayload = props.item.author?.tier
+  if (fromPayload) return TIER_LABELS[fromPayload]
+  // Falls back to "Trust" while the lookup is in flight and for sellers with
+  // no tier yet, so the button never implies a rank that hasn't been earned.
+  return tierLabelFor(storeSlug.value) ?? 'Trust'
+})
 
 // ── Author ───────────────────────────────────────────────────────────
 const authorLink = computed(() =>

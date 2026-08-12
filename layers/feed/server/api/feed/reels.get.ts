@@ -37,6 +37,9 @@ export default defineEventHandler(async (event) => {
               store_name: true,
               store_slug: true,
               store_logo: true,
+              // Denormalised — lets the slide's trust affordance name the
+              // seller's earned tier with no extra request.
+              trustTier: true,
               watermark_enabled: true,
               watermark_text: true,
             },

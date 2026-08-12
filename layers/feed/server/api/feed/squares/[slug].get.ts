@@ -28,7 +28,13 @@ const PRODUCT_SELECT = {
     take: 2,
   },
   seller: {
-    select: { id: true, store_name: true, store_slug: true, store_logo: true },
+    select: {
+      id: true,
+      store_name: true,
+      store_slug: true,
+      store_logo: true,
+      trustTier: true,
+    },
   },
   variants: {
     select: { id: true, size: true, stock: true, price: true },

@@ -9,6 +9,20 @@ interface OAuthUserProfile {
 }
 
 /**
+ * Is this a safe same-origin path to redirect a user to after sign-in?
+ *
+ * The obvious check — `startsWith('/')` — is not sufficient. `//evil.com` and
+ * `/\evil.com` both pass it, and browsers resolve them as *absolute*
+ * cross-origin URLs, turning the post-login hop into an open redirect that
+ * inherits the trust of the auth flow. Require exactly one leading slash.
+ */
+export const isSafeRedirectPath = (value: unknown): value is string => {
+  if (typeof value !== 'string' || !value.startsWith('/')) return false
+  // Second character must not start a new authority component.
+  return value[1] !== '/' && value[1] !== '\\'
+}
+
+/**
  * Resolve the app origin (`scheme://host`) that OAuth redirect URIs are built
  * from.
  *
