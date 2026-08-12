@@ -201,7 +201,7 @@
     "products": "Produkte",
     "unitsSold": "Verkaufte Einheiten",
     "commissionOut": "Ausgezahlte Provision",
-    "commission": "{rate}% Provision",
+    "commission": "{amount} pro Verkauf",
     "promoters": "Verkäufer, die meine Produkte bewerben",
     "promotersHint": "Affiliates, die Käufer zu deinem Shop empfohlen haben",
     "noPromoters": "Noch keine Affiliate-Verkäufer",

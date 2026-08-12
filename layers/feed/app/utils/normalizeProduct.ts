@@ -69,6 +69,9 @@ export const normalizeProductToFeedItem = (
       avatar: product.seller?.store_logo || undefined,
       role: 'seller',
       storeSlug: product.seller?.store_slug ?? product.store_slug ?? null,
+      tier:
+        ((product.seller as { trustTier?: string | null } | undefined)
+          ?.trustTier as IFeedItem['author']['tier']) ?? null,
     },
     media: primaryMedia
       ? {

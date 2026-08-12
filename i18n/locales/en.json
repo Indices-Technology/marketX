@@ -202,7 +202,7 @@
     "products": "Products",
     "unitsSold": "Units Sold",
     "commissionOut": "Commission Out",
-    "commission": "{rate}% commission",
+    "commission": "{amount} per sale",
     "promoters": "Sellers Promoting My Products",
     "promotersHint": "Affiliates who have referred buyers to your store",
     "noPromoters": "No affiliate sellers yet",

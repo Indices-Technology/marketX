@@ -1,7 +1,9 @@
 /**
  * Global navigation tests — desktop SideNav + mobile BottomNavMobile
  *
- * Desktop (1440×900): fixed left sidebar with Home, Discover, Reels, Near Me, Squares.
+ * Desktop (1440×900): fixed left sidebar with Home, Discover, Reels, Squares.
+ *   Near Me moved OUT of the rail and into the ☰ More popup (see MoreMenu.vue) —
+ *   the rail holds primary destinations only, More holds app-level secondary ones.
  *   1440px puts us safely above the xl: breakpoint (1280px + ~17px scrollbar = ~1297px).
  * Mobile (390×844):   fixed bottom bar with Home, Near Me, Create, Squares, Profile.
  *
@@ -53,8 +55,10 @@ test.describe('desktop SideNav — guest', () => {
     await expect(sideNav(page).locator('a[href="/reels"]')).toBeVisible(T)
   })
 
-  test('Near Me nav link is present', async ({ page }) => {
-    await expect(sideNav(page).locator('a[href="/map"]')).toBeVisible(T)
+  test('More button is present for guests', async ({ page }) => {
+    await expect(
+      sideNav(page).locator('button[aria-label="More"]'),
+    ).toBeVisible(T)
   })
 
   test('Squares nav link is present', async ({ page }) => {
@@ -84,6 +88,39 @@ test.describe('desktop SideNav — guest', () => {
     await expect(sideNav(page).locator('a[href="/user-register"]')).toBeVisible(
       T,
     )
+  })
+})
+
+// ── DESKTOP ☰ MORE MENU ───────────────────────────────────────────────────────
+// Driven from /discover, not /. The home route renders SplashScreen as its
+// ClientOnly fallback — a `fixed inset-0 z-[100]` overlay that swallows every
+// click until hydration completes, which is also why the three pre-existing
+// "link navigates to X" tests above fail. /discover hydrates normally, and the
+// rail under test is identical on both routes.
+test.describe('desktop SideNav — More menu (guest)', () => {
+  test.use({ viewport: { width: 1440, height: 900 } })
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/discover', { waitUntil: 'networkidle' })
+  })
+
+  test('Near Me is reachable from the More menu', async ({ page }) => {
+    // Near Me lives in ☰ More now, not the rail. It must still be reachable by a
+    // GUEST — that is the whole reason More renders for logged-out visitors.
+    await expect(sideNav(page).locator('a[href="/map"]')).toHaveCount(0)
+    await sideNav(page).locator('button[aria-label="More"]').click()
+    await expect(sideNav(page).locator('a[href="/map"]')).toBeVisible(T)
+  })
+
+  test('Help is reachable from the More menu', async ({ page }) => {
+    await sideNav(page).locator('button[aria-label="More"]').click()
+    await expect(sideNav(page).locator('a[href="/help"]')).toBeVisible(T)
+  })
+
+  test('More menu navigates to /map', async ({ page }) => {
+    await sideNav(page).locator('button[aria-label="More"]').click()
+    await sideNav(page).locator('a[href="/map"]').click()
+    await expect(page).toHaveURL('/map', T)
   })
 })
 

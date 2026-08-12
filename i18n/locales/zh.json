@@ -201,7 +201,7 @@
     "products": "商品",
     "unitsSold": "已售件数",
     "commissionOut": "已付佣金",
-    "commission": "{rate}% 佣金",
+    "commission": "每笔销售 {amount}",
     "promoters": "推广我的商品的卖家",
     "promotersHint": "曾向您店铺推荐买家的推广者",
     "noPromoters": "暂无推广卖家",

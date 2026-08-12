@@ -1,13 +1,13 @@
 // GET /api/commerce/affiliate — affiliate status and earnings stats
 import { UserError } from '~~/layers/profile/server/types/user.types'
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
-import { affiliateService } from '../../../services/affiliate.service'
+import { affiliateService, affiliateStatsKey } from '../../../services/affiliate.service'
 import { remember } from '~~/server/utils/cache'
 
 export default defineEventHandler(async (event) => {
   try {
     const user = await requireAuth(event)
-    const data = await remember(`affiliate:stats:${user.id}`, 60, () =>
+    const data = await remember(affiliateStatsKey(user.id), 60, () =>
       affiliateService.getStats(user.id),
     )
     return { success: true, data }

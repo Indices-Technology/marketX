@@ -194,7 +194,13 @@
                 title="Store card"
                 @click="showCard = true"
               >
-                <Icon name="solar:card-linear" size="16" />
+                <!-- Same green shield the feed rail uses for this seller's
+                     Trust Card, so one mark means one thing across surfaces. -->
+                <Icon
+                  name="solar:shield-check-bold"
+                  size="16"
+                  class="text-emerald-500"
+                />
                 Trust Card
               </button>
               <button
@@ -447,7 +453,11 @@
               title="Store card"
               @click="showCard = true"
             >
-              <Icon name="solar:card-linear" size="18" />
+              <Icon
+                name="solar:shield-check-bold"
+                size="18"
+                class="text-emerald-500"
+              />
             </button>
             <button
               class="rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-600 transition-colors hover:bg-gray-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"

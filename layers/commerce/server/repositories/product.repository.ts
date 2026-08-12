@@ -10,6 +10,9 @@ const productFeedInclude = {
       store_logo: true,
       store_name: true,
       default_currency: true,
+      // Denormalised trust tier — free on a row already joined, and it saves
+      // the feed a per-slide tier lookup.
+      trustTier: true,
     },
   },
   media: {

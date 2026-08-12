@@ -184,6 +184,13 @@ model SellerProfile {
   // ── Rating (denormalised — updated on every review write) ────────────────
   averageRating         Float?
   totalReviews          Int                    @default(0)
+  // ── Trust tier (denormalised — mirrors the current ReputationProfile) ────
+  /// "TIER_1" | "TIER_2" | "TIER_3", or null below the min-evidence threshold.
+  /// Written by the reputation engine whenever it persists a snapshot, so any
+  /// surface that already loads a seller row (feed, tiles, map, search) can
+  /// label the tier without a second query. Display only — the engine never
+  /// reads this back, it recomputes from the signal ledger.
+  trustTier             String?
 
   @@unique([profileId, store_slug])
   @@index([profileId])

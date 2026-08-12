@@ -6,6 +6,7 @@
     <video
       ref="videoEl"
       :src="videoUrl"
+      :preload="videoPreload"
       class="h-full w-full object-cover"
       loop
       playsinline
@@ -232,7 +233,9 @@
             class="text-emerald-400 transition-transform group-active:scale-75"
           />
         </div>
-        <span class="text-shadow text-[12px] font-bold text-white">Trust</span>
+        <span class="text-shadow text-[12px] font-bold text-white">{{
+          trustLabel
+        }}</span>
       </button>
 
       <!-- Mute Toggle — hidden when bg music owns the audio -->
@@ -330,6 +333,10 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useState } from '#imports'
 import type { IFeedItem } from '~~/layers/feed/app/types/feed.types'
 import TrustCardOverlay from '~~/layers/feed/app/components/TrustCardOverlay.vue'
+import {
+  useSellerTier,
+  TIER_LABELS,
+} from '~~/layers/reputation/app/composables/useSellerTier'
 import { useProduct } from '~~/layers/commerce/app/composables/useProduct'
 import { useLikedProducts } from '~~/layers/commerce/app/composables/useLikedProducts'
 import { useViewTracker } from '~~/layers/core/app/composables/useViewTracker'
@@ -344,7 +351,20 @@ const props = defineProps<{
   reel: IFeedItem
   isActive: boolean
   index: number
+  /** Slides away from the active one. Drives how much video is prefetched. */
+  distance?: number
 }>()
+
+// A <video> with a src and no preload attribute defaults to "metadata" in every
+// major browser — so each mounted slide opened a connection and pulled the file
+// header whether or not it was anywhere near the viewport. Only the active reel
+// earns real buffering; its immediate neighbour keeps metadata so swiping to it
+// doesn't stall; anything further costs nothing until it comes close.
+// play() loads regardless of this attribute, so activation is never blocked.
+const distance = computed(() => props.distance ?? (props.isActive ? 0 : 2))
+const videoPreload = computed(() =>
+  distance.value === 0 ? 'auto' : distance.value === 1 ? 'metadata' : 'none',
+)
 
 const emit = defineEmits<{
   'open-comments': [reel: IFeedItem]
@@ -434,6 +454,17 @@ const storeSlug = computed(
     props.reel.product?.seller?.store_slug ||
     null,
 )
+
+// Earned rank instead of the generic word "Trust" — see FeedSlide. The tier
+// rides on the feed payload (denormalised, no extra query); the batched lookup
+// only covers payloads that predate the field. "Trust" is the fallback while
+// that resolves and for sellers with no earned tier.
+const { tierLabelFor } = useSellerTier()
+const trustLabel = computed(() => {
+  const fromPayload = props.reel.author?.tier
+  if (fromPayload) return TIER_LABELS[fromPayload]
+  return tierLabelFor(storeSlug.value) ?? 'Trust'
+})
 
 const authorAvatar = computed(() => {
   const raw =

@@ -65,6 +65,7 @@ export default defineEventHandler(async (event) => {
             store_slug: true,
             store_logo: true,
             store_banner: true,
+            trustTier: true,
             is_verified: true,
             averageRating: true,
             totalReviews: true,

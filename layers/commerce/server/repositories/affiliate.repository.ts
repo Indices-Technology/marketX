@@ -2,7 +2,7 @@ export const affiliateRepository = {
   async getProfile(userId: string) {
     return prisma.profile.findUnique({
       where: { id: userId },
-      select: { id: true, username: true, affiliateCode: true },
+      select: { id: true, username: true, email: true, affiliateCode: true },
     })
   },
 

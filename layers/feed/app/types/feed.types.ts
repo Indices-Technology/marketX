@@ -21,6 +21,10 @@ export interface IFeedItem {
     // Seller-authored content only (null otherwise). The real store slug —
     // never derive this from `username`, which is a separate field.
     storeSlug?: string | null
+    // Earned trust tier, denormalised onto SellerProfile by the reputation
+    // engine. Null for regular users and for sellers below the min-evidence
+    // threshold — surfaces must fall back rather than imply an unearned rank.
+    tier?: 'TIER_1' | 'TIER_2' | 'TIER_3' | null
   }
 
   // Media (primary display — first non-music item, kept for backward compat)

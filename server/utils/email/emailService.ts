@@ -310,6 +310,84 @@ p{font-size:15px;color:#333;line-height:1.6;margin:0 0 12px}
   return { subject, html, text: `Funds Released\n\n${detail}` }
 }
 
+/**
+ * Affiliate commission credited (order delivered). The affiliate counterpart to
+ * `buildFundsReleasedEmail` — sellers already get that on the same release, and
+ * an affiliate with no verified phone has no other off-platform signal at all.
+ */
+export function buildAffiliateCommissionEmail(
+  orderId: number,
+  amountKobo: number,
+  opts: { isSellerWallet?: boolean; walletUrl?: string; appName?: string } = {},
+): { subject: string; html: string; text: string } {
+  const appName = opts.appName ?? 'MarketX'
+  const amount = `₦${(amountKobo / 100).toLocaleString('en-NG')}`
+  const subject = `🎉 You earned ${amount} — Order #${orderId} delivered`
+  const walletName = opts.isSellerWallet ? 'seller wallet' : 'wallet'
+  const detail = `Order #${orderId}, placed through your affiliate link, has been delivered. Your ${amount} commission has been credited to your ${walletName} and is now available.`
+  const cta = opts.walletUrl
+    ? `<p style="text-align:center;margin:24px 0 8px"><a href="${opts.walletUrl}" style="display:inline-block;background:#e31837;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:700;font-size:15px">View your wallet</a></p>`
+    : ''
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+body{font-family:Arial,sans-serif;background:#f4f4f4;margin:0;padding:0}
+.wrap{max-width:480px;margin:40px auto;background:#fff;border-radius:12px;overflow:hidden}
+.hd{background:#e31837;padding:28px 32px;text-align:center}
+.hd h1{color:#fff;margin:0;font-size:20px}
+.bd{padding:32px}
+.badge{display:inline-block;font-size:13px;background:#dcfce7;color:#166534;padding:4px 10px;border-radius:20px;margin-bottom:16px}
+.amt{font-size:28px;font-weight:800;color:#16a34a;margin:12px 0}
+p{font-size:15px;color:#333;line-height:1.6;margin:0 0 12px}
+.ft{text-align:center;padding:16px;font-size:12px;color:#aaa}
+</style></head><body>
+<div class="wrap"><div class="hd"><h1>${appName}</h1></div>
+<div class="bd"><span class="badge">🎉 Commission Earned</span>
+<div class="amt">${amount}</div>
+<p>${detail}</p>${cta}
+<p style="color:#888;font-size:13px">Keep sharing your links — you earn on every delivered order.</p>
+</div><div class="ft">&copy; ${new Date().getFullYear()} ${appName}. All rights reserved.</div></div>
+</body></html>`
+  return { subject, html, text: `Commission Earned\n\n${detail}` }
+}
+
+/**
+ * Affiliate enrollment confirmation. Carries the referral link in the body so it
+ * is reachable without hunting for the dashboard tab.
+ */
+export function buildAffiliateWelcomeEmail(
+  affiliateLink: string,
+  opts: { dashboardUrl?: string; appName?: string } = {},
+): { subject: string; html: string; text: string } {
+  const appName = opts.appName ?? 'MarketX'
+  const subject = `You're now a ${appName} affiliate`
+  const detail = `Your affiliate link is ready. Share it anywhere — when someone buys through it, you earn the seller's commission on every delivered order.`
+  const cta = opts.dashboardUrl
+    ? `<p style="text-align:center;margin:20px 0 8px"><a href="${opts.dashboardUrl}" style="display:inline-block;background:#e31837;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:700;font-size:15px">Open your dashboard</a></p>`
+    : ''
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+body{font-family:Arial,sans-serif;background:#f4f4f4;margin:0;padding:0}
+.wrap{max-width:480px;margin:40px auto;background:#fff;border-radius:12px;overflow:hidden}
+.hd{background:#e31837;padding:28px 32px;text-align:center}
+.hd h1{color:#fff;margin:0;font-size:20px}
+.bd{padding:32px}
+.badge{display:inline-block;font-size:13px;background:#fee2e2;color:#991b1b;padding:4px 10px;border-radius:20px;margin-bottom:16px}
+.link{display:block;background:#f4f4f4;border:1px solid #e5e5e5;border-radius:8px;padding:12px;font-family:monospace;font-size:13px;color:#111;word-break:break-all;margin:12px 0}
+p{font-size:15px;color:#333;line-height:1.6;margin:0 0 12px}
+.ft{text-align:center;padding:16px;font-size:12px;color:#aaa}
+</style></head><body>
+<div class="wrap"><div class="hd"><h1>${appName}</h1></div>
+<div class="bd"><span class="badge">Affiliate Programme</span>
+<p>${detail}</p>
+<span class="link">${affiliateLink}</span>${cta}
+<p style="color:#888;font-size:13px">Commissions are set per product by each seller and are paid once the buyer's order is delivered.</p>
+</div><div class="ft">&copy; ${new Date().getFullYear()} ${appName}. All rights reserved.</div></div>
+</body></html>`
+  return {
+    subject,
+    html,
+    text: `${detail}\n\nYour link: ${affiliateLink}`,
+  }
+}
+
 export function buildSellerVerificationEmail(
   storeName: string,
   status: 'VERIFIED' | 'REJECTED',
@@ -670,6 +748,38 @@ p{font-size:15px;color:#333;line-height:1.6;margin:0}
 <div class="ft">&copy; ${new Date().getFullYear()} ${appName}. All rights reserved.</div></div>
 </body></html>`
   return { subject, html, text: `New message from ${senderName}\n\n${detail}` }
+}
+
+export function buildShoutoutReceivedEmail(
+  actorUsername: string,
+  message: string,
+  wallUrl?: string,
+  appName = 'MarketX',
+): { subject: string; html: string; text: string } {
+  const subject = `📣 ${actorUsername} left a shoutout on your wall`
+  const button = wallUrl
+    ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:16px 0 0"><tr><td style="border-radius:8px;background:#e31837"><a href="${wallUrl}" style="display:inline-block;padding:10px 24px;font-size:14px;font-weight:600;color:#fff;text-decoration:none;border-radius:8px">View wall →</a></td></tr></table>`
+    : ''
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+body{font-family:Arial,sans-serif;background:#f4f4f4;margin:0;padding:0}
+.wrap{max-width:480px;margin:40px auto;background:#fff;border-radius:12px;overflow:hidden}
+.hd{background:#e31837;padding:28px 32px;text-align:center}
+.hd h1{color:#fff;margin:0;font-size:20px}
+.bd{padding:32px}
+.quote{border-left:3px solid #e31837;padding:4px 0 4px 14px;color:#333;font-size:15px;line-height:1.6;margin:0}
+.ft{text-align:center;padding:16px;font-size:12px;color:#aaa}
+</style></head><body>
+<div class="wrap"><div class="hd"><h1>${appName}</h1></div>
+<div class="bd"><p style="font-size:15px;color:#333;margin:0 0 12px"><strong>${actorUsername}</strong> left a shoutout on your wall:</p>
+<div class="quote">${message.replace(/\n/g, '<br>')}</div>
+${button}
+</div><div class="ft">&copy; ${new Date().getFullYear()} ${appName}. All rights reserved.</div></div>
+</body></html>`
+  return {
+    subject,
+    html,
+    text: `${actorUsername} left a shoutout on your wall:\n\n${message}${wallUrl ? `\n\n${wallUrl}` : ''}`,
+  }
 }
 
 export function buildContentModerationEmail(

@@ -201,7 +201,7 @@
     "products": "Productos",
     "unitsSold": "Unidades Vendidas",
     "commissionOut": "Comisión Pagada",
-    "commission": "{rate}% de comisión",
+    "commission": "{amount} por venta",
     "promoters": "Vendedores que Promocionan mis Productos",
     "promotersHint": "Afiliados que han referido compradores a tu tienda",
     "noPromoters": "Aún no hay vendedores afiliados",

@@ -3,6 +3,8 @@
 
 import { requireAuth } from '~~/server/layers/shared/middleware/requireAuth'
 import { notificationQueue } from '~~/server/queues/notification.queue'
+import { emailQueue } from '~~/server/queues/email.queue'
+import { buildShoutoutReceivedEmail } from '~~/server/utils/email/emailService'
 import { z } from 'zod'
 
 const shoutoutSchema = z.object({
@@ -72,7 +74,9 @@ export default defineEventHandler(async (event) => {
       },
     })
 
-    // Notify the wall owner
+    // Notify the wall owner — in-app (SSE) + WhatsApp are handled by the
+    // notification service itself; email is sent here since it needs the
+    // wall URL, which the notification service has no concept of.
     if (ownerProfileId !== user.id) {
       notificationQueue.enqueue({
         userId: ownerProfileId,
@@ -81,6 +85,27 @@ export default defineEventHandler(async (event) => {
         message: `left a shoutout on your wall`,
         postId: shoutout.id,
       })
+
+      prisma.profile
+        .findUnique({ where: { id: ownerProfileId }, select: { email: true } })
+        .then((owner) => {
+          if (
+            !owner?.email ||
+            owner.email.includes('@checkout.marketx.') ||
+            owner.email.includes('@phone.marketx.')
+          )
+            return
+          const wallUrl = `${useRuntimeConfig().public.baseURL}${
+            type === 'STORE' ? `/sellers/profile/${slug}` : `/profile/${slug}`
+          }`
+          const { subject, html, text } = buildShoutoutReceivedEmail(
+            shoutout.author.username ?? 'Someone',
+            parsed.data.body,
+            wallUrl,
+          )
+          emailQueue.enqueue({ to: owner.email, subject, html, text, type: 'GENERAL' })
+        })
+        .catch(() => {})
     }
 
     return { data: { ...shoutout, type: 'SHOUTOUT', viewerLiked: false } }

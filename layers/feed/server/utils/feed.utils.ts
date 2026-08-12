@@ -20,6 +20,7 @@ export const normalizePost = (post: IPost): IFeedItem => {
           sellerProfile?: Array<{
             store_logo?: string | null
             store_slug?: string | null
+            trustTier?: string | null
           }>
         }
       | undefined
@@ -38,6 +39,9 @@ export const normalizePost = (post: IPost): IFeedItem => {
       // Consumers must not fall back to `username` here — it's a different
       // field and often differs from the slug.
       storeSlug: sellerProfile?.store_slug ?? null,
+      // Denormalised on SellerProfile, so it costs no extra query. Null for
+      // regular users and for sellers below the min-evidence threshold.
+      tier: (sellerProfile?.trustTier as IFeedItem['author']['tier']) ?? null,
     },
     // Primary media (first content item, for legacy consumers)
     media: primaryMedia
@@ -97,6 +101,9 @@ export const normalizeProduct = (product: IProduct): IFeedItem => {
       avatar: product.seller?.store_logo || null || undefined,
       role: 'seller',
       storeSlug: product.seller?.store_slug ?? null,
+      tier:
+        ((product.seller as { trustTier?: string | null } | undefined)
+          ?.trustTier as IFeedItem['author']['tier']) ?? null,
     },
     media: primaryMedia
       ? {

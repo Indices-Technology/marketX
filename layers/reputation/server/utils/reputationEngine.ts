@@ -334,6 +334,14 @@ async function persistSnapshot(sellerId: string, c: ReputationComputed) {
           dimensions: c.dimensions as unknown as object,
         },
       }),
+      // Denormalised mirror on the seller row. Every surface that already loads
+      // a seller (feed, tiles, map, search) can then show the tier with no
+      // extra query. In the same transaction as the snapshot so the column and
+      // the snapshot it mirrors can never disagree.
+      prisma.sellerProfile.update({
+        where: { id: sellerId },
+        data: { trustTier: c.tier },
+      }),
     ])
   } catch {
     // No-op until the ReputationProfile table exists.

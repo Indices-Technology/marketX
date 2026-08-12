@@ -83,8 +83,18 @@ interface MenuEntry {
 }
 
 const items = computed<MenuEntry[]>(() => {
+  // Money-and-orders group. Affiliate/Wallet live here rather than in the ☰ More
+  // menu because this component is shared by the desktop rail AND the mobile bar
+  // — putting them in More would duplicate them on desktop while leaving mobile
+  // (which has no room for a ☰) with no route to them at all.
   const entries: MenuEntry[] = [
     { label: 'My Orders', to: '/buyer/orders', icon: 'solar:box-linear' },
+    {
+      label: 'Wallet',
+      to: `/profile/${username.value}?tab=wallet`,
+      icon: 'solar:wallet-linear',
+    },
+    { label: 'Affiliate', to: '/affiliate', icon: 'solar:money-bag-linear' },
   ]
 
   if (sellerStore.hasSellers) {

@@ -258,7 +258,9 @@
                   <p class="text-xs text-gray-400 dark:text-neutral-500">
                     {{ product.storeName }} ·
                     <span class="text-brand dark:text-brand/80">
-                      {{ $t('affiliate.commission', { rate: product.affiliateCommission }) }}
+                      <!-- affiliateCommission is a flat ₦ amount per unit, NOT a
+                           percentage — format it as currency. -->
+                      {{ $t('affiliate.commission', { amount: formatPrice(product.affiliateCommission ?? 0) }) }}
                     </span>
                   </p>
                 </div>

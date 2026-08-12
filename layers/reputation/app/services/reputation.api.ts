@@ -19,6 +19,15 @@ class ReputationApiClient extends BaseApiClient {
     })
   }
 
+  /** Tier for a batch of stores, keyed by slug (compact surfaces). */
+  async getTiers(slugs: string[]): Promise<unknown> {
+    return this.request('/api/reputation/tiers', {
+      method: 'GET',
+      params: { slugs: slugs.join(',') },
+      skipAuth: true,
+    })
+  }
+
   /**
    * Check a pasted identifier (MarketX link, Seller ID, phone, or @handle) →
    * one of: verified | unverified | unknown. Powers the Verify door. Guest-safe.

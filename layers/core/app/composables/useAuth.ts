@@ -24,12 +24,30 @@ import { extractErrorMessage } from '~~/layers/core/app/utils/errors'
 import type { IProfile } from '~~/layers/profile/app/types/profile.types'
 import type { IAuthUser } from '~~/shared/types/auth'
 
+/**
+ * Where to land after a successful sign-in.
+ *
+ * `auth.ts` middleware bounces protected routes to `/user-login?redirect=<path>`;
+ * until now nothing read that param back, so every sign-in landed on `/` and the
+ * deep link the user actually clicked was lost. Only same-origin *paths* are
+ * honoured — a `redirect` carrying a scheme or protocol-relative `//host` is an
+ * open-redirect vector, so those fall back to home.
+ */
+export const resolvePostLoginPath = (redirect: unknown): string => {
+  if (typeof redirect !== 'string' || !redirect) return '/'
+  if (!redirect.startsWith('/') || redirect.startsWith('//')) return '/'
+  // Never bounce back onto an auth screen — that loops the user.
+  if (/^\/(user-login|phone-login|user-register)\b/.test(redirect)) return '/'
+  return redirect
+}
+
 export const useAuth = () => {
   const authStore = useAuthStore()
   const profileStore = useProfileStore()
   const authApi = useAuthApi()
   const profileApi = useProfileApi()
   const router = useRouter()
+  const route = useRoute()
 
   // ==================== STATE ====================
   const accessToken = computed(() => authStore.accessToken)
@@ -160,9 +178,10 @@ export const useAuth = () => {
       authStore.setMessage('Logged in successfully!')
       notifyWelcome()
 
-      // Redirect to dashboard after 1 second
+      // Honour the return URL auth.ts stashed, else home.
+      const destination = resolvePostLoginPath(route.query.redirect)
       setTimeout(() => {
-        router.push('/')
+        router.push(destination)
       }, 1000)
 
       return result

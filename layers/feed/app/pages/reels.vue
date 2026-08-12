@@ -84,10 +84,18 @@
           class="reel-slide relative mx-auto flex h-[100dvh] w-full max-w-[560px] snap-start snap-always justify-center bg-black"
           :data-index="index"
         >
+          <!-- Only slides near the active one keep their component tree
+               mounted. The wrapper always renders, so it holds the height,
+               the snap point, and the data-index the observer reads — scroll
+               position and infinite scroll behave exactly as before. Without
+               this, `reels` grows by a page on every load and every reel ever
+               fetched stays mounted with a live <video>. -->
           <ReelItem
+            v-if="isNear(index)"
             :reel="reel"
             :is-active="index === activeIndex"
             :index="index"
+            :distance="Math.abs(index - activeIndex)"
             @open-comments="openComments"
           />
         </div>
@@ -151,6 +159,13 @@ const LIMIT = 10
 
 const reels = ref<IFeedItem[]>([])
 const activeIndex = ref(0)
+
+// How many slides either side of the active one stay mounted. Two is enough to
+// cover a fast flick in either direction while keeping the number of live
+// <video> elements constant no matter how far the user has scrolled.
+const RENDER_WINDOW = 2
+const isNear = (index: number) =>
+  Math.abs(index - activeIndex.value) <= RENDER_WINDOW
 const { selectedPost, reviewProduct, openComments } = useFeedComments()
 
 // DOM Refs

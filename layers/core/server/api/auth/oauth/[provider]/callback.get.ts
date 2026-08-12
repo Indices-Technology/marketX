@@ -71,7 +71,9 @@ export default defineEventHandler(async (event) => {
   const redirectPath = decodeURIComponent(
     getCookie(event, 'oauth_redirect') || '/',
   )
-  const safeRedirectPath = redirectPath.startsWith('/') ? redirectPath : '/'
+  // Re-validate after decoding — the cookie was written pre-encoding, and
+  // `%2F%2Fevil.com` only becomes `//evil.com` once decoded here.
+  const safeRedirectPath = isSafeRedirectPath(redirectPath) ? redirectPath : '/'
 
   deleteCookie(event, 'oauth_redirect', { path: '/' })
 

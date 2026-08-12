@@ -7,7 +7,7 @@
 # Test info
 
 - Name: tests\e2e\ui\navigation.spec.ts >> mobile BottomNav — guest >> guest sees "Start selling" CTA in bottom nav (goes to /user-register)
-- Location: tests\e2e\ui\navigation.spec.ts:150:3
+- Location: tests\e2e\ui\navigation.spec.ts:187:3
 
 # Error details
 
@@ -42,434 +42,483 @@ Call log:
             - /url: /user-login
     - generic [ref=e20]:
       - main [ref=e21]:
-        - generic [ref=e24]:
-          - generic:
-            - generic [ref=e25]:
-              - button "Search or verify a seller" [ref=e26] [cursor=pointer]
-              - generic [ref=e28]:
-                - button "For You" [ref=e29] [cursor=pointer]
-                - button "Trending" [ref=e30] [cursor=pointer]
-                - button "Deals" [ref=e31] [cursor=pointer]
-            - generic [ref=e32]:
-              - generic [ref=e34]:
-                - generic [ref=e37]:
-                  - link "OkoroSamuel" [ref=e38] [cursor=pointer]:
-                    - /url: /profile/OkoroSamuel
-                    - img "OkoroSamuel" [ref=e39]
-                  - button "0" [ref=e40] [cursor=pointer]:
-                    - generic [ref=e43]: "0"
-                  - button "0" [ref=e44] [cursor=pointer]:
-                    - generic [ref=e47]: "0"
-                  - button "0" [ref=e48] [cursor=pointer]:
-                    - generic [ref=e51]: "0"
-                - link "@OkoroSamuel" [ref=e54] [cursor=pointer]:
-                  - /url: /profile/OkoroSamuel
-              - generic [ref=e56]:
-                - generic [ref=e57]:
-                  - link "imakwam" [ref=e58] [cursor=pointer]:
-                    - /url: /sellers/profile/imakwam
-                    - img "imakwam" [ref=e59]
-                  - button "0" [ref=e60] [cursor=pointer]:
-                    - generic [ref=e63]: "0"
-                  - button "0" [ref=e64] [cursor=pointer]:
-                    - generic [ref=e67]: "0"
-                  - button "0" [ref=e68] [cursor=pointer]:
-                    - generic [ref=e71]: "0"
-                - link "@imakwam" [ref=e74] [cursor=pointer]:
-                  - /url: /sellers/profile/imakwam
-              - generic [ref=e76]:
-                - generic [ref=e79]:
-                  - link "obedjoseph" [ref=e80] [cursor=pointer]:
-                    - /url: /sellers/profile/obedjoseph
-                    - img "obedjoseph" [ref=e81]
-                  - button "0" [ref=e82] [cursor=pointer]:
-                    - generic [ref=e85]: "0"
-                  - button "0" [ref=e86] [cursor=pointer]:
-                    - generic [ref=e89]: "0"
-                  - button "0" [ref=e90] [cursor=pointer]:
-                    - generic [ref=e93]: "0"
-                - link "@obedjoseph" [ref=e96] [cursor=pointer]:
-                  - /url: /sellers/profile/obedjoseph
-              - generic [ref=e98]:
-                - generic [ref=e101]:
-                  - link "obedjoseph" [ref=e102] [cursor=pointer]:
-                    - /url: /sellers/profile/obedjoseph
-                    - img "obedjoseph" [ref=e103]
-                  - button "0" [ref=e104] [cursor=pointer]:
-                    - generic [ref=e107]: "0"
-                  - button "0" [ref=e108] [cursor=pointer]:
-                    - generic [ref=e111]: "0"
-                  - button "0" [ref=e112] [cursor=pointer]:
-                    - generic [ref=e115]: "0"
-                - link "@obedjoseph" [ref=e118] [cursor=pointer]:
-                  - /url: /sellers/profile/obedjoseph
-              - generic [ref=e120]:
-                - generic [ref=e121]:
-                  - paragraph [ref=e122]: Local markets, online
-                  - heading "Step into a Square" [level=2] [ref=e123]
-                  - paragraph [ref=e124]: Communities of traders organised the way Nigeria's physical markets work.
-                - generic [ref=e125]:
-                  - article [ref=e126]:
-                    - link "View Balogun Market Square market square" [ref=e127] [cursor=pointer]:
-                      - /url: /squares/balogun-market-lagos
-                    - generic:
-                      - generic: Market
-                    - generic:
-                      - generic:
-                        - generic: BA
-                    - generic [ref=e128]:
-                      - heading "Balogun Market Square" [level=3] [ref=e129]
-                      - paragraph [ref=e130]: Lagos Island, Lagos
-                      - generic [ref=e132]:
-                        - generic [ref=e133]: 0 traders
-                        - generic [ref=e135]: · 0 goods
-                        - generic [ref=e136]: Visit
-                  - article [ref=e138]:
-                    - link "View Bodija Market Square market square" [ref=e139] [cursor=pointer]:
-                      - /url: /squares/bodija-market-ibadan
-                    - generic:
-                      - generic: Market
-                    - generic:
-                      - generic:
-                        - generic: BO
-                    - generic [ref=e140]:
-                      - heading "Bodija Market Square" [level=3] [ref=e141]
-                      - paragraph [ref=e142]: Ibadan, Oyo
-                      - generic [ref=e144]:
-                        - generic [ref=e145]: 0 traders
-                        - generic [ref=e147]: · 0 goods
-                        - generic [ref=e148]: Visit
-                  - article [ref=e150]:
-                    - link "View Hamaz Shopping Complex market square" [ref=e151] [cursor=pointer]:
-                      - /url: /squares/hamaz-complex-jos
-                    - generic:
-                      - generic: Market
-                    - generic:
-                      - generic:
-                        - generic: HA
-                    - generic [ref=e152]:
-                      - heading "Hamaz Shopping Complex" [level=3] [ref=e153]
-                      - paragraph [ref=e154]: Jos, Plateau
-                      - generic [ref=e156]:
-                        - generic [ref=e157]: 1 traders
-                        - generic [ref=e159]: · 0 goods
-                        - generic [ref=e160]: Visit
-                  - article [ref=e162]:
-                    - link "View Computer Village Square market square" [ref=e163] [cursor=pointer]:
-                      - /url: /squares/computer-village-ikeja
-                    - generic:
-                      - generic: Market
-                    - generic:
-                      - generic:
-                        - generic: CO
-                    - generic [ref=e164]:
-                      - heading "Computer Village Square" [level=3] [ref=e165]
-                      - paragraph [ref=e166]: Ikeja, Lagos
-                      - generic [ref=e168]:
-                        - generic [ref=e169]: 0 traders
-                        - generic [ref=e171]: · 0 goods
-                        - generic [ref=e172]: Visit
-                  - article [ref=e174]:
-                    - link "View Yola Central Market Complex market square" [ref=e175] [cursor=pointer]:
-                      - /url: /squares/yola-central-market
-                    - generic:
-                      - generic: Market
-                    - generic:
-                      - generic:
-                        - generic: YO
-                    - generic [ref=e176]:
-                      - heading "Yola Central Market Complex" [level=3] [ref=e177]
-                      - paragraph [ref=e178]: Yola, Adamawa
-                      - generic [ref=e180]:
-                        - generic [ref=e181]: 0 traders
-                        - generic [ref=e183]: · 0 goods
-                        - generic [ref=e184]: Visit
-                  - article [ref=e186]:
-                    - link "View Wuse Market Abuja market square" [ref=e187] [cursor=pointer]:
-                      - /url: /squares/wuse-market-abuja
-                    - generic:
-                      - generic: Market
-                    - generic:
-                      - generic:
-                        - generic: WU
-                    - generic [ref=e188]:
-                      - heading "Wuse Market Abuja" [level=3] [ref=e189]
-                      - paragraph [ref=e190]: Abuja, FCT
-                      - generic [ref=e192]:
-                        - generic [ref=e193]: 0 traders
-                        - generic [ref=e195]: · 0 goods
-                        - generic [ref=e196]: Visit
-                - link "Explore all Squares" [ref=e198] [cursor=pointer]:
-                  - /url: /squares
-                  - text: Explore all Squares
-              - generic [ref=e201]:
-                - generic [ref=e203]:
-                  - generic [ref=e204]:
-                    - link "HausaCaps" [ref=e205] [cursor=pointer]:
-                      - /url: /sellers/profile/hausacaps
-                      - img "HausaCaps" [ref=e206]
-                    - button "Follow" [ref=e207] [cursor=pointer]
-                  - button "2" [ref=e209] [cursor=pointer]:
-                    - generic [ref=e212]: "2"
-                  - button "0" [ref=e213] [cursor=pointer]:
-                    - generic [ref=e216]: "0"
-                  - button "0" [ref=e217] [cursor=pointer]:
-                    - generic [ref=e220]: "0"
-                  - button "Unmute" [ref=e221] [cursor=pointer]
-                - generic [ref=e224]:
-                  - link "HausaCaps" [ref=e226] [cursor=pointer]:
-                    - /url: /sellers/profile/hausacaps
-                  - paragraph [ref=e227]: 10 views
-                  - paragraph [ref=e229]: Hausa Caps
-                  - link "Shop Now • ₦40,000" [ref=e230] [cursor=pointer]:
-                    - /url: /product/hausa-caps
-                    - text: Shop Now • ₦40,000
-              - generic [ref=e235]:
-                - generic [ref=e237]:
-                  - link "joshbj" [ref=e238] [cursor=pointer]:
-                    - /url: /profile/joshbj
-                    - img "joshbj" [ref=e239]
-                  - button "0" [ref=e240] [cursor=pointer]:
-                    - generic [ref=e243]: "0"
-                  - button "1" [ref=e244] [cursor=pointer]:
-                    - generic [ref=e247]: "1"
-                  - button "0" [ref=e248] [cursor=pointer]:
-                    - generic [ref=e251]: "0"
-                - link "@joshbj" [ref=e254] [cursor=pointer]:
-                  - /url: /profile/joshbj
-              - generic [ref=e256]:
-                - generic [ref=e258]:
-                  - link "joshjosh" [ref=e259] [cursor=pointer]:
-                    - /url: /profile/joshjosh
-                    - img "joshjosh" [ref=e260]
-                  - button "1" [ref=e261] [cursor=pointer]:
-                    - generic [ref=e264]: "1"
-                  - button "0" [ref=e265] [cursor=pointer]:
-                    - generic [ref=e268]: "0"
-                  - button "0" [ref=e269] [cursor=pointer]:
-                    - generic [ref=e272]: "0"
-                - link "@joshjosh" [ref=e275] [cursor=pointer]:
-                  - /url: /profile/joshjosh
-              - generic [ref=e277]:
-                - generic [ref=e279]:
-                  - link "joshjosh" [ref=e280] [cursor=pointer]:
-                    - /url: /profile/joshjosh
-                    - img "joshjosh" [ref=e281]
-                  - button "0" [ref=e282] [cursor=pointer]:
-                    - generic [ref=e285]: "0"
-                  - button "0" [ref=e286] [cursor=pointer]:
-                    - generic [ref=e289]: "0"
-                  - button "0" [ref=e290] [cursor=pointer]:
-                    - generic [ref=e293]: "0"
-                - link "@joshjosh" [ref=e296] [cursor=pointer]:
-                  - /url: /profile/joshjosh
-              - generic [ref=e298]:
-                - generic [ref=e301]:
-                  - link "joshbj" [ref=e302] [cursor=pointer]:
-                    - /url: /profile/joshbj
-                    - img "joshbj" [ref=e303]
-                  - button "1" [ref=e304] [cursor=pointer]:
-                    - generic [ref=e307]: "1"
-                  - button "0" [ref=e308] [cursor=pointer]:
-                    - generic [ref=e311]: "0"
-                  - button "0" [ref=e312] [cursor=pointer]:
-                    - generic [ref=e315]: "0"
-                - link "@joshbj" [ref=e318] [cursor=pointer]:
-                  - /url: /profile/joshbj
-              - generic [ref=e320]:
-                - generic [ref=e322]:
-                  - link "joshbj" [ref=e323] [cursor=pointer]:
-                    - /url: /profile/joshbj
-                    - img "joshbj" [ref=e324]
-                  - button "1" [ref=e325] [cursor=pointer]:
-                    - generic [ref=e328]: "1"
-                  - button "1" [ref=e329] [cursor=pointer]:
-                    - generic [ref=e332]: "1"
-                  - button "0" [ref=e333] [cursor=pointer]:
-                    - generic [ref=e336]: "0"
-                - link "@joshbj" [ref=e339] [cursor=pointer]:
-                  - /url: /profile/joshbj
-              - generic [ref=e341]:
-                - generic [ref=e343]:
-                  - link "joshuabj" [ref=e344] [cursor=pointer]:
-                    - /url: /profile/joshuabj
-                    - img "joshuabj" [ref=e345]
-                  - button "1" [ref=e346] [cursor=pointer]:
-                    - generic [ref=e349]: "1"
-                  - button "0" [ref=e350] [cursor=pointer]:
-                    - generic [ref=e353]: "0"
-                  - button "0" [ref=e354] [cursor=pointer]:
-                    - generic [ref=e357]: "0"
-                - link "@joshuabj" [ref=e360] [cursor=pointer]:
-                  - /url: /profile/joshuabj
-              - generic [ref=e362]:
-                - 'img "#fashion #lifestyle" [ref=e363]'
-                - generic [ref=e364]:
-                  - link "joshbj" [ref=e365] [cursor=pointer]:
-                    - /url: /profile/joshbj
-                    - img "joshbj" [ref=e366]
-                  - button "0" [ref=e367] [cursor=pointer]:
-                    - generic [ref=e370]: "0"
-                  - button "0" [ref=e371] [cursor=pointer]:
-                    - generic [ref=e374]: "0"
-                  - button "0" [ref=e375] [cursor=pointer]:
-                    - generic [ref=e378]: "0"
-                - generic [ref=e379]:
-                  - link "@joshbj" [ref=e381] [cursor=pointer]:
-                    - /url: /profile/joshbj
-                  - paragraph [ref=e382]: "#fashion #lifestyle"
-              - generic [ref=e384]:
-                - 'img "#fashion #lifestyle" [ref=e385]'
-                - generic [ref=e386]:
-                  - link "Opesko" [ref=e387] [cursor=pointer]:
-                    - /url: /profile/Opesko
-                    - img "Opesko" [ref=e388]
-                  - button "1" [ref=e389] [cursor=pointer]:
-                    - generic [ref=e392]: "1"
-                  - button "2" [ref=e393] [cursor=pointer]:
-                    - generic [ref=e396]: "2"
-                  - button "0" [ref=e397] [cursor=pointer]:
-                    - generic [ref=e400]: "0"
-                - generic [ref=e401]:
-                  - link "@Opesko" [ref=e403] [cursor=pointer]:
-                    - /url: /profile/Opesko
-                  - paragraph [ref=e404]: "#fashion #lifestyle"
-      - navigation [ref=e405]:
-        - generic [ref=e406]:
-          - link "Home" [ref=e407] [cursor=pointer]:
+        - generic [ref=e25]:
+          - generic [ref=e30]:
+            - heading "Find trusted sellers. Buy with confidence." [level=1] [ref=e31]:
+              - generic [ref=e32]: Find trusted sellers. Buy with confidence.
+            - generic [ref=e35]:
+              - tablist "Find or verify a seller" [ref=e36]:
+                - tab "Find a seller" [selected] [ref=e37] [cursor=pointer]: Find a seller
+                - tab "Verify any seller" [ref=e39] [cursor=pointer]: Verify any seller
+              - generic [ref=e41]:
+                - generic [ref=e43]: Search sellers, products or markets
+                - textbox "Search sellers, products or markets" [ref=e44]:
+                  - /placeholder: Search sellers, products or markets…
+                - button "Search" [ref=e45] [cursor=pointer]
+            - generic [ref=e46]:
+              - link "Log in" [ref=e47] [cursor=pointer]:
+                - /url: /user-login
+              - generic [ref=e48]: ·
+              - link "Start selling" [ref=e49] [cursor=pointer]:
+                - /url: /sellers/create
+            - generic [ref=e50]:
+              - generic [ref=e53]: Verified Sellers
+              - generic [ref=e56]: Escrow Protected
+          - generic [ref=e58]:
+            - img "Itel 5 watt charger" [ref=e61]
+            - generic [ref=e62]:
+              - link "Hadronpower" [ref=e63] [cursor=pointer]:
+                - /url: /sellers/profile/hadronpower
+                - img "Hadronpower" [ref=e64]
+              - button "0" [ref=e65] [cursor=pointer]:
+                - generic [ref=e68]: "0"
+              - button "0" [ref=e69] [cursor=pointer]:
+                - generic [ref=e72]: "0"
+              - button "0" [ref=e73] [cursor=pointer]:
+                - generic [ref=e76]: "0"
+              - button "View seller's Trust Card" [ref=e77] [cursor=pointer]:
+                - generic [ref=e80]: Trust
+            - generic [ref=e81]:
+              - generic [ref=e82]:
+                - link "Hadronpower" [ref=e83] [cursor=pointer]:
+                  - /url: /sellers/profile/hadronpower
+                - generic [ref=e84]: Product
+              - paragraph [ref=e85]: Itel 5 watt charger
+              - link "Shop Now • ₦4,000" [ref=e86] [cursor=pointer]:
+                - /url: /product/itel-5-watt-charger
+                - text: Shop Now • ₦4,000
+          - generic [ref=e90]:
+            - paragraph [ref=e92]: Wireless Bluetooth Earbuds
+            - generic [ref=e93]:
+              - link "MarketX Demo Store" [ref=e94] [cursor=pointer]:
+                - /url: /sellers/profile/tiktok-review-store
+                - img "MarketX Demo Store" [ref=e95]
+              - button "0" [ref=e96] [cursor=pointer]:
+                - generic [ref=e99]: "0"
+              - button "0" [ref=e100] [cursor=pointer]:
+                - generic [ref=e103]: "0"
+              - button "0" [ref=e104] [cursor=pointer]:
+                - generic [ref=e107]: "0"
+              - button "View seller's Trust Card" [ref=e108] [cursor=pointer]:
+                - generic [ref=e111]: Trust
+            - generic [ref=e112]:
+              - generic [ref=e113]:
+                - link "MarketX Demo Store" [ref=e114] [cursor=pointer]:
+                  - /url: /sellers/profile/tiktok-review-store
+                - generic [ref=e115]: Product
+              - link "Shop Now • ₦22,000" [ref=e116] [cursor=pointer]:
+                - /url: /product/wireless-bluetooth-earbuds
+                - text: Shop Now • ₦22,000
+          - generic [ref=e120]:
+            - paragraph [ref=e122]: Handwoven Ankara Tote Bag
+            - generic [ref=e123]:
+              - link "MarketX Demo Store" [ref=e124] [cursor=pointer]:
+                - /url: /sellers/profile/tiktok-review-store
+                - img "MarketX Demo Store" [ref=e125]
+              - button "0" [ref=e126] [cursor=pointer]:
+                - generic [ref=e129]: "0"
+              - button "0" [ref=e130] [cursor=pointer]:
+                - generic [ref=e133]: "0"
+              - button "0" [ref=e134] [cursor=pointer]:
+                - generic [ref=e137]: "0"
+              - button "View seller's Trust Card" [ref=e138] [cursor=pointer]:
+                - generic [ref=e141]: Trust
+            - generic [ref=e142]:
+              - generic [ref=e143]:
+                - link "MarketX Demo Store" [ref=e144] [cursor=pointer]:
+                  - /url: /sellers/profile/tiktok-review-store
+                - generic [ref=e145]: Product
+              - link "Shop Now • ₦15,000" [ref=e146] [cursor=pointer]:
+                - /url: /product/handwoven-ankara-tote-bag
+                - text: Shop Now • ₦15,000
+          - generic [ref=e150]:
+            - img "Itel power pack panels" [ref=e153]
+            - generic [ref=e154]:
+              - link "Hadronpower" [ref=e155] [cursor=pointer]:
+                - /url: /sellers/profile/hadronpower
+                - img "Hadronpower" [ref=e156]
+              - button "1" [ref=e157] [cursor=pointer]:
+                - generic [ref=e160]: "1"
+              - button "0" [ref=e161] [cursor=pointer]:
+                - generic [ref=e164]: "0"
+              - button "0" [ref=e165] [cursor=pointer]:
+                - generic [ref=e168]: "0"
+              - button "View seller's Trust Card" [ref=e169] [cursor=pointer]:
+                - generic [ref=e172]: Trust
+            - generic [ref=e173]:
+              - generic [ref=e174]:
+                - link "Hadronpower" [ref=e175] [cursor=pointer]:
+                  - /url: /sellers/profile/hadronpower
+                - generic [ref=e176]: Product
+              - paragraph [ref=e177]: Itel power pack panels
+              - link "Shop Now • ₦340,000" [ref=e178] [cursor=pointer]:
+                - /url: /product/itel-power-pack-panels
+                - text: Shop Now • ₦340,000
+          - generic [ref=e182]:
+            - generic [ref=e183]:
+              - paragraph [ref=e184]: Local markets, online
+              - heading "Step into a Square" [level=2] [ref=e185]
+              - paragraph [ref=e186]: Communities of traders organised the way Nigeria's physical markets work.
+            - generic [ref=e187]:
+              - article [ref=e188]:
+                - link "View Balogun Market Square market square" [ref=e189] [cursor=pointer]:
+                  - /url: /squares/balogun-market-lagos
+                - generic:
+                  - generic: Market
+                - generic:
+                  - generic:
+                    - generic: BA
+                - generic [ref=e190]:
+                  - heading "Balogun Market Square" [level=3] [ref=e191]
+                  - paragraph [ref=e192]: Lagos Island, Lagos
+                  - generic [ref=e195]: Explore market
+              - article [ref=e197]:
+                - link "View Bodija Market Square market square" [ref=e198] [cursor=pointer]:
+                  - /url: /squares/bodija-market-ibadan
+                - generic:
+                  - generic: Market
+                - generic:
+                  - generic:
+                    - generic: BO
+                - generic [ref=e199]:
+                  - heading "Bodija Market Square" [level=3] [ref=e200]
+                  - paragraph [ref=e201]: Ibadan, Oyo
+                  - generic [ref=e204]: Explore market
+              - article [ref=e206]:
+                - link "View Hamaz Shopping Complex market square" [ref=e207] [cursor=pointer]:
+                  - /url: /squares/hamaz-complex-jos
+                - generic:
+                  - generic: Market
+                - generic:
+                  - generic:
+                    - generic: HA
+                - generic [ref=e208]:
+                  - heading "Hamaz Shopping Complex" [level=3] [ref=e209]
+                  - paragraph [ref=e210]: Jos, Plateau
+                  - generic [ref=e212]:
+                    - generic [ref=e213]: 1 traders
+                    - generic [ref=e215]: · 2 goods
+                    - generic [ref=e216]: Visit
+              - article [ref=e218]:
+                - link "View Computer Village Square market square" [ref=e219] [cursor=pointer]:
+                  - /url: /squares/computer-village-ikeja
+                - generic:
+                  - generic: Market
+                - generic:
+                  - generic:
+                    - generic: CO
+                - generic [ref=e220]:
+                  - heading "Computer Village Square" [level=3] [ref=e221]
+                  - paragraph [ref=e222]: Ikeja, Lagos
+                  - generic [ref=e225]: Explore market
+              - article [ref=e227]:
+                - link "View Yola Central Market Complex market square" [ref=e228] [cursor=pointer]:
+                  - /url: /squares/yola-central-market
+                - generic:
+                  - generic: Market
+                - generic:
+                  - generic:
+                    - generic: YO
+                - generic [ref=e229]:
+                  - heading "Yola Central Market Complex" [level=3] [ref=e230]
+                  - paragraph [ref=e231]: Yola, Adamawa
+                  - generic [ref=e234]: Explore market
+              - article [ref=e236]:
+                - link "View Wuse Market Abuja market square" [ref=e237] [cursor=pointer]:
+                  - /url: /squares/wuse-market-abuja
+                - generic:
+                  - generic: Market
+                - generic:
+                  - generic:
+                    - generic: WU
+                - generic [ref=e238]:
+                  - heading "Wuse Market Abuja" [level=3] [ref=e239]
+                  - paragraph [ref=e240]: Abuja, FCT
+                  - generic [ref=e243]: Explore market
+            - link "Explore all Squares" [ref=e245] [cursor=pointer]:
+              - /url: /squares
+              - text: Explore all Squares
+          - generic [ref=e248]:
+            - img "Ultimate Smartwatch with Health Features" [ref=e251]
+            - generic [ref=e252]:
+              - link "LegitShop" [ref=e253] [cursor=pointer]:
+                - /url: /sellers/profile/legitshop
+                - img "LegitShop" [ref=e254]
+              - button "1" [ref=e255] [cursor=pointer]:
+                - generic [ref=e258]: "1"
+              - button "0" [ref=e259] [cursor=pointer]:
+                - generic [ref=e262]: "0"
+              - button "0" [ref=e263] [cursor=pointer]:
+                - generic [ref=e266]: "0"
+              - button "View seller's Trust Card" [ref=e267] [cursor=pointer]:
+                - generic [ref=e270]: Trust
+            - generic [ref=e271]:
+              - generic [ref=e272]:
+                - link "LegitShop" [ref=e273] [cursor=pointer]:
+                  - /url: /sellers/profile/legitshop
+                - generic [ref=e274]: Product
+              - paragraph [ref=e275]: Ultimate Smartwatch with Health Features
+              - link "Shop Now • ₦70,000" [ref=e276] [cursor=pointer]:
+                - /url: /product/ultimate-smartwatch-with-health-features
+                - text: Shop Now • ₦70,000
+          - generic [ref=e280]:
+            - img "Antimony ore" [ref=e283]
+            - generic [ref=e284]:
+              - link "OkoroSamuel store" [ref=e285] [cursor=pointer]:
+                - /url: /sellers/profile/okorosamuel-store
+                - img "OkoroSamuel store" [ref=e286]
+              - button "1" [ref=e287] [cursor=pointer]:
+                - generic [ref=e290]: "1"
+              - button "0" [ref=e291] [cursor=pointer]:
+                - generic [ref=e294]: "0"
+              - button "0" [ref=e295] [cursor=pointer]:
+                - generic [ref=e298]: "0"
+              - button "View seller's Trust Card" [ref=e299] [cursor=pointer]:
+                - generic [ref=e302]: Trust
+            - generic [ref=e303]:
+              - generic [ref=e304]:
+                - link "OkoroSamuel store" [ref=e305] [cursor=pointer]:
+                  - /url: /sellers/profile/okorosamuel-store
+                - generic [ref=e306]: Product
+              - paragraph [ref=e307]: Antimony ore
+              - link "Shop Now • ₦2,000,000" [ref=e308] [cursor=pointer]:
+                - /url: /product/antimony-ore
+                - text: Shop Now • ₦2,000,000
+          - generic [ref=e312]:
+            - img "iPhone 14PM 256GB" [ref=e315]
+            - generic [ref=e316]:
+              - link "Jprimexbossnaturestores" [ref=e317] [cursor=pointer]:
+                - /url: /sellers/profile/jprimexbossnaturegadgets
+                - img "Jprimexbossnaturestores" [ref=e318]
+              - button "1" [ref=e319] [cursor=pointer]:
+                - generic [ref=e322]: "1"
+              - button "0" [ref=e323] [cursor=pointer]:
+                - generic [ref=e326]: "0"
+              - button "0" [ref=e327] [cursor=pointer]:
+                - generic [ref=e330]: "0"
+              - button "View seller's Trust Card" [ref=e331] [cursor=pointer]:
+                - generic [ref=e334]: Trust
+            - generic [ref=e335]:
+              - generic [ref=e336]:
+                - link "Jprimexbossnaturestores" [ref=e337] [cursor=pointer]:
+                  - /url: /sellers/profile/jprimexbossnaturegadgets
+                - generic [ref=e338]: Product
+              - paragraph [ref=e339]: iPhone 14PM 256GB
+              - link "Shop Now • ₦900,000" [ref=e340] [cursor=pointer]:
+                - /url: /product/iphone-14pm-256gb
+                - text: Shop Now • ₦900,000
+          - generic [ref=e344]:
+            - img "house for sell" [ref=e347]
+            - generic [ref=e348]:
+              - link "obed stor" [ref=e349] [cursor=pointer]:
+                - /url: /sellers/profile/obed
+                - img "obed stor" [ref=e350]
+              - button "1" [ref=e351] [cursor=pointer]:
+                - generic [ref=e354]: "1"
+              - button "0" [ref=e355] [cursor=pointer]:
+                - generic [ref=e358]: "0"
+              - button "0" [ref=e359] [cursor=pointer]:
+                - generic [ref=e362]: "0"
+              - button "View seller's Trust Card" [ref=e363] [cursor=pointer]:
+                - generic [ref=e366]: Trust
+            - generic [ref=e367]:
+              - generic [ref=e368]:
+                - link "obed stor" [ref=e369] [cursor=pointer]:
+                  - /url: /sellers/profile/obed
+                - generic [ref=e370]: Product
+              - paragraph [ref=e371]: house for sell
+              - link "Shop Now • ₦400,000,000" [ref=e372] [cursor=pointer]:
+                - /url: /product/house-for-sell
+                - text: Shop Now • ₦400,000,000
+          - generic [ref=e376]:
+            - generic [ref=e380]:
+              - link "HausaCaps" [ref=e381] [cursor=pointer]:
+                - /url: /sellers/profile/hausacaps
+                - img "HausaCaps" [ref=e382]
+              - button "2" [ref=e383] [cursor=pointer]:
+                - generic [ref=e386]: "2"
+              - button "0" [ref=e387] [cursor=pointer]:
+                - generic [ref=e390]: "0"
+              - button "0" [ref=e391] [cursor=pointer]:
+                - generic [ref=e394]: "0"
+              - button "View seller's Trust Card" [ref=e395] [cursor=pointer]:
+                - generic [ref=e398]: Trust
+            - generic [ref=e399]:
+              - generic [ref=e400]:
+                - link "HausaCaps" [ref=e401] [cursor=pointer]:
+                  - /url: /sellers/profile/hausacaps
+                - generic [ref=e402]: Product
+              - paragraph [ref=e403]: Hausa Caps
+              - link "Shop Now • ₦40,000" [ref=e404] [cursor=pointer]:
+                - /url: /product/hausa-caps
+                - text: Shop Now • ₦40,000
+          - generic [ref=e408]:
+            - img "Versatile Solar-Powered Stand Fan with Remote" [ref=e411]
+            - generic [ref=e412]:
+              - link "Makintech" [ref=e413] [cursor=pointer]:
+                - /url: /sellers/profile/makintech
+                - img "Makintech" [ref=e414]
+              - button "1" [ref=e415] [cursor=pointer]:
+                - generic [ref=e418]: "1"
+              - button "0" [ref=e419] [cursor=pointer]:
+                - generic [ref=e422]: "0"
+              - button "0" [ref=e423] [cursor=pointer]:
+                - generic [ref=e426]: "0"
+              - button "View seller's Trust Card" [ref=e427] [cursor=pointer]:
+                - generic [ref=e430]: Trust
+            - generic [ref=e431]:
+              - generic [ref=e432]:
+                - link "Makintech" [ref=e433] [cursor=pointer]:
+                  - /url: /sellers/profile/makintech
+                - generic [ref=e434]: Product
+              - paragraph [ref=e435]: Versatile Solar-Powered Stand Fan with Remote
+              - link "Shop Now • ₦80,000" [ref=e436] [cursor=pointer]:
+                - /url: /product/versatile-solar-powered-stand-fan-with-remote
+                - text: Shop Now • ₦80,000
+          - generic [ref=e440]:
+            - img "Vibrant Geometric Ankara Fabric" [ref=e443]
+            - generic [ref=e444]:
+              - link "Hadaz stores" [ref=e445] [cursor=pointer]:
+                - /url: /sellers/profile/hadazstores
+                - img "Hadaz stores" [ref=e446]
+              - button "0" [ref=e447] [cursor=pointer]:
+                - generic [ref=e450]: "0"
+              - button "0" [ref=e451] [cursor=pointer]:
+                - generic [ref=e454]: "0"
+              - button "0" [ref=e455] [cursor=pointer]:
+                - generic [ref=e458]: "0"
+              - button "View seller's Trust Card" [ref=e459] [cursor=pointer]:
+                - generic [ref=e462]: Trust
+            - generic [ref=e463]:
+              - generic [ref=e464]:
+                - link "Hadaz stores" [ref=e465] [cursor=pointer]:
+                  - /url: /sellers/profile/hadazstores
+                - generic [ref=e466]: Product
+              - paragraph [ref=e467]: Vibrant Geometric Ankara Fabric
+              - link "Shop Now • ₦7,500" [ref=e468] [cursor=pointer]:
+                - /url: /product/vibrant-geometric-ankara-fabric
+                - text: Shop Now • ₦7,500
+          - generic [ref=e472]:
+            - img "Corporate Elegant Yellow Ankara Print Dress" [ref=e475]
+            - generic [ref=e476]:
+              - link "Starcollections" [ref=e477] [cursor=pointer]:
+                - /url: /sellers/profile/starcollections
+                - img "Starcollections" [ref=e478]
+              - button "0" [ref=e479] [cursor=pointer]:
+                - generic [ref=e482]: "0"
+              - button "0" [ref=e483] [cursor=pointer]:
+                - generic [ref=e486]: "0"
+              - button "0" [ref=e487] [cursor=pointer]:
+                - generic [ref=e490]: "0"
+              - button "View seller's Trust Card" [ref=e491] [cursor=pointer]:
+                - generic [ref=e494]: Trust
+            - generic [ref=e495]:
+              - generic [ref=e496]:
+                - link "Starcollections" [ref=e497] [cursor=pointer]:
+                  - /url: /sellers/profile/starcollections
+                - generic [ref=e498]: Product
+              - paragraph [ref=e499]: Corporate Elegant Yellow Ankara Print Dress
+              - link "Shop Now • ₦20,000" [ref=e500] [cursor=pointer]:
+                - /url: /product/corporate-elegant-yellow-ankara-print-dress
+                - text: Shop Now • ₦20,000
+      - navigation [ref=e503]:
+        - generic [ref=e504]:
+          - link "Home" [ref=e505] [cursor=pointer]:
             - /url: /
-          - link "Discover" [ref=e409] [cursor=pointer]:
+          - link "Discover" [ref=e507] [cursor=pointer]:
             - /url: /discover
-          - link "Near Me" [ref=e411] [cursor=pointer]:
+          - link "Near Me" [ref=e509] [cursor=pointer]:
             - /url: /map
-          - link "Squares" [ref=e413] [cursor=pointer]:
+          - link "Squares" [ref=e511] [cursor=pointer]:
             - /url: /squares
-          - link "Sign in" [ref=e415] [cursor=pointer]:
+          - link "Sign in" [ref=e513] [cursor=pointer]:
             - /url: /user-login
-      - button "Messages & AI" [ref=e417] [cursor=pointer]
+      - button "Messages & AI" [ref=e515] [cursor=pointer]
   - generic:
     - img
-  - generic [ref=e419]:
-    - button "Toggle Nuxt DevTools" [ref=e420] [cursor=pointer]:
-      - img [ref=e421]
-    - generic "Page load time" [ref=e424]:
-      - generic [ref=e425]: "150"
-      - generic [ref=e426]: ms
-    - button "Toggle Component Inspector" [ref=e428] [cursor=pointer]:
-      - img [ref=e429]
+  - generic [ref=e517]:
+    - button "Toggle Nuxt DevTools" [ref=e518] [cursor=pointer]:
+      - img [ref=e519]
+    - generic "Page load time" [ref=e522]:
+      - generic [ref=e523]: "176"
+      - generic [ref=e524]: ms
+    - button "Toggle Component Inspector" [ref=e526] [cursor=pointer]:
+      - img [ref=e527]
 ```
 
 # Test source
 
 ```ts
-  55  | 
-  56  |   test('Near Me nav link is present', async ({ page }) => {
-  57  |     await expect(sideNav(page).locator('a[href="/map"]')).toBeVisible(T)
-  58  |   })
-  59  | 
-  60  |   test('Squares nav link is present', async ({ page }) => {
-  61  |     await expect(sideNav(page).locator('a[href="/squares"]')).toBeVisible(T)
-  62  |   })
-  63  | 
-  64  |   test('Discover link navigates to /discover', async ({ page }) => {
-  65  |     await sideNav(page)
-  66  |       .getByRole('link', { name: /^discover$/i })
-  67  |       .click()
-  68  |     await expect(page).toHaveURL('/discover', T)
-  69  |   })
-  70  | 
-  71  |   test('Squares link navigates to /squares', async ({ page }) => {
-  72  |     await sideNav(page).locator('a[href="/squares"]').click()
-  73  |     await expect(page).toHaveURL('/squares', T)
-  74  |   })
-  75  | 
-  76  |   test('Reels link navigates to /reels', async ({ page }) => {
-  77  |     await sideNav(page).locator('a[href="/reels"]').click()
-  78  |     await expect(page).toHaveURL('/reels', T)
-  79  |   })
-  80  | 
-  81  |   test('guest sees Create link pointing to /user-register', async ({
-  82  |     page,
-  83  |   }) => {
-  84  |     await expect(sideNav(page).locator('a[href="/user-register"]')).toBeVisible(
-  85  |       T,
-  86  |     )
-  87  |   })
-  88  | })
-  89  | 
-  90  | test.describe('desktop SideNav — active state', () => {
-  91  |   test.use({ viewport: { width: 1440, height: 900 } })
-  92  | 
-  93  |   test('Home link has active class when on /', async ({ page }) => {
-  94  |     // MinimalHome's autoplaying/looping video slides keep the network busy
-  95  |     // indefinitely, same as SSE/WS pages elsewhere in this suite — never
-  96  |     // reaches 'networkidle'.
-  97  |     await page.goto('/', { waitUntil: 'domcontentloaded' })
-  98  |     // Two a[href="/"] exist: logo + nav-button. Target only the nav-button.
-  99  |     await expect(sideNav(page).locator('a.nav-button[href="/"]')).toHaveClass(
-  100 |       /active/,
-  101 |       T,
-  102 |     )
-  103 |   })
-  104 | 
-  105 |   test('Discover link has active class when on /discover', async ({ page }) => {
-  106 |     await page.goto('/discover', { waitUntil: 'networkidle' })
-  107 |     await expect(sideNav(page).locator('a[href="/discover"]')).toHaveClass(
-  108 |       /active/,
-  109 |       T,
-  110 |     )
-  111 |   })
-  112 | 
-  113 |   test('Squares link has active class when on /squares', async ({ page }) => {
-  114 |     await page.goto('/squares', { waitUntil: 'networkidle' })
-  115 |     await expect(sideNav(page).locator('a[href="/squares"]')).toHaveClass(
-  116 |       /active/,
-  117 |       T,
-  118 |     )
-  119 |   })
-  120 | })
-  121 | 
-  122 | // ── MOBILE BOTTOM NAV ─────────────────────────────────────────────────────────
-  123 | 
-  124 | test.describe('mobile BottomNav — guest', () => {
-  125 |   test.use({ viewport: { width: 390, height: 844 } })
+  92  | })
+  93  | 
+  94  | // ── DESKTOP ☰ MORE MENU ───────────────────────────────────────────────────────
+  95  | // Driven from /discover, not /. The home route renders SplashScreen as its
+  96  | // ClientOnly fallback — a `fixed inset-0 z-[100]` overlay that swallows every
+  97  | // click until hydration completes, which is also why the three pre-existing
+  98  | // "link navigates to X" tests above fail. /discover hydrates normally, and the
+  99  | // rail under test is identical on both routes.
+  100 | test.describe('desktop SideNav — More menu (guest)', () => {
+  101 |   test.use({ viewport: { width: 1440, height: 900 } })
+  102 | 
+  103 |   test.beforeEach(async ({ page }) => {
+  104 |     await page.goto('/discover', { waitUntil: 'networkidle' })
+  105 |   })
+  106 | 
+  107 |   test('Near Me is reachable from the More menu', async ({ page }) => {
+  108 |     // Near Me lives in ☰ More now, not the rail. It must still be reachable by a
+  109 |     // GUEST — that is the whole reason More renders for logged-out visitors.
+  110 |     await expect(sideNav(page).locator('a[href="/map"]')).toHaveCount(0)
+  111 |     await sideNav(page).locator('button[aria-label="More"]').click()
+  112 |     await expect(sideNav(page).locator('a[href="/map"]')).toBeVisible(T)
+  113 |   })
+  114 | 
+  115 |   test('Help is reachable from the More menu', async ({ page }) => {
+  116 |     await sideNav(page).locator('button[aria-label="More"]').click()
+  117 |     await expect(sideNav(page).locator('a[href="/help"]')).toBeVisible(T)
+  118 |   })
+  119 | 
+  120 |   test('More menu navigates to /map', async ({ page }) => {
+  121 |     await sideNav(page).locator('button[aria-label="More"]').click()
+  122 |     await sideNav(page).locator('a[href="/map"]').click()
+  123 |     await expect(page).toHaveURL('/map', T)
+  124 |   })
+  125 | })
   126 | 
-  127 |   test.beforeEach(async ({ page }) => {
-  128 |     // MinimalHome's autoplaying/looping video slides keep the network busy
-  129 |     // indefinitely, same as SSE/WS pages elsewhere in this suite — never
-  130 |     // reaches 'networkidle'.
-  131 |     await page.goto('/', { waitUntil: 'domcontentloaded' })
-  132 |   })
-  133 | 
-  134 |   test('bottom nav bar is visible', async ({ page }) => {
-  135 |     await expect(bottomNav(page)).toBeVisible(T)
-  136 |   })
-  137 | 
-  138 |   test('Home icon link is present in bottom nav', async ({ page }) => {
-  139 |     await expect(bottomNav(page).locator('a[href="/"]')).toBeVisible(T)
+  127 | test.describe('desktop SideNav — active state', () => {
+  128 |   test.use({ viewport: { width: 1440, height: 900 } })
+  129 | 
+  130 |   test('Home link has active class when on /', async ({ page }) => {
+  131 |     // MinimalHome's autoplaying/looping video slides keep the network busy
+  132 |     // indefinitely, same as SSE/WS pages elsewhere in this suite — never
+  133 |     // reaches 'networkidle'.
+  134 |     await page.goto('/', { waitUntil: 'domcontentloaded' })
+  135 |     // Two a[href="/"] exist: logo + nav-button. Target only the nav-button.
+  136 |     await expect(sideNav(page).locator('a.nav-button[href="/"]')).toHaveClass(
+  137 |       /active/,
+  138 |       T,
+  139 |     )
   140 |   })
   141 | 
-  142 |   test('Near Me icon link is present in bottom nav', async ({ page }) => {
-  143 |     await expect(bottomNav(page).locator('a[href="/map"]')).toBeVisible(T)
-  144 |   })
-  145 | 
-  146 |   test('Squares icon link is present in bottom nav', async ({ page }) => {
-  147 |     await expect(bottomNav(page).locator('a[href="/squares"]')).toBeVisible(T)
+  142 |   test('Discover link has active class when on /discover', async ({ page }) => {
+  143 |     await page.goto('/discover', { waitUntil: 'networkidle' })
+  144 |     await expect(sideNav(page).locator('a[href="/discover"]')).toHaveClass(
+  145 |       /active/,
+  146 |       T,
+  147 |     )
   148 |   })
   149 | 
-  150 |   test('guest sees "Start selling" CTA in bottom nav (goes to /user-register)', async ({
-  151 |     page,
-  152 |   }) => {
-  153 |     await expect(
-  154 |       bottomNav(page).locator('a[href="/user-register"]'),
-> 155 |     ).toBeVisible(T)
-      |       ^ Error: expect(locator).toBeVisible() failed
+  150 |   test('Squares link has active class when on /squares', async ({ page }) => {
+  151 |     await page.goto('/squares', { waitUntil: 'networkidle' })
+  152 |     await expect(sideNav(page).locator('a[href="/squares"]')).toHaveClass(
+  153 |       /active/,
+  154 |       T,
+  155 |     )
   156 |   })
   157 | })
   158 | 
-  159 | // ── MOBILE HEADER — aria-labels ──────────────────────────────────────────────
+  159 | // ── MOBILE BOTTOM NAV ─────────────────────────────────────────────────────────
   160 | 
-  161 | test.describe('mobile header — aria-labels', () => {
+  161 | test.describe('mobile BottomNav — guest', () => {
   162 |   test.use({ viewport: { width: 390, height: 844 } })
   163 | 
   164 |   test.beforeEach(async ({ page }) => {
@@ -479,89 +528,127 @@ Call log:
   168 |     await page.goto('/', { waitUntil: 'domcontentloaded' })
   169 |   })
   170 | 
-  171 |   test('Cart button has aria-label="Cart"', async ({ page }) => {
-  172 |     await expect(page.locator('button[aria-label="Cart"]')).toBeVisible(T)
+  171 |   test('bottom nav bar is visible', async ({ page }) => {
+  172 |     await expect(bottomNav(page)).toBeVisible(T)
   173 |   })
   174 | 
-  175 |   test('Search control has aria-label="Search"', async ({ page }) => {
-  176 |     await expect(page.locator('[aria-label="Search"]')).toBeVisible(T)
+  175 |   test('Home icon link is present in bottom nav', async ({ page }) => {
+  176 |     await expect(bottomNav(page).locator('a[href="/"]')).toBeVisible(T)
   177 |   })
   178 | 
-  179 |   test('guest sees a Sign in CTA in the mobile header', async ({ page }) => {
-  180 |     const header = page.locator('header.mobile-header')
-  181 |     await expect(header.getByRole('link', { name: /sign in/i })).toBeVisible(T)
-  182 |   })
-  183 | })
-  184 | 
-  185 | // ── MOBILE BOTTOM NAV — aria-labels ──────────────────────────────────────────
+  179 |   test('Near Me icon link is present in bottom nav', async ({ page }) => {
+  180 |     await expect(bottomNav(page).locator('a[href="/map"]')).toBeVisible(T)
+  181 |   })
+  182 | 
+  183 |   test('Squares icon link is present in bottom nav', async ({ page }) => {
+  184 |     await expect(bottomNav(page).locator('a[href="/squares"]')).toBeVisible(T)
+  185 |   })
   186 | 
-  187 | test.describe('mobile BottomNav — aria-labels', () => {
-  188 |   test.use({ viewport: { width: 390, height: 844 } })
-  189 | 
-  190 |   test.beforeEach(async ({ page }) => {
-  191 |     // MinimalHome's autoplaying/looping video slides keep the network busy
-  192 |     // indefinitely, same as SSE/WS pages elsewhere in this suite — never
-  193 |     // reaches 'networkidle'.
-  194 |     await page.goto('/', { waitUntil: 'domcontentloaded' })
-  195 |   })
-  196 | 
-  197 |   test('Home link has aria-label="Home"', async ({ page }) => {
-  198 |     await expect(bottomNav(page).locator('[aria-label="Home"]')).toBeVisible(T)
-  199 |   })
+  187 |   test('guest sees "Start selling" CTA in bottom nav (goes to /user-register)', async ({
+  188 |     page,
+  189 |   }) => {
+  190 |     await expect(
+  191 |       bottomNav(page).locator('a[href="/user-register"]'),
+> 192 |     ).toBeVisible(T)
+      |       ^ Error: expect(locator).toBeVisible() failed
+  193 |   })
+  194 | })
+  195 | 
+  196 | // ── MOBILE HEADER — aria-labels ──────────────────────────────────────────────
+  197 | 
+  198 | test.describe('mobile header — aria-labels', () => {
+  199 |   test.use({ viewport: { width: 390, height: 844 } })
   200 | 
-  201 |   test('Near Me link has aria-label="Near Me"', async ({ page }) => {
-  202 |     await expect(bottomNav(page).locator('[aria-label="Near Me"]')).toBeVisible(
-  203 |       T,
-  204 |     )
-  205 |   })
-  206 | 
-  207 |   test('Squares link has aria-label="Squares"', async ({ page }) => {
-  208 |     await expect(bottomNav(page).locator('[aria-label="Squares"]')).toBeVisible(
-  209 |       T,
-  210 |     )
-  211 |   })
-  212 | 
-  213 |   test('guest: Create link has aria-label="Start selling"', async ({
-  214 |     page,
-  215 |   }) => {
-  216 |     await expect(
-  217 |       bottomNav(page).locator('[aria-label="Start selling"]'),
-  218 |     ).toBeVisible(T)
+  201 |   test.beforeEach(async ({ page }) => {
+  202 |     // MinimalHome's autoplaying/looping video slides keep the network busy
+  203 |     // indefinitely, same as SSE/WS pages elsewhere in this suite — never
+  204 |     // reaches 'networkidle'.
+  205 |     await page.goto('/', { waitUntil: 'domcontentloaded' })
+  206 |   })
+  207 | 
+  208 |   test('Cart button has aria-label="Cart"', async ({ page }) => {
+  209 |     await expect(page.locator('button[aria-label="Cart"]')).toBeVisible(T)
+  210 |   })
+  211 | 
+  212 |   test('Search control has aria-label="Search"', async ({ page }) => {
+  213 |     await expect(page.locator('[aria-label="Search"]')).toBeVisible(T)
+  214 |   })
+  215 | 
+  216 |   test('guest sees a Sign in CTA in the mobile header', async ({ page }) => {
+  217 |     const header = page.locator('header.mobile-header')
+  218 |     await expect(header.getByRole('link', { name: /sign in/i })).toBeVisible(T)
   219 |   })
-  220 | 
-  221 |   test('guest: Sign in link has aria-label="Sign in"', async ({ page }) => {
-  222 |     await expect(bottomNav(page).locator('[aria-label="Sign in"]')).toBeVisible(
-  223 |       T,
-  224 |     )
-  225 |   })
-  226 | })
-  227 | 
-  228 | // ── AUTH STATE DIFFERENCES ────────────────────────────────────────────────────
-  229 | 
-  230 | test.describe('navigation — authenticated differences', () => {
-  231 |   test.use({ viewport: { width: 1440, height: 900 } })
-  232 | 
-  233 |   test('authenticated user sees Create <button> in nav (not a link)', async ({
-  234 |     page,
-  235 |     request,
-  236 |   }) => {
-  237 |     await pageLogin(page, request)
-  238 |     // SSE/Pusher connections on authenticated home never reach networkidle
-  239 |     await page.goto('/', { waitUntil: 'domcontentloaded' })
-  240 |     // Logged-in Create is a <button> that opens a modal, not an <a href="/user-register">
-  241 |     await expect(
-  242 |       sideNav(page).locator('a[href="/user-register"]'),
-  243 |     ).not.toBeVisible()
-  244 |     const createBtn = sideNav(page)
-  245 |       .locator('button')
-  246 |       .filter({ hasText: /create/i })
-  247 |     await expect(createBtn).toBeVisible(T)
+  220 | })
+  221 | 
+  222 | // ── MOBILE BOTTOM NAV — aria-labels ──────────────────────────────────────────
+  223 | 
+  224 | test.describe('mobile BottomNav — aria-labels', () => {
+  225 |   test.use({ viewport: { width: 390, height: 844 } })
+  226 | 
+  227 |   test.beforeEach(async ({ page }) => {
+  228 |     // MinimalHome's autoplaying/looping video slides keep the network busy
+  229 |     // indefinitely, same as SSE/WS pages elsewhere in this suite — never
+  230 |     // reaches 'networkidle'.
+  231 |     await page.goto('/', { waitUntil: 'domcontentloaded' })
+  232 |   })
+  233 | 
+  234 |   test('Home link has aria-label="Home"', async ({ page }) => {
+  235 |     await expect(bottomNav(page).locator('[aria-label="Home"]')).toBeVisible(T)
+  236 |   })
+  237 | 
+  238 |   test('Near Me link has aria-label="Near Me"', async ({ page }) => {
+  239 |     await expect(bottomNav(page).locator('[aria-label="Near Me"]')).toBeVisible(
+  240 |       T,
+  241 |     )
+  242 |   })
+  243 | 
+  244 |   test('Squares link has aria-label="Squares"', async ({ page }) => {
+  245 |     await expect(bottomNav(page).locator('[aria-label="Squares"]')).toBeVisible(
+  246 |       T,
+  247 |     )
   248 |   })
-  249 | })
-  250 | 
-  251 | // ── PAGE META / SEO ───────────────────────────────────────────────────────────
-  252 | 
-  253 | test.describe('page meta tags', () => {
-  254 |   for (const { route, label } of [
-  255 |     { route: '/', label: 'home' },
+  249 | 
+  250 |   test('guest: Create link has aria-label="Start selling"', async ({
+  251 |     page,
+  252 |   }) => {
+  253 |     await expect(
+  254 |       bottomNav(page).locator('[aria-label="Start selling"]'),
+  255 |     ).toBeVisible(T)
+  256 |   })
+  257 | 
+  258 |   test('guest: Sign in link has aria-label="Sign in"', async ({ page }) => {
+  259 |     await expect(bottomNav(page).locator('[aria-label="Sign in"]')).toBeVisible(
+  260 |       T,
+  261 |     )
+  262 |   })
+  263 | })
+  264 | 
+  265 | // ── AUTH STATE DIFFERENCES ────────────────────────────────────────────────────
+  266 | 
+  267 | test.describe('navigation — authenticated differences', () => {
+  268 |   test.use({ viewport: { width: 1440, height: 900 } })
+  269 | 
+  270 |   test('authenticated user sees Create <button> in nav (not a link)', async ({
+  271 |     page,
+  272 |     request,
+  273 |   }) => {
+  274 |     await pageLogin(page, request)
+  275 |     // SSE/Pusher connections on authenticated home never reach networkidle
+  276 |     await page.goto('/', { waitUntil: 'domcontentloaded' })
+  277 |     // Logged-in Create is a <button> that opens a modal, not an <a href="/user-register">
+  278 |     await expect(
+  279 |       sideNav(page).locator('a[href="/user-register"]'),
+  280 |     ).not.toBeVisible()
+  281 |     const createBtn = sideNav(page)
+  282 |       .locator('button')
+  283 |       .filter({ hasText: /create/i })
+  284 |     await expect(createBtn).toBeVisible(T)
+  285 |   })
+  286 | })
+  287 | 
+  288 | // ── PAGE META / SEO ───────────────────────────────────────────────────────────
+  289 | 
+  290 | test.describe('page meta tags', () => {
+  291 |   for (const { route, label } of [
+  292 |     { route: '/', label: 'home' },
 ```

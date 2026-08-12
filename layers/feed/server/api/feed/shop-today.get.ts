@@ -23,7 +23,14 @@ const PRODUCT_SELECT = {
   created_at: true,
   sellerId: true,
   media: { where: { isBgMusic: false }, select: MEDIA_SELECT, take: 1 },
-  seller: { select: { store_name: true, store_slug: true, store_logo: true } },
+  seller: {
+    select: {
+      store_name: true,
+      store_slug: true,
+      store_logo: true,
+      trustTier: true,
+    },
+  },
   variants: { select: { id: true, stock: true, price: true }, take: 1 },
   _count: { select: { likes: true } },
 }

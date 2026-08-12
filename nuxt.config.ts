@@ -445,6 +445,12 @@ export default defineNuxtConfig({
       paystackPk: process.env.PAYSTACK_PUBLIC_KEY,
       // Pay on Delivery — off by default (paused); set NUXT_PUBLIC_POD_ENABLED=true to re-enable.
       podEnabled: process.env.NUXT_PUBLIC_POD_ENABLED === 'true',
+      // GIG Logistics — off by default (paused): our carrier API access isn't
+      // live yet, so GIG must not be quoted or booked. Sellers run their own
+      // shipping (BYOS / pickup) meanwhile. Set NUXT_PUBLIC_GIG_ENABLED=true to
+      // turn it back on platform-wide; per-seller `gigEnabled` preferences are
+      // left untouched so they survive the pause.
+      gigEnabled: process.env.NUXT_PUBLIC_GIG_ENABLED === 'true',
       // Trust homepage (hero Trust Card + spotlight rail). The reputation engine
       // is live and every figure is computed from real rows (orders / reviews /
       // dispute tickets — see server/utils/trustFacts.ts); nothing is seeded.
