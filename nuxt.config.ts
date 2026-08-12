@@ -436,6 +436,9 @@ export default defineNuxtConfig({
         process.env.NUXT_PUBLIC_PRIVACY_EMAIL || 'privacy@marketx.africa',
       legalEmail: process.env.NUXT_PUBLIC_LEGAL_EMAIL || 'legal@marketx.africa',
       baseURL: process.env.NUXT_PUBLIC_BASE_URL || 'http://localhost:3000',
+      // Meta Pixel — unset by default (plugin no-ops without it) so ad
+      // tracking never loads outside of an explicit campaign environment.
+      metaPixelId: process.env.NUXT_PUBLIC_META_PIXEL_ID || '',
       // Cloudinary cloud name — exposed so the client (card downloads) and SSR
       // (OG images) can build composite card-image URLs from scratch.
       cloudinaryCloud: process.env.CLOUDINARY_CLOUD_NAME || '',
