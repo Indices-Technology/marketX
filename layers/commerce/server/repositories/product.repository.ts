@@ -85,6 +85,10 @@ const productInclude = {
       pod_enabled: true,
       pod_delivery_days: true,
       pod_zones: true,
+      // Raw config, NOT for the client. The service derives a public summary
+      // from it (deriveDeliveryOptions) and strips it before responding — it
+      // holds the seller's flat rates and per-zone pricing.
+      shippingConfig: true,
     },
   },
   media: {

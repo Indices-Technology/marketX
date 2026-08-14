@@ -15,6 +15,23 @@ export interface IWallPost {
   wallTargetSlug: string | null
   author: { id: string; username: string; avatar: string | null; role: string }
   media: { id: string; url: string; type: string; altText: string | null }[]
+  /** Structured @mentions, rendered as links by PostCaption. */
+  mentions?: Array<{ type: 'seller' | 'user'; handle: string }> | null
+  /** Products the author tagged — the shoppable half of a post. */
+  taggedProducts?: Array<{
+    productId: number
+    product: {
+      id: number
+      title: string
+      price: number
+      discount: number | null
+      slug: string
+      averageRating: number | null
+      totalReviews: number | null
+      media: { url: string; type: string }[]
+      _count?: { likes: number }
+    } | null
+  }> | null
   _count: { likes: number; comments: number }
 }
 

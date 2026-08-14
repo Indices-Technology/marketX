@@ -1,6 +1,7 @@
 // FILE PATH: server/layers/seller/services/seller.service.ts
 
 import { SellerError, SellerProfile } from '../types/seller.types'
+import { deriveDeliveryOptions } from '~~/layers/shipping/server/utils/deliveryOptions'
 import {
   CreateSellerProfileRequest,
   UpdateSellerProfileRequest,
@@ -118,7 +119,13 @@ export const sellerService = {
       throw new SellerError('Seller profile not found', 404)
     }
 
-    return seller
+    // Swap the raw shipping config for the public summary the storefront shows
+    // as chips under the store tagline. Same contract as the product endpoint:
+    // derive, then delete the raw config so it never leaves the server.
+    const safe = { ...seller } as Record<string, unknown>
+    delete safe.shippingConfig
+    safe.deliveryOptions = deriveDeliveryOptions(seller)
+    return safe as SellerProfile
   },
 
   async getSellerWithRelations(sellerId: string): Promise<any> {

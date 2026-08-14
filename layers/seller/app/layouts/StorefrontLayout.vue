@@ -141,6 +141,15 @@
     </footer>
 
     <CartSidebar :is-open="showCart" @close="showCart = false" />
+    <!-- HomeLayout renders these too. Anything inside the page that calls
+         useShareModal() sets shared state but needs a modal mounted somewhere
+         to show it — without this, Share is a no-op in storefront chrome. -->
+    <ShareModal
+      :is-open="shareState.isOpen"
+      :url="shareState.url"
+      :title="shareState.title"
+      @close="closeShare"
+    />
   </div>
 </template>
 
@@ -149,10 +158,14 @@ import { computed, defineAsyncComponent } from 'vue'
 import { useCart } from '~~/layers/commerce/app/composables/useCart'
 import { useCartDrawer } from '~~/layers/commerce/app/composables/useCartDrawer'
 import { useStorefront } from '~~/layers/seller/app/composables/useStorefront'
+import { useShareModal } from '~~/layers/social/app/composables/useShareModal'
 import { cloudinaryUrl } from '~~/layers/core/app/utils/cloudinary'
 
 const CartSidebar = defineAsyncComponent(
   () => import('~~/layers/commerce/app/components/CartSidebar.vue'),
+)
+const ShareModal = defineAsyncComponent(
+  () => import('~~/layers/social/app/components/modals/ShareModal.vue'),
 )
 
 /**
@@ -172,6 +185,7 @@ const props = defineProps<{
 const { cartCount } = useCart()
 const { isOpen: showCart } = useCartDrawer()
 const { storefrontSlug } = useStorefront()
+const { shareState, closeShare } = useShareModal()
 
 /**
  * Home of THIS shop — the short /{slug} form, which is a storefront entrance in

@@ -184,43 +184,55 @@
             </p>
 
             <div class="space-y-3">
-              <!-- POD -->
+              <!-- Every way this seller can get the item to you, derived from
+                   their own shipping settings. Lives here rather than in its
+                   own card so the buyer reads delivery and payment as one
+                   answer instead of two competing ones. -->
               <div
-                v-if="product.seller?.pod_enabled"
+                v-for="opt in deliveryOptions"
+                :key="opt.key"
                 class="flex items-start gap-2.5"
               >
                 <div
-                  class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30"
+                  class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
+                  :class="
+                    opt.key === 'pod' || opt.key === 'pay_rider'
+                      ? 'bg-emerald-100 dark:bg-emerald-900/30'
+                      : 'bg-brand/10'
+                  "
                 >
                   <Icon
-                    name="solar:delivery-linear"
+                    :name="opt.icon"
                     size="15"
-                    class="text-emerald-600 dark:text-emerald-400"
+                    :class="
+                      opt.key === 'pod' || opt.key === 'pay_rider'
+                        ? 'text-emerald-600 dark:text-emerald-400'
+                        : 'text-brand'
+                    "
                   />
                 </div>
-                <div>
+                <div class="min-w-0">
                   <p
                     class="text-sm font-semibold text-gray-800 dark:text-neutral-200"
                   >
-                    Pay on Delivery available
+                    {{ opt.label }}
                   </p>
                   <p
-                    v-if="podZones.length"
+                    v-if="opt.detail"
                     class="mt-0.5 text-[11px] text-gray-500 dark:text-neutral-400"
+                  >
+                    {{ opt.detail }}
+                  </p>
+                  <!-- POD is state-gated; the zones are the buyer's real
+                       question ("does it reach me?"), so they stay. -->
+                  <p
+                    v-if="opt.key === 'pod' && podZones.length"
+                    class="text-[11px] text-gray-500 dark:text-neutral-400"
                   >
                     {{ podZones.slice(0, 4).join(', ')
                     }}{{
                       podZones.length > 4 ? ` +${podZones.length - 4} more` : ''
                     }}
-                  </p>
-                  <p
-                    v-if="product.seller.pod_delivery_days"
-                    class="text-[11px] text-gray-500 dark:text-neutral-400"
-                  >
-                    Delivered in {{ product.seller.pod_delivery_days }}–{{
-                      product.seller.pod_delivery_days + 2
-                    }}
-                    days
                   </p>
                 </div>
               </div>
@@ -290,9 +302,11 @@
                 </div>
               </div>
 
-              <!-- No POD note -->
+              <!-- No POD note. Suppressed when the seller offers pay-the-rider:
+                   two adjacent lines saying cash is and is not accepted read as
+                   a contradiction, even though they cover different amounts. -->
               <div
-                v-if="!product.seller?.pod_enabled"
+                v-if="!offersPod && !offersPayRider"
                 class="flex items-center gap-2.5"
               >
                 <div
@@ -394,7 +408,8 @@
                 <Icon name="solar:star-bold" size="12" />
                 {{ product.averageRating.toFixed(1) }}
                 <span class="font-normal text-gray-500 dark:text-neutral-400"
-                  >({{ product.totalReviews ?? 0 }} reviews)</span
+                  >({{ product.totalReviews ?? 0 }}
+                  {{ (product.totalReviews ?? 0) === 1 ? 'review' : 'reviews' }})</span
                 >
               </a>
               <span
@@ -452,10 +467,7 @@
                 >
                   {{ v.price > product.price ? '+' : '−'
                   }}{{
-                    formatProductPrice(
-                      Math.abs(v.price - product.price),
-                      'NGN',
-                    )
+                    formatProductPrice(Math.abs(v.price - product.price), 'NGN')
                   }}
                 </span>
               </button>
@@ -484,12 +496,20 @@
             }}
           </p>
 
-          <!-- Qty + Add to Cart + Buy Now + View Cart + Share — always one row,
-               mobile and desktop. View Cart / Share shrink to icon-only so the
-               row never needs to wrap. -->
+          <!-- Qty + Share on mobile; the full row (adds Add to Cart, Buy Now,
+               View Cart) from `sm` up.
+               Mobile carried five controls here AND a sticky bar repeating two
+               of them — the same two actions rendered twice on one screen, with
+               a cart shortcut the header and bottom nav already provide. The
+               sticky bar is always in reach, so it owns buying on mobile and
+               this row keeps only what it can't: choosing quantity, and share.
+               Desktop has no sticky bar, so nothing is hidden there. -->
           <div class="flex items-stretch gap-1.5 sm:gap-2">
+            <!-- Fills the row on mobile now that the buy buttons moved to the
+                 sticky bar — a lone stepper hugging the left edge with dead
+                 space beside it reads as an unfinished row. -->
             <div
-              class="flex shrink-0 items-center gap-0.5 rounded-xl border border-gray-200 dark:border-neutral-700"
+              class="flex flex-1 items-center justify-between gap-0.5 rounded-xl border border-gray-200 sm:flex-none sm:shrink-0 sm:justify-start dark:border-neutral-700"
             >
               <button
                 class="touch-manipulation px-2 py-3 text-lg font-bold text-gray-600 hover:text-brand dark:text-neutral-400"
@@ -511,7 +531,7 @@
             <BaseButton
               variant="primary"
               size="sm"
-              class="flex-1 touch-manipulation !px-2"
+              class="hidden flex-1 touch-manipulation !px-2 sm:flex"
               :loading="addingToCart"
               :disabled="
                 addingToCart ||
@@ -531,7 +551,7 @@
             <BaseButton
               variant="primary"
               size="sm"
-              class="flex-1 touch-manipulation !px-2"
+              class="hidden flex-1 touch-manipulation !px-2 sm:flex"
               :loading="buyingNow"
               :disabled="
                 buyingNow ||
@@ -552,7 +572,7 @@
             <BaseButton
               variant="icon"
               size="sm"
-              class="shrink-0 touch-manipulation rounded-xl border border-gray-200 dark:border-neutral-700"
+              class="hidden shrink-0 touch-manipulation rounded-xl border border-gray-200 sm:flex dark:border-neutral-700"
               aria-label="View cart"
               @click="openCart()"
             >
@@ -987,25 +1007,44 @@
           padding-bottom: calc(0.625rem + env(safe-area-inset-bottom, 0px));
         "
       >
-        <p class="min-w-0 flex-1 truncate text-lg font-extrabold text-brand">
+        <p class="min-w-0 shrink truncate text-base font-extrabold text-brand">
           {{ formatProductPrice(discountedPrice, 'NGN') }}
         </p>
+        <!-- Add to Cart is secondary here: most shared-link buyers arrive for
+             one item, and forcing them through the cart drawer to reach
+             checkout added a step for the common case. Buy Now (adds, then
+             goes straight to /checkout) is the filled primary. -->
         <BaseButton
-          variant="primary"
-          class="shrink-0 touch-manipulation px-6 py-3"
+          variant="secondary"
+          class="shrink-0 touch-manipulation px-3 py-3"
+          aria-label="Add to cart"
           :loading="addingToCart"
           :disabled="
             addingToCart || !selectedVariantId || selectedVariant?.stock === 0
           "
           @click="handleAddToCart"
         >
+          <Icon v-if="!addingToCart" name="solar:cart-plus-linear" size="18" />
+        </BaseButton>
+        <BaseButton
+          variant="primary"
+          class="flex-1 touch-manipulation px-4 py-3"
+          :loading="buyingNow"
+          :disabled="
+            buyingNow ||
+            addingToCart ||
+            !selectedVariantId ||
+            selectedVariant?.stock === 0
+          "
+          @click="buyNow"
+        >
           <Icon
-            v-if="!addingToCart"
-            name="solar:cart-plus-linear"
+            v-if="!buyingNow"
+            name="solar:bag-check-linear"
             size="16"
             class="mr-1"
           />
-          {{ addingToCart ? 'Adding…' : 'Add to Cart' }}
+          {{ buyingNow ? 'Starting…' : 'Buy Now' }}
         </BaseButton>
       </div>
 
@@ -1122,6 +1161,33 @@ const product = computed(() => data.value?.data ?? null)
 // known from the URL at first paint, so this renders right the first time.
 const { isStorefront, storeLink } = useStorefront()
 const inStorefront = isStorefront
+
+// Derived server-side from the seller's shipping settings (see
+// deriveDeliveryOptions) — the raw shippingConfig is never sent to the client.
+const deliveryOptions = computed(
+  () =>
+    ((
+      product.value?.seller as
+        | {
+            deliveryOptions?: Array<{
+              key: string
+              label: string
+              detail: string | null
+              icon: string
+            }>
+          }
+        | undefined
+    )?.deliveryOptions ?? []),
+)
+const offersPayRider = computed(() =>
+  deliveryOptions.value.some((o) => o.key === 'pay_rider'),
+)
+// Read off the derived list, not seller.pod_enabled: POD is paused
+// platform-wide, so a seller who has it switched on still cannot offer it and
+// the page must say so rather than quietly showing neither line.
+const offersPod = computed(() =>
+  deliveryOptions.value.some((o) => o.key === 'pod'),
+)
 const layoutComponent = computed(() =>
   inStorefront.value ? StorefrontLayout : HomeLayout,
 )
@@ -1299,18 +1365,24 @@ const podZones = computed<string[]>(() => {
   return Array.isArray(z) ? z : []
 })
 
-const trustTips = [
+// "Inspect item before paying on delivery" was hardcoded, but it is only true
+// when Pay-on-Delivery is actually offered — and POD is paused platform-wide,
+// so every buyer was reading a promise the checkout does not keep. Swapped for
+// the escrow guarantee, which IS what protects them when they prepay.
+const trustTips = computed(() => [
   {
     icon: 'solar:shield-check-linear',
     text: 'Secure checkout — payments are encrypted',
   },
-  {
-    icon: 'solar:eye-linear',
-    text: 'Inspect item before paying on delivery',
-  },
+  offersPod.value
+    ? { icon: 'solar:eye-linear', text: 'Inspect item before paying on delivery' }
+    : {
+        icon: 'solar:eye-linear',
+        text: 'Payment is held in escrow until you confirm delivery',
+      },
   { icon: 'solar:money-bag-linear', text: 'Buyer protection on all orders' },
   { icon: 'solar:user-check-linear', text: 'Only pay when satisfied' },
-]
+])
 
 // ── Seller ───────────────────────────────────────────────────────────────────
 const sellerMemberSince = computed(() => {
