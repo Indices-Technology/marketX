@@ -36,9 +36,19 @@
          useHomeSearch singleton instead of its usual generic overlay (see
          `:use-custom-search` on HomeLayout in index.vue) — one entry point,
          same destination. -->
+    <!-- Rides up with the header when it auto-hides, instead of leaving a
+         header-sized gap above the tabs. Same technique (and duration) as
+         HomeLayout's own Feed/Reels bar. The tabs themselves stay put while
+         scrolling — they are this feed's controls, not app chrome, and losing
+         them mid-browse would mean pausing just to change tab. -->
     <div
       v-if="!isHeroSlide"
-      class="fixed inset-x-0 top-[calc(3.5rem+env(safe-area-inset-top,0px)+10px)] z-20 flex items-center justify-center gap-2 px-3 md:left-20 md:top-4 lg:right-[420px] xl:left-72 min-[1500px]:right-[calc(50vw-330px)]"
+      class="fixed inset-x-0 z-20 flex items-center justify-center gap-2 px-3 transition-[top] duration-300 ease-in-out md:left-20 md:top-4 lg:right-[420px] xl:left-72 min-[1500px]:right-[calc(50vw-330px)]"
+      :class="
+        mobileNavVisible
+          ? 'top-[calc(3.5rem+env(safe-area-inset-top,0px)+10px)]'
+          : 'top-[calc(env(safe-area-inset-top,0px)+10px)]'
+      "
     >
       <div
         class="scrollbar-hide flex gap-1 overflow-x-auto rounded-full bg-black/40 p-1 backdrop-blur-md"
@@ -70,6 +80,7 @@
     <div
       ref="containerRef"
       class="scrollbar-hide fixed inset-0 z-0 snap-y snap-mandatory overflow-y-auto bg-black md:left-20 lg:right-[420px] xl:left-72 min-[1500px]:right-[calc(50vw-330px)]"
+      @scroll.passive="onFeedScroll"
     >
       <div
         v-if="pending && !items.length"
@@ -196,6 +207,8 @@ import ReelItem from '~~/layers/feed/app/components/ReelItem.vue'
 import FeedSlide from '~~/layers/feed/app/components/FeedSlide.vue'
 import SquareSpotlightSlide from '~~/layers/feed/app/components/SquareSpotlightSlide.vue'
 import HomeHero from '~~/layers/feed/app/components/HomeHero.vue'
+import { useState } from '#imports'
+import { useHomeReset } from '~~/layers/feed/app/composables/useHomeReset'
 import TrustFindVerifyDock from '~~/layers/feed/app/components/TrustFindVerifyDock.vue'
 import BaseModal from '~~/layers/ui/app/components/BaseModal.vue'
 import ProductReviewModal from '~~/layers/commerce/app/components/modals/ProductReviewModal.vue'
@@ -377,6 +390,15 @@ const applySlots = async () => {
   setupObserver()
 }
 
+// Home tab / logo pressed while already on home. The route does not change, so
+// nothing here reacts on its own — this feed owns its scroll position and has
+// to bring itself back to the first slide.
+const { resetSignal } = useHomeReset()
+watch(resetSignal, () => {
+  activeIndex.value = 0
+  containerRef.value?.scrollTo({ top: 0, behavior: 'smooth' })
+})
+
 const loadTab = async () => {
   const tab = activeHomeTab.value
   if (tab === 'products') {
@@ -407,14 +429,44 @@ watch(items, async () => {
   setupObserver()
 })
 
-// "No navs" while the hero is the visible slide — same shared signal
-// HomeLayout's own scroll-threshold logic uses for the desktop hero, so both
-// surfaces agree on what "showing the hero" means for nav visibility.
+// Floating chat button: out of the way while the user is swiping.
+//
+// This component owns its own scroll container (fixed inset-0), so none of
+// HomeLayout's scroll listeners fire here and the shared nav-visibility signal
+// never moved on its own — chrome sat over slide content permanently, with
+// nothing able to shift it. This handler is the missing input.
+const feedScrolling = useState<boolean>('feed-scrolling', () => false)
+let scrollIdleTimer: ReturnType<typeof setTimeout> | null = null
+const SCROLL_IDLE_MS = 600
+
+const onFeedScroll = () => {
+  feedScrolling.value = true
+  if (scrollIdleTimer) clearTimeout(scrollIdleTimer)
+  scrollIdleTimer = setTimeout(() => {
+    feedScrolling.value = false
+  }, SCROLL_IDLE_MS)
+}
+
+/**
+ * Chrome visibility for the immersive feed — header, bottom nav, and (through
+ * `feed-scrolling`) the floating chat button.
+ *
+ * Two independent reasons to hide, resolved in one place rather than by two
+ * watchers writing the same shared refs and clobbering each other:
+ *   - the hero slide is showing ("no navs" is a property of the hero, and the
+ *     same signal HomeLayout's desktop hero uses)
+ *   - the user is actively swiping through the feed
+ *
+ * The `|| onHero` on reveal matters: without it, the scroll-idle timer firing
+ * while still on the hero would put the navs back over it.
+ */
+const chromeHidden = computed(() => isHeroSlide.value || feedScrolling.value)
+
 watch(
-  isHeroSlide,
-  (onHero) => {
-    mobileNavVisible.value = !onHero
-    bottomNavVisible.value = !onHero
+  chromeHidden,
+  (hide) => {
+    mobileNavVisible.value = !hide
+    bottomNavVisible.value = !hide
   },
   { immediate: true },
 )
@@ -422,6 +474,10 @@ watch(
 onUnmounted(() => {
   observer?.disconnect()
   window.removeEventListener('keydown', onKeydown)
+  // Shared singleton — leaving it true would hide the button on whatever page
+  // renders next.
+  if (scrollIdleTimer) clearTimeout(scrollIdleTimer)
+  feedScrolling.value = false
   // Restore nav in case we're unmounting mid-hero (e.g. navigated away before
   // swiping past it) — these are shared singletons, so leaving them hidden
   // would incorrectly hide nav on whatever page renders next.

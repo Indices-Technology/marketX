@@ -53,6 +53,15 @@ export class OrderApiClient extends BaseApiClient {
     return this.request(`/api/commerce/orders/seller?${q}`, { method: 'GET' })
   }
   /** Count of orders awaiting the seller's action (paid, not yet shipped). */
+  /** Count of the buyer's in-flight orders. One number, not a list. */
+  async getBuyerActiveCount(): Promise<{
+    success: boolean
+    data: { count: number }
+  }> {
+    return this.request('/api/commerce/orders/buyer-active-count', {
+      method: 'GET',
+    })
+  }
   async getSellerPendingCount(
     storeSlug: string,
   ): Promise<{ success: boolean; data: { count: number } }> {

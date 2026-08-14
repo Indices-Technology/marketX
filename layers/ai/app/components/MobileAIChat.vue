@@ -15,6 +15,12 @@
         unreadMessages > 0
           ? 'bg-brand text-white'
           : 'bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900',
+        // Slide out rather than sit on top of the content the user came to
+        // read. Translated, not v-if'd, so the return is animated and the
+        // button never pops back mid-tap.
+        hidden
+          ? 'pointer-events-none translate-y-[150%] opacity-0'
+          : 'translate-y-0 opacity-100',
       ]"
       aria-label="Messages & AI"
       @click="open"
@@ -324,12 +330,35 @@ const props = defineProps<{
   /** Park the button on the left — for surfaces whose right edge is already
       occupied (the full-screen feed's action rail). */
   sideLeft?: boolean
+  /**
+   * The layout's own nav-visibility signal. This button is position:fixed over
+   * whatever the page is showing, so on the full-screen feed it inevitably
+   * covers content — a product card's store name, a caption. Following the same
+   * signal the header and bottom nav already use means it gets out of the way
+   * while the user is actually reading or scrolling, and comes back when they
+   * stop. Defaults to visible so surfaces that don't pass it are unaffected.
+   */
+  navVisible?: boolean
 }>()
 const emit = defineEmits(['open', 'close'])
 
 // Pages with a mobile sticky action bar (e.g. the product buy bar) set this so
 // the floating button lifts above the bar instead of overlapping it.
 const buyBarVisible = useState<boolean>('mobile-buy-bar', () => false)
+
+/**
+ * Set by the full-screen feed while the user is actively swiping through it.
+ *
+ * That feed owns its own scroll container, so it never drives the shared
+ * nav-visibility signal the rest of the app uses — which is why this button sat
+ * permanently on top of slide content (a product card's store name, a caption)
+ * with no way to get it out of the way. Same useState channel as the buy bar
+ * above, so the mechanism is one the component already speaks.
+ */
+const feedScrolling = useState<boolean>('feed-scrolling', () => false)
+
+/** Out of the way while reading; back the moment the user stops. */
+const hidden = computed(() => props.navVisible === false || feedScrolling.value)
 
 const profileStore = useProfileStore()
 const notificationStore = useNotificationStore()
