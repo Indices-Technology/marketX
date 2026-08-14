@@ -71,6 +71,21 @@ export default {
         display: ['Archivo', 'system-ui', 'sans-serif'],
       },
 
+      // ── Safe-area tokens ────────────────────────────────────────────────
+      // The app renders edge-to-edge (`viewport-fit=cover`), so every fixed
+      // element has to keep clear of the notch / home indicator / rounded
+      // corners. These make that a utility (`pb-safe-b`, `pt-safe-t`) instead
+      // of the hand-written `env(safe-area-inset-*)` scattered through ~18
+      // components, which is how the insets drifted apart in the first place.
+      spacing: {
+        'safe-t': 'env(safe-area-inset-top, 0px)',
+        'safe-b': 'env(safe-area-inset-bottom, 0px)',
+        'safe-l': 'env(safe-area-inset-left, 0px)',
+        'safe-r': 'env(safe-area-inset-right, 0px)',
+        // Bottom nav (h-16) plus its inset — the most common composite here.
+        'nav-b': 'calc(4rem + env(safe-area-inset-bottom, 0px))',
+      },
+
       fontSize: {
         '2xs': ['10px', { lineHeight: '14px', letterSpacing: '0' }],
         '3xs': ['9px', { lineHeight: '12px', letterSpacing: '0' }],

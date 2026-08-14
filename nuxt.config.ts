@@ -137,6 +137,13 @@ export default defineNuxtConfig({
   // ── PWA ─────────────────────────────────────────────────────────────────────
   pwa: {
     registerType: 'autoUpdate',
+    // injectManifest, not generateSW: an SSR app cannot use Workbox's
+    // `navigateFallback` (it hijacks every navigation, not just failed ones).
+    // The routing/caching policy lives in service-worker/sw.ts — read the
+    // header comment there before changing anything here.
+    strategies: 'injectManifest',
+    srcDir: '../service-worker', // resolved against Nuxt's srcDir (app/)
+    filename: 'sw.ts',
     manifest: {
       name: 'MarketX',
       short_name: 'MarketX',
@@ -145,10 +152,23 @@ export default defineNuxtConfig({
       theme_color: '#F43F5E',
       background_color: '#0f172a',
       display: 'standalone',
-      orientation: 'portrait',
+      // Fallbacks for browsers that reject `standalone` — a tabless
+      // minimal-ui window still reads as an app, whereas dropping straight to
+      // `browser` loses the install entirely.
+      display_override: ['standalone', 'minimal-ui'],
+      // Deliberately NOT locked to portrait. The install target is every
+      // device: a locked orientation makes the tablet and desktop installs
+      // letterbox, and blocks landscape video on phones. Reels lock their own
+      // orientation at the component level where it actually applies.
+      orientation: 'any',
       scope: '/',
       start_url: '/?source=pwa',
       id: '/',
+      lang: 'en',
+      dir: 'ltr',
+      // Reuse the open app window instead of spawning a second one when a
+      // shortcut, share target or deep link is activated.
+      launch_handler: { client_mode: ['navigate-existing', 'auto'] },
       categories: ['shopping', 'business', 'social'],
       icons: [
         // PNG — required for iOS home screen (Safari ignores SVG icons)
@@ -208,34 +228,20 @@ export default defineNuxtConfig({
         },
       ],
     },
-    workbox: {
-      // Cache strategy: network-first for API, cache-first for static assets
-      navigateFallback: '/offline',
-      globPatterns: ['**/*.{js,css,html,svg,png,ico,webp,woff2}'],
-      runtimeCaching: [
-        {
-          // Cloudinary images — cache-first, 30 day TTL
-          urlPattern: /^https:\/\/res\.cloudinary\.com\/.*/,
-          handler: 'CacheFirst',
-          options: {
-            cacheName: 'cloudinary-images',
-            expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 },
-          },
-        },
-        {
-          // API responses — network-first, fall back to cache
-          urlPattern: /^https?:\/\/.*\/api\/.*/,
-          handler: 'NetworkFirst',
-          options: {
-            cacheName: 'api-cache',
-            expiration: { maxEntries: 100, maxAgeSeconds: 60 * 5 },
-            networkTimeoutSeconds: 10,
-          },
-        },
-      ],
+    injectManifest: {
+      // Icons only. Everything else (build chunks, images, fonts, public API
+      // reads) is cached lazily at runtime by sw.ts — precaching the whole
+      // bundle would download every route's JS on first visit, which is a real
+      // cost on a metered mobile plan and the majority of our traffic.
+      globPatterns: ['icons/**/*.{png,svg}', 'favicon.ico'],
     },
     client: {
-      installPrompt: true,
+      // localStorage key holding the "user dismissed the install nudge" flag —
+      // read by PwaInstallPrompt.vue via `$pwa.cancelInstall()`.
+      installPrompt: 'marketx:hide-install',
+      // Poll for a new worker hourly. Installed PWAs are opened for weeks
+      // without a cold start, so without this a deploy can go unnoticed.
+      periodicSyncForUpdates: 3600,
     },
     devOptions: {
       enabled: false, // disable in dev to avoid noise
@@ -343,7 +349,12 @@ export default defineNuxtConfig({
             "media-src 'self' blob: https://res.cloudinary.com",
             // res.cloudinary.com + picsum: the MarketX Card download (html-to-image)
             // must fetch the store's images to inline them into the captured PNG.
-            "connect-src 'self' https://api.paystack.co https://api.upstash.io https://api.iconify.design https://api.cloudinary.com https://res.cloudinary.com https://picsum.photos https://fastly.picsum.photos https://tiles.stadiamaps.com https://tiles.openfreemap.org https://api.maptiler.com https://*.cartocdn.com https://nominatim.openstreetmap.org https://*.tile.openstreetmap.org wss: ws:",
+            // fonts.googleapis/gstatic appear here as well as in style-src /
+            // font-src: once the service worker caches fonts it re-issues those
+            // requests itself, and a worker-initiated fetch is checked against
+            // connect-src, not font-src. Without them, fonts fail CSP for every
+            // SW-controlled page. See service-worker/sw.ts.
+            "connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com https://api.paystack.co https://api.upstash.io https://api.iconify.design https://api.cloudinary.com https://res.cloudinary.com https://picsum.photos https://fastly.picsum.photos https://tiles.stadiamaps.com https://tiles.openfreemap.org https://api.maptiler.com https://*.cartocdn.com https://nominatim.openstreetmap.org https://*.tile.openstreetmap.org wss: ws:",
             'frame-src https://checkout.paystack.com',
             "worker-src 'self' blob:",
           ].join('; '),

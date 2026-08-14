@@ -33,6 +33,42 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 
 @layer base {
+  /* ── Device behaviour ──────────────────────────────────────────────────
+     Cross-device defaults that only make sense at the document root. */
+  html {
+    /* iOS inflates text when a phone is rotated to landscape unless this is
+       pinned; the app has fixed type roles, so let them be the type roles. */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    /* Grey flash on every tap in Android Chrome / iOS Safari. Components own
+       their own :active states, so the UA one is pure noise. */
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Installed PWA only. With no address bar there is nothing above the page to
+     absorb an overscroll, so pull-to-refresh fires on any downward drag past
+     the top — losing feed position and in-progress forms with no visible
+     control to undo it. In a browser tab the gesture stays, since the reload
+     button is right there. */
+  @media (display-mode: standalone), (display-mode: minimal-ui) {
+    html,
+    body {
+      overscroll-behavior-y: contain;
+    }
+  }
+
+  /* iOS Safari zooms the viewport whenever a focused form control renders
+     below 16px, and never zooms back out — so the .t-* sizes on inputs
+     (sm 12px / md 14px) leave the user stranded mid-checkout on a zoomed page.
+     Phones get 16px controls; every other breakpoint keeps the design scale. */
+  @media (pointer: coarse) and (max-width: 767px) {
+    input,
+    select,
+    textarea {
+      font-size: 16px;
+    }
+  }
+
   /* Sensible defaults so raw/unclassed text already lands in the system.
      Explicit utility classes always win over these element defaults. */
   body {
