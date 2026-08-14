@@ -29,6 +29,9 @@ const schema = z.object({
   county: z.string().optional().default(''),
   shipState: z.string().max(100).optional(),
   shipPhone: z.string().max(30).optional(),
+  // Per-order WhatsApp opt-in for shipPhone. Absent = no consent; the
+  // buyer must actively tick the box at checkout for this to be true.
+  shipPhoneOptIn: z.boolean().optional().default(false),
   country: z.string().min(2).max(2),
   shippingCost: z.number().int().min(0).default(0),
   shippingZone: z.string().optional(),

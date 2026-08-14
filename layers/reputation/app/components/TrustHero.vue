@@ -374,9 +374,11 @@ watch(
       return
     }
     try {
-      // QR opens the seller's Trust tab directly — scan → verify.
+      // QR opens the seller's Trust tab directly — scan → verify. Uses the
+      // short /{slug} shopfront route: a scan is an outside entrance, so it
+      // lands in her chrome rather than the marketplace's.
       const base = String(config.public.baseURL || '').replace(/\/+$/, '')
-      const url = `${base}/sellers/profile/${f.store_slug}?tab=trust&mx_scan=card`
+      const url = `${base}/${encodeURIComponent(f.store_slug)}?tab=trust&mx_scan=card`
       qr.value = await QRCode.toDataURL(url, {
         width: 240,
         margin: 1,

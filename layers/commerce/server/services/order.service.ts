@@ -37,6 +37,9 @@ export interface PlaceOrderInput {
   shipState?: string
   /** Destination contact phone — carrier delivery contact. */
   shipPhone?: string
+  /** Buyer ticked "send delivery updates to this number on WhatsApp" at
+   *  checkout. The Meta opt-in for shipPhone; logistics messages only. */
+  shipPhoneOptIn?: boolean
   country: string
   paymentMethod?: string
   affiliateCode?: string
@@ -80,6 +83,7 @@ export const orderService = {
       county,
       shipState,
       shipPhone,
+      shipPhoneOptIn,
       country,
       paymentMethod,
       affiliateCode,
@@ -341,6 +345,8 @@ export const orderService = {
             county: county || '',
             ...(shipState ? { shipState } : {}),
             ...(shipPhone ? { shipPhone } : {}),
+            // Consent only means something alongside a number to send to.
+            shipPhoneOptIn: !!shipPhone && !!shipPhoneOptIn,
             country,
             totalAmount: groupTotal,
             shippingCost: groupShipping,

@@ -1,5 +1,7 @@
 <template>
-  <HomeLayout :narrow-feed="false" :hide-right-sidebar="true">
+  <!-- Marketplace chrome by default; the seller's own storefront chrome when
+       the visitor arrived from her shop. Same page, two intents: browse vs buy. -->
+  <component :is="layoutComponent" v-bind="layoutProps">
     <!-- Loading skeleton -->
     <div
       v-if="pending || status === 'idle'"
@@ -330,138 +332,47 @@
 
         <!-- ── Product Info ── -->
         <div class="flex flex-col gap-5">
-          <!-- Seller card -->
-          <div
+          <!-- Compact seller strip. The full trader card moved below the buy
+               block: on mobile it pushed title, price and Add to Cart a whole
+               screen down, so the buyer met a seller bio before the product. -->
+          <NuxtLink
             v-if="product.seller"
-            class="rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-neutral-800 dark:bg-neutral-800/50"
+            :to="storeLink(`/sellers/profile/${product.seller.store_slug}`)"
+            class="flex items-center gap-2 text-[13px] text-gray-600 transition-colors hover:text-brand dark:text-neutral-400"
           >
-            <div class="flex items-start gap-3">
-              <!-- Avatar -->
-              <NuxtLink :to="`/sellers/profile/${product.seller.store_slug}`">
-                <img
-                  v-if="product.seller.store_logo"
-                  :src="imgAvatar(product.seller.store_logo)"
-                  class="h-12 w-12 rounded-xl object-cover"
-                  loading="lazy"
-                  decoding="async"
-                />
-                <div
-                  v-else
-                  class="flex h-12 w-12 items-center justify-center rounded-xl bg-brand/10"
-                >
-                  <Icon
-                    name="solar:shop-2-linear"
-                    size="22"
-                    class="text-brand"
-                  />
-                </div>
-              </NuxtLink>
-
-              <!-- Info -->
-              <div class="min-w-0 flex-1">
-                <div class="flex flex-wrap items-center gap-1.5">
-                  <NuxtLink
-                    :to="`/sellers/profile/${product.seller.store_slug}`"
-                    class="ink-strong text-sm font-semibold hover:text-brand"
-                  >
-                    {{ product.seller.store_name || product.seller.store_slug }}
-                  </NuxtLink>
-                  <span
-                    v-if="product.seller.is_verified"
-                    class="flex items-center gap-0.5 rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
-                  >
-                    <Icon name="solar:verified-check-bold" size="10" />
-                    Verified
-                  </span>
-                  <span
-                    v-if="product.seller.isPremium"
-                    class="rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
-                  >
-                    Premium
-                  </span>
-                </div>
-                <div
-                  class="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[11px] text-gray-500 dark:text-neutral-400"
-                >
-                  <!-- Rating -->
-                  <span
-                    v-if="product.seller.averageRating"
-                    class="flex items-center gap-0.5"
-                  >
-                    <Icon
-                      name="solar:star-bold"
-                      size="11"
-                      class="text-amber-400"
-                    />
-                    {{ product.seller.averageRating.toFixed(1) }}
-                    <span class="opacity-60"
-                      >({{ product.seller.totalReviews }})</span
-                    >
-                  </span>
-                  <!-- Location -->
-                  <span
-                    v-if="
-                      product.seller.locationLabel ||
-                      product.seller.store_location
-                    "
-                    class="flex items-center gap-0.5"
-                  >
-                    <Icon name="solar:map-point-linear" size="11" />
-                    {{
-                      product.seller.locationLabel ||
-                      product.seller.store_location
-                    }}
-                  </span>
-                  <!-- Member since -->
-                  <span class="flex items-center gap-0.5">
-                    <Icon name="solar:calendar-linear" size="11" />
-                    Since {{ sellerMemberSince }}
-                  </span>
-                  <!-- POD badge -->
-                  <span
-                    v-if="product.seller.pod_enabled"
-                    class="flex items-center gap-0.5 text-emerald-600 dark:text-emerald-400"
-                  >
-                    <Icon name="solar:delivery-linear" size="11" />
-                    Pay on delivery
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Actions -->
-            <div class="mt-3 flex gap-2">
-              <NuxtLink
-                :to="`/sellers/profile/${product.seller.store_slug}`"
-                class="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-gray-200 py-2 text-xs font-semibold text-gray-700 transition-colors hover:border-brand hover:text-brand dark:border-neutral-700 dark:text-neutral-300"
-              >
-                <Icon name="solar:shop-2-linear" size="14" />
-                View Store
-              </NuxtLink>
-              <button
-                :disabled="messageLoading || !product.seller?.id"
-                class="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-brand px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#d81b36] disabled:opacity-60"
-                @click="messageStore"
-              >
-                <Icon
-                  :name="
-                    messageLoading
-                      ? 'eos-icons:loading'
-                      : 'solar:chat-round-line-linear'
-                  "
-                  size="14"
-                  :class="messageLoading ? 'animate-spin' : ''"
-                />
-                Chat with Seller
-              </button>
-            </div>
-          </div>
+            <img
+              v-if="product.seller.store_logo"
+              :src="imgAvatar(product.seller.store_logo)"
+              alt=""
+              class="h-6 w-6 shrink-0 rounded-lg object-cover"
+              loading="lazy"
+              decoding="async"
+            />
+            <span class="truncate font-semibold">
+              {{ product.seller.store_name || product.seller.store_slug }}
+            </span>
+            <Icon
+              v-if="product.seller.is_verified"
+              name="solar:verified-check-bold"
+              size="13"
+              class="shrink-0 text-emerald-500"
+              aria-label="Verified"
+            />
+            <span
+              v-if="product.seller.averageRating"
+              class="flex shrink-0 items-center gap-0.5 text-[12px]"
+            >
+              <Icon name="solar:star-bold" size="11" class="text-amber-400" />
+              {{ product.seller.averageRating.toFixed(1) }}
+            </span>
+          </NuxtLink>
 
           <!-- Title & price -->
           <div>
-            <!-- Market — the good lives inside a market square -->
+            <!-- Market — the good lives inside a market square. Hidden in a
+                 storefront for the same reason as the market rail below. -->
             <NuxtLink
-              v-if="product.square"
+              v-if="!inStorefront && product.square"
               :to="`/squares/${product.square.slug}`"
               class="mb-1.5 inline-flex items-center gap-1 rounded-full bg-brand/5 px-2.5 py-1 text-[12px] font-medium text-brand transition hover:bg-brand/10"
             >
@@ -663,6 +574,133 @@
             >
               <Icon name="solar:share-linear" size="16" />
             </BaseButton>
+          </div>
+
+          <!-- Full trader card — after the buy decision, not before it. -->
+          <div
+            v-if="product.seller"
+            class="rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-neutral-800 dark:bg-neutral-800/50"
+          >
+            <div class="flex items-start gap-3">
+              <!-- Avatar -->
+              <NuxtLink :to="`/sellers/profile/${product.seller.store_slug}`">
+                <img
+                  v-if="product.seller.store_logo"
+                  :src="imgAvatar(product.seller.store_logo)"
+                  class="h-12 w-12 rounded-xl object-cover"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <div
+                  v-else
+                  class="flex h-12 w-12 items-center justify-center rounded-xl bg-brand/10"
+                >
+                  <Icon
+                    name="solar:shop-2-linear"
+                    size="22"
+                    class="text-brand"
+                  />
+                </div>
+              </NuxtLink>
+
+              <!-- Info -->
+              <div class="min-w-0 flex-1">
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <NuxtLink
+                    :to="`/sellers/profile/${product.seller.store_slug}`"
+                    class="ink-strong text-sm font-semibold hover:text-brand"
+                  >
+                    {{ product.seller.store_name || product.seller.store_slug }}
+                  </NuxtLink>
+                  <span
+                    v-if="product.seller.is_verified"
+                    class="flex items-center gap-0.5 rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+                  >
+                    <Icon name="solar:verified-check-bold" size="10" />
+                    Verified
+                  </span>
+                  <span
+                    v-if="product.seller.isPremium"
+                    class="rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
+                  >
+                    Premium
+                  </span>
+                </div>
+                <div
+                  class="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[11px] text-gray-500 dark:text-neutral-400"
+                >
+                  <!-- Rating -->
+                  <span
+                    v-if="product.seller.averageRating"
+                    class="flex items-center gap-0.5"
+                  >
+                    <Icon
+                      name="solar:star-bold"
+                      size="11"
+                      class="text-amber-400"
+                    />
+                    {{ product.seller.averageRating.toFixed(1) }}
+                    <span class="opacity-60"
+                      >({{ product.seller.totalReviews }})</span
+                    >
+                  </span>
+                  <!-- Location -->
+                  <span
+                    v-if="
+                      product.seller.locationLabel ||
+                      product.seller.store_location
+                    "
+                    class="flex items-center gap-0.5"
+                  >
+                    <Icon name="solar:map-point-linear" size="11" />
+                    {{
+                      product.seller.locationLabel ||
+                      product.seller.store_location
+                    }}
+                  </span>
+                  <!-- Member since -->
+                  <span class="flex items-center gap-0.5">
+                    <Icon name="solar:calendar-linear" size="11" />
+                    Since {{ sellerMemberSince }}
+                  </span>
+                  <!-- POD badge -->
+                  <span
+                    v-if="product.seller.pod_enabled"
+                    class="flex items-center gap-0.5 text-emerald-600 dark:text-emerald-400"
+                  >
+                    <Icon name="solar:delivery-linear" size="11" />
+                    Pay on delivery
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="mt-3 flex gap-2">
+              <NuxtLink
+                :to="`/sellers/profile/${product.seller.store_slug}`"
+                class="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-gray-200 py-2 text-xs font-semibold text-gray-700 transition-colors hover:border-brand hover:text-brand dark:border-neutral-700 dark:text-neutral-300"
+              >
+                <Icon name="solar:shop-2-linear" size="14" />
+                View Store
+              </NuxtLink>
+              <button
+                :disabled="messageLoading || !product.seller?.id"
+                class="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-brand px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#d81b36] disabled:opacity-60"
+                @click="messageStore"
+              >
+                <Icon
+                  :name="
+                    messageLoading
+                      ? 'eos-icons:loading'
+                      : 'solar:chat-round-line-linear'
+                  "
+                  size="14"
+                  :class="messageLoading ? 'animate-spin' : ''"
+                />
+                Chat with Seller
+              </button>
+            </div>
           </div>
 
           <!-- Affiliate card — visible only to enrolled affiliates, on affiliatable products -->
@@ -890,7 +928,12 @@
       </section>
 
       <!-- ── More from this market ── -->
-      <section v-if="product.square && marketProducts.length" class="mt-10">
+      <!-- Suppressed inside a storefront: sending her customer to a market
+           full of competitors is the exact leak sellers object to. -->
+      <section
+        v-if="!inStorefront && product.square && marketProducts.length"
+        class="mt-10"
+      >
         <div class="mb-3 flex items-center justify-between">
           <h2 class="t-heading text-lg">More from {{ product.square.name }}</h2>
           <NuxtLink
@@ -914,7 +957,9 @@
       </section>
 
       <!-- ── Recently viewed ── -->
-      <section v-if="recentlyViewedItems.length" class="mt-10">
+      <!-- Also marketplace-only. Whatever the buyer looked at elsewhere is,
+           by definition, not this seller's stock. -->
+      <section v-if="!inStorefront && recentlyViewedItems.length" class="mt-10">
         <h2 class="t-heading mb-3 text-lg">Recently viewed</h2>
         <div
           class="rail-scroll -mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-2"
@@ -991,7 +1036,7 @@
         @close="showAffiliateCard = false"
       />
     </div>
-  </HomeLayout>
+  </component>
 </template>
 
 <script setup lang="ts">
@@ -1004,6 +1049,8 @@ import { useRoute } from 'vue-router'
 import { sanitizeHtml } from '~~/layers/commerce/utils/sanitizeHtml'
 import { variantLabel } from '~~/layers/commerce/utils/variants'
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
+import StorefrontLayout from '~~/layers/seller/app/layouts/StorefrontLayout.vue'
+import { useStorefront } from '~~/layers/seller/app/composables/useStorefront'
 import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 import VideoPlayer from '~~/layers/core/app/components/VideoPlayer.vue'
 import ProductReviews from '~~/layers/commerce/app/components/ProductReviews.vue'
@@ -1066,6 +1113,24 @@ const { data, pending, status } = useLazyAsyncData(
 )
 const product = computed(() => data.value?.data ?? null)
 
+// ── Storefront vs marketplace ────────────────────────────────────────────────
+// Keyed on the arrival marker alone, NOT on a seller match against the fetched
+// product. Product data is client-only (`server: false` below), so a
+// data-dependent check is false during SSR and flips true after hydration —
+// swapping :is on the layout, which remounts the whole shell as a visible
+// flash of marketplace chrome on every storefront product view. The marker is
+// known from the URL at first paint, so this renders right the first time.
+const { isStorefront, storeLink } = useStorefront()
+const inStorefront = isStorefront
+const layoutComponent = computed(() =>
+  inStorefront.value ? StorefrontLayout : HomeLayout,
+)
+const layoutProps = computed(() =>
+  inStorefront.value
+    ? { store: product.value?.seller }
+    : { narrowFeed: false, hideRightSidebar: true },
+)
+
 // SSR-resolved copy — so social scrapers and search crawlers (no JS) receive the
 // product's OG meta in the server HTML. Mirrors the store page's `store-seo-*`
 // fetch. Prefer the live client product once it has loaded.
@@ -1123,7 +1188,7 @@ const loadRelated = async () => {
   }
 }
 
-const goToProduct = (p: IProduct) => navigateTo(`/product/${p.slug}`)
+const goToProduct = (p: IProduct) => navigateTo(storeLink(`/product/${p.slug}`))
 
 // ── Message the trader (creates/opens the store conversation) ────────────────
 const chatApi = useChatApi()

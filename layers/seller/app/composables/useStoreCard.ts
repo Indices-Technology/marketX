@@ -46,10 +46,16 @@ export function useStoreCard() {
 
   // The card is a Trust Card: its QR opens the seller's Trust tab (scan → verify),
   // not the plain storefront.
+  //
+  // Points at the short /{slug} shopfront route — a printed card is an outside
+  // entrance, so it should land in her chrome, not the marketplace's. The short
+  // form is also the shorter string, which means a less dense QR and an easier
+  // scan off a paper card in bad light.
   const qrTarget = computed(() => {
     if (!seller.value) return ''
     const base = String(config.public.baseURL || '').replace(/\/+$/, '')
-    return `${base}/sellers/profile/${seller.value.store_slug}?tab=trust&mx_scan=card`
+    const slug = encodeURIComponent(seller.value.store_slug)
+    return `${base}/${slug}?tab=trust&mx_scan=card`
   })
 
   watch(qrTarget, async (url) => {

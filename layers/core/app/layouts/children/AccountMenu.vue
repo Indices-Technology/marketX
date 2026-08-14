@@ -98,11 +98,14 @@ const items = computed<MenuEntry[]>(() => {
   ]
 
   if (sellerStore.hasSellers) {
+    // Label the destination, not the "mode". One name — "Seller Hub" — across
+    // the desktop rail, this menu and the mobile dock, so the same tap target
+    // isn't called three different things depending on where you found it.
     entries.push(
       isSellerRoute.value
-        ? { label: 'Switch to Buyer Mode', to: '/', icon: 'solar:bag-4-linear' }
+        ? { label: 'Back to Shopping', to: '/', icon: 'solar:bag-4-linear' }
         : {
-            label: 'Switch to Seller Mode',
+            label: 'Seller Hub',
             to:
               sellerStore.sellers.length === 1
                 ? `/seller/${sellerStore.sellers[0].store_slug}/dashboard`

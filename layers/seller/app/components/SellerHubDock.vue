@@ -15,7 +15,13 @@
   Selling" banner, which serves the inverse audience; the two are mutually
   exclusive by construction (hasSellers).
 
-  Destination mirrors SideNav/AccountMenu exactly: one store goes straight to its
+  Persistent, but not unconditionally: it rides with the bottom nav (hidden while
+  the user scrolls down into content) and stays out of focused task routes — see
+  SUPPRESSED. HomeLayout is the shell for ~35 pages, so "always on" would mean
+  following the seller all the way into checkout.
+
+  Named "Seller Hub" to match the desktop rail and the account menu — one tap
+  target, one name. Destination mirrors them too: one store goes straight to its
   dashboard, several land on the chooser.
 -->
 <template>
@@ -65,13 +71,13 @@
           <span
             class="shrink-0 whitespace-nowrap rounded-xl bg-brand px-3 py-1.5 text-[11px] font-bold text-white shadow-sm"
           >
-            Dashboard →
+            Seller Hub →
           </span>
         </NuxtLink>
 
         <button
           class="shrink-0 p-1 text-gray-400 hover:text-gray-600 dark:text-neutral-500 dark:hover:text-neutral-300"
-          aria-label="Hide seller dashboard shortcut"
+          aria-label="Hide Seller Hub shortcut"
           @click="dismissed = true"
         >
           <Icon name="solar:close-circle-linear" size="16" />
@@ -83,9 +89,16 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import { useSellerStore } from '~~/layers/seller/app/store/seller.store'
 import { useOrderApi } from '~~/layers/commerce/app/services/order.api'
+
+const props = defineProps<{
+  /** Mirrors HomeLayout's bottom-nav visibility — the dock sits directly on top
+      of that bar, so it rides with it instead of hovering over content alone. */
+  navVisible?: boolean
+}>()
 
 // The floating AI chat button occupies the same corner and has to lift clear
 // when this dock is up (same contract HomeLayout's "Start Selling" banner uses
@@ -93,6 +106,7 @@ import { useOrderApi } from '~~/layers/commerce/app/services/order.api'
 // dismiss state lives here.
 const emit = defineEmits<{ visibility: [boolean] }>()
 
+const route = useRoute()
 const profileStore = useProfileStore()
 const sellerStore = useSellerStore()
 const orderApi = useOrderApi()
@@ -102,8 +116,39 @@ const orderApi = useOrderApi()
 // the "where is my dashboard?" problem this component exists to solve.
 const dismissed = ref(false)
 
+/**
+ * Surfaces where a persistent shortcut is noise rather than help.
+ *
+ * HomeLayout is the shell for ~35 pages, not just the feed, so without this the
+ * dock follows the seller into checkout and their own dashboard. Two kinds of
+ * route are excluded: focused tasks with their own primary action competing for
+ * the same thumb position (checkout, messages, support, settings), and places
+ * where it would point at the page you're already on (/seller, /sellers).
+ */
+const SUPPRESSED = [
+  '/checkout',
+  '/success',
+  '/messages',
+  '/support',
+  '/settings',
+  '/seller',
+  '/sellers',
+  '/user-login',
+  '/user-register',
+]
+
+const routeAllows = computed(
+  () =>
+    !SUPPRESSED.some((p) => route.path === p || route.path.startsWith(`${p}/`)),
+)
+
 const visible = computed(
-  () => !dismissed.value && profileStore.isLoggedIn && sellerStore.hasSellers,
+  () =>
+    !dismissed.value &&
+    profileStore.isLoggedIn &&
+    sellerStore.hasSellers &&
+    routeAllows.value &&
+    props.navVisible !== false,
 )
 
 watch(visible, (v) => emit('visibility', v), { immediate: true })
@@ -155,9 +200,14 @@ const loadPendingOrders = async () => {
 
 onMounted(loadPendingOrders)
 
-// The seller store hydrates asynchronously after login (auth-init plugin), so
-// on a fresh sign-in the slug usually isn't there yet when this first mounts.
-watch(() => primaryStore.value?.store_slug, loadPendingOrders)
+// Re-check on navigation as well as on store change. Mount-only went stale the
+// moment a seller fulfilled something: they'd ship three orders, come back, and
+// still be told "3 orders awaiting you" until a full page reload. Cheap enough
+// to repeat — it's a single count, and BaseApiClient dedups in-flight GETs.
+watch(
+  () => [primaryStore.value?.store_slug, route.path] as const,
+  loadPendingOrders,
+)
 </script>
 
 <style scoped>

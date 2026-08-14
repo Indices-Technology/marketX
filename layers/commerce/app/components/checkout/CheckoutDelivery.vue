@@ -8,6 +8,34 @@
       Delivery Details
     </h2>
 
+    <!-- Rendered here rather than inside either address branch so it shows on
+         both the saved-address and new-address paths. This tick is the Meta
+         opt-in for messaging the delivery number, so it has to be a real,
+         visible choice — never an assumption buried in terms. -->
+    <label
+      v-if="form.phone"
+      class="mb-4 flex cursor-pointer items-start gap-2.5 rounded-xl bg-gray-50 px-3.5 py-3 dark:bg-neutral-800/60"
+    >
+      <input
+        v-model="form.notifyShipPhone"
+        type="checkbox"
+        class="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-brand focus:ring-brand dark:border-neutral-600"
+      />
+      <span class="min-w-0">
+        <span
+          class="block text-[13px] font-medium text-gray-800 dark:text-neutral-200"
+        >
+          Send delivery updates to {{ form.phone }} on WhatsApp
+        </span>
+        <span
+          class="mt-0.5 block text-[11px] text-gray-500 dark:text-neutral-400"
+        >
+          Dispatch and arrival only. Payment and receipt details go to your
+          account, not this number.
+        </span>
+      </span>
+    </label>
+
     <!-- Saved address cards -->
     <div v-if="savedAddresses.length" class="mb-4 space-y-2">
       <button
@@ -90,30 +118,71 @@
             : 'Add / use different address'
         }}
       </button>
+
+      <!-- Saved address with no phone on file. The carrier needs a number to
+           deliver, so ask for just that instead of reopening the full form. -->
+      <div
+        v-if="!showNewAddressForm && selectedAddressId && !form.phone"
+        class="pt-1"
+      >
+        <BaseInput
+          v-model="form.phone"
+          type="tel"
+          label="Phone"
+          required
+          autocomplete="tel"
+          hint="The rider calls this number on delivery"
+          placeholder="+234 801 234 5678"
+        />
+      </div>
     </div>
 
     <!-- Address form -->
     <div v-if="!savedAddresses.length || showNewAddressForm" class="space-y-3">
+      <!-- Required fields only. Email and postcode live behind the disclosure
+           below — neither is needed to place or deliver an order, and on a
+           phone every extra input is a reason to abandon. -->
       <div class="grid grid-cols-2 gap-3">
         <div class="col-span-2">
-          <BaseInput v-model="form.name" label="Full Name" placeholder="Your full name" />
-        </div>
-        <div class="col-span-2">
           <BaseInput
-            v-model="form.email"
-            type="email"
-            label="Email"
-            hint="Used for payment receipt"
-            placeholder="you@example.com"
+            v-model="form.name"
+            label="Full Name"
+            required
+            autocomplete="name"
+            placeholder="Your full name"
           />
         </div>
         <div class="col-span-2">
-          <BaseInput v-model="form.address" label="Delivery Address" placeholder="Street address" />
+          <BaseInput
+            v-model="form.phone"
+            type="tel"
+            label="Phone"
+            required
+            autocomplete="tel"
+            :hint="
+              phoneIsVerified
+                ? 'Your verified MarketX number'
+                : 'The rider calls this number on delivery'
+            "
+            placeholder="+234 801 234 5678"
+          />
+        </div>
+        <div class="col-span-2">
+          <BaseInput
+            v-model="form.address"
+            label="Delivery Address"
+            required
+            autocomplete="street-address"
+            placeholder="Street, area, nearest landmark"
+          />
         </div>
         <div v-if="isNigeria">
-          <label class="mb-1 block text-xs font-medium text-gray-500 dark:text-neutral-400">State</label>
+          <label class="t-label mb-1.5 block">
+            State <span class="ml-0.5 text-brand" aria-hidden="true">*</span>
+          </label>
           <select
             v-model="form.state"
+            autocomplete="address-level1"
             class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
             @change="emit('address-changed')"
           >
@@ -122,29 +191,76 @@
           </select>
         </div>
         <div v-else>
-          <BaseInput v-model="form.state" label="State / Province" placeholder="State" />
+          <BaseInput
+            v-model="form.state"
+            label="State / Province"
+            autocomplete="address-level1"
+            placeholder="State"
+          />
         </div>
         <div>
-          <BaseInput v-model="form.county" label="City / LGA" placeholder="e.g. Ikeja" />
-        </div>
-        <div>
-          <BaseInput v-model="form.zipcode" label="Postal Code" placeholder="100001" />
+          <BaseInput
+            v-model="form.county"
+            label="City / LGA"
+            autocomplete="address-level2"
+            placeholder="e.g. Ikeja"
+          />
         </div>
         <div class="col-span-2">
-          <BaseInput v-model="form.phone" type="tel" label="Phone" placeholder="+2348012345678" />
-        </div>
-        <div>
-          <label class="mb-1 block text-xs font-medium text-gray-500 dark:text-neutral-400">Country</label>
+          <label class="t-label mb-1.5 block">Country</label>
           <select
             v-model="form.country"
+            autocomplete="country"
             class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
             @change="onCountryChange"
           >
-            <option value="">Select country</option>
             <option v-for="c in COUNTRIES" :key="c.code" :value="c.code">
               {{ c.name }}
             </option>
           </select>
+        </div>
+      </div>
+
+      <!-- Optional extras. Auto-opened outside Nigeria, where a postcode
+           actually carries routing information. -->
+      <button
+        v-if="!showOptionalFields"
+        type="button"
+        class="flex max-w-full items-center gap-1.5 text-[12px] font-semibold text-gray-500 transition-colors hover:text-brand dark:text-neutral-400"
+        @click="showOptional = true"
+      >
+        <Icon
+          :name="form.email ? 'solar:letter-linear' : 'solar:add-circle-linear'"
+          size="14"
+          class="shrink-0"
+        />
+        <span class="truncate">
+          {{
+            form.email
+              ? `Receipt to ${form.email} — change`
+              : 'Add email or postcode (optional)'
+          }}
+        </span>
+      </button>
+      <div v-else class="grid grid-cols-2 gap-3">
+        <div class="col-span-2">
+          <BaseInput
+            v-model="form.email"
+            type="email"
+            label="Email"
+            autocomplete="email"
+            hint="Optional — for a payment receipt"
+            placeholder="you@example.com"
+          />
+        </div>
+        <div class="col-span-2">
+          <BaseInput
+            v-model="form.zipcode"
+            label="Postal Code"
+            autocomplete="postal-code"
+            hint="Optional"
+            placeholder="100001"
+          />
         </div>
       </div>
 
@@ -214,6 +330,7 @@ interface DeliveryForm {
   zipcode: string
   country: string
   phone: string
+  notifyShipPhone: boolean
 }
 
 const props = defineProps<{ form: DeliveryForm }>()
@@ -230,6 +347,23 @@ const showNewAddressForm = ref(false)
 const showSavePanel = ref(false)
 const saveLabel = ref('')
 const isSaving = ref(false)
+const showOptional = ref(false)
+
+// Outside Nigeria a postcode is real routing data, so open the extras there
+// automatically. Inside it, they stay collapsed: a prefilled email is already
+// correct, and surfacing it as an input just invites needless typing.
+const showOptionalFields = computed(
+  () => showOptional.value || !isNigeria.value,
+)
+
+// The phone captured at signup via WhatsApp OTP. Verified, so it beats
+// retyping — and worth labelling as verified when it is what's in the field.
+const verifiedPhone = computed(() =>
+  profileStore.me?.phoneVerified ? profileStore.me?.phone || '' : '',
+)
+const phoneIsVerified = computed(
+  () => !!verifiedPhone.value && props.form.phone === verifiedPhone.value,
+)
 
 const selectSavedAddress = (addr: ISavedAddress) => {
   selectedAddressId.value = addr.id
@@ -240,7 +374,9 @@ const selectSavedAddress = (addr: ISavedAddress) => {
   props.form.state = addr.state
   props.form.zipcode = addr.zipcode
   props.form.country = addr.country
-  props.form.phone = addr.phone
+  // Older saved addresses predate the phone requirement; fall back to the
+  // verified signup number rather than leaving the carrier without one.
+  props.form.phone = addr.phone || verifiedPhone.value
   emit('address-changed')
 }
 
@@ -308,8 +444,8 @@ const deleteAddress = async (id: number) => {
           county: '',
           state: '',
           zipcode: '',
-          country: '',
-          phone: '',
+          country: 'NG',
+          phone: verifiedPhone.value,
         })
       }
     }
@@ -319,8 +455,12 @@ const deleteAddress = async (id: number) => {
 }
 
 onMounted(async () => {
-  if (profileStore.isLoggedIn) {
-    await loadAddresses()
+  if (!profileStore.isLoggedIn) return
+  await loadAddresses()
+  // After addresses settle, so a phone stored on the chosen address wins.
+  // Only fills a gap; never overwrites what the buyer already has.
+  if (!props.form.phone && verifiedPhone.value) {
+    props.form.phone = verifiedPhone.value
   }
 })
 

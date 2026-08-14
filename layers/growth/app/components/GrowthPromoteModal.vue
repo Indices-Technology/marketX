@@ -49,9 +49,12 @@
         <!-- Connected -->
         <div v-else-if="tiktokState === 'ready'" class="space-y-2">
           <div class="flex items-center justify-between gap-2">
-            <p v-if="creatorInfo?.nickname" class="text-xs text-gray-500 dark:text-neutral-400">
-              Posting as <span class="font-semibold">{{ creatorInfo.nickname }}</span>
-            </p>
+            <div v-if="creatorInfo?.nickname" class="flex items-center gap-2">
+              <BaseAvatar :src="creatorInfo.avatarUrl" :name="creatorInfo.nickname" size="xs" />
+              <p class="text-xs text-gray-500 dark:text-neutral-400">
+                Posting as <span class="font-semibold">{{ creatorInfo.nickname }}</span>
+              </p>
+            </div>
             <button
               type="button"
               class="text-[11px] font-medium text-gray-400 hover:text-red-500 disabled:opacity-50 dark:text-neutral-500"
@@ -220,6 +223,7 @@ import BaseModal from '~~/layers/ui/app/components/BaseModal.vue'
 import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 import BaseSelect from '~~/layers/ui/app/components/BaseSelect.vue'
 import BaseInput from '~~/layers/ui/app/components/BaseInput.vue'
+import BaseAvatar from '~~/layers/ui/app/components/BaseAvatar.vue'
 import ProductShareCard from '~~/layers/commerce/app/components/product-card/ProductShareCard.vue'
 import { useCardCapture } from '~~/layers/seller/app/composables/useCardCapture'
 import { useGrowthAsset } from '~~/layers/growth/app/composables/useGrowthAsset'

@@ -172,7 +172,8 @@
         sellerDockVisible ||
         (!dismissSellerBanner &&
           profileStore.isLoggedIn &&
-          !sellerStore.hasSellers)
+          !sellerStore.hasSellers &&
+          bottomNavVisible)
       "
       @open="showAI = true"
       @close="showAI = false"
@@ -182,7 +183,10 @@
          the "Start Selling" pitch below. Mutually exclusive on hasSellers, so
          they never contend for the same slot. -->
     <ClientOnly>
-      <SellerHubDock @visibility="sellerDockVisible = $event" />
+      <SellerHubDock
+        :nav-visible="bottomNavVisible"
+        @visibility="sellerDockVisible = $event"
+      />
     </ClientOnly>
 
     <ClientOnly>
@@ -191,7 +195,8 @@
           v-if="
             !dismissSellerBanner &&
             profileStore.isLoggedIn &&
-            !sellerStore.hasSellers
+            !sellerStore.hasSellers &&
+            bottomNavVisible
           "
           class="fixed bottom-16 left-0 right-0 z-20 px-3 pb-2 md:hidden"
         >

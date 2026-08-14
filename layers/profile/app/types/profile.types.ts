@@ -7,6 +7,8 @@ export interface IProfile extends ProfileModel {
   profileUrl?: string
   profileStats?: IProfileStats
   sellerProfile?: ISellerProfile
+  /// camelCase mirror of `phone_verified`, as returned by GET /api/profile.
+  phoneVerified?: boolean
 }
 
 export interface IProfileStats {

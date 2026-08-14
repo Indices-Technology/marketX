@@ -1,5 +1,9 @@
 ﻿<template>
-  <HomeLayout :narrow-feed="false" :hide-right-sidebar="false">
+  <!-- Two entrances, one page. Arrived from the seller's shared link (/{slug} -> ?store=)
+       -> her storefront chrome, nothing competing for the click. Arrived by
+       browsing the marketplace -> marketplace chrome, so the visitor keeps
+       the nav they were using and is never stranded in a shop. -->
+  <component :is="layoutComponent" v-bind="layoutProps">
     <div
       class="pb-[max(5rem,_calc(1.5rem_+_env(safe-area-inset-bottom)))] md:pb-6"
     >
@@ -915,7 +919,7 @@
       :is-owner="isOwnStore"
       @close="showCard = false"
     />
-  </HomeLayout>
+  </component>
 </template>
 
 <script setup lang="ts">
@@ -923,6 +927,8 @@ import { ref, reactive, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { useRoute } from 'vue-router'
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
+import StorefrontLayout from '~~/layers/seller/app/layouts/StorefrontLayout.vue'
+import { useStorefront } from '~~/layers/seller/app/composables/useStorefront'
 import ProductCardMini from '~~/layers/commerce/app/components/ProductCardMini.vue'
 import { useProductDetail } from '~~/layers/commerce/app/composables/useProductDetail'
 import { imgAvatar, cloudinaryUrl } from '~~/layers/core/app/utils/cloudinary'
@@ -953,8 +959,26 @@ import WallShoutoutComposer from '~~/layers/social/app/components/wall/WallShout
 import WallPostCard from '~~/layers/social/app/components/wall/WallPostCard.vue'
 
 const route = useRoute()
-const storeSlug =
-  (route.params.storeSlug as string) || (route.params.store_slug as string)
+// Served by two routes: /sellers/profile/{slug} (marketplace) and /{slug} (the
+// seller's shopfront, param name `store`). Strip a leading @ so /@jane works.
+const storeSlug = (
+  (route.params.storeSlug as string) ||
+  (route.params.store_slug as string) ||
+  (route.params.store as string) ||
+  ''
+).replace(/^@/, '')
+
+// Two URLs serving one page needs a canonical or they compete in search. The
+// short form wins it: that is what sellers hand out, so it is what accumulates
+// inbound links.
+useHead({
+  link: [
+    {
+      rel: 'canonical',
+      href: `${String(useRuntimeConfig().public.baseURL || '').replace(/\/+$/, '')}/${storeSlug}`,
+    },
+  ],
+})
 
 // SSR-fetch the store so the OG/Twitter meta (incl. the Cloudinary card image)
 // is in the server HTML — the only thing link-preview crawlers (WhatsApp,
@@ -996,6 +1020,20 @@ const activeTab = ref(
 const visitedTabs = reactive(new Set<string>([activeTab.value]))
 watch(activeTab, (t) => visitedTabs.add(t))
 const seller = computed(() => currentSeller.value)
+
+// ── Storefront vs marketplace ────────────────────────────────────────────────
+// Matched against THIS store's slug, so a stale ?store= carried in from another
+// seller's shop can never dress this page in the wrong shopkeeper's chrome.
+const { isStorefrontOf } = useStorefront()
+const inStorefront = computed(() => isStorefrontOf(storeSlug))
+const layoutComponent = computed(() =>
+  inStorefront.value ? StorefrontLayout : HomeLayout,
+)
+const layoutProps = computed(() =>
+  inStorefront.value
+    ? { store: seller.value }
+    : { narrowFeed: false, hideRightSidebar: false },
+)
 // Render-time guard — neutralizes any javascript:/data: URL persisted before
 // input validation was tightened (stored-XSS defense-in-depth)
 const safeStoreWebsite = computed(() =>
