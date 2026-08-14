@@ -6,6 +6,8 @@
  * - Private/auth pages get robots: noindex automatically.
  * - Titles follow the pattern: "Page Title | MarketX"
  * - OG images fall back to /og-default.png when no specific image exists.
+ * - Structured data is emitted by the setters too (see useJsonLd), so a page
+ *   never has to know which schema.org type it is.
  *
  * Usage:
  *   const { setStorePage } = useSeo()
@@ -16,6 +18,39 @@ import {
   storeCardImage,
   productCardImage,
 } from '~~/layers/core/app/utils/cardImage'
+import {
+  breadcrumbSchema,
+  organizationSchema,
+  productSchema,
+  storeSchema,
+  useJsonLd,
+  webSiteSchema,
+} from '~~/layers/core/app/composables/useJsonLd'
+
+/**
+ * ISO 4217 code for schema.org offers and the OG product extensions. Prices are
+ * stored and displayed in Naira; the exchange-rate endpoint converts for
+ * display only, so the canonical offer currency is always NGN.
+ */
+const CURRENCY = 'NGN'
+
+/**
+ * Routes that render identical content under more than one URL. Each entry
+ * rewrites the duplicate to the URL that should own the ranking.
+ *
+ * A seller's store is reachable at BOTH `/{slug}` (the vanity URL on the Trust
+ * Card, QR codes and WhatsApp bios) and `/sellers/profile/{slug}` (what
+ * internal links point at, to skip a redirect hop). Neither redirects — that is
+ * deliberate, see layers/seller/app/pages/[store].vue — so without this the two
+ * compete as duplicates and split their own link equity. The vanity URL wins,
+ * because it is the one that collects external links.
+ */
+const CANONICAL_REWRITES: Array<[RegExp, string]> = [
+  [/^\/sellers\/profile\/([^/]+)\/?$/, '/$1'],
+  // `/@amara` and `/amara` resolve to the same storefront ([store].vue strips
+  // the leading @), so fold the handle form into the plain one.
+  [/^\/@([^/]+)\/?$/, '/$1'],
+]
 
 export const useSeo = () => {
   const config = useRuntimeConfig()
@@ -25,9 +60,32 @@ export const useSeo = () => {
 
   // ── Shared head defaults (call once in app.vue or a layout) ──────────────
   const defaults = () => {
+    const route = useRoute()
+
+    /**
+     * One canonical for the whole app, derived from the path.
+     *
+     * Deriving it beats setting it per-page: it cannot be forgotten, and it
+     * drops the query string — which matters because so much traffic arrives
+     * carrying one (`?source=pwa`, `?source=pwa-shortcut`, `?ref=` affiliate
+     * codes, `?store=`, discover filters). Every one of those is a separate URL
+     * to a crawler, all serving the same page.
+     */
+    const canonical = () => {
+      let path = route.path.replace(/\/+$/, '') || '/'
+      for (const [pattern, replacement] of CANONICAL_REWRITES) {
+        if (pattern.test(path)) {
+          path = path.replace(pattern, replacement)
+          break
+        }
+      }
+      return `${baseURL}${path === '/' ? '' : path}` || baseURL
+    }
+
     useHead({
       titleTemplate: (t) => (t ? `${t} | ${siteName}` : siteName),
       htmlAttrs: { lang: 'en' },
+      link: [{ key: 'canonical', rel: 'canonical', href: canonical }],
     })
     useSeoMeta({
       ogSiteName: siteName,
@@ -36,6 +94,11 @@ export const useSeo = () => {
       twitterCard: 'summary_large_image',
       twitterSite: BRAND.twitterHandle,
     })
+
+    // Site-wide identity. Emitted once, here, so every page inherits the
+    // publisher graph that Product/Store schemas reference by @id.
+    useJsonLd('organization', organizationSchema({ siteName, baseURL }))
+    useJsonLd('website', webSiteSchema({ siteName, baseURL }))
   }
 
   // ── Public pages ─────────────────────────────────────────────────────────
@@ -44,7 +107,10 @@ export const useSeo = () => {
     const desc = `Buy safely from trusted Nigerian businesses on ${siteName}. Verify any seller, pay protected with escrow, and release funds only when your order arrives.`
     const title = `${siteName} — Buy safely from trusted Nigerian businesses`
     useSeoMeta({
-      title: siteName,
+      // Not `siteName`: titleTemplate appends " | MarketX", so passing the brand
+      // here rendered the home page — the most valuable title on the site — as
+      // "MarketX | MarketX". The value proposition carries the keywords instead.
+      title: 'Buy safely from trusted Nigerian businesses',
       description: desc,
       ogTitle: title,
       ogDescription: desc,
@@ -116,15 +182,49 @@ export const useSeo = () => {
     })
   }
 
+  /**
+   * /verify — the guest-facing "is this seller safe to pay?" door.
+   *
+   * Worth its own setter: it is the one page that answers a query buyers
+   * already type ("is <shop> legit"), it is reachable straight from a QR scan
+   * with no session, and it shipped with no meta at all — so it had no title,
+   * no description and no preview anywhere it was shared.
+   */
+  const setVerifyPage = () => {
+    const desc = `Check any Nigerian seller before you pay. Look up a store on ${siteName} to see verification status, trust tier, and real order history — free, no account needed.`
+    useSeoMeta({
+      title: 'Verify a seller before you pay',
+      description: desc,
+      ogTitle: `Verify a seller before you pay | ${siteName}`,
+      ogDescription: desc,
+      ogImage: defaultImage,
+      ogUrl: `${baseURL}/verify`,
+      twitterImage: defaultImage,
+    })
+  }
+
   const setCategoryPage = (name: string, slug: string) => {
-    const desc = `Browse ${name} products from verified sellers on ${siteName}.`
+    const desc = `Browse ${name} products from verified sellers on ${siteName}. Compare prices, check seller trust scores, and pay protected with escrow.`
     useSeoMeta({
       title: name,
       description: desc,
       ogTitle: `${name} | ${siteName}`,
       ogDescription: desc,
+      // This setter previously shipped no image at all, so category links
+      // unfurled bare on WhatsApp and X — the two places they actually spread.
+      ogImage: defaultImage,
       ogUrl: `${baseURL}/category/${slug}`,
+      twitterImage: defaultImage,
     })
+
+    useJsonLd(
+      'breadcrumb',
+      breadcrumbSchema([
+        { name: 'Home', url: baseURL },
+        { name: 'Discover', url: `${baseURL}/discover` },
+        { name, url: `${baseURL}/category/${slug}` },
+      ]),
+    )
   }
 
   // ── Store / seller pages ─────────────────────────────────────────────────
@@ -138,6 +238,14 @@ export const useSeo = () => {
     publicId?: string | null
     city?: string | null
     category?: string | null
+    // Structured-data extras — all optional, all omitted from the schema when
+    // absent rather than guessed at.
+    state?: string | null
+    latitude?: number | null
+    longitude?: number | null
+    store_phone?: string | null
+    averageRating?: number | null
+    totalReviews?: number | null
   }) => {
     const name = seller.store_name || seller.store_slug
     const location = seller.city ? ` · ${seller.city}` : ''
@@ -175,11 +283,40 @@ export const useSeo = () => {
       ogImageWidth: 1200,
       ogImageHeight: 630,
       ogImageAlt: `${name} on ${siteName}`,
-      ogUrl: `${baseURL}/sellers/profile/${seller.store_slug}`,
+      // The vanity URL, matching the canonical this page declares — og:url and
+      // rel=canonical disagreeing is a classic way to split a page's signals
+      // between two URLs.
+      ogUrl: `${baseURL}/${seller.store_slug}`,
       ogType: 'profile',
       twitterCard: 'summary_large_image',
       twitterImage: ogImage,
     })
+
+    useJsonLd(
+      'store',
+      storeSchema({
+        name,
+        description: desc,
+        image: seller.store_logo || ogImage,
+        url: `${baseURL}/${seller.store_slug}`,
+        city: seller.city,
+        state: seller.state,
+        latitude: seller.latitude,
+        longitude: seller.longitude,
+        telephone: seller.store_phone,
+        ratingValue: seller.averageRating,
+        reviewCount: seller.totalReviews,
+      }),
+    )
+
+    useJsonLd(
+      'breadcrumb',
+      breadcrumbSchema([
+        { name: 'Home', url: baseURL },
+        { name: 'Stores', url: `${baseURL}/sellers` },
+        { name, url: `${baseURL}/${seller.store_slug}` },
+      ]),
+    )
   }
 
   // Keep old name for backwards compat
@@ -219,6 +356,15 @@ export const useSeo = () => {
       price?: number
       sellerName?: string
       sellerPublicId?: string | null
+      // Structured-data extras. `inStock` defaults to true only because a
+      // product page that renders at all is a listed product; pass it
+      // explicitly wherever variant stock is known.
+      sku?: string | null
+      inStock?: boolean
+      averageRating?: number | null
+      totalReviews?: number | null
+      categoryName?: string | null
+      categorySlug?: string | null
     },
   ) => {
     const buildDesc = () => {
@@ -279,6 +425,70 @@ export const useSeo = () => {
       ogType: 'product',
       twitterCard: 'summary_large_image',
       twitterImage: ogImage,
+    })
+
+    // Open Graph product extensions — what makes a pasted link unfurl with a
+    // price on Facebook/WhatsApp instead of just a photo and a title.
+    useHead({
+      meta: [
+        {
+          key: 'og:price:amount',
+          property: 'product:price:amount',
+          content: () => {
+            const price = getProduct().price
+            return price != null ? String(price) : ''
+          },
+        },
+        {
+          key: 'og:price:currency',
+          property: 'product:price:currency',
+          content: CURRENCY,
+        },
+        {
+          key: 'og:availability',
+          property: 'product:availability',
+          content: () =>
+            getProduct().inStock === false ? 'out of stock' : 'in stock',
+        },
+      ],
+    })
+
+    // Getters, for the same reason the meta above uses them: registered once
+    // during setup, resolved again each time the product data changes.
+    useJsonLd('product', () => {
+      const p = getProduct()
+      if (!p.title || !p.slug) return null
+      return productSchema({
+        name: p.title,
+        description: p.description || buildDesc(),
+        image: p.imageUrl,
+        url: `${baseURL}/product/${p.slug}`,
+        sku: p.sku,
+        price: p.price,
+        currency: CURRENCY,
+        inStock: p.inStock !== false,
+        sellerName: p.sellerName,
+        ratingValue: p.averageRating,
+        reviewCount: p.totalReviews,
+      })
+    })
+
+    useJsonLd('breadcrumb', () => {
+      const p = getProduct()
+      if (!p.title || !p.slug) return null
+      return breadcrumbSchema([
+        { name: 'Home', url: baseURL },
+        { name: 'Discover', url: `${baseURL}/discover` },
+        ...(p.categoryName && p.categorySlug
+          ? [
+              {
+                name: p.categoryName,
+                url: `${baseURL}/category/${p.categorySlug}`,
+              },
+            ]
+          : []),
+        { name: p.title, url: `${baseURL}/product/${p.slug}` },
+      ])
     })
   }
 
@@ -347,7 +557,8 @@ export const useSeo = () => {
   const setLandingPage = () => {
     const desc = `${siteName} — The all-in-one platform for everyday business in Africa. Discover stores near you, buy local, and sell to the world.`
     useSeoMeta({
-      title: siteName,
+      // See setHomePage — `siteName` here renders as "MarketX | MarketX".
+      title: 'The all-in-one platform for everyday business in Africa',
       description: desc,
       ogTitle: `${siteName} — Your Business, Fully Alive`,
       ogDescription: desc,
@@ -429,6 +640,7 @@ export const useSeo = () => {
     setReelsPage,
     setSellersPage,
     setThriftPage,
+    setVerifyPage,
     setCategoryPage,
     // Store / profile
     setStorePage,

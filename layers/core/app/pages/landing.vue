@@ -842,11 +842,11 @@ const footerShop = [
 ]
 
 const footerCompany = [
-  { to: '/About', label: 'About' },
+  { to: '/about', label: 'About' },
   { to: '/sellers/create', label: 'Sell on MarketX' },
-  { to: '/Help', label: 'Help center' },
-  { to: '/Privacy', label: 'Privacy' },
-  { to: '/Terms', label: 'Terms' },
+  { to: '/help', label: 'Help center' },
+  { to: '/privacy', label: 'Privacy' },
+  { to: '/terms', label: 'Terms' },
 ]
 </script>
 

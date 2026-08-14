@@ -134,8 +134,8 @@
           <NuxtLink to="/trust/how-it-works" class="hover:text-brand">
             How it works
           </NuxtLink>
-          <NuxtLink to="/Terms" class="hover:text-brand">Terms</NuxtLink>
-          <NuxtLink to="/Privacy" class="hover:text-brand">Privacy</NuxtLink>
+          <NuxtLink to="/terms" class="hover:text-brand">Terms</NuxtLink>
+          <NuxtLink to="/privacy" class="hover:text-brand">Privacy</NuxtLink>
         </div>
       </div>
     </footer>

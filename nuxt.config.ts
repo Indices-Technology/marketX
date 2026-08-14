@@ -375,7 +375,13 @@ export default defineNuxtConfig({
         headers: { 'Content-Security-Policy': OPENAPI_DOC_CSP },
       },
       '/embed/**': {
-        headers: { 'Content-Security-Policy': EMBED_CSP },
+        headers: {
+          'Content-Security-Policy': EMBED_CSP,
+          // Same product, second URL. Left indexable it would compete with
+          // /product/[slug] for its own listing, so it is crawlable (robots.txt
+          // allows it, so this header is actually read) but never indexed.
+          'X-Robots-Tag': 'noindex, nofollow',
+        },
       },
     },
   },
