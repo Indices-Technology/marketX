@@ -273,6 +273,15 @@
           >
         </button>
 
+        <!-- A disabled pay button with no explanation is its own abandonment
+             cause. Name what is still missing instead. -->
+        <p
+          v-if="missingFields.length && items.length"
+          class="text-center text-xs font-medium text-amber-600 dark:text-amber-400"
+        >
+          Add your {{ missingFields.join(', ') }} to continue
+        </p>
+
         <p class="text-center text-xs text-gray-400 dark:text-neutral-500">
           {{
             paymentMethod === 'paypal'
@@ -351,8 +360,14 @@ const form = reactive({
   county: '',
   state: '',
   zipcode: '',
-  country: '',
+  // Nigeria is the default market — pre-selecting it removes a required
+  // dropdown for almost every buyer, and unblocks the rate quote a step sooner.
+  country: 'NG',
   phone: '',
+  // Consent to WhatsApp the delivery number about this order. Pre-ticked
+  // because a buyer who just typed a number expects to hear about the parcel
+  // on it — but it stays visible and switchable, and is captured per order.
+  notifyShipPhone: true,
 })
 
 const DEFAULT_PARCEL = { weightKg: 0.5, lengthCm: 20, widthCm: 15, heightCm: 5 }
@@ -553,10 +568,24 @@ const isFormValid = computed(
     !!form.name.trim() &&
     !!form.address.trim() &&
     !!form.country &&
+    // The rider calls this number on arrival — without it a delivery stalls,
+    // so it is required even though email and postcode are not.
+    !!form.phone.trim() &&
     // NG destinations must pick a state — the carrier can't ship without it.
     (form.country !== 'NG' || !!form.state) &&
     shippingReady.value,
 )
+
+// Only the delivery details the buyer can act on — a pending rate quote is our
+// problem to solve, not something to nag them about.
+const missingFields = computed(() => {
+  const missing: string[] = []
+  if (!form.name.trim()) missing.push('name')
+  if (!form.phone.trim()) missing.push('phone number')
+  if (!form.address.trim()) missing.push('delivery address')
+  if (form.country === 'NG' && !form.state) missing.push('state')
+  return missing
+})
 
 const handleCheckout = async () => {
   if (!isFormValid.value || isSubmitting.value) return
@@ -583,6 +612,7 @@ const handleCheckout = async () => {
     county: form.county,
     shipState: form.state || undefined,
     shipPhone: form.phone || undefined,
+    shipPhoneOptIn: form.notifyShipPhone,
     zipcode: form.zipcode,
     country: form.country,
     shippingCost,

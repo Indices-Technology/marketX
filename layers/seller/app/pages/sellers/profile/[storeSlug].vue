@@ -1,5 +1,9 @@
 ﻿<template>
-  <HomeLayout :narrow-feed="false" :hide-right-sidebar="false">
+  <!-- Two entrances, one page. Arrived from the seller's shared link (/{slug} -> ?store=)
+       -> her storefront chrome, nothing competing for the click. Arrived by
+       browsing the marketplace -> marketplace chrome, so the visitor keeps
+       the nav they were using and is never stranded in a shop. -->
+  <component :is="layoutComponent" v-bind="layoutProps">
     <div
       class="pb-[max(5rem,_calc(1.5rem_+_env(safe-area-inset-bottom)))] md:pb-6"
     >
@@ -191,17 +195,20 @@
               </button>
               <button
                 class="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
-                title="Store card"
+                :title="tierLabel ? `${tierLabel} — open Trust Card` : 'Trust Card'"
                 @click="showCard = true"
               >
                 <!-- Same green shield the feed rail uses for this seller's
-                     Trust Card, so one mark means one thing across surfaces. -->
+                     Trust Card, so one mark means one thing across surfaces.
+                     The shield stays green at every tier on purpose — tiering
+                     the colour too would make the shared mark stop meaning one
+                     thing. The tier is carried by the label instead. -->
                 <Icon
                   name="solar:shield-check-bold"
                   size="16"
                   class="text-emerald-500"
                 />
-                Trust Card
+                {{ trustButtonLabel }}
               </button>
               <button
                 class="rounded-xl border border-gray-200 bg-white p-2.5 text-gray-600 transition-colors hover:bg-gray-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
@@ -329,6 +336,20 @@
                 />
                 Joined {{ formatDate(seller.created_at) }}
               </span>
+
+              <!-- How this store gets goods to you, at a glance. Short chips on
+                   purpose — the tagline answers "who is this seller", and the
+                   full wording with ETAs lives on the product page where the
+                   buyer is actually deciding. -->
+              <span
+                v-for="opt in deliveryChips"
+                :key="opt.key"
+                class="flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-600 dark:bg-neutral-800 dark:text-neutral-300"
+                :title="opt.detail || opt.label"
+              >
+                <Icon :name="opt.icon" size="12" class="text-brand" />
+                {{ opt.short }}
+              </span>
               <a
                 v-if="safeStoreWebsite"
                 :href="safeStoreWebsite"
@@ -397,7 +418,11 @@
               >
                 {{
                   (seller as any).totalReviews
-                    ? `${(seller as any).totalReviews} Reviews`
+                    ? `${(seller as any).totalReviews} ${
+                        (seller as any).totalReviews === 1
+                          ? 'Review'
+                          : 'Reviews'
+                      }`
                     : 'Rating'
                 }}
               </p>
@@ -449,8 +474,8 @@
               {{ isFollowing ? 'Following' : 'Follow' }}
             </button>
             <button
-              class="rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-600 transition-colors hover:bg-gray-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
-              title="Store card"
+              class="flex shrink-0 items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3.5 py-3 text-gray-600 transition-colors hover:bg-gray-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+              :title="tierLabel ? `${tierLabel} — open Trust Card` : 'Trust Card'"
               @click="showCard = true"
             >
               <Icon
@@ -458,6 +483,15 @@
                 size="18"
                 class="text-emerald-500"
               />
+              <!-- Tier only. The full "Trust Card" wording does not fit beside
+                   a flex-1 Follow button on a narrow phone, and the shield
+                   already says what the button opens. -->
+              <span
+                v-if="tierLabel"
+                class="whitespace-nowrap text-[13px] font-semibold"
+              >
+                {{ tierLabel }}
+              </span>
             </button>
             <button
               class="rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-600 transition-colors hover:bg-gray-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
@@ -915,7 +949,7 @@
       :is-owner="isOwnStore"
       @close="showCard = false"
     />
-  </HomeLayout>
+  </component>
 </template>
 
 <script setup lang="ts">
@@ -923,6 +957,8 @@ import { ref, reactive, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { useRoute } from 'vue-router'
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
+import StorefrontLayout from '~~/layers/seller/app/layouts/StorefrontLayout.vue'
+import { useStorefront } from '~~/layers/seller/app/composables/useStorefront'
 import ProductCardMini from '~~/layers/commerce/app/components/ProductCardMini.vue'
 import { useProductDetail } from '~~/layers/commerce/app/composables/useProductDetail'
 import { imgAvatar, cloudinaryUrl } from '~~/layers/core/app/utils/cloudinary'
@@ -953,8 +989,26 @@ import WallShoutoutComposer from '~~/layers/social/app/components/wall/WallShout
 import WallPostCard from '~~/layers/social/app/components/wall/WallPostCard.vue'
 
 const route = useRoute()
-const storeSlug =
-  (route.params.storeSlug as string) || (route.params.store_slug as string)
+// Served by two routes: /sellers/profile/{slug} (marketplace) and /{slug} (the
+// seller's shopfront, param name `store`). Strip a leading @ so /@jane works.
+const storeSlug = (
+  (route.params.storeSlug as string) ||
+  (route.params.store_slug as string) ||
+  (route.params.store as string) ||
+  ''
+).replace(/^@/, '')
+
+// Two URLs serving one page needs a canonical or they compete in search. The
+// short form wins it: that is what sellers hand out, so it is what accumulates
+// inbound links.
+useHead({
+  link: [
+    {
+      rel: 'canonical',
+      href: `${String(useRuntimeConfig().public.baseURL || '').replace(/\/+$/, '')}/${storeSlug}`,
+    },
+  ],
+})
 
 // SSR-fetch the store so the OG/Twitter meta (incl. the Cloudinary card image)
 // is in the server HTML — the only thing link-preview crawlers (WhatsApp,
@@ -981,11 +1035,16 @@ const { addToCart } = useCart()
 const pageLoading = ref(true)
 const loadError = ref(false)
 // Deep-link a tab via ?tab= (e.g. the Trust Card QR opens ?tab=trust).
-const VALID_TABS = ['wall', 'trust', 'products', 'reviews', 'about']
+const VALID_TABS = ['products', 'trust', 'wall', 'reviews', 'about']
+// The Feed tab's key stays `wall`; accept `?tab=feed` too so the URL can use
+// the name people now see, without breaking links already pointing at wall.
+const TAB_ALIASES: Record<string, string> = { feed: 'wall', all: 'wall' }
+const requestedTab =
+  typeof route.query.tab === 'string'
+    ? (TAB_ALIASES[route.query.tab] ?? route.query.tab)
+    : ''
 const activeTab = ref(
-  typeof route.query.tab === 'string' && VALID_TABS.includes(route.query.tab)
-    ? route.query.tab
-    : 'wall',
+  VALID_TABS.includes(requestedTab) ? requestedTab : 'products',
 )
 
 // Lazy-mount the heavier tabs. The tab panels use v-show (kept, so switching
@@ -996,6 +1055,58 @@ const activeTab = ref(
 const visitedTabs = reactive(new Set<string>([activeTab.value]))
 watch(activeTab, (t) => visitedTabs.add(t))
 const seller = computed(() => currentSeller.value)
+
+// ── Trust tier ───────────────────────────────────────────────────────────────
+// Mind the direction: TIER_1 is the TOP tier (100+ settled sales, <2% dispute
+// rate) and TIER_3 the entry level — see tierFrom() in reputation.registry.ts.
+// The number counts DOWN as trust goes up.
+//
+// Labels match TrustProfile.vue so a tier reads identically wherever it shows.
+// `trustTier` is denormalised onto the seller row and is not in the public omit
+// list, so it arrives with the store fetch — no extra query.
+const TIER_LABELS: Record<string, string> = {
+  TIER_1: 'Tier 1',
+  TIER_2: 'Tier 2',
+  TIER_3: 'Tier 3',
+}
+const tierLabel = computed(() => {
+  const t = (seller.value as { trustTier?: string | null } | null)?.trustTier
+  return (t && TIER_LABELS[t]) || null
+})
+// Null until the reputation engine has enough evidence to place a seller, so
+// the button keeps its old label rather than showing a blank or a fake tier.
+const trustButtonLabel = computed(() => tierLabel.value ?? 'Trust Card')
+
+// ── Delivery chips ───────────────────────────────────────────────────────────
+// Derived server-side from the seller's shipping settings; the raw config never
+// reaches the client. Short forms only — the tagline is a glance, not a spec.
+const CHIP_SHORT: Record<string, string> = {
+  pickup: 'Pickup',
+  seller_delivery: 'Seller delivery',
+  pay_rider: 'Pay rider',
+  gig: 'GIG',
+  pod: 'POD',
+}
+const deliveryChips = computed(() =>
+  (
+    (seller.value as { deliveryOptions?: Array<{ key: string; label: string; detail: string | null; icon: string }> } | null)
+      ?.deliveryOptions ?? []
+  ).map((o) => ({ ...o, short: CHIP_SHORT[o.key] ?? o.label })),
+)
+
+// ── Storefront vs marketplace ────────────────────────────────────────────────
+// Matched against THIS store's slug, so a stale ?store= carried in from another
+// seller's shop can never dress this page in the wrong shopkeeper's chrome.
+const { isStorefrontOf } = useStorefront()
+const inStorefront = computed(() => isStorefrontOf(storeSlug))
+const layoutComponent = computed(() =>
+  inStorefront.value ? StorefrontLayout : HomeLayout,
+)
+const layoutProps = computed(() =>
+  inStorefront.value
+    ? { store: seller.value }
+    : { narrowFeed: false, hideRightSidebar: false },
+)
 // Render-time guard — neutralizes any javascript:/data: URL persisted before
 // input validation was tightened (stored-XSS defense-in-depth)
 const safeStoreWebsite = computed(() =>
@@ -1047,10 +1158,14 @@ const showCard = ref(false)
 const trigger = ref<HTMLElement | null>(null)
 let observer: IntersectionObserver | null = null
 
+// Products first: a store page is opened to see what is for sale, and "All" as
+// a leading tab said nothing about what was behind it. The `wall` key is kept
+// (it is the wall API and existing ?tab=wall links) but now reads as "Feed",
+// which is what it actually shows.
 const tabs = [
-  { key: 'wall', label: 'All', icon: 'solar:widget-5-linear' },
-  { key: 'trust', label: 'Trust', icon: 'solar:shield-check-linear' },
   { key: 'products', label: 'Products', icon: 'solar:widget-2-linear' },
+  { key: 'trust', label: 'Trust', icon: 'solar:shield-check-linear' },
+  { key: 'wall', label: 'Feed', icon: 'solar:widget-5-linear' },
   { key: 'reviews', label: 'Reviews', icon: 'solar:star-linear' },
   { key: 'about', label: 'About', icon: 'solar:info-circle-linear' },
 ]

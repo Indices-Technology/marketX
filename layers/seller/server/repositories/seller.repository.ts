@@ -51,6 +51,11 @@ const SELLER_PUBLIC_OMIT = {
   ...SELLER_PRIVATE_OMIT,
   primarySquareId: true,
   lastActiveAt: true,
+  // Kept: the service derives the public delivery-options summary from it and
+  // strips it before responding (see sellerService.getSellerBySlug). Selecting
+  // it here is the only way to read it on the public path; it must never reach
+  // a client, since it holds flat rates and per-zone pricing.
+  shippingConfig: false,
 } as const
 
 export const sellerRepository = {

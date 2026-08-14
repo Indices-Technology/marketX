@@ -33,6 +33,11 @@ export const profileService = {
       links: profile.links || undefined,
       profileUrl: websiteUrl || undefined,
       emailVerified: profile.email_verified,
+      // Exposed so checkout can prefill the delivery phone for people who
+      // signed up by WhatsApp OTP — they should never retype a number we
+      // already verified.
+      phone: profile.phone || undefined,
+      phoneVerified: profile.phone_verified,
       role: profile.role,
       sellerProfile: profile.sellerProfile?.[0] ?? undefined,
       createdAt: profile.created_at,

@@ -401,6 +401,14 @@ model Orders {
   shipState         String?
   /// Destination contact phone — required by the carrier for delivery.
   shipPhone         String?
+  /// Whether the buyer ticked "send delivery updates to this number on WhatsApp"
+  /// at checkout. This IS the Meta opt-in for shipPhone, captured per order and
+  /// never inherited from a previous one. Defaults false so existing rows are
+  /// not treated as consented — consent cannot be backfilled.
+  /// Scope is logistics only: shipPhone may belong to a third party receiving
+  /// the parcel, so prices, item lists and escrow detail never go to it. Full
+  /// order messaging goes to the verified Profile.phone instead.
+  shipPhoneOptIn    Boolean         @default(false)
   /// Buyer's delivery/handling note captured at checkout — an immutable snapshot
   /// for the packer/courier (e.g. "call before arriving", "gift wrap"). Content-
   /// guard masked, ≤280 chars, per-seller. NOT a channel to renegotiate the order

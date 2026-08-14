@@ -26,7 +26,10 @@ export default defineEventHandler(async (event) => {
   const stateCookie = getCookie(event, 'growth_fb_state')
   const sellerId = getCookie(event, 'growth_fb_seller')
   const redirectRaw = getCookie(event, 'growth_fb_redirect')
-  const redirectTo = redirectRaw ? decodeURIComponent(redirectRaw) : '/'
+  // Re-validate AFTER decoding: the cookie stores the encoded form, so
+  // `%2F%2Fevil.com` only becomes the off-origin `//evil.com` at this point.
+  const redirectDecoded = redirectRaw ? decodeURIComponent(redirectRaw) : '/'
+  const redirectTo = isSafeRedirectPath(redirectDecoded) ? redirectDecoded : '/'
 
   // One-shot cookies — clear regardless of outcome.
   for (const c of [

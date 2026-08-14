@@ -11,6 +11,7 @@ import { prisma } from '~~/server/utils/db'
 import { sanitizeHtml } from '~~/layers/commerce/utils/sanitizeHtml'
 import { remember, bust } from '~~/server/utils/cache'
 import { entityEmbedder } from '~~/layers/ai/server/services/entity-embedder.service'
+import { deriveDeliveryOptions } from '~~/layers/shipping/server/utils/deliveryOptions'
 import {
   assignUniqueSlugs,
   detectSkuCollisions,
@@ -93,6 +94,31 @@ async function generateUniqueSlug(title: string): Promise<string> {
     const taken = await productRepository.getProductBySlug(candidate)
     if (!taken) return candidate
     counter++
+  }
+}
+
+/**
+ * Swap the seller's raw `shippingConfig` for a derived, public-safe list of the
+ * delivery options they actually offer. The raw config is selected only so this
+ * can read it — it carries flat rates and per-zone pricing and must never reach
+ * a client, so it is deleted from the payload on the way out.
+ */
+function withDeliveryOptions<T extends { seller?: unknown }>(product: T): T {
+  const seller = product.seller as
+    | (Record<string, unknown> & {
+        shippingConfig?: unknown
+        pod_enabled?: boolean | null
+        pod_delivery_days?: number | null
+      })
+    | null
+    | undefined
+  if (!seller) return product
+
+  const safeSeller = { ...seller }
+  delete safeSeller.shippingConfig
+  return {
+    ...product,
+    seller: { ...safeSeller, deliveryOptions: deriveDeliveryOptions(seller) },
   }
 }
 
@@ -332,7 +358,7 @@ export const productService = {
     const product = await productRepository.getProductBySlugFull(slug)
     if (!product)
       throw new UserError('PRODUCT_NOT_FOUND', 'Product not found', 404)
-    return product
+    return withDeliveryOptions(product)
   },
 
   async getSellerProducts(

@@ -42,10 +42,11 @@ export default defineEventHandler(async (event) => {
     }
 
     const query = getQuery(event)
-    const redirectTo =
-      typeof query.redirectTo === 'string' && query.redirectTo.startsWith('/')
-        ? query.redirectTo
-        : '/'
+    // Not just `startsWith('/')` — `//evil.com` passes that and browsers treat
+    // it as an absolute cross-origin URL. See isSafeRedirectPath.
+    const redirectTo = isSafeRedirectPath(query.redirectTo)
+      ? query.redirectTo
+      : '/'
 
     const config = useRuntimeConfig()
     const appUrl = resolveOAuthAppUrl(event, config.public.baseURL as string)

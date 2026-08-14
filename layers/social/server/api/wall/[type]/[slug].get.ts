@@ -32,6 +32,32 @@ const postShape = {
     where: { isBgMusic: false },
     select: { id: true, url: true, type: true, altText: true },
   },
+  // Without this the wall showed a post's text and media but silently dropped
+  // whatever the author tagged — the shoppable half of a "shop this post".
+  // Shape mirrors taggedProductsInclude in post.repository.ts so the same
+  // TaggedProductsDisplay component renders it identically to the main feed.
+  taggedProducts: {
+    select: {
+      productId: true,
+      product: {
+        select: {
+          id: true,
+          title: true,
+          price: true,
+          discount: true,
+          slug: true,
+          averageRating: true,
+          totalReviews: true,
+          media: {
+            take: 1,
+            where: { isBgMusic: false },
+            select: { url: true, type: true },
+          },
+          _count: { select: { likes: true } },
+        },
+      },
+    },
+  },
   _count: { select: { likes: true, comments: true } },
 } as const
 

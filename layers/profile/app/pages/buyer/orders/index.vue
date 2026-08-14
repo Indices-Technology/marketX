@@ -56,7 +56,11 @@
                   <img
                     v-for="(item, i) in order.orderItem.slice(0, 2)"
                     :key="i"
-                    :src="item.variant?.product?.media?.[0]?.url ? imgThumb(item.variant.product.media[0].url) : ''"
+                    :src="
+                      item.variant?.product?.media?.[0]?.url
+                        ? imgThumb(item.variant.product.media[0].url)
+                        : ''
+                    "
                     class="h-9 w-9 rounded-lg border-2 border-white bg-gray-100 object-cover dark:border-neutral-800"
                     loading="lazy"
                     decoding="async"
@@ -111,16 +115,20 @@
       <!-- Payment success banner -->
       <div
         v-if="paymentSuccess"
-        class="mb-5 flex items-center gap-3 rounded-2xl border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20"
+        class="mb-5 flex items-start gap-3 rounded-2xl border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20"
       >
         <Icon
           name="solar:check-circle-bold"
           size="24"
           class="shrink-0 text-green-500"
         />
-        <div>
+        <div class="min-w-0 flex-1">
           <p class="text-sm font-semibold text-green-800 dark:text-green-300">
-            {{ paymentType === 'pod' ? 'Shipping secured!' : 'Payment successful!' }}
+            {{
+              paymentType === 'pod'
+                ? 'Shipping secured!'
+                : 'Payment successful!'
+            }}
           </p>
           <p class="text-xs text-green-600 dark:text-green-400">
             {{
@@ -129,6 +137,7 @@
                 : 'Your order has been placed and is being processed.'
             }}
           </p>
+          <PostPurchaseActions :order="orders[0]" />
         </div>
       </div>
 
@@ -151,13 +160,13 @@
         <button
           v-for="tab in STATUS_TABS"
           :key="tab.value"
-          @click="activeStatus = tab.value"
           class="shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-colors"
           :class="
             activeStatus === tab.value
               ? 'bg-gray-900 text-white dark:bg-neutral-100 dark:text-neutral-900'
               : 'bg-gray-100 text-gray-600 dark:bg-neutral-800 dark:text-neutral-400'
           "
+          @click="activeStatus = tab.value"
         >
           {{ tab.label }}
         </button>
@@ -182,18 +191,17 @@
 
       <!-- Orders list -->
       <div v-else-if="filteredOrders.length" class="space-y-6">
-        <div
-          v-for="group in orderGroups"
-          :key="group.id"
-          class="space-y-2"
-        >
+        <div v-for="group in orderGroups" :key="group.id" class="space-y-2">
           <!-- Multi-seller purchase header ("ships in N packages") -->
           <div
             v-if="group.orders.length > 1"
             class="flex items-center justify-between px-1"
           >
-            <p class="text-xs font-semibold text-gray-600 dark:text-neutral-300">
-              Purchase · {{ group.orders.length }} shipments from different sellers
+            <p
+              class="text-xs font-semibold text-gray-600 dark:text-neutral-300"
+            >
+              Purchase · {{ group.orders.length }} shipments from different
+              sellers
             </p>
             <p class="text-[11px] text-gray-400 dark:text-neutral-500">
               {{ formatDate(group.orders[0].created_at) }}
@@ -204,124 +212,146 @@
             :key="order.id"
             class="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
           >
-          <NuxtLink
-            :to="`/buyer/orders/${order.id}`"
-            class="block p-5 transition-colors hover:bg-gray-50 dark:hover:bg-neutral-800/50"
-          >
-            <!-- Order header -->
-            <div class="mb-3 flex items-start justify-between">
-              <div>
-                <p class="text-xs text-gray-400 dark:text-neutral-500">
-                  Order #{{ order.id }}
-                </p>
-                <p class="mt-0.5 text-xs text-gray-400 dark:text-neutral-500">
-                  {{ formatDate(order.created_at) }}
-                </p>
-              </div>
-              <div class="flex items-center gap-1.5">
-                <BaseBadge v-if="order.paymentMethod === 'pay_on_delivery'" status="success">POD</BaseBadge>
-                <BaseBadge
-                  :status="confirmedIds.has(order.id) ? 'DELIVERED' : order.status"
-                  :label="
-                    orderStatusLabel(
-                      confirmedIds.has(order.id) ? 'DELIVERED' : order.status,
-                    )
-                  "
-                />
-              </div>
-            </div>
-
-            <!-- Items preview -->
-            <div class="mb-3 flex gap-2">
-              <img
-                v-for="(item, i) in order.orderItem.slice(0, 3)"
-                :key="i"
-                :src="item.variant?.product?.media?.[0]?.url ? imgThumb(item.variant.product.media[0].url) : ''"
-                class="h-14 w-14 rounded-xl bg-gray-100 object-cover dark:bg-neutral-800"
-                loading="lazy"
-                decoding="async"
-              />
-              <div
-                v-if="order.orderItem.length > 3"
-                class="flex h-14 w-14 items-center justify-center rounded-xl bg-gray-100 text-sm font-semibold text-gray-500 dark:bg-neutral-800"
-              >
-                +{{ order.orderItem.length - 3 }}
-              </div>
-            </div>
-
-            <!-- Footer -->
-            <div class="flex items-center justify-between">
-              <p class="text-xs text-gray-500 dark:text-neutral-400">
-                {{ order.orderItem.length }} item{{
-                  order.orderItem.length !== 1 ? 's' : ''
-                }}
-                <span v-if="order.shippingZone">
-                  · {{ order.shippingZone }}</span
-                >
-              </p>
-              <p class="text-sm font-bold text-gray-900 dark:text-neutral-100">
-                {{ formatPrice(order.totalAmount + (order.shippingCost || 0)) }}
-              </p>
-            </div>
-
-            <!-- Tracking -->
-            <div
-              v-if="order.trackingNumber"
-              class="mt-2 flex items-center gap-1.5 border-t border-gray-200 pt-2 text-xs text-brand dark:border-neutral-800"
+            <NuxtLink
+              :to="`/buyer/orders/${order.id}`"
+              class="block p-5 transition-colors hover:bg-gray-50 dark:hover:bg-neutral-800/50"
             >
-              <Icon name="solar:delivery-linear" size="14" />
-              {{ order.shipper || 'Courier' }} · {{ order.trackingNumber }}
-            </div>
-          </NuxtLink>
-
-          <!-- POD cash reminder — shown for active POD orders not yet delivered -->
-          <div
-            v-if="order.paymentMethod === 'pay_on_delivery' && !['DELIVERED','CANCELLED','RETURNED'].includes(order.status) && !confirmedIds.has(order.id)"
-            class="flex items-center gap-2 border-t border-emerald-100 bg-emerald-50 px-5 py-2.5 text-xs text-emerald-700 dark:border-emerald-900/30 dark:bg-emerald-900/10 dark:text-emerald-400"
-          >
-            <Icon name="solar:money-bag-linear" size="14" class="shrink-0" />
-            Have <strong class="mx-0.5">{{ formatPrice(order.totalAmount) }}</strong> ready to pay in cash on delivery
-          </div>
-
-          <!-- Confirm Receipt bar — SHIPPED, or READY_FOR_PICKUP for a
-               collect-in-person order (see canConfirmReceipt). -->
-          <div
-            v-if="canConfirmReceipt(order.status) && !confirmedIds.has(order.id)"
-            class="border-t border-amber-100 bg-amber-50 px-5 py-3 dark:border-amber-900/30 dark:bg-amber-900/10"
-          >
-            <div class="flex items-center justify-between gap-3">
-              <div
-                class="flex items-center gap-1.5 text-xs text-amber-700 dark:text-amber-400"
-              >
-                <Icon
-                  name="solar:alarm-linear"
-                  size="14"
-                  class="shrink-0"
-                />
-                Payment auto-releases to seller in 7 days
+              <!-- Order header -->
+              <div class="mb-3 flex items-start justify-between">
+                <div>
+                  <p class="text-xs text-gray-400 dark:text-neutral-500">
+                    Order #{{ order.id }}
+                  </p>
+                  <p class="mt-0.5 text-xs text-gray-400 dark:text-neutral-500">
+                    {{ formatDate(order.created_at) }}
+                  </p>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <BaseBadge
+                    v-if="order.paymentMethod === 'pay_on_delivery'"
+                    status="success"
+                    >POD</BaseBadge
+                  >
+                  <BaseBadge
+                    :status="
+                      confirmedIds.has(order.id) ? 'DELIVERED' : order.status
+                    "
+                    :label="
+                      orderStatusLabel(
+                        confirmedIds.has(order.id) ? 'DELIVERED' : order.status,
+                      )
+                    "
+                  />
+                </div>
               </div>
-              <BaseButton
-                variant="success"
-                size="sm"
-                class="shrink-0"
-                :loading="confirmingIds.has(order.id)"
-                :disabled="confirmingIds.has(order.id)"
-                @click.prevent="confirmReceipt(order.id, order.isPickup)"
+
+              <!-- Items preview -->
+              <div class="mb-3 flex gap-2">
+                <img
+                  v-for="(item, i) in order.orderItem.slice(0, 3)"
+                  :key="i"
+                  :src="
+                    item.variant?.product?.media?.[0]?.url
+                      ? imgThumb(item.variant.product.media[0].url)
+                      : ''
+                  "
+                  class="h-14 w-14 rounded-xl bg-gray-100 object-cover dark:bg-neutral-800"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <div
+                  v-if="order.orderItem.length > 3"
+                  class="flex h-14 w-14 items-center justify-center rounded-xl bg-gray-100 text-sm font-semibold text-gray-500 dark:bg-neutral-800"
+                >
+                  +{{ order.orderItem.length - 3 }}
+                </div>
+              </div>
+
+              <!-- Footer -->
+              <div class="flex items-center justify-between">
+                <p class="text-xs text-gray-500 dark:text-neutral-400">
+                  {{ order.orderItem.length }} item{{
+                    order.orderItem.length !== 1 ? 's' : ''
+                  }}
+                  <span v-if="order.shippingZone">
+                    · {{ order.shippingZone }}</span
+                  >
+                </p>
+                <p
+                  class="text-sm font-bold text-gray-900 dark:text-neutral-100"
+                >
+                  {{
+                    formatPrice(order.totalAmount + (order.shippingCost || 0))
+                  }}
+                </p>
+              </div>
+
+              <!-- Tracking -->
+              <div
+                v-if="order.trackingNumber"
+                class="mt-2 flex items-center gap-1.5 border-t border-gray-200 pt-2 text-xs text-brand dark:border-neutral-800"
               >
-                {{ order.isPickup ? 'Confirm Pickup' : 'Confirm Receipt' }}
-              </BaseButton>
+                <Icon name="solar:delivery-linear" size="14" />
+                {{ order.shipper || 'Courier' }} · {{ order.trackingNumber }}
+              </div>
+            </NuxtLink>
+
+            <!-- POD cash reminder — shown for active POD orders not yet delivered -->
+            <div
+              v-if="
+                order.paymentMethod === 'pay_on_delivery' &&
+                !['DELIVERED', 'CANCELLED', 'RETURNED'].includes(
+                  order.status,
+                ) &&
+                !confirmedIds.has(order.id)
+              "
+              class="flex items-center gap-2 border-t border-emerald-100 bg-emerald-50 px-5 py-2.5 text-xs text-emerald-700 dark:border-emerald-900/30 dark:bg-emerald-900/10 dark:text-emerald-400"
+            >
+              <Icon name="solar:money-bag-linear" size="14" class="shrink-0" />
+              Have
+              <strong class="mx-0.5">{{
+                formatPrice(order.totalAmount)
+              }}</strong>
+              ready to pay in cash on delivery
+            </div>
+
+            <!-- Confirm Receipt bar — SHIPPED, or READY_FOR_PICKUP for a
+               collect-in-person order (see canConfirmReceipt). -->
+            <div
+              v-if="
+                canConfirmReceipt(order.status) && !confirmedIds.has(order.id)
+              "
+              class="border-t border-amber-100 bg-amber-50 px-5 py-3 dark:border-amber-900/30 dark:bg-amber-900/10"
+            >
+              <div class="flex items-center justify-between gap-3">
+                <div
+                  class="flex items-center gap-1.5 text-xs text-amber-700 dark:text-amber-400"
+                >
+                  <Icon name="solar:alarm-linear" size="14" class="shrink-0" />
+                  Payment auto-releases to seller in 7 days
+                </div>
+                <BaseButton
+                  variant="success"
+                  size="sm"
+                  class="shrink-0"
+                  :loading="confirmingIds.has(order.id)"
+                  :disabled="confirmingIds.has(order.id)"
+                  @click.prevent="confirmReceipt(order.id, order.isPickup)"
+                >
+                  {{ order.isPickup ? 'Confirm Pickup' : 'Confirm Receipt' }}
+                </BaseButton>
+              </div>
+            </div>
+
+            <!-- Confirmed state -->
+            <div
+              v-if="confirmedIds.has(order.id)"
+              class="flex items-center gap-1.5 border-t border-green-100 bg-green-50 px-5 py-3 text-xs font-medium text-green-700 dark:border-green-900/30 dark:bg-green-900/10 dark:text-green-400"
+            >
+              <Icon name="solar:check-circle-bold" size="14" />
+              Receipt confirmed — funds released to seller
             </div>
           </div>
-
-          <!-- Confirmed state -->
-          <div
-            v-if="confirmedIds.has(order.id)"
-            class="flex items-center gap-1.5 border-t border-green-100 bg-green-50 px-5 py-3 text-xs font-medium text-green-700 dark:border-green-900/30 dark:bg-green-900/10 dark:text-green-400"
-          >
-            <Icon name="solar:check-circle-bold" size="14" />
-            Receipt confirmed — funds released to seller
-          </div>
-        </div>
         </div>
       </div>
 
@@ -369,6 +399,8 @@ import { imgThumb } from '~~/layers/core/app/utils/cloudinary'
 import RightSideNavBuyerOrders from '~~/layers/core/app/layouts/children/RightSideNavBuyerOrders.vue'
 import { useOrder } from '~~/layers/commerce/app/composables/useOrder'
 import { useOrderApi } from '~~/layers/commerce/app/services/order.api'
+import { useCartStore } from '~~/layers/commerce/app/stores/cart.store'
+import PostPurchaseActions from '~~/layers/commerce/app/components/PostPurchaseActions.vue'
 import {
   orderStatusLabel,
   canConfirmReceipt,
@@ -387,6 +419,7 @@ setOrdersPage()
 const route = useRoute()
 const { orders, fetchMyOrders, hasFetchedOnce } = useOrder()
 const orderApi = useOrderApi()
+const cartStore = useCartStore()
 const { sellers, hasSellers, loadUserSellers } = useSellerManagement()
 
 const pendingSellerOrders = ref<any[]>([])
@@ -488,17 +521,27 @@ onMounted(async () => {
     }
   }
 
+  // Empty the local cart once payment is confirmed.
+  //
+  // The server already clears it (verify/pod-verify/webhook/paypal-capture all
+  // call cartRepository.clearCart), but the Pinia cart store is `persist: true`
+  // and this page never re-fetches the cart — so the badge kept showing the
+  // just-purchased items until something else happened to call fetchCart().
+  // `success.vue` does clear the store, but nothing routes there: checkout sends
+  // buyers to `/buyer/orders?payment=success`, so that page's cleanup never ran.
+  if (paymentSuccess.value) {
+    cartStore.clearStore()
+  }
+
   await loadOrders()
 
   // Load seller orders in parallel (non-blocking)
   if (!sellers.value.length) await loadUserSellers().catch(() => {})
   fetchPendingSellerOrders()
 
-  if (paymentSuccess.value) {
-    setTimeout(() => {
-      paymentSuccess.value = false
-    }, 6000)
-  }
+  // The banner used to self-dismiss after 6s. It now carries the follow/rate
+  // actions, and a panel that deletes itself while the buyer is reaching for a
+  // star is worse than one that lingers — so it stays until they navigate away.
 })
 
 const loadOrders = async () => {

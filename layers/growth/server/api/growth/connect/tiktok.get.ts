@@ -33,14 +33,19 @@ export default defineEventHandler(async (event) => {
       )
     }
     if (!process.env.OAUTH_TIKTOK_CLIENT_KEY) {
-      throw new UserError('NOT_CONFIGURED', 'TikTok is not configured on the server', 500)
+      throw new UserError(
+        'NOT_CONFIGURED',
+        'TikTok is not configured on the server',
+        500,
+      )
     }
 
     const query = getQuery(event)
-    const redirectTo =
-      typeof query.redirectTo === 'string' && query.redirectTo.startsWith('/')
-        ? query.redirectTo
-        : '/'
+    // Not just `startsWith('/')` — `//evil.com` passes that and browsers treat
+    // it as an absolute cross-origin URL. See isSafeRedirectPath.
+    const redirectTo = isSafeRedirectPath(query.redirectTo)
+      ? query.redirectTo
+      : '/'
 
     const config = useRuntimeConfig()
     const appUrl = resolveOAuthAppUrl(event, config.public.baseURL as string)
@@ -49,7 +54,12 @@ export default defineEventHandler(async (event) => {
 
     setCookie(event, 'growth_tt_state', state, COOKIE)
     setCookie(event, 'growth_tt_seller', seller.id, COOKIE)
-    setCookie(event, 'growth_tt_redirect', encodeURIComponent(redirectTo), COOKIE)
+    setCookie(
+      event,
+      'growth_tt_redirect',
+      encodeURIComponent(redirectTo),
+      COOKIE,
+    )
 
     return {
       success: true,
@@ -57,11 +67,17 @@ export default defineEventHandler(async (event) => {
     }
   } catch (error) {
     if (error instanceof UserError)
-      throw createError({ statusCode: error.status, statusMessage: error.message })
+      throw createError({
+        statusCode: error.status,
+        statusMessage: error.message,
+      })
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
     logger.logError('[GET /api/growth/connect/tiktok]', error, {
       requestId: event.context?.requestId,
     })
-    throw createError({ statusCode: 500, statusMessage: 'Failed to start TikTok connection' })
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Failed to start TikTok connection',
+    })
   }
 })

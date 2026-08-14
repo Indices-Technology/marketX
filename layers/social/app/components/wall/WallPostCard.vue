@@ -69,13 +69,37 @@
       </button>
     </div>
 
-    <!-- Body text -->
-    <p
-      v-if="post.caption || post.content"
+    <!-- Body text. PostCaption (same as the main feed) both clamps long copy
+         and turns @mentions / #hashtags into links — the plain <p> this
+         replaced did neither, so a long post pushed the media and actions off
+         screen and mentions rendered as dead text. -->
+    <div
+      v-if="bodyText"
       class="mt-3 text-sm leading-relaxed text-gray-700 dark:text-neutral-300"
     >
-      {{ post.caption || post.content }}
-    </p>
+      <PostCaption
+        :caption="bodyText"
+        :mentions="post.mentions"
+        :class="expanded ? '' : 'line-clamp-4'"
+      />
+      <button
+        v-if="isLongBody"
+        class="mt-1 text-xs font-semibold text-gray-400 transition hover:text-brand dark:text-neutral-500"
+        @click.stop="expanded = !expanded"
+      >
+        {{ expanded ? 'Show less' : 'Show more' }}
+      </button>
+    </div>
+
+    <!-- Tagged products — "shop this post". Rendered above the actions so the
+         thing being sold sits with the post, not after the like button. -->
+    <div v-if="taggedProducts.length" class="mt-3">
+      <TaggedProductsDisplay
+        :products="taggedProducts"
+        :content-type="post.contentType ?? ''"
+        @select-product="openTaggedProduct"
+      />
+    </div>
 
     <!-- Media — same gallery as the main feed: full images (no square crop),
          playable videos that autoplay on scroll, tap opens the full post. -->
@@ -122,15 +146,29 @@
         {{ post._count.comments > 0 ? post._count.comments : '' }}
         <span>Comment</span>
       </button>
+
+      <!-- Share — the wall card never had one, so a post on a store page was
+           the only place in the app you could not pass a post along. -->
+      <button
+        class="ml-auto flex items-center gap-1.5 text-xs font-semibold text-gray-400 transition hover:text-brand dark:text-neutral-500"
+        @click="sharePost"
+      >
+        <Icon name="solar:share-linear" size="16" />
+        <span>Share</span>
+      </button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import { useRouter } from '#imports'
+import { useRouter, useRoute, useRuntimeConfig } from '#imports'
 import { imgAvatar } from '~~/layers/core/app/utils/cloudinary'
 import PostMediaGallery from '~~/layers/social/app/components/post-card/PostMediaGallery.vue'
+import PostCaption from '~~/layers/social/app/components/PostCaption.vue'
+import TaggedProductsDisplay from '~~/layers/social/app/components/TaggedProductsDisplay.vue'
+import { useShareModal } from '~~/layers/social/app/composables/useShareModal'
+import { useStorefront } from '~~/layers/seller/app/composables/useStorefront'
 import { useFeedSound } from '~~/layers/feed/app/composables/useFeedSound'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import {
@@ -153,12 +191,62 @@ const emit = defineEmits<{
 }>()
 
 const router = useRouter()
+const route = useRoute()
 const profileStore = useProfileStore()
+const { storeLink } = useStorefront()
 const deleting = ref(false)
 
 // ─── Media ────────────────────────────────────────────────────────────────────
 const mediaItems = computed(() => props.post.media ?? [])
 const openPost = () => router.push(`/post/${props.post.id}`)
+
+// ─── Body text ────────────────────────────────────────────────────────────────
+const bodyText = computed(() => props.post.caption || props.post.content || '')
+const expanded = ref(false)
+// Matches the main feed's threshold in PostCardActions so a post that clamps in
+// the feed also clamps here.
+const isLongBody = computed(() => bodyText.value.length > 120)
+
+// ─── Tagged products ──────────────────────────────────────────────────────────
+// Flattened into the shape TaggedProductsDisplay expects (same mapping the feed
+// card uses), tolerating a tag whose product row has since been removed.
+// Gated on a seller author, matching PostCardActions in the main feed. On a
+// store wall this also stops a customer shoutout from turning into a shop
+// window for goods that are not the shopkeeper's.
+const taggedProducts = computed(() =>
+  (props.post.author.role === 'seller' ? props.post.taggedProducts ?? [] : [])
+    .filter((t) => t.product)
+    .map((t) => ({
+      id: t.product!.id,
+      title: t.product!.title,
+      price: t.product!.price,
+      slug: t.product!.slug,
+      image: t.product!.media?.[0]?.url ?? null,
+      averageRating: t.product!.averageRating ?? null,
+      totalReviews: t.product!.totalReviews ?? 0,
+      likeCount: t.product!._count?.likes ?? 0,
+    })),
+)
+
+const openTaggedProduct = (id: number) => {
+  const hit = taggedProducts.value.find((p) => p.id === id)
+  // Prefer the slug — /product/:id also resolves, but the slug URL is the one
+  // worth having in history and in the address bar if the buyer shares it.
+  router.push(storeLink(`/product/${hit?.slug ?? id}`))
+}
+
+// ─── Share ────────────────────────────────────────────────────────────────────
+const { openShare } = useShareModal()
+const sharePost = () => {
+  const base = String(useRuntimeConfig().public.baseURL || '').replace(
+    /\/+$/,
+    '',
+  )
+  openShare(
+    `${base}/post/${props.post.id}`,
+    bodyText.value.slice(0, 80) || `Post by ${props.post.author.username}`,
+  )
+}
 
 // ─── Video autoplay-on-scroll (mirrors PostCard) ──────────────────────────────
 const cardRef = ref<HTMLElement | null>(null)
@@ -240,7 +328,13 @@ const timeAgo = (date: string): string => {
 }
 
 const toggleLike = async () => {
-  if (!profileStore.isLoggedIn) return
+  // Was a bare `return` — the button looked live but did nothing at all for a
+  // signed-out visitor, which is most traffic on a shared store link. Send them
+  // somewhere instead, and bring them back to the post afterwards.
+  if (!profileStore.isLoggedIn) {
+    router.push(`/user-login?redirect=${encodeURIComponent(route.fullPath)}`)
+    return
+  }
   const wasLiked = localLiked.value
   localLiked.value = !wasLiked
   localLikes.value += wasLiked ? -1 : 1

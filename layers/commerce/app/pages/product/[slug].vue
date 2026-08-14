@@ -1,5 +1,7 @@
 <template>
-  <HomeLayout :narrow-feed="false" :hide-right-sidebar="true">
+  <!-- Marketplace chrome by default; the seller's own storefront chrome when
+       the visitor arrived from her shop. Same page, two intents: browse vs buy. -->
+  <component :is="layoutComponent" v-bind="layoutProps">
     <!-- Loading skeleton -->
     <div
       v-if="pending || status === 'idle'"
@@ -182,43 +184,55 @@
             </p>
 
             <div class="space-y-3">
-              <!-- POD -->
+              <!-- Every way this seller can get the item to you, derived from
+                   their own shipping settings. Lives here rather than in its
+                   own card so the buyer reads delivery and payment as one
+                   answer instead of two competing ones. -->
               <div
-                v-if="product.seller?.pod_enabled"
+                v-for="opt in deliveryOptions"
+                :key="opt.key"
                 class="flex items-start gap-2.5"
               >
                 <div
-                  class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30"
+                  class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
+                  :class="
+                    opt.key === 'pod' || opt.key === 'pay_rider'
+                      ? 'bg-emerald-100 dark:bg-emerald-900/30'
+                      : 'bg-brand/10'
+                  "
                 >
                   <Icon
-                    name="solar:delivery-linear"
+                    :name="opt.icon"
                     size="15"
-                    class="text-emerald-600 dark:text-emerald-400"
+                    :class="
+                      opt.key === 'pod' || opt.key === 'pay_rider'
+                        ? 'text-emerald-600 dark:text-emerald-400'
+                        : 'text-brand'
+                    "
                   />
                 </div>
-                <div>
+                <div class="min-w-0">
                   <p
                     class="text-sm font-semibold text-gray-800 dark:text-neutral-200"
                   >
-                    Pay on Delivery available
+                    {{ opt.label }}
                   </p>
                   <p
-                    v-if="podZones.length"
+                    v-if="opt.detail"
                     class="mt-0.5 text-[11px] text-gray-500 dark:text-neutral-400"
+                  >
+                    {{ opt.detail }}
+                  </p>
+                  <!-- POD is state-gated; the zones are the buyer's real
+                       question ("does it reach me?"), so they stay. -->
+                  <p
+                    v-if="opt.key === 'pod' && podZones.length"
+                    class="text-[11px] text-gray-500 dark:text-neutral-400"
                   >
                     {{ podZones.slice(0, 4).join(', ')
                     }}{{
                       podZones.length > 4 ? ` +${podZones.length - 4} more` : ''
                     }}
-                  </p>
-                  <p
-                    v-if="product.seller.pod_delivery_days"
-                    class="text-[11px] text-gray-500 dark:text-neutral-400"
-                  >
-                    Delivered in {{ product.seller.pod_delivery_days }}–{{
-                      product.seller.pod_delivery_days + 2
-                    }}
-                    days
                   </p>
                 </div>
               </div>
@@ -288,9 +302,11 @@
                 </div>
               </div>
 
-              <!-- No POD note -->
+              <!-- No POD note. Suppressed when the seller offers pay-the-rider:
+                   two adjacent lines saying cash is and is not accepted read as
+                   a contradiction, even though they cover different amounts. -->
               <div
-                v-if="!product.seller?.pod_enabled"
+                v-if="!offersPod && !offersPayRider"
                 class="flex items-center gap-2.5"
               >
                 <div
@@ -330,7 +346,257 @@
 
         <!-- ── Product Info ── -->
         <div class="flex flex-col gap-5">
-          <!-- Seller card -->
+          <!-- Compact seller strip. The full trader card moved below the buy
+               block: on mobile it pushed title, price and Add to Cart a whole
+               screen down, so the buyer met a seller bio before the product. -->
+          <NuxtLink
+            v-if="product.seller"
+            :to="storeLink(`/sellers/profile/${product.seller.store_slug}`)"
+            class="flex items-center gap-2 text-[13px] text-gray-600 transition-colors hover:text-brand dark:text-neutral-400"
+          >
+            <img
+              v-if="product.seller.store_logo"
+              :src="imgAvatar(product.seller.store_logo)"
+              alt=""
+              class="h-6 w-6 shrink-0 rounded-lg object-cover"
+              loading="lazy"
+              decoding="async"
+            />
+            <span class="truncate font-semibold">
+              {{ product.seller.store_name || product.seller.store_slug }}
+            </span>
+            <Icon
+              v-if="product.seller.is_verified"
+              name="solar:verified-check-bold"
+              size="13"
+              class="shrink-0 text-emerald-500"
+              aria-label="Verified"
+            />
+            <span
+              v-if="product.seller.averageRating"
+              class="flex shrink-0 items-center gap-0.5 text-[12px]"
+            >
+              <Icon name="solar:star-bold" size="11" class="text-amber-400" />
+              {{ product.seller.averageRating.toFixed(1) }}
+            </span>
+          </NuxtLink>
+
+          <!-- Title & price -->
+          <div>
+            <!-- Market — the good lives inside a market square. Hidden in a
+                 storefront for the same reason as the market rail below. -->
+            <NuxtLink
+              v-if="!inStorefront && product.square"
+              :to="`/squares/${product.square.slug}`"
+              class="mb-1.5 inline-flex items-center gap-1 rounded-full bg-brand/5 px-2.5 py-1 text-[12px] font-medium text-brand transition hover:bg-brand/10"
+            >
+              <Icon name="solar:shop-2-linear" size="13" />
+              {{ product.square.name }}
+            </NuxtLink>
+            <h1 class="t-title text-2xl leading-snug">
+              {{ product.title }}
+            </h1>
+            <!-- Social proof: product rating + views -->
+            <div
+              class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-gray-500 dark:text-neutral-400"
+            >
+              <a
+                v-if="product.averageRating"
+                href="#reviews"
+                class="flex items-center gap-0.5 font-semibold text-amber-500"
+              >
+                <Icon name="solar:star-bold" size="12" />
+                {{ product.averageRating.toFixed(1) }}
+                <span class="font-normal text-gray-500 dark:text-neutral-400"
+                  >({{ product.totalReviews ?? 0 }}
+                  {{ (product.totalReviews ?? 0) === 1 ? 'review' : 'reviews' }})</span
+                >
+              </a>
+              <span
+                v-if="product.viewCount > 0"
+                class="flex items-center gap-1"
+              >
+                <Icon name="solar:eye-linear" size="12" />
+                {{ product.viewCount.toLocaleString() }}
+                {{ product.viewCount === 1 ? 'view' : 'views' }}
+              </span>
+            </div>
+            <div class="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <span class="t-price-lg text-brand">{{
+                formatProductPrice(discountedPrice, 'NGN')
+              }}</span>
+              <span
+                v-if="product.discount && product.discount > 0"
+                class="ink-faint text-base line-through"
+              >
+                {{ formatProductPrice(product.price, 'NGN') }}
+              </span>
+              <span
+                v-if="product.discount && product.discount > 0"
+                class="rounded-full bg-green-100 px-2 py-0.5 text-xs font-bold text-green-700 dark:bg-green-900/30 dark:text-green-400"
+              >
+                {{ product.discount }}% off
+              </span>
+            </div>
+          </div>
+
+          <!-- Variants -->
+          <div v-if="showVariantSelector">
+            <p
+              class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-neutral-400"
+            >
+              Size / Option
+            </p>
+            <div class="flex flex-wrap gap-2">
+              <button
+                v-for="v in displayVariants"
+                :key="v.id"
+                :disabled="v.stock === 0"
+                class="min-h-[44px] touch-manipulation rounded-xl border-2 px-4 py-2 text-sm font-semibold transition-all disabled:opacity-40"
+                :class="
+                  selectedVariantId === v.id
+                    ? 'border-brand bg-brand/5 text-brand'
+                    : 'border-gray-200 text-gray-700 hover:border-gray-400 dark:border-neutral-700 dark:text-neutral-300'
+                "
+                @click="selectedVariantId = v.id"
+              >
+                {{ v.size }}
+                <span
+                  v-if="v.price && v.price !== product.price"
+                  class="ml-1 text-[11px] opacity-60"
+                >
+                  {{ v.price > product.price ? '+' : '−'
+                  }}{{
+                    formatProductPrice(Math.abs(v.price - product.price), 'NGN')
+                  }}
+                </span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Stock indicator -->
+          <p
+            v-if="selectedVariant"
+            class="text-xs"
+            :class="
+              selectedVariant.stock > 5
+                ? 'text-green-600'
+                : selectedVariant.stock > 0
+                  ? 'text-amber-600'
+                  : 'text-red-500'
+            "
+          >
+            <Icon name="solar:record-circle-bold" size="10" class="mr-1" />
+            {{
+              selectedVariant.stock > 5
+                ? 'In stock'
+                : selectedVariant.stock > 0
+                  ? `Only ${selectedVariant.stock} left`
+                  : 'Out of stock'
+            }}
+          </p>
+
+          <!-- Qty + Share on mobile; the full row (adds Add to Cart, Buy Now,
+               View Cart) from `sm` up.
+               Mobile carried five controls here AND a sticky bar repeating two
+               of them — the same two actions rendered twice on one screen, with
+               a cart shortcut the header and bottom nav already provide. The
+               sticky bar is always in reach, so it owns buying on mobile and
+               this row keeps only what it can't: choosing quantity, and share.
+               Desktop has no sticky bar, so nothing is hidden there. -->
+          <div class="flex items-stretch gap-1.5 sm:gap-2">
+            <!-- Fills the row on mobile now that the buy buttons moved to the
+                 sticky bar — a lone stepper hugging the left edge with dead
+                 space beside it reads as an unfinished row. -->
+            <div
+              class="flex flex-1 items-center justify-between gap-0.5 rounded-xl border border-gray-200 sm:flex-none sm:shrink-0 sm:justify-start dark:border-neutral-700"
+            >
+              <button
+                class="touch-manipulation px-2 py-3 text-lg font-bold text-gray-600 hover:text-brand dark:text-neutral-400"
+                @click="qty = Math.max(1, qty - 1)"
+              >
+                −
+              </button>
+              <span
+                class="w-5 text-center text-sm font-bold text-gray-900 dark:text-neutral-100"
+                >{{ qty }}</span
+              >
+              <button
+                class="touch-manipulation px-2 py-3 text-lg font-bold text-gray-600 hover:text-brand dark:text-neutral-400"
+                @click="qty++"
+              >
+                +
+              </button>
+            </div>
+            <BaseButton
+              variant="primary"
+              size="sm"
+              class="hidden flex-1 touch-manipulation !px-2 sm:flex"
+              :loading="addingToCart"
+              :disabled="
+                addingToCart ||
+                !selectedVariantId ||
+                selectedVariant?.stock === 0
+              "
+              @click="handleAddToCart"
+            >
+              <Icon
+                v-if="!addingToCart"
+                name="solar:cart-plus-linear"
+                size="16"
+                class="mr-1"
+              />
+              {{ addingToCart ? 'Adding…' : 'Add to Cart' }}
+            </BaseButton>
+            <BaseButton
+              variant="primary"
+              size="sm"
+              class="hidden flex-1 touch-manipulation !px-2 sm:flex"
+              :loading="buyingNow"
+              :disabled="
+                buyingNow ||
+                addingToCart ||
+                !selectedVariantId ||
+                selectedVariant?.stock === 0
+              "
+              @click="buyNow"
+            >
+              <Icon
+                v-if="!buyingNow"
+                name="solar:bag-check-linear"
+                size="16"
+                class="mr-1"
+              />
+              {{ buyingNow ? 'Starting…' : 'Buy Now' }}
+            </BaseButton>
+            <BaseButton
+              variant="icon"
+              size="sm"
+              class="hidden shrink-0 touch-manipulation rounded-xl border border-gray-200 sm:flex dark:border-neutral-700"
+              aria-label="View cart"
+              @click="openCart()"
+            >
+              <span class="relative">
+                <Icon name="solar:cart-large-2-linear" size="16" />
+                <span
+                  v-if="cartCount > 0"
+                  class="absolute -right-2 -top-2 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-brand px-0.5 text-[9px] font-bold text-white"
+                  >{{ cartCount > 9 ? '9+' : cartCount }}</span
+                >
+              </span>
+            </BaseButton>
+            <BaseButton
+              variant="icon"
+              size="sm"
+              class="shrink-0 touch-manipulation rounded-xl border border-gray-200 dark:border-neutral-700"
+              aria-label="Share"
+              @click="showShareOptions = true"
+            >
+              <Icon name="solar:share-linear" size="16" />
+            </BaseButton>
+          </div>
+
+          <!-- Full trader card — after the buy decision, not before it. -->
           <div
             v-if="product.seller"
             class="rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-neutral-800 dark:bg-neutral-800/50"
@@ -455,214 +721,6 @@
                 Chat with Seller
               </button>
             </div>
-          </div>
-
-          <!-- Title & price -->
-          <div>
-            <!-- Market — the good lives inside a market square -->
-            <NuxtLink
-              v-if="product.square"
-              :to="`/squares/${product.square.slug}`"
-              class="mb-1.5 inline-flex items-center gap-1 rounded-full bg-brand/5 px-2.5 py-1 text-[12px] font-medium text-brand transition hover:bg-brand/10"
-            >
-              <Icon name="solar:shop-2-linear" size="13" />
-              {{ product.square.name }}
-            </NuxtLink>
-            <h1 class="t-title text-2xl leading-snug">
-              {{ product.title }}
-            </h1>
-            <!-- Social proof: product rating + views -->
-            <div
-              class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-gray-500 dark:text-neutral-400"
-            >
-              <a
-                v-if="product.averageRating"
-                href="#reviews"
-                class="flex items-center gap-0.5 font-semibold text-amber-500"
-              >
-                <Icon name="solar:star-bold" size="12" />
-                {{ product.averageRating.toFixed(1) }}
-                <span class="font-normal text-gray-500 dark:text-neutral-400"
-                  >({{ product.totalReviews ?? 0 }} reviews)</span
-                >
-              </a>
-              <span
-                v-if="product.viewCount > 0"
-                class="flex items-center gap-1"
-              >
-                <Icon name="solar:eye-linear" size="12" />
-                {{ product.viewCount.toLocaleString() }}
-                {{ product.viewCount === 1 ? 'view' : 'views' }}
-              </span>
-            </div>
-            <div class="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <span class="t-price-lg text-brand">{{
-                formatProductPrice(discountedPrice, 'NGN')
-              }}</span>
-              <span
-                v-if="product.discount && product.discount > 0"
-                class="ink-faint text-base line-through"
-              >
-                {{ formatProductPrice(product.price, 'NGN') }}
-              </span>
-              <span
-                v-if="product.discount && product.discount > 0"
-                class="rounded-full bg-green-100 px-2 py-0.5 text-xs font-bold text-green-700 dark:bg-green-900/30 dark:text-green-400"
-              >
-                {{ product.discount }}% off
-              </span>
-            </div>
-          </div>
-
-          <!-- Variants -->
-          <div v-if="showVariantSelector">
-            <p
-              class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-neutral-400"
-            >
-              Size / Option
-            </p>
-            <div class="flex flex-wrap gap-2">
-              <button
-                v-for="v in displayVariants"
-                :key="v.id"
-                :disabled="v.stock === 0"
-                class="min-h-[44px] touch-manipulation rounded-xl border-2 px-4 py-2 text-sm font-semibold transition-all disabled:opacity-40"
-                :class="
-                  selectedVariantId === v.id
-                    ? 'border-brand bg-brand/5 text-brand'
-                    : 'border-gray-200 text-gray-700 hover:border-gray-400 dark:border-neutral-700 dark:text-neutral-300'
-                "
-                @click="selectedVariantId = v.id"
-              >
-                {{ v.size }}
-                <span
-                  v-if="v.price && v.price !== product.price"
-                  class="ml-1 text-[11px] opacity-60"
-                >
-                  {{ v.price > product.price ? '+' : '−'
-                  }}{{
-                    formatProductPrice(
-                      Math.abs(v.price - product.price),
-                      'NGN',
-                    )
-                  }}
-                </span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Stock indicator -->
-          <p
-            v-if="selectedVariant"
-            class="text-xs"
-            :class="
-              selectedVariant.stock > 5
-                ? 'text-green-600'
-                : selectedVariant.stock > 0
-                  ? 'text-amber-600'
-                  : 'text-red-500'
-            "
-          >
-            <Icon name="solar:record-circle-bold" size="10" class="mr-1" />
-            {{
-              selectedVariant.stock > 5
-                ? 'In stock'
-                : selectedVariant.stock > 0
-                  ? `Only ${selectedVariant.stock} left`
-                  : 'Out of stock'
-            }}
-          </p>
-
-          <!-- Qty + Add to Cart + Buy Now + View Cart + Share — always one row,
-               mobile and desktop. View Cart / Share shrink to icon-only so the
-               row never needs to wrap. -->
-          <div class="flex items-stretch gap-1.5 sm:gap-2">
-            <div
-              class="flex shrink-0 items-center gap-0.5 rounded-xl border border-gray-200 dark:border-neutral-700"
-            >
-              <button
-                class="touch-manipulation px-2 py-3 text-lg font-bold text-gray-600 hover:text-brand dark:text-neutral-400"
-                @click="qty = Math.max(1, qty - 1)"
-              >
-                −
-              </button>
-              <span
-                class="w-5 text-center text-sm font-bold text-gray-900 dark:text-neutral-100"
-                >{{ qty }}</span
-              >
-              <button
-                class="touch-manipulation px-2 py-3 text-lg font-bold text-gray-600 hover:text-brand dark:text-neutral-400"
-                @click="qty++"
-              >
-                +
-              </button>
-            </div>
-            <BaseButton
-              variant="primary"
-              size="sm"
-              class="flex-1 touch-manipulation !px-2"
-              :loading="addingToCart"
-              :disabled="
-                addingToCart ||
-                !selectedVariantId ||
-                selectedVariant?.stock === 0
-              "
-              @click="handleAddToCart"
-            >
-              <Icon
-                v-if="!addingToCart"
-                name="solar:cart-plus-linear"
-                size="16"
-                class="mr-1"
-              />
-              {{ addingToCart ? 'Adding…' : 'Add to Cart' }}
-            </BaseButton>
-            <BaseButton
-              variant="primary"
-              size="sm"
-              class="flex-1 touch-manipulation !px-2"
-              :loading="buyingNow"
-              :disabled="
-                buyingNow ||
-                addingToCart ||
-                !selectedVariantId ||
-                selectedVariant?.stock === 0
-              "
-              @click="buyNow"
-            >
-              <Icon
-                v-if="!buyingNow"
-                name="solar:bag-check-linear"
-                size="16"
-                class="mr-1"
-              />
-              {{ buyingNow ? 'Starting…' : 'Buy Now' }}
-            </BaseButton>
-            <BaseButton
-              variant="icon"
-              size="sm"
-              class="shrink-0 touch-manipulation rounded-xl border border-gray-200 dark:border-neutral-700"
-              aria-label="View cart"
-              @click="openCart()"
-            >
-              <span class="relative">
-                <Icon name="solar:cart-large-2-linear" size="16" />
-                <span
-                  v-if="cartCount > 0"
-                  class="absolute -right-2 -top-2 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-brand px-0.5 text-[9px] font-bold text-white"
-                  >{{ cartCount > 9 ? '9+' : cartCount }}</span
-                >
-              </span>
-            </BaseButton>
-            <BaseButton
-              variant="icon"
-              size="sm"
-              class="shrink-0 touch-manipulation rounded-xl border border-gray-200 dark:border-neutral-700"
-              aria-label="Share"
-              @click="showShareOptions = true"
-            >
-              <Icon name="solar:share-linear" size="16" />
-            </BaseButton>
           </div>
 
           <!-- Affiliate card — visible only to enrolled affiliates, on affiliatable products -->
@@ -890,7 +948,12 @@
       </section>
 
       <!-- ── More from this market ── -->
-      <section v-if="product.square && marketProducts.length" class="mt-10">
+      <!-- Suppressed inside a storefront: sending her customer to a market
+           full of competitors is the exact leak sellers object to. -->
+      <section
+        v-if="!inStorefront && product.square && marketProducts.length"
+        class="mt-10"
+      >
         <div class="mb-3 flex items-center justify-between">
           <h2 class="t-heading text-lg">More from {{ product.square.name }}</h2>
           <NuxtLink
@@ -914,7 +977,9 @@
       </section>
 
       <!-- ── Recently viewed ── -->
-      <section v-if="recentlyViewedItems.length" class="mt-10">
+      <!-- Also marketplace-only. Whatever the buyer looked at elsewhere is,
+           by definition, not this seller's stock. -->
+      <section v-if="!inStorefront && recentlyViewedItems.length" class="mt-10">
         <h2 class="t-heading mb-3 text-lg">Recently viewed</h2>
         <div
           class="rail-scroll -mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-2"
@@ -942,25 +1007,44 @@
           padding-bottom: calc(0.625rem + env(safe-area-inset-bottom, 0px));
         "
       >
-        <p class="min-w-0 flex-1 truncate text-lg font-extrabold text-brand">
+        <p class="min-w-0 shrink truncate text-base font-extrabold text-brand">
           {{ formatProductPrice(discountedPrice, 'NGN') }}
         </p>
+        <!-- Add to Cart is secondary here: most shared-link buyers arrive for
+             one item, and forcing them through the cart drawer to reach
+             checkout added a step for the common case. Buy Now (adds, then
+             goes straight to /checkout) is the filled primary. -->
         <BaseButton
-          variant="primary"
-          class="shrink-0 touch-manipulation px-6 py-3"
+          variant="secondary"
+          class="shrink-0 touch-manipulation px-3 py-3"
+          aria-label="Add to cart"
           :loading="addingToCart"
           :disabled="
             addingToCart || !selectedVariantId || selectedVariant?.stock === 0
           "
           @click="handleAddToCart"
         >
+          <Icon v-if="!addingToCart" name="solar:cart-plus-linear" size="18" />
+        </BaseButton>
+        <BaseButton
+          variant="primary"
+          class="flex-1 touch-manipulation px-4 py-3"
+          :loading="buyingNow"
+          :disabled="
+            buyingNow ||
+            addingToCart ||
+            !selectedVariantId ||
+            selectedVariant?.stock === 0
+          "
+          @click="buyNow"
+        >
           <Icon
-            v-if="!addingToCart"
-            name="solar:cart-plus-linear"
+            v-if="!buyingNow"
+            name="solar:bag-check-linear"
             size="16"
             class="mr-1"
           />
-          {{ addingToCart ? 'Adding…' : 'Add to Cart' }}
+          {{ buyingNow ? 'Starting…' : 'Buy Now' }}
         </BaseButton>
       </div>
 
@@ -991,7 +1075,7 @@
         @close="showAffiliateCard = false"
       />
     </div>
-  </HomeLayout>
+  </component>
 </template>
 
 <script setup lang="ts">
@@ -1004,6 +1088,8 @@ import { useRoute } from 'vue-router'
 import { sanitizeHtml } from '~~/layers/commerce/utils/sanitizeHtml'
 import { variantLabel } from '~~/layers/commerce/utils/variants'
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
+import StorefrontLayout from '~~/layers/seller/app/layouts/StorefrontLayout.vue'
+import { useStorefront } from '~~/layers/seller/app/composables/useStorefront'
 import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 import VideoPlayer from '~~/layers/core/app/components/VideoPlayer.vue'
 import ProductReviews from '~~/layers/commerce/app/components/ProductReviews.vue'
@@ -1066,6 +1152,51 @@ const { data, pending, status } = useLazyAsyncData(
 )
 const product = computed(() => data.value?.data ?? null)
 
+// ── Storefront vs marketplace ────────────────────────────────────────────────
+// Keyed on the arrival marker alone, NOT on a seller match against the fetched
+// product. Product data is client-only (`server: false` below), so a
+// data-dependent check is false during SSR and flips true after hydration —
+// swapping :is on the layout, which remounts the whole shell as a visible
+// flash of marketplace chrome on every storefront product view. The marker is
+// known from the URL at first paint, so this renders right the first time.
+const { isStorefront, storeLink } = useStorefront()
+const inStorefront = isStorefront
+
+// Derived server-side from the seller's shipping settings (see
+// deriveDeliveryOptions) — the raw shippingConfig is never sent to the client.
+const deliveryOptions = computed(
+  () =>
+    ((
+      product.value?.seller as
+        | {
+            deliveryOptions?: Array<{
+              key: string
+              label: string
+              detail: string | null
+              icon: string
+            }>
+          }
+        | undefined
+    )?.deliveryOptions ?? []),
+)
+const offersPayRider = computed(() =>
+  deliveryOptions.value.some((o) => o.key === 'pay_rider'),
+)
+// Read off the derived list, not seller.pod_enabled: POD is paused
+// platform-wide, so a seller who has it switched on still cannot offer it and
+// the page must say so rather than quietly showing neither line.
+const offersPod = computed(() =>
+  deliveryOptions.value.some((o) => o.key === 'pod'),
+)
+const layoutComponent = computed(() =>
+  inStorefront.value ? StorefrontLayout : HomeLayout,
+)
+const layoutProps = computed(() =>
+  inStorefront.value
+    ? { store: product.value?.seller }
+    : { narrowFeed: false, hideRightSidebar: true },
+)
+
 // SSR-resolved copy — so social scrapers and search crawlers (no JS) receive the
 // product's OG meta in the server HTML. Mirrors the store page's `store-seo-*`
 // fetch. Prefer the live client product once it has loaded.
@@ -1123,7 +1254,7 @@ const loadRelated = async () => {
   }
 }
 
-const goToProduct = (p: IProduct) => navigateTo(`/product/${p.slug}`)
+const goToProduct = (p: IProduct) => navigateTo(storeLink(`/product/${p.slug}`))
 
 // ── Message the trader (creates/opens the store conversation) ────────────────
 const chatApi = useChatApi()
@@ -1234,18 +1365,24 @@ const podZones = computed<string[]>(() => {
   return Array.isArray(z) ? z : []
 })
 
-const trustTips = [
+// "Inspect item before paying on delivery" was hardcoded, but it is only true
+// when Pay-on-Delivery is actually offered — and POD is paused platform-wide,
+// so every buyer was reading a promise the checkout does not keep. Swapped for
+// the escrow guarantee, which IS what protects them when they prepay.
+const trustTips = computed(() => [
   {
     icon: 'solar:shield-check-linear',
     text: 'Secure checkout — payments are encrypted',
   },
-  {
-    icon: 'solar:eye-linear',
-    text: 'Inspect item before paying on delivery',
-  },
+  offersPod.value
+    ? { icon: 'solar:eye-linear', text: 'Inspect item before paying on delivery' }
+    : {
+        icon: 'solar:eye-linear',
+        text: 'Payment is held in escrow until you confirm delivery',
+      },
   { icon: 'solar:money-bag-linear', text: 'Buyer protection on all orders' },
   { icon: 'solar:user-check-linear', text: 'Only pay when satisfied' },
-]
+])
 
 // ── Seller ───────────────────────────────────────────────────────────────────
 const sellerMemberSince = computed(() => {
