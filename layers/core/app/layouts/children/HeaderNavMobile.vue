@@ -3,9 +3,17 @@
     class="mobile-header border-b border-gray-200/60 bg-white/80 backdrop-blur-md dark:border-neutral-800/60 dark:bg-neutral-900/80"
   >
     <div class="flex h-14 items-center gap-2 px-4">
-      <!-- Logo -->
-      <NuxtLink to="/" class="flex shrink-0 items-center">
-        <BrandLogo variant="mark" class="h-6 w-auto" />
+      <!-- Logo. Full wordmark on home, compact mark everywhere else: home is
+           the one screen whose job includes saying whose app this is, while
+           inner pages need the width for their own title and actions. Same
+           split Instagram and Jumia use. -->
+      <NuxtLink
+        to="/"
+        class="flex shrink-0 items-center"
+        aria-label="MarketX home"
+        @click="isHome && requestHomeReset()"
+      >
+        <BrandLogo :variant="isHome ? 'wordmark' : 'mark'" class="h-6 w-auto" />
       </NuxtLink>
 
       <!-- Spacer -->
@@ -85,6 +93,7 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
+import { useHomeReset } from '~~/layers/feed/app/composables/useHomeReset'
 import { useNotificationStore } from '~~/layers/profile/app/stores/notification.store'
 import AppIcon from '~~/layers/ui/app/components/AppIcon.vue'
 import BrandLogo from '~~/layers/ui/app/components/BrandLogo.vue'
@@ -92,6 +101,9 @@ import BrandLogo from '~~/layers/ui/app/components/BrandLogo.vue'
 defineEmits(['open-notifications', 'open-cart', 'open-search'])
 
 const route = useRoute()
+const isHome = computed(() => route.path === '/')
+// Tapping the logo on home returns to the top, same as the Home tab.
+const { requestHomeReset } = useHomeReset()
 const profileStore = useProfileStore()
 const notificationStore = useNotificationStore()
 

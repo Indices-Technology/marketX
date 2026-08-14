@@ -168,26 +168,25 @@
     <MobileAIChatButton
       :is-open="showAI"
       :side-left="immersive"
+      :nav-visible="bottomNavVisible"
       :banner-visible="
-        sellerDockVisible ||
-        (!dismissSellerBanner &&
-          profileStore.isLoggedIn &&
-          !sellerStore.hasSellers &&
-          bottomNavVisible)
+        !dismissSellerBanner &&
+        profileStore.isLoggedIn &&
+        !sellerStore.hasSellers &&
+        bottomNavVisible
       "
       @open="showAI = true"
       @close="showAI = false"
     />
 
-    <!-- Sellers get the dashboard shortcut mobile was missing; non-sellers get
-         the "Start Selling" pitch below. Mutually exclusive on hasSellers, so
-         they never contend for the same slot. -->
-    <ClientOnly>
-      <SellerHubDock
-        :nav-visible="bottomNavVisible"
-        @visibility="sellerDockVisible = $event"
-      />
-    </ClientOnly>
+    <!-- SellerHubDock removed. As a floating dock it sat on top of page content
+         (store names, hero copy) and its dismiss was session state on the
+         component — so every layout swap that remounted it brought the banner
+         back after the seller had closed it.
+         The same shortcut is now a tile in MobileStatusStrip on home, and
+         AccountMenu in the bottom nav already carries "Seller Hub" on every
+         other page, so no route to the dashboard was lost.
+         Non-sellers still get the "Start Selling" pitch below. -->
 
     <ClientOnly>
       <Transition name="seller-banner">
@@ -293,7 +292,6 @@ import { useRoute } from 'vue-router'
 
 // ─── Always-visible layout components (eager) ───────────────────────────────
 import BottomNavMobile from '~~/layers/core/app/layouts/children/BottomNavMobile.vue'
-import SellerHubDock from '~~/layers/seller/app/components/SellerHubDock.vue'
 import SideNav from '~~/layers/core/app/layouts/children/SideNav.vue'
 import HeaderNavMobile from '~~/layers/core/app/layouts/children/HeaderNavMobile.vue'
 import RightSideNav from '~~/layers/core/app/layouts/children/RightSideNav.vue'
@@ -535,9 +533,6 @@ const { isOpen: showAI } = useDassaPanel()
 // Shared so pages (e.g. product page "View cart") can open the drawer too.
 const { isOpen: showCart } = useCartDrawer()
 const dismissSellerBanner = ref(false)
-// Reported by SellerHubDock (it owns its own dismiss state) so the floating AI
-// button can clear whichever of the two docks is currently occupying the slot.
-const sellerDockVisible = ref(false)
 
 const openPostUploader = () => {
   showCreateModal.value = false

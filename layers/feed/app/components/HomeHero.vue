@@ -89,6 +89,22 @@
           class="flex flex-col justify-center"
           :class="dense ? 'items-center text-center' : ''"
         >
+          <!-- Mobile branding. The desktop hero has a logo bar above (v-if
+               !dense); mobile had none on the assumption the real header was
+               a swipe away — but HomeLayout hides that header for the whole
+               time the hero slide is showing, so the first screen a phone
+               user ever sees carried no MarketX mark at all. Wordmark only:
+               the auth actions in the desktop bar stay desktop-only, since
+               the mobile hero already owns its own CTA below. -->
+          <NuxtLink
+            v-if="dense"
+            to="/"
+            class="mb-5 flex items-center justify-center"
+            aria-label="MarketX home"
+          >
+            <BrandLogo variant="wordmark" class="h-7 w-auto" />
+          </NuxtLink>
+
           <!-- Rotating value prop. Same promise said several ways — a static
                line has to be the one perfect sentence, whereas cycling lets
                the page cover discovery, verification and safe payment in
@@ -124,6 +140,18 @@
                the bottom of the viewport. -->
           <div class="pointer-events-auto mt-5 w-full max-w-xl">
             <TrustFindVerifyDock :show-seller-cta="!dense" />
+          </div>
+
+          <!-- Signed-in user's own state, on the first slide they land on after
+               logging in — the "mobile dashboard" ask, as a status card rather
+               than a launcher. Renders nothing for guests and nothing when the
+               account is quiet, so the hero is unchanged for everyone else.
+               Costs no requests: every value is already in a store by now. -->
+          <div
+            v-if="dense && profileStore.isLoggedIn"
+            class="pointer-events-auto mt-5 w-full"
+          >
+            <MobileStatusStrip />
           </div>
 
           <!-- Guest actions for the MOBILE hero. The desktop hero has its own
@@ -324,6 +352,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import BrandLogo from '~~/layers/ui/app/components/BrandLogo.vue'
+import MobileStatusStrip from '~~/layers/feed/app/components/MobileStatusStrip.vue'
 import TrustFindVerifyDock from '~~/layers/feed/app/components/TrustFindVerifyDock.vue'
 import ProductCardMini from '~~/layers/commerce/app/components/ProductCardMini.vue'
 import MarketXCard from '~~/layers/seller/app/components/MarketXCard.vue'

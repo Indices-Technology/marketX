@@ -17,11 +17,15 @@
   >
     <div class="flex h-16 items-center justify-around px-2">
       <!-- Home -->
+      <!-- Pressed while already on home, this is a route no-op, so the user
+           stays scrolled deep in the feed and the button looks broken. Fire
+           the reset signal in that case instead. -->
       <NuxtLink
         to="/"
         class="nav-item"
         :class="{ active: isHome }"
         aria-label="Home"
+        @click="isHome && requestHomeReset()"
       >
         <AppIcon name="home" :active="isHome" size="26" />
       </NuxtLink>
@@ -129,6 +133,7 @@ import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import Avatar from '~~/layers/profile/app/components/Avatar.vue'
 import AppIcon from '~~/layers/ui/app/components/AppIcon.vue'
 import AccountMenu from './AccountMenu.vue'
+import { useHomeReset } from '~~/layers/feed/app/composables/useHomeReset'
 
 defineEmits(['create'])
 defineOptions({ inheritAttrs: false })
@@ -141,6 +146,7 @@ const menuOpen = ref(false)
 const menuRef = ref<HTMLElement | null>(null)
 
 const isHome = computed(() => route.path === '/')
+const { requestHomeReset } = useHomeReset()
 const isDiscover = computed(() => route.path.startsWith('/discover'))
 const isNearby = computed(() => route.path.startsWith('/map'))
 const isSquares = computed(() => route.path.startsWith('/squares'))
