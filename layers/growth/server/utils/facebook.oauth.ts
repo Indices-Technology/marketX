@@ -117,9 +117,13 @@ export async function exchangeFacebookConnection(
       access_token: string
       category?: string
     }>
+    paging?: unknown
     error?: { message?: string }
   }>(`https://graph.facebook.com/${GRAPH_API_VERSION}/me/accounts`, {
-    query: { access_token: userToken },
+    query: {
+      access_token: userToken,
+      fields: 'id,name,access_token,category,tasks',
+    },
   })
   if (pagesRes.error) {
     throw new Error(`Facebook pages error: ${pagesRes.error.message}`)
@@ -127,25 +131,40 @@ export async function exchangeFacebookConnection(
 
   // Diagnostic for the "empty but no error" case — cheap, only fires on the
   // failure path, and turns "no_pages" from a dead end into an answer: was
-  // pages_show_list actually granted on this token or not?
+  // pages_show_list actually granted, and does the token see ANY business
+  // portfolio at all (a Business-Login-shared Page may need to be looked up
+  // via its Business rather than the classic personal /me/accounts list).
   if (!pagesRes.data || pagesRes.data.length === 0) {
     try {
-      const perms = await $fetch<{
-        data?: Array<{ permission: string; status: string }>
-      }>(`https://graph.facebook.com/${GRAPH_API_VERSION}/me/permissions`, {
-        query: { access_token: userToken },
-      })
+      const [perms, businesses] = await Promise.all([
+        $fetch<{ data?: Array<{ permission: string; status: string }> }>(
+          `https://graph.facebook.com/${GRAPH_API_VERSION}/me/permissions`,
+          { query: { access_token: userToken } },
+        ),
+        $fetch<{
+          data?: Array<{ id: string; name: string }>
+          error?: { message?: string }
+        }>(`https://graph.facebook.com/${GRAPH_API_VERSION}/me/businesses`, {
+          query: { access_token: userToken },
+        }).catch((e) => ({
+          data: undefined,
+          error: { message: e instanceof Error ? e.message : String(e) },
+        })),
+      ])
       logger.warn('[facebook.oauth] /me/accounts returned no pages', {
+        rawPagesResponse: pagesRes,
         grantedPermissions: (perms.data || [])
           .filter((p) => p.status === 'granted')
           .map((p) => p.permission),
         declinedPermissions: (perms.data || [])
           .filter((p) => p.status !== 'granted')
           .map((p) => p.permission),
+        businesses: businesses.data,
+        businessesError: businesses.error,
       })
     } catch (e) {
       logger.warn(
-        '[facebook.oauth] /me/accounts returned no pages (and /me/permissions check failed)',
+        '[facebook.oauth] /me/accounts returned no pages (and diagnostic checks failed)',
         {
           error: e instanceof Error ? e.message : String(e),
         },
