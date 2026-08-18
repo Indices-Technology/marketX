@@ -19,7 +19,11 @@ export const FACEBOOK_CONNECT_SCOPES =
   process.env.FACEBOOK_SCOPES ||
   'pages_show_list,pages_read_engagement,pages_manage_posts'
 
-const GRAPH_API_VERSION = 'v19.0'
+// v19.0 was retired (Meta: "v18.0 and v19.0 calls return 400 errors" as of
+// 2026) — this silently broke every call in this file. Re-verify against
+// developers.facebook.com/docs/graph-api/changelog before bumping further;
+// Meta's 2-year-per-version guarantee means this will need updating again.
+const GRAPH_API_VERSION = 'v25.0'
 
 /**
  * Once an app requests Page permissions, Meta requires it to be a "Facebook
@@ -119,6 +123,34 @@ export async function exchangeFacebookConnection(
   })
   if (pagesRes.error) {
     throw new Error(`Facebook pages error: ${pagesRes.error.message}`)
+  }
+
+  // Diagnostic for the "empty but no error" case — cheap, only fires on the
+  // failure path, and turns "no_pages" from a dead end into an answer: was
+  // pages_show_list actually granted on this token or not?
+  if (!pagesRes.data || pagesRes.data.length === 0) {
+    try {
+      const perms = await $fetch<{
+        data?: Array<{ permission: string; status: string }>
+      }>(`https://graph.facebook.com/${GRAPH_API_VERSION}/me/permissions`, {
+        query: { access_token: userToken },
+      })
+      logger.warn('[facebook.oauth] /me/accounts returned no pages', {
+        grantedPermissions: (perms.data || [])
+          .filter((p) => p.status === 'granted')
+          .map((p) => p.permission),
+        declinedPermissions: (perms.data || [])
+          .filter((p) => p.status !== 'granted')
+          .map((p) => p.permission),
+      })
+    } catch (e) {
+      logger.warn(
+        '[facebook.oauth] /me/accounts returned no pages (and /me/permissions check failed)',
+        {
+          error: e instanceof Error ? e.message : String(e),
+        },
+      )
+    }
   }
 
   return (pagesRes.data || []).map((p) => ({
