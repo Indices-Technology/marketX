@@ -144,6 +144,17 @@
             <StoreSwitcher />
           </ClientOnly>
         </div>
+        <!-- One-tap shortcut to Growth (connect Facebook, promote, import from
+             posts) — previously only reachable via the "More" overflow sheet,
+             which buried it behind an extra tap sellers weren't finding. -->
+        <NuxtLink
+          v-if="storeSlug"
+          :to="`/seller/${storeSlug}/growth`"
+          class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-white"
+          aria-label="Growth"
+        >
+          <Icon name="solar:rocket-2-linear" size="20" />
+        </NuxtLink>
       </header>
 
       <!-- Main content -->
@@ -274,7 +285,9 @@
               <Icon name="solar:settings-linear" size="20" />
               <span>Settings</span>
             </NuxtLink>
-            <div class="my-1 border-t border-gray-200 dark:border-neutral-800" />
+            <div
+              class="my-1 border-t border-gray-200 dark:border-neutral-800"
+            />
             <NuxtLink to="/seller/dashboard" class="more-item">
               <Icon name="solar:shop-2-linear" size="20" />
               <span>My Stores</span>
