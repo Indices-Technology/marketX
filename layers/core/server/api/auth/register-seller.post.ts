@@ -163,7 +163,12 @@ export default defineEventHandler(async (event) => {
 
     // ── 2. Check duplicate user ──────────────────────────────────────────────
     const existing = await prisma.profile.findFirst({
-      where: { OR: [{ email: email.toLowerCase() }, { username }] },
+      where: {
+        OR: [
+          { email: email.toLowerCase() },
+          { username: { equals: username, mode: 'insensitive' } },
+        ],
+      },
       select: { email: true },
     })
     if (existing) {

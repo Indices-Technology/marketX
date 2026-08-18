@@ -9,18 +9,27 @@ export const loginSchema = z.object({
 })
 export type LoginInput = z.infer<typeof loginSchema>
 
+// ==================== USERNAME ====================
+// Single source of truth for username rules. Shared by registration and by the
+// live availability check so the typeahead can never say "looks fine" about a
+// username that registration would later reject.
+export const usernameSchema = z
+  .string()
+  .min(3, 'Username must be at least 3 characters')
+  .max(30, 'Username must be at most 30 characters')
+  .regex(
+    /^[a-zA-Z0-9_-]+$/,
+    'Username can only contain letters, numbers, underscores, and hyphens',
+  )
+
+export const checkUsernameSchema = z.object({ username: usernameSchema })
+export type CheckUsernameInput = z.infer<typeof checkUsernameSchema>
+
 // ==================== REGISTER ====================
 export const registerSchema = z
   .object({
     email: z.string().email('Invalid email address'),
-    username: z
-      .string()
-      .min(3, 'Username must be at least 3 characters')
-      .max(30, 'Username must be at most 30 characters')
-      .regex(
-        /^[a-zA-Z0-9_-]+$/,
-        'Username can only contain letters, numbers, underscores, and hyphens',
-      ),
+    username: usernameSchema,
 
     // Use the Enhanced Schema here
     password: enhancedPasswordSchema,

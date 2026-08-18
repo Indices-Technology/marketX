@@ -86,6 +86,22 @@ export const RATE_LIMITS = {
     lockoutMs: 15 * 60 * 1000, // 15 minutes lockout
     keyPrefix: 'auth:refresh',
   },
+  // Username availability check: a typeahead endpoint, so the ceiling is high
+  // enough for real typing but still caps scripted enumeration of usernames.
+  CHECK_USERNAME: {
+    maxAttempts: parseInt(
+      process.env.RATE_LIMIT_CHECK_USERNAME_MAX || '60',
+      10,
+    ),
+    windowMs: parseInt(
+      process.env.RATE_LIMIT_CHECK_USERNAME_WINDOW || String(5 * 60 * 1000),
+      10,
+    ), // 5 minutes
+    message: 'Too many username checks',
+    lockoutMs: 5 * 60 * 1000, // 5 minutes lockout
+    keyPrefix: 'auth:check-username',
+  },
+
   PROFILE_FETCH: {
     maxAttempts: parseInt(process.env.RATE_LIMIT_REFRESH_TOKEN_MAX || '10', 10),
     windowMs: parseInt(

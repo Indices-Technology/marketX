@@ -18,7 +18,7 @@
         class="mb-8 flex justify-center"
         aria-label="MarketX home"
       >
-        <BrandLogo variant="full" class="h-10 w-auto" />
+        <BrandLogo variant="wordmark" class="h-10 w-auto" />
       </NuxtLink>
 
       <div

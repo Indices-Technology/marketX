@@ -6,6 +6,8 @@
     :error="error"
     :required="required"
   >
+    <template v-if="$slots.hint" #hint><slot name="hint" /></template>
+
     <template #default="{ id: fieldId, describedBy }">
       <div class="relative flex items-center">
         <div
@@ -53,7 +55,8 @@
             v-else-if="iconRight"
             :name="iconRight"
             size="16"
-            class="pointer-events-none text-gray-400 dark:text-neutral-500"
+            class="pointer-events-none"
+            :class="iconRightClass || 'text-gray-400 dark:text-neutral-500'"
           />
         </div>
       </div>
@@ -82,6 +85,8 @@ const props = withDefaults(
     required?: boolean
     iconLeft?: string
     iconRight?: string
+    /** Overrides the right icon's colour — for status affordances (checking / available / taken). */
+    iconRightClass?: string
     autocomplete?: string
     size?: 'sm' | 'md' | 'lg'
   }>(),

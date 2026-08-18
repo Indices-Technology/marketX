@@ -16,11 +16,12 @@ import {
 } from '~~/server/utils/auth/rateLimiter'
 import { RATE_LIMITS } from '~~/server/config/rateLimits'
 import { authRepository } from '~~/layers/core/server/repositories/auth.repository'
+import { getClientIP } from '~~/server/layers/shared/utils/security'
 
 // Seed accounts from prisma/seed.ts — the ones test helpers log in as.
 const TEST_EMAILS = ['ada@peppr.test', 'balogun@peppr.test']
 
-export default defineEventHandler(async () => {
+export default defineEventHandler(async (event) => {
   if (process.env.NODE_ENV === 'production') {
     throw createError({
       statusCode: 403,
@@ -35,6 +36,13 @@ export default defineEventHandler(async () => {
       await authRepository.clearFailedLoginAttempts(email)
     }),
   )
+
+  // IP-keyed limits live in Redis too, and registration only allows 3 per
+  // hour — without this, a second run of the auth suite fails on the register
+  // happy path for reasons that have nothing to do with the code under test.
+  const ip = getClientIP(event)
+  clearRateLimit(`register:${ip}`, RATE_LIMITS.REGISTER.keyPrefix)
+  clearRateLimit(`check-username:${ip}`, RATE_LIMITS.CHECK_USERNAME.keyPrefix)
 
   return { success: true }
 })
