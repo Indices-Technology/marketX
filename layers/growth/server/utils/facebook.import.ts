@@ -4,7 +4,9 @@
  * to facebook.posting.ts; same Graph API version, same error normalisation.
  */
 
-const GRAPH_API_VERSION = 'v19.0'
+// Kept in sync with facebook.oauth.ts / facebook.posting.ts — v19.0 was
+// retired ("v18.0 and v19.0 calls return 400 errors" as of 2026).
+const GRAPH_API_VERSION = 'v25.0'
 const MAX_POSTS = 25
 const MAX_IMAGES_PER_POST = 10
 

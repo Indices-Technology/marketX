@@ -7,7 +7,9 @@
  * and returns the post id immediately. See docs/GROWTH_ENGINE.md.
  */
 
-const GRAPH_API_VERSION = 'v19.0'
+// Kept in sync with facebook.oauth.ts / facebook.import.ts — v19.0 was
+// retired ("v18.0 and v19.0 calls return 400 errors" as of 2026).
+const GRAPH_API_VERSION = 'v25.0'
 
 /**
  * A non-2xx HTTP response makes ofetch throw a FetchError instead of a
