@@ -90,6 +90,13 @@
     "prettier-plugin-tailwindcss": "^0.5.12",
     "prisma": "^7.4.0",
     "tsx": "^4.21.0",
-    "vitest": "^2.1.9"
+    "vitest": "^2.1.9",
+    "workbox-cacheable-response": "^7.4.1",
+    "workbox-core": "^7.4.1",
+    "workbox-expiration": "^7.4.1",
+    "workbox-navigation-preload": "^7.4.1",
+    "workbox-precaching": "^7.4.1",
+    "workbox-routing": "^7.4.1",
+    "workbox-strategies": "^7.4.1"
   }
 }

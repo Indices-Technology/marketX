@@ -27,15 +27,23 @@ export interface FacebookSignedRequestPayload {
  *
  * Fails closed: with no app secret configured it returns `null` (in production a
  * warning is logged) so an unsigned request can never be treated as valid.
+ *
+ * Two Meta apps can call these callbacks — the original login app
+ * (OAUTH_FACEBOOK_CLIENT_SECRET) and the dedicated Page-management app
+ * (GROWTH_FACEBOOK_CLIENT_SECRET, set once that app exists) — each signs with
+ * its OWN secret, so every configured secret is tried until one verifies.
  */
 export function verifyFacebookSignedRequest(
   signedRequest: string | undefined | null,
 ): FacebookSignedRequestPayload | null {
-  const secret = process.env.OAUTH_FACEBOOK_CLIENT_SECRET
-  if (!secret) {
+  const secrets = [
+    process.env.OAUTH_FACEBOOK_CLIENT_SECRET,
+    process.env.GROWTH_FACEBOOK_CLIENT_SECRET,
+  ].filter((s): s is string => !!s)
+  if (secrets.length === 0) {
     if (!import.meta.dev) {
       logger.warn(
-        '[facebook signed_request] OAUTH_FACEBOOK_CLIENT_SECRET not set — rejecting',
+        '[facebook signed_request] no Facebook app secret configured — rejecting',
       )
     }
     return null
@@ -58,14 +66,14 @@ export function verifyFacebookSignedRequest(
   if (providedSig.length === 0) return null
 
   // HMAC is over the raw base64url payload segment, not the decoded JSON.
-  const expectedSig = createHmac('sha256', secret).update(payloadPart).digest()
-
-  if (
-    providedSig.length !== expectedSig.length ||
-    !timingSafeEqual(providedSig, expectedSig)
-  ) {
-    return null
-  }
+  const verified = secrets.some((secret) => {
+    const expectedSig = createHmac('sha256', secret).update(payloadPart).digest()
+    return (
+      providedSig.length === expectedSig.length &&
+      timingSafeEqual(providedSig, expectedSig)
+    )
+  })
+  if (!verified) return null
 
   let payload: FacebookSignedRequestPayload
   try {

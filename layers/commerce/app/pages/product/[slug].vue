@@ -1220,6 +1220,21 @@ setProductPage(() => ({
   price: seoProduct.value?.price,
   sellerName: seoProduct.value?.seller?.store_name,
   sellerPublicId: (seoProduct.value?.seller as any)?.publicId,
+  // ── schema.org Product fields ──
+  sku: (seoProduct.value as any)?.SKU,
+  // Any variant with stock keeps the product In Stock; a product with no
+  // variant rows at all is treated as available rather than guessed unavailable.
+  inStock: (() => {
+    const variants = (seoProduct.value as any)?.variants ?? []
+    return variants.length === 0
+      ? true
+      : variants.some((v: any) => (v?.stock ?? 0) > 0)
+  })(),
+  averageRating: seoProduct.value?.averageRating,
+  totalReviews: seoProduct.value?.totalReviews,
+  // `category` is the ProductCategories join rows; first one is the primary.
+  categoryName: seoProduct.value?.category?.[0]?.category?.name,
+  categorySlug: seoProduct.value?.category?.[0]?.category?.slug,
 }))
 
 // ── Related discovery: more from this trader / market ────────────────────────

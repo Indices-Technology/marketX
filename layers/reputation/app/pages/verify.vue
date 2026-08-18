@@ -364,8 +364,11 @@ import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 import BrandLogo from '~~/layers/ui/app/components/BrandLogo.vue'
 import StoreAvatar from '~~/layers/profile/app/components/StoreAvatar.vue'
 import { useReputationApi } from '~~/layers/reputation/app/services/reputation.api'
+import { useSeo } from '~~/layers/core/app/composables/useSeo'
 
 defineOptions({ name: 'VerifyPage' })
+
+useSeo().setVerifyPage()
 
 interface VerifySeller {
   store_slug: string

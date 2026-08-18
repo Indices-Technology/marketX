@@ -1,10 +1,12 @@
 /**
  * Facebook Page connection OAuth (posting) — distinct from the LOGIN OAuth in
- * server/utils/auth/oauth.ts. Same Meta App (OAUTH_FACEBOOK_CLIENT_ID/SECRET),
- * but requests Page-management scopes and walks the token chain Page access
- * requires: auth code → short-lived user token → long-lived user token →
- * /me/accounts (the Pages the user administers, each with its own Page token).
- * See docs/GROWTH_ENGINE.md.
+ * server/utils/auth/oauth.ts. Uses its OWN Meta app (GROWTH_FACEBOOK_CLIENT_ID/
+ * SECRET, "marketx-pages"), NOT the login app's OAUTH_FACEBOOK_CLIENT_ID/SECRET
+ * — Meta ties Page-management permissions (pages_show_list etc.) to a
+ * "Facebook Login for Business" app, which a plain consumer-login app cannot be
+ * upgraded into. Walks the token chain Page access requires: auth code →
+ * short-lived user token → long-lived user token → /me/accounts (the Pages the
+ * user administers, each with its own Page token). See docs/GROWTH_ENGINE.md.
  */
 
 /**
@@ -23,7 +25,7 @@ export function facebookAuthorizeUrl(
   redirectUri: string,
 ): string {
   const params = new URLSearchParams({
-    client_id: process.env.OAUTH_FACEBOOK_CLIENT_ID || '',
+    client_id: process.env.GROWTH_FACEBOOK_CLIENT_ID || '',
     redirect_uri: redirectUri,
     response_type: 'code',
     scope: FACEBOOK_CONNECT_SCOPES,
@@ -55,8 +57,8 @@ export async function exchangeFacebookConnection(
     error?: { message?: string }
   }>(`https://graph.facebook.com/${GRAPH_API_VERSION}/oauth/access_token`, {
     query: {
-      client_id: process.env.OAUTH_FACEBOOK_CLIENT_ID || '',
-      client_secret: process.env.OAUTH_FACEBOOK_CLIENT_SECRET || '',
+      client_id: process.env.GROWTH_FACEBOOK_CLIENT_ID || '',
+      client_secret: process.env.GROWTH_FACEBOOK_CLIENT_SECRET || '',
       redirect_uri: redirectUri,
       code,
     },
@@ -73,8 +75,8 @@ export async function exchangeFacebookConnection(
   }>(`https://graph.facebook.com/${GRAPH_API_VERSION}/oauth/access_token`, {
     query: {
       grant_type: 'fb_exchange_token',
-      client_id: process.env.OAUTH_FACEBOOK_CLIENT_ID || '',
-      client_secret: process.env.OAUTH_FACEBOOK_CLIENT_SECRET || '',
+      client_id: process.env.GROWTH_FACEBOOK_CLIENT_ID || '',
+      client_secret: process.env.GROWTH_FACEBOOK_CLIENT_SECRET || '',
       fb_exchange_token: shortLived.access_token,
     },
   })

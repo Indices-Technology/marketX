@@ -89,8 +89,11 @@
           <p
             class="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300"
           >
-            <Icon name="solar:recive-square-linear" size="12" class="mr-1" />Pre-loved &amp;
-            thrift items only
+            <Icon
+              name="solar:recive-square-linear"
+              size="12"
+              class="mr-1"
+            />Pre-loved &amp; thrift items only
           </p>
         </div>
       </template>
@@ -215,7 +218,9 @@
         </div>
 
         <div
-          v-if="!sidebarSquares.length && !sidebarSellers.length && sidebarHasData"
+          v-if="
+            !sidebarSquares.length && !sidebarSellers.length && sidebarHasData
+          "
           class="text-[12px] text-gray-500 dark:text-neutral-400"
         >
           Explore the markets to discover traders.

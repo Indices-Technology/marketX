@@ -3,31 +3,39 @@
  *
  * Receives WhatsApp Cloud API events (message delivery/read status, and later
  * inbound messages once sellers connect their own numbers). Meta signs every
- * event with the SAME App Secret used for the FB signed_request checks
- * (OAUTH_FACEBOOK_CLIENT_SECRET) — this is one Meta App with multiple products.
+ * event with the App Secret of the Meta app the WABA lives under
+ * (WHATSAPP_APP_SECRET, "marketx-WA") — a DIFFERENT app from the one that
+ * issues OAUTH_FACEBOOK_CLIENT_SECRET (consumer login), so that var alone
+ * cannot verify these. Both are tried since dev setups may still only have
+ * one configured.
  */
 
 import { createHmac, timingSafeEqual } from 'crypto'
 
 function verify(rawBody: string, signature: string): boolean {
-  const secret = process.env.OAUTH_FACEBOOK_CLIENT_SECRET
-  if (!secret) {
+  const secrets = [
+    process.env.WHATSAPP_APP_SECRET,
+    process.env.OAUTH_FACEBOOK_CLIENT_SECRET,
+  ].filter((s): s is string => !!s)
+  if (secrets.length === 0) {
     // Fail closed in production — a missing secret must not disable verification
     if (!import.meta.dev) {
       logger.warn(
-        '[webhook/whatsapp] OAUTH_FACEBOOK_CLIENT_SECRET not set — rejecting webhook',
+        '[webhook/whatsapp] no app secret configured — rejecting webhook',
       )
       return false
     }
     return true // dev only
   }
-  const expected =
-    'sha256=' + createHmac('sha256', secret).update(rawBody).digest('hex')
-  try {
-    return timingSafeEqual(Buffer.from(signature), Buffer.from(expected))
-  } catch {
-    return false
-  }
+  return secrets.some((secret) => {
+    const expected =
+      'sha256=' + createHmac('sha256', secret).update(rawBody).digest('hex')
+    try {
+      return timingSafeEqual(Buffer.from(signature), Buffer.from(expected))
+    } catch {
+      return false
+    }
+  })
 }
 
 interface WhatsAppStatus {

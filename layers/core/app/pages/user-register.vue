@@ -315,13 +315,13 @@
             >
               {{ $t('auth.register.agreePrefix') }}
               <NuxtLink
-                to="/Terms"
+                to="/terms"
                 class="font-semibold text-brand hover:opacity-80"
                 >{{ $t('auth.register.terms') }}</NuxtLink
               >
               {{ $t('auth.register.agreeMid') }}
               <NuxtLink
-                to="/Privacy"
+                to="/privacy"
                 class="font-semibold text-brand hover:opacity-80"
                 >{{ $t('auth.register.privacy') }}</NuxtLink
               >
