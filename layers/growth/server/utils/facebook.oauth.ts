@@ -25,6 +25,12 @@ export const FACEBOOK_CONNECT_SCOPES =
 // Meta's 2-year-per-version guarantee means this will need updating again.
 const GRAPH_API_VERSION = 'v25.0'
 
+/** $fetch errors embed the full request URL (including access_token=...) in
+ *  their message — strip it before this can ever reach a log. */
+function redactToken(message: string): string {
+  return message.replace(/access_token=[^&"\s]+/gi, 'access_token=[redacted]')
+}
+
 /**
  * Once an app requests Page permissions, Meta requires it to be a "Facebook
  * Login for Business" app — which authorizes via a Login Configuration
@@ -46,8 +52,11 @@ export function facebookAuthorizeUrl(
     redirect_uri: redirectUri,
     response_type: 'code',
     state,
+    // override_default_response_type is documented for SYSTEM-USER token
+    // configs only — this Configuration is "User access token" type, so it
+    // must be omitted here rather than copied from the System-user example.
     ...(configId
-      ? { config_id: configId, override_default_response_type: 'true' }
+      ? { config_id: configId }
       : { scope: FACEBOOK_CONNECT_SCOPES }),
   })
   return `https://www.facebook.com/${GRAPH_API_VERSION}/dialog/oauth?${params.toString()}`
@@ -148,7 +157,9 @@ export async function exchangeFacebookConnection(
           query: { access_token: userToken },
         }).catch((e) => ({
           data: undefined,
-          error: { message: e instanceof Error ? e.message : String(e) },
+          error: {
+            message: redactToken(e instanceof Error ? e.message : String(e)),
+          },
         })),
       ])
       logger.warn('[facebook.oauth] /me/accounts returned no pages', {
@@ -166,7 +177,7 @@ export async function exchangeFacebookConnection(
       logger.warn(
         '[facebook.oauth] /me/accounts returned no pages (and diagnostic checks failed)',
         {
-          error: e instanceof Error ? e.message : String(e),
+          error: redactToken(e instanceof Error ? e.message : String(e)),
         },
       )
     }
