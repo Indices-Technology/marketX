@@ -36,8 +36,9 @@
           <span class="font-semibold text-gray-900 dark:text-neutral-100">Post to TikTok</span>
         </div>
 
+        <Transition name="fade" mode="out-in">
         <!-- Not connected -->
-        <div v-if="tiktokState === 'disconnected'" class="space-y-2">
+        <div v-if="tiktokState === 'disconnected'" key="disconnected" class="space-y-2">
           <p class="text-sm text-gray-500 dark:text-neutral-400">
             Connect your TikTok to post this card directly.
           </p>
@@ -47,7 +48,7 @@
         </div>
 
         <!-- Connected -->
-        <div v-else-if="tiktokState === 'ready'" class="space-y-2">
+        <div v-else-if="tiktokState === 'ready'" key="ready" class="space-y-2">
           <div class="flex items-center justify-between gap-2">
             <div v-if="creatorInfo?.nickname" class="flex items-center gap-2">
               <BaseAvatar :src="creatorInfo.avatarUrl" :name="creatorInfo.nickname" size="xs" />
@@ -105,6 +106,7 @@
               This is promotional content
             </label>
 
+            <Transition name="fade">
             <div v-if="isPromotional" class="ml-1 space-y-1.5 border-l-2 border-gray-100 pl-3 dark:border-neutral-800">
               <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-neutral-300">
                 <input
@@ -129,6 +131,7 @@
                 Your photo will be labeled as "{{ brandContent ? 'Paid partnership' : 'Promotional content' }}"
               </p>
             </div>
+            </Transition>
 
             <!-- Photo posts only — TikTok's Duet/Stitch interaction settings are
                  video-only and don't apply to this integration (see
@@ -171,11 +174,18 @@
             </p>
           </div>
 
-          <p v-if="statusText" class="text-xs" :class="statusClass">{{ statusText }}</p>
+          <Transition name="fade">
+            <p v-if="statusText" class="text-xs" :class="statusClass">{{ statusText }}</p>
+          </Transition>
         </div>
 
         <!-- Loading creator info -->
-        <div v-else class="text-sm text-gray-400">Checking TikTok…</div>
+        <div v-else key="loading" class="space-y-2">
+          <BaseSkeleton shape="line" width="60%" height="14px" />
+          <BaseSkeleton shape="block" height="36px" rounded="rounded-lg" />
+          <BaseSkeleton shape="block" height="52px" rounded="rounded-lg" />
+        </div>
+        </Transition>
       </div>
 
       <!-- Facebook -->
@@ -185,8 +195,9 @@
           <span class="font-semibold text-gray-900 dark:text-neutral-100">Post to Facebook</span>
         </div>
 
+        <Transition name="fade" mode="out-in">
         <!-- Not connected -->
-        <div v-if="facebookState === 'disconnected'" class="space-y-2">
+        <div v-if="facebookState === 'disconnected'" key="disconnected" class="space-y-2">
           <p class="text-sm text-gray-500 dark:text-neutral-400">
             Connect your Facebook Page to post this card directly.
           </p>
@@ -196,7 +207,7 @@
         </div>
 
         <!-- Connected -->
-        <div v-else-if="facebookState === 'ready'" class="space-y-2">
+        <div v-else-if="facebookState === 'ready'" key="ready" class="space-y-2">
           <div class="flex items-center justify-between gap-2">
             <p v-if="facebookConn?.displayName" class="text-xs text-gray-500 dark:text-neutral-400">
               Posting to <span class="font-semibold">{{ facebookConn.displayName }}</span>
@@ -228,7 +239,11 @@
         </div>
 
         <!-- Loading connection state -->
-        <div v-else class="text-sm text-gray-400">Checking Facebook…</div>
+        <div v-else key="loading" class="space-y-2">
+          <BaseSkeleton shape="line" width="70%" height="14px" />
+          <BaseSkeleton shape="block" height="36px" rounded="rounded-lg" />
+        </div>
+        </Transition>
       </div>
     </div>
   </BaseModal>
@@ -241,6 +256,7 @@ import BaseButton from '~~/layers/ui/app/components/BaseButton.vue'
 import BaseSelect from '~~/layers/ui/app/components/BaseSelect.vue'
 import BaseInput from '~~/layers/ui/app/components/BaseInput.vue'
 import BaseAvatar from '~~/layers/ui/app/components/BaseAvatar.vue'
+import BaseSkeleton from '~~/layers/ui/app/components/BaseSkeleton.vue'
 import ProductShareCard from '~~/layers/commerce/app/components/product-card/ProductShareCard.vue'
 import { useCardCapture } from '~~/layers/seller/app/composables/useCardCapture'
 import { useGrowthAsset } from '~~/layers/growth/app/composables/useGrowthAsset'
@@ -389,6 +405,17 @@ watch(brandContent, (checked) => {
   if (checked && privacyLevel.value === 'SELF_ONLY') privacyLevel.value = ''
 })
 
+// The "Your Brand"/"Branded Content" checkboxes are hidden (not unmounted-and-
+// reset) when the promotional toggle goes off — without this, a previously
+// checked brandContent stays true in the background, permanently filtering
+// "Only me" out of the privacy dropdown with no visible control left to undo it.
+watch(isPromotional, (on) => {
+  if (!on) {
+    brandOrganic.value = false
+    brandContent.value = false
+  }
+})
+
 // creator_info returning no privacy options is TikTok's own signal that this
 // account can't receive a Direct Post right now — stop rather than render a
 // form with nothing selectable.
@@ -512,3 +539,14 @@ watch(
   { immediate: true },
 )
 </script>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.15s;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>
