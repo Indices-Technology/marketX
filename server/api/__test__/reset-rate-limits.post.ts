@@ -44,6 +44,7 @@ export default defineEventHandler(async (event) => {
   clearRateLimit(`register:${ip}`, RATE_LIMITS.REGISTER.keyPrefix)
   clearRateLimit(`register:${ip}`, RATE_LIMITS.REGISTER_SELLER.keyPrefix)
   clearRateLimit(`check-username:${ip}`, RATE_LIMITS.CHECK_USERNAME.keyPrefix)
+  clearRateLimit(`verify:${ip}`, RATE_LIMITS.VERIFY_SELLER.keyPrefix)
 
   return { success: true }
 })

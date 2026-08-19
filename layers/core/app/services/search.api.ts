@@ -4,6 +4,18 @@ import type { Product } from '~~/shared/types/product'
 import type { Post } from '~~/shared/types/post'
 import type { Tag } from '~~/shared/types/tag'
 
+/** A store hit as /api/search returns it — not a User, which is what this was typed as. */
+export interface StoreSearchHit {
+  id: string
+  publicId?: string | null
+  store_name?: string | null
+  store_slug: string
+  store_description?: string | null
+  store_logo?: string | null
+  is_verified?: boolean | null
+  cac_verified?: boolean | null
+}
+
 export class SearchApiClient extends BaseApiClient {
   // FIXED: Added 'stores' to the acceptable types
   async search(
@@ -17,7 +29,7 @@ export class SearchApiClient extends BaseApiClient {
       users: User[]
       products: Product[]
       posts: Post[]
-      stores: User[]
+      stores: StoreSearchHit[]
       tags: Tag[]
     }
   }> {

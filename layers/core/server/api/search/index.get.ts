@@ -64,6 +64,10 @@ export default defineEventHandler(async (event) => {
               store_slug: true,
               store_description: true,
               store_logo: true,
+              // Trust state travels with the hit: a seller's standing is a fact
+              // to show on the row, not an errand the buyer has to run.
+              is_verified: true,
+              cac_verified: true,
             },
             take: limit,
             skip: offset,

@@ -104,6 +104,21 @@ export const RATE_LIMITS = {
     keyPrefix: 'reg',
   },
 
+  // Seller verification lookup. Public and unauthenticated, and now driven by
+  // the search dock's typeahead, so it needs a ceiling — each call can cost up
+  // to four DB lookups. Generous enough that a buyer checking a few sellers in
+  // a row never notices.
+  VERIFY_SELLER: {
+    maxAttempts: parseInt(process.env.RATE_LIMIT_VERIFY_SELLER_MAX || '40', 10),
+    windowMs: parseInt(
+      process.env.RATE_LIMIT_VERIFY_SELLER_WINDOW || String(5 * 60 * 1000),
+      10,
+    ), // 5 minutes
+    message: 'Too many verification checks',
+    lockoutMs: 5 * 60 * 1000, // 5 minutes lockout
+    keyPrefix: 'reputation:verify',
+  },
+
   // Username availability check: a typeahead endpoint, so the ceiling is high
   // enough for real typing but still caps scripted enumeration of usernames.
   CHECK_USERNAME: {

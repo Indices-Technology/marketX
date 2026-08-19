@@ -13,6 +13,14 @@
 // stranger — a scammer with no record must not look like a verified seller.
 
 import { resolveProfile } from '~~/layers/reputation/server/utils/reputationEngine'
+import RATE_LIMITS from '~~/server/config/rateLimits'
+import { getClientIP } from '~~/server/layers/shared/utils/security'
+import {
+  slugFromSellerLink,
+  sellerPublicIdFrom,
+  phoneTailFrom,
+  handleFrom,
+} from '~~/shared/utils/sellerIdentifier'
 
 type VerifyStatus = 'verified' | 'unverified' | 'unknown'
 type MatchedBy = 'link' | 'id' | 'phone' | 'handle'
@@ -29,33 +37,9 @@ const SELLER_SELECT = {
   created_at: true,
 } as const
 
-// Pull a store slug out of a pasted MarketX link, if that's what this is.
-function slugFromLink(raw: string): string | null {
-  const m = raw.match(/\/sellers\/profile\/([^/?#\s]+)/i)
-  return m?.[1] ?? null
-}
-
-// Collapse a public Seller ID to its normalized form (MX-LAG-J8KP → MXLAGJ8KP).
-function normalizePublicId(raw: string): string | null {
-  const collapsed = raw.toUpperCase().replace(/[^A-Z0-9]/g, '')
-  return collapsed.startsWith('MX') && collapsed.length >= 6 ? collapsed : null
-}
-
-// Digits only; last 9 tolerates +234 / leading-0 variants of the same number.
-function phoneDigits(raw: string): string | null {
-  const d = raw.replace(/\D/g, '')
-  return d.length >= 7 ? d.slice(-9) : null
-}
-
-// @handle or bare handle → lowercase, no leading @.
-function handleOf(raw: string): string | null {
-  const h = raw.trim().replace(/^@/, '').toLowerCase()
-  return /^[a-z0-9._]{2,40}$/.test(h) ? h : null
-}
-
 async function resolveSeller(q: string) {
   // 1) A pasted MarketX profile link → slug (most precise).
-  const slug = slugFromLink(q)
+  const slug = slugFromSellerLink(q)
   if (slug) {
     const s = await prisma.sellerProfile.findUnique({
       where: { store_slug: slug },
@@ -67,7 +51,7 @@ async function resolveSeller(q: string) {
   // 2) Public Seller ID (MX-…). Match the normalized (hyphen/case-insensitive)
   //    form first, then fall back to the raw publicId as printed on the card —
   //    so it resolves whether or not publicIdNormalized has been backfilled.
-  const pid = normalizePublicId(q)
+  const pid = sellerPublicIdFrom(q)
   if (pid) {
     const s = await prisma.sellerProfile.findFirst({
       where: {
@@ -79,7 +63,7 @@ async function resolveSeller(q: string) {
   }
 
   // 3) Phone — loose contains on the last 9 digits (store_phone isn't normalized).
-  const phone = phoneDigits(q)
+  const phone = phoneTailFrom(q)
   if (phone) {
     const s = await prisma.sellerProfile.findFirst({
       where: { store_phone: { contains: phone } },
@@ -91,7 +75,7 @@ async function resolveSeller(q: string) {
   // 4) Social @handle across the platforms kept in store_socials JSON, or a
   //    bare handle that happens to be their store slug. (case-sensitive contains
   //    is a known limitation — good enough until handles are normalized on save.)
-  const handle = handleOf(q)
+  const handle = handleFrom(q)
   if (handle) {
     const s = await prisma.sellerProfile.findFirst({
       where: {
@@ -115,6 +99,25 @@ export default defineEventHandler(async (event) => {
     const q = String(getQuery(event).q ?? '').trim()
     if (!q) {
       throw createError({ statusCode: 400, statusMessage: 'Missing query' })
+    }
+
+    const rateLimit = await checkRateLimitAsync(
+      `verify:${getClientIP(event)}`,
+      {
+        windowMs: RATE_LIMITS.VERIFY_SELLER.windowMs,
+        maxAttempts: RATE_LIMITS.VERIFY_SELLER.maxAttempts,
+        lockoutMs: RATE_LIMITS.VERIFY_SELLER.lockoutMs,
+        keyPrefix: RATE_LIMITS.VERIFY_SELLER.keyPrefix,
+      },
+    )
+    if (!rateLimit.allowed) {
+      const secs =
+        rateLimit.lockedUntilMs ||
+        Math.ceil((rateLimit.resetAt - Date.now()) / 1000)
+      throw createError({
+        statusCode: 429,
+        statusMessage: `Too many checks. Try again in ${secs} seconds`,
+      })
     }
 
     const match = await resolveSeller(q)

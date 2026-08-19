@@ -1,4 +1,5 @@
 import { BaseApiClient } from '~~/layers/core/app/services/base.api'
+import type { VerifyResult } from '~~/layers/reputation/app/types/trust.types'
 
 /** Client for the reputation surfaces (spotlight rail + profile trust tab). */
 class ReputationApiClient extends BaseApiClient {
@@ -32,11 +33,17 @@ class ReputationApiClient extends BaseApiClient {
    * Check a pasted identifier (MarketX link, Seller ID, phone, or @handle) →
    * one of: verified | unverified | unknown. Powers the Verify door. Guest-safe.
    */
-  async verify(q: string): Promise<unknown> {
+  async verify(
+    q: string,
+    opts: { silent?: boolean } = {},
+  ): Promise<{ success: boolean; data: VerifyResult }> {
     return this.request('/api/reputation/verify', {
       method: 'GET',
       params: { q },
       skipAuth: true,
+      // Typeahead callers pass silent: a transient failure while the buyer is
+      // still typing shouldn't raise a global toast.
+      silent: opts.silent,
     })
   }
 

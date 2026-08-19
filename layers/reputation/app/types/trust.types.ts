@@ -83,3 +83,30 @@ export interface TrustProfileView {
   }
   dimensions: TrustDimension[]
 }
+
+// ── Verify lookup ("check any seller") ──────────────────────────────────────
+// Returned by GET /api/reputation/verify. Three honest states: `unknown` means
+// no MarketX footprint, and must never be presented as reassurance.
+
+export type VerifyStatus = 'verified' | 'unverified' | 'unknown'
+export type VerifyMatchedBy = 'link' | 'id' | 'phone' | 'handle'
+
+export interface VerifySeller {
+  store_slug: string
+  store_name: string | null
+  store_logo: string | null
+  store_location: string | null
+  publicId: string | null
+  is_verified: boolean
+  cac_verified: boolean
+  enoughEvidence: boolean
+  tier: string | null
+  headline: string
+}
+
+export interface VerifyResult {
+  status: VerifyStatus
+  query: string
+  matchedBy?: VerifyMatchedBy
+  seller?: VerifySeller
+}
