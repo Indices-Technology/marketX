@@ -86,6 +86,24 @@ export const RATE_LIMITS = {
     lockoutMs: 15 * 60 * 1000, // 15 minutes lockout
     keyPrefix: 'auth:refresh',
   },
+  // Seller registration (account + store in one call). Its own namespace and
+  // a looser cap than REGISTER — the wizard is longer, so a retry after a
+  // validation bounce is normal. keyPrefix stays 'reg' to match the keys
+  // already live in Redis.
+  REGISTER_SELLER: {
+    maxAttempts: parseInt(
+      process.env.RATE_LIMIT_REGISTER_SELLER_MAX || '5',
+      10,
+    ),
+    windowMs: parseInt(
+      process.env.RATE_LIMIT_REGISTER_SELLER_WINDOW || String(15 * 60 * 1000),
+      10,
+    ), // 15 minutes
+    message: 'Too many store creation attempts',
+    lockoutMs: 15 * 60 * 1000, // 15 minutes lockout
+    keyPrefix: 'reg',
+  },
+
   // Username availability check: a typeahead endpoint, so the ceiling is high
   // enough for real typing but still caps scripted enumeration of usernames.
   CHECK_USERNAME: {

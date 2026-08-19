@@ -843,29 +843,100 @@
           </button>
         </div>
 
-        <!-- CTA buttons -->
-        <div class="flex flex-col gap-3 sm:flex-row">
-          <NuxtLink
-            :to="`/seller/${createdStoreSlug}/products/create`"
-            class="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-brand px-6 py-4 font-bold text-white shadow-2xl shadow-brand/30 transition hover:bg-[#d81b36]"
+        <!-- Primary CTA -->
+        <NuxtLink
+          :to="`/seller/${createdStoreSlug}/products/create`"
+          class="flex w-full items-center justify-center gap-2 rounded-2xl bg-brand px-6 py-4 font-bold text-white shadow-2xl shadow-brand/30 transition hover:bg-[#d81b36]"
+        >
+          <Icon name="solar:add-circle-linear" size="18" />
+          Add first product
+        </NuxtLink>
+
+        <!-- Most new sellers already have a catalogue somewhere else — adding
+             products one at a time is the slowest way in, so offer the bulk
+             routes right where the store goes live. -->
+        <div class="mt-8 text-left">
+          <p
+            class="text-[10px] font-black uppercase tracking-widest text-brand"
           >
-            <Icon name="solar:add-circle-linear" size="18" />
-            Add first product
+            Already selling somewhere?
+          </p>
+          <h2 class="mt-1 text-lg font-black text-gray-900 dark:text-white">
+            Bring your products over
+          </h2>
+
+          <ul
+            class="mt-3 divide-y divide-gray-100 rounded-2xl border border-gray-100 dark:divide-neutral-800 dark:border-neutral-800"
+          >
+            <li>
+              <NuxtLink
+                :to="`/seller/${createdStoreSlug}/products/bulk`"
+                class="flex items-center justify-between gap-3 px-4 py-3.5 transition-colors hover:bg-gray-50 dark:hover:bg-neutral-800/60"
+              >
+                <span
+                  class="flex min-w-0 items-center gap-2.5 text-sm font-medium text-gray-700 dark:text-neutral-300"
+                >
+                  <Icon
+                    name="solar:document-text-linear"
+                    size="18"
+                    class="shrink-0"
+                  />
+                  Bulk import
+                  <span
+                    class="truncate text-xs font-normal text-gray-400 dark:text-neutral-500"
+                  >
+                    Spreadsheet or paste
+                  </span>
+                </span>
+                <Icon
+                  name="solar:alt-arrow-right-linear"
+                  size="14"
+                  class="shrink-0 text-gray-400 dark:text-neutral-500"
+                />
+              </NuxtLink>
+            </li>
+
+            <!-- Social imports are listed, not linked. Facebook import works
+                 and stays reachable from Growth → Connected accounts while it's
+                 being tested; it isn't pointed at brand-new sellers yet. TikTok
+                 needs the video.list scope the app doesn't hold (see
+                 layers/growth/server/utils/tiktok.oauth.ts). -->
+            <li
+              v-for="src in soonSources"
+              :key="src.id"
+              class="flex items-center justify-between gap-3 px-4 py-3.5"
+            >
+              <span
+                class="flex min-w-0 items-center gap-2.5 text-sm font-medium text-gray-500 dark:text-neutral-400"
+              >
+                <Icon :name="src.icon" size="15" class="shrink-0" />
+                {{ src.label }}
+              </span>
+              <span
+                class="shrink-0 text-xs font-medium text-gray-400 dark:text-neutral-600"
+              >
+                Coming soon
+              </span>
+            </li>
+          </ul>
+        </div>
+
+        <div
+          class="mt-6 flex items-center justify-center gap-6 text-sm text-gray-500 dark:text-neutral-400"
+        >
+          <NuxtLink
+            :to="`/${createdStoreSlug}`"
+            class="transition hover:text-gray-900 dark:hover:text-white"
+          >
+            Preview your store →
           </NuxtLink>
           <NuxtLink
             to="/discover"
-            class="flex flex-1 items-center justify-center gap-2 rounded-2xl border-2 border-gray-300 px-6 py-4 font-bold text-gray-900 transition hover:border-gray-400 hover:bg-gray-50 dark:border-neutral-700 dark:text-white dark:hover:bg-neutral-800"
+            class="transition hover:text-gray-900 dark:hover:text-white"
           >
-            Browse the feed
+            Browse the feed →
           </NuxtLink>
         </div>
-
-        <NuxtLink
-          :to="`/${createdStoreSlug}`"
-          class="mt-4 block text-sm text-gray-500 transition hover:text-gray-900 dark:text-neutral-400 dark:hover:text-white"
-        >
-          Preview your store →
-        </NuxtLink>
       </div>
     </div>
   </div>
@@ -926,6 +997,18 @@ onMounted(() => {
     step.value = 2
   }
 })
+
+// Import routes that exist but aren't offered to brand-new sellers yet.
+// Facebook import is built and testable from Growth → Connected accounts; it
+// gets a link here once testing signs off. TikTok is waiting on a scope.
+const soonSources = [
+  {
+    id: 'facebook',
+    label: 'Import from Facebook',
+    icon: 'simple-icons:facebook',
+  },
+  { id: 'tiktok', label: 'Import from TikTok', icon: 'simple-icons:tiktok' },
+]
 
 const chooseType = (type: 'buyer' | 'seller') => {
   accountType.value = type

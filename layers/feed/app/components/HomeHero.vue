@@ -56,8 +56,10 @@
           >
             Log in
           </NuxtLink>
+          <!-- Guest-only block: /sellers/create is auth-walled, so send them
+               to the wizard that opens an account and a store together. -->
           <NuxtLink
-            to="/sellers/create"
+            to="/user-register"
             class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-neutral-200"
           >
             Become a Seller
@@ -172,7 +174,7 @@
             </NuxtLink>
             <span class="text-gray-300 dark:text-neutral-700">·</span>
             <NuxtLink
-              to="/sellers/create"
+              to="/user-register"
               class="font-semibold text-brand underline underline-offset-4"
             >
               Start selling

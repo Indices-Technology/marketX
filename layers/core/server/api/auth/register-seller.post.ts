@@ -8,6 +8,7 @@ import { isReservedSlug } from '~~/server/layers/shared/utils/reservedSlugs'
 import { normalizePhone } from '~~/shared/utils/phone'
 import { AuthError } from '../../types/auth.types'
 import { SellerError } from '~~/layers/seller/server/types/seller.types'
+import RATE_LIMITS from '~~/server/config/rateLimits'
 
 defineRouteMeta({
   openAPI: {
@@ -148,10 +149,10 @@ export default defineEventHandler(async (event) => {
   try {
     // ── 1. Rate limit ────────────────────────────────────────────────────────
     const rateLimit = await checkRateLimitAsync(`register:${ipAddress}`, {
-      windowMs: 15 * 60 * 1000,
-      maxAttempts: 5,
-      lockoutMs: 15 * 60 * 1000,
-      keyPrefix: 'reg',
+      windowMs: RATE_LIMITS.REGISTER_SELLER.windowMs,
+      maxAttempts: RATE_LIMITS.REGISTER_SELLER.maxAttempts,
+      lockoutMs: RATE_LIMITS.REGISTER_SELLER.lockoutMs,
+      keyPrefix: RATE_LIMITS.REGISTER_SELLER.keyPrefix,
     })
     if (!rateLimit.allowed) {
       const secs = Math.ceil((rateLimit.resetAt - Date.now()) / 1000)

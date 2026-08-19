@@ -42,6 +42,7 @@ export default defineEventHandler(async (event) => {
   // happy path for reasons that have nothing to do with the code under test.
   const ip = getClientIP(event)
   clearRateLimit(`register:${ip}`, RATE_LIMITS.REGISTER.keyPrefix)
+  clearRateLimit(`register:${ip}`, RATE_LIMITS.REGISTER_SELLER.keyPrefix)
   clearRateLimit(`check-username:${ip}`, RATE_LIMITS.CHECK_USERNAME.keyPrefix)
 
   return { success: true }

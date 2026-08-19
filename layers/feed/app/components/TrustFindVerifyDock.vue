@@ -271,7 +271,7 @@
     >
       Selling instead?
       <NuxtLink
-        to="/sellers/create"
+        :to="sellerCtaTarget"
         class="font-semibold text-gray-900 underline underline-offset-2 hover:text-gray-700 dark:text-white dark:hover:text-neutral-300"
       >
         Become a verified seller →
@@ -298,6 +298,7 @@ import StoreAvatar from '~~/layers/profile/app/components/StoreAvatar.vue'
 import { imgThumb } from '~~/layers/core/app/utils/cloudinary'
 import { useSearchApi } from '~~/layers/core/app/services/search.api'
 import { useRecentSearches } from '~~/layers/commerce/app/composables/useRecentSearches'
+import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import type { User } from '~~/layers/core/app/types/user'
 import type { Product } from '~~/shared/types/product'
 
@@ -308,6 +309,14 @@ const props = withDefaults(
     showSellerCta: true,
     boxedDropdown: true,
   },
+)
+
+// /sellers/create is auth-walled — a signed-out visitor following it lands on
+// the login wall instead of a way in. Guests get the wizard that opens an
+// account and a store together; signed-in users go straight to store creation.
+const profileStore = useProfileStore()
+const sellerCtaTarget = computed(() =>
+  profileStore.isLoggedIn ? '/sellers/create' : '/user-register',
 )
 
 const { formatPrice } = useCurrency()
