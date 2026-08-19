@@ -35,57 +35,39 @@ export const defaultThresholds: AlertThreshold = {
 }
 
 /**
- * Get auth metrics for the last 24 hours
+ * Get auth metrics for the last 24 hours.
+ *
+ * One grouped scan, not one COUNT per event type. This runs on a timer in
+ * production (server/plugins/monitoring.ts), so five separate counts over an
+ * append-only audit table was five times the billed work, forever, whether or
+ * not anything had happened.
  */
 export async function getAuthMetrics(): Promise<AuthMetrics> {
   const last24h = new Date(Date.now() - 24 * 60 * 60 * 1000)
 
-  // Get failed logins
-  const failedLogins = await prisma.auditLog.count({
-    where: {
-      event_type: 'LOGIN_FAILED',
-      created_at: { gte: last24h },
-    },
+  const TRACKED = [
+    'LOGIN_FAILED',
+    'ACCOUNT_LOCKED',
+    'REGISTER_SUCCESS',
+    'PASSWORD_RESET_SUCCESS',
+    'SUSPICIOUS_ACTIVITY',
+  ] as const
+
+  const grouped = await prisma.auditLog.groupBy({
+    by: ['event_type'],
+    where: { event_type: { in: [...TRACKED] }, created_at: { gte: last24h } },
+    _count: { _all: true },
   })
 
-  // Get account lockouts
-  const accountLockouts = await prisma.auditLog.count({
-    where: {
-      event_type: 'ACCOUNT_LOCKED',
-      created_at: { gte: last24h },
-    },
-  })
-
-  // Get registrations
-  const registrations = await prisma.auditLog.count({
-    where: {
-      event_type: 'REGISTER_SUCCESS',
-      created_at: { gte: last24h },
-    },
-  })
-
-  // Get password resets
-  const passwordResets = await prisma.auditLog.count({
-    where: {
-      event_type: 'PASSWORD_RESET_SUCCESS',
-      created_at: { gte: last24h },
-    },
-  })
-
-  // Get suspicious activities
-  const suspiciousActivities = await prisma.auditLog.count({
-    where: {
-      event_type: 'SUSPICIOUS_ACTIVITY',
-      created_at: { gte: last24h },
-    },
-  })
+  const tally = (type: (typeof TRACKED)[number]) =>
+    grouped.find((g) => g.event_type === type)?._count._all ?? 0
 
   return {
-    failedLogins24h: failedLogins,
-    accountLockouts24h: accountLockouts,
-    registrations24h: registrations,
-    passwordResets24h: passwordResets,
-    suspiciousActivities24h: suspiciousActivities,
+    failedLogins24h: tally('LOGIN_FAILED'),
+    accountLockouts24h: tally('ACCOUNT_LOCKED'),
+    registrations24h: tally('REGISTER_SUCCESS'),
+    passwordResets24h: tally('PASSWORD_RESET_SUCCESS'),
+    suspiciousActivities24h: tally('SUSPICIOUS_ACTIVITY'),
     averageLoginTime: 75, // Would come from tracing/monitoring service
     authEndpointErrors: 0, // Would come from error tracking service
   }

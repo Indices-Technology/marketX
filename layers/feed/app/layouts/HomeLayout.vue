@@ -552,15 +552,23 @@ const handlePost = async () => {
   showStoryModal.value = false
   showQuickProductModal.value = false
 
-  await Promise.all([
-    refreshNuxtData('layout-data'),
-    refreshNuxtData('homepage-main'),
-    refreshNuxtData('profile-data'),
-  ])
+  // 'layout-data' is the only key that exists — 'homepage-main' and
+  // 'profile-data' had no useAsyncData behind them, so those two calls were
+  // silent no-ops rather than the refresh they read as.
+  await refreshNuxtData('layout-data')
 }
 
 // ─── Lifecycle ──────────────────────────────────────────────────────────────
 let refreshInterval: ReturnType<typeof setInterval> | null = null
+
+// Catch up on whatever was skipped while the tab was in the background.
+let lastRefreshedAt = Date.now()
+const onVisibilityChange = () => {
+  if (document.visibilityState !== 'visible') return
+  if (Date.now() - lastRefreshedAt < 300000) return
+  lastRefreshedAt = Date.now()
+  refresh()
+}
 
 onMounted(() => {
   // Persist banner dismiss
@@ -582,10 +590,18 @@ onMounted(() => {
   document.addEventListener('touchmove', onTouchMove, { passive: true })
   document.addEventListener('touchend', onTouchEnd, { passive: true })
 
-  // Periodic refresh (notifications, etc.)
+  // Periodic refresh of the layout rails (featured sellers + categories).
+  // Skipped while the tab is hidden: a backgrounded tab left open overnight was
+  // still calling the API every 5 minutes, which is billed DB work for a screen
+  // nobody is looking at — and enough to keep the database from ever idling.
+  // A tab coming back to the foreground refreshes immediately, so returning
+  // users still see current data.
   refreshInterval = setInterval(() => {
+    if (document.visibilityState !== 'visible') return
+    lastRefreshedAt = Date.now()
     refresh()
   }, 300000)
+  document.addEventListener('visibilitychange', onVisibilityChange)
 })
 
 onUnmounted(() => {
@@ -594,6 +610,7 @@ onUnmounted(() => {
   document.removeEventListener('touchmove', onTouchMove)
   document.removeEventListener('touchend', onTouchEnd)
   if (refreshInterval) clearInterval(refreshInterval)
+  document.removeEventListener('visibilitychange', onVisibilityChange)
   if (pauseTimer) clearTimeout(pauseTimer)
 })
 
