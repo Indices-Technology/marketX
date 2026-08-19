@@ -42,6 +42,31 @@ export class AuthApiClient extends BaseApiClient {
     })
   }
 
+  // ==================== USERNAME AVAILABILITY ====================
+
+  /**
+   * Checks whether a username can still be claimed. Public — called from the
+   * signup form on every debounced keystroke, which is why it is `silent`
+   * (a transient failure shouldn't pop a global toast; the field handles it).
+   *
+   * @param username - Candidate username
+   * @returns `{ available, message, suggestions }`
+   */
+  async checkUsername(username: string): Promise<{
+    success: boolean
+    username: string
+    available: boolean
+    message: string
+    suggestions: string[]
+  }> {
+    return this.request('/api/auth/check-username', {
+      method: 'GET',
+      params: { username },
+      skipAuth: true,
+      silent: true,
+    })
+  }
+
   // ==================== REGISTER SELLER (account + store, auto-login) ==========
 
   /**

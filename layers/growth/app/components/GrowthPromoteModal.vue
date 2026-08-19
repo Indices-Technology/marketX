@@ -74,75 +74,92 @@
             class="w-full rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-sm text-gray-900 focus:border-brand focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
           />
 
-          <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-neutral-300">
-            <input
-              v-model="allowComment"
-              type="checkbox"
-              :disabled="creatorInfo?.commentDisabled"
-              class="h-4 w-4 rounded border-gray-300 text-brand focus:ring-brand dark:border-neutral-600"
-            />
-            Allow comments
-          </label>
+          <!-- creator_info returned no privacy options — this TikTok account cannot
+               receive a Direct Post right now (TikTok's own eligibility signal).
+               Stop here rather than show a form with nothing to submit. -->
+          <p
+            v-if="!canDirectPost"
+            class="rounded-lg bg-amber-50 px-2.5 py-2 text-[11px] text-amber-700 dark:bg-amber-900/20 dark:text-amber-400"
+          >
+            Your TikTok account can't receive a Direct Post right now. You can still send this to
+            your TikTok inbox as a draft below.
+          </p>
 
-          <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-neutral-300">
-            <input
-              v-model="isPromotional"
-              type="checkbox"
-              class="h-4 w-4 rounded border-gray-300 text-brand focus:ring-brand dark:border-neutral-600"
-            />
-            This is promotional content
-          </label>
-
-          <div v-if="isPromotional" class="ml-1 space-y-1.5 border-l-2 border-gray-100 pl-3 dark:border-neutral-800">
+          <template v-else>
             <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-neutral-300">
               <input
-                v-model="brandOrganic"
+                v-model="allowComment"
+                type="checkbox"
+                :disabled="creatorInfo?.commentDisabled"
+                class="h-4 w-4 rounded border-gray-300 text-brand focus:ring-brand dark:border-neutral-600"
+              />
+              Allow comments
+            </label>
+
+            <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-neutral-300">
+              <input
+                v-model="isPromotional"
                 type="checkbox"
                 class="h-4 w-4 rounded border-gray-300 text-brand focus:ring-brand dark:border-neutral-600"
               />
-              Your Brand
+              This is promotional content
             </label>
-            <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-neutral-300">
-              <input
-                v-model="brandContent"
-                type="checkbox"
-                class="h-4 w-4 rounded border-gray-300 text-brand focus:ring-brand dark:border-neutral-600"
-              />
-              Branded Content
-            </label>
-            <p v-if="!brandOrganic && !brandContent" class="text-[11px] text-red-500">
-              Select at least one option
+
+            <div v-if="isPromotional" class="ml-1 space-y-1.5 border-l-2 border-gray-100 pl-3 dark:border-neutral-800">
+              <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-neutral-300">
+                <input
+                  v-model="brandOrganic"
+                  type="checkbox"
+                  class="h-4 w-4 rounded border-gray-300 text-brand focus:ring-brand dark:border-neutral-600"
+                />
+                Your Brand
+              </label>
+              <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-neutral-300">
+                <input
+                  v-model="brandContent"
+                  type="checkbox"
+                  class="h-4 w-4 rounded border-gray-300 text-brand focus:ring-brand dark:border-neutral-600"
+                />
+                Branded Content
+              </label>
+              <p v-if="!brandOrganic && !brandContent" class="text-[11px] text-red-500">
+                Select at least one option
+              </p>
+              <p v-else class="text-[11px] text-gray-400 dark:text-neutral-500">
+                Your photo will be labeled as "{{ brandContent ? 'Paid partnership' : 'Promotional content' }}"
+              </p>
+            </div>
+
+            <!-- Photo posts only — TikTok's Duet/Stitch interaction settings are
+                 video-only and don't apply to this integration (see
+                 content-posting-api-reference-photo-post). Comment is the only
+                 applicable interaction toggle. -->
+            <BaseSelect
+              v-model="privacyLevel"
+              label="Who can see it"
+              placeholder="Choose who can see it"
+              :options="privacyOptions"
+              size="sm"
+            />
+            <p v-if="brandContent && privacyLevel === 'SELF_ONLY'" class="text-[11px] text-red-500">
+              Branded content can't be set to private — choose a public or friends option
             </p>
-            <p v-else class="text-[11px] text-gray-400 dark:text-neutral-500">
-              Your photo will be labeled as "{{ brandContent ? 'Paid partnership' : 'Promotional content' }}"
+
+            <p class="text-[11px] text-gray-400 dark:text-neutral-500">
+              By posting, you agree to TikTok's
+              <span v-if="brandContent"> Branded Content Policy and</span>
+              Music Usage Confirmation.
             </p>
-          </div>
 
-          <BaseSelect
-            v-model="privacyLevel"
-            label="Who can see it"
-            placeholder="Choose who can see it"
-            :options="privacyOptions"
-            size="sm"
-          />
-          <p v-if="brandContent && privacyLevel === 'SELF_ONLY'" class="text-[11px] text-red-500">
-            Branded content can't be set to private — choose a public or friends option
-          </p>
+            <BaseButton variant="primary" size="sm" :loading="posting || uploading" :disabled="!canPost" @click="onPost">
+              Post to TikTok
+            </BaseButton>
 
-          <p class="text-[11px] text-gray-400 dark:text-neutral-500">
-            By posting, you agree to TikTok's
-            <span v-if="brandContent"> Branded Content Policy and</span>
-            Music Usage Confirmation.
-          </p>
-
-          <BaseButton variant="primary" size="sm" :loading="posting || uploading" :disabled="!canPost" @click="onPost">
-            Post to TikTok
-          </BaseButton>
-
-          <p class="text-[11px] text-gray-400 dark:text-neutral-500">
-            Until your app is approved, TikTok keeps posts private (only you see them). Processing can take a few
-            minutes after you post.
-          </p>
+            <p class="text-[11px] text-gray-400 dark:text-neutral-500">
+              Until your app is approved, TikTok keeps posts private (only you see them). Processing can take a few
+              minutes after you post.
+            </p>
+          </template>
 
           <div class="border-t border-gray-100 pt-2 dark:border-neutral-800">
             <BaseButton variant="secondary" size="sm" :loading="posting || uploading" @click="onSendDraft">
@@ -372,7 +389,13 @@ watch(brandContent, (checked) => {
   if (checked && privacyLevel.value === 'SELF_ONLY') privacyLevel.value = ''
 })
 
+// creator_info returning no privacy options is TikTok's own signal that this
+// account can't receive a Direct Post right now — stop rather than render a
+// form with nothing selectable.
+const canDirectPost = computed(() => (creatorInfo.value?.privacyOptions?.length ?? 0) > 0)
+
 const canPost = computed(() => {
+  if (!canDirectPost.value) return false
   if (!privacyLevel.value) return false
   if (isPromotional.value && !brandOrganic.value && !brandContent.value) return false
   if (brandContent.value && privacyLevel.value === 'SELF_ONLY') return false

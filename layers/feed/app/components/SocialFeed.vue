@@ -35,7 +35,7 @@
       </div>
     </Transition>
 
-    <!-- Find a trader / Verify any seller — same dock as the logged-out home. -->
+    <!-- Search + seller check in one box — same dock as the logged-out home. -->
     <TrustFindVerifyDock :show-seller-cta="false" class="mb-4" />
 
     <!-- Feed filter (Products · Deals · Following · Feed) + card/list toggle.

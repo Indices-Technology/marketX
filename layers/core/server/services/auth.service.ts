@@ -34,7 +34,7 @@ const createUniqueUsername = async (seed: string) => {
   let attempt = 0
   while (attempt < 10) {
     const exists = await prisma.profile.findFirst({
-      where: { username: candidate },
+      where: { username: { equals: candidate, mode: 'insensitive' } },
       select: { id: true },
     })
     if (!exists) return candidate
@@ -46,7 +46,86 @@ const createUniqueUsername = async (seed: string) => {
   return `user_${crypto.randomUUID().replace(/-/g, '').slice(0, 8)}`
 }
 
+/**
+ * Free variations on a taken username, so the signup form can offer a way
+ * forward instead of just a red error. Candidates are probed in one query.
+ */
+const suggestUsernames = async (seed: string, limit = 3) => {
+  const base = normalizeUsername(seed).slice(0, 16) || 'user'
+  const candidates = [
+    `${base}1`,
+    `${base}_`,
+    `real${base}`,
+    `${base}${new Date().getFullYear()}`,
+    `${base}${Math.floor(Math.random() * 900) + 100}`,
+    `the${base}`,
+  ]
+    .map((c) => c.slice(0, 30))
+    .filter((c) => c.length >= 3)
+
+  const taken = await prisma.profile.findMany({
+    where: {
+      OR: candidates.map((c) => ({
+        username: { equals: c, mode: 'insensitive' as const },
+      })),
+    },
+    select: { username: true },
+  })
+  const takenSet = new Set(taken.map((t) => t.username?.toLowerCase()))
+
+  return candidates
+    .filter((c) => !takenSet.has(c.toLowerCase()))
+    .slice(0, limit)
+}
+
 export const authService = {
+  // ==================== USERNAME AVAILABILITY ====================
+
+  /**
+   * Live "is this username free?" check for the signup form.
+   *
+   * Registration used to be the first moment a user learned their username was
+   * taken — after they had filled in email and both password fields. This runs
+   * the exact same uniqueness query as `register`, so what it reports is what
+   * registration will do.
+   *
+   * @param username - Candidate username (already format-validated by the route)
+   * @param ipAddress - Caller IP, for rate limiting
+   * @returns `{ available, suggestions }` — suggestions only when taken
+   * @throws {AuthError} 429 - Rate limit exceeded
+   */
+  async checkUsernameAvailability(username: string, ipAddress: string) {
+    const rateLimit = await checkRateLimitAsync(`check-username:${ipAddress}`, {
+      windowMs: RATE_LIMITS.CHECK_USERNAME.windowMs,
+      maxAttempts: RATE_LIMITS.CHECK_USERNAME.maxAttempts,
+      lockoutMs: RATE_LIMITS.CHECK_USERNAME.lockoutMs,
+      keyPrefix: RATE_LIMITS.CHECK_USERNAME.keyPrefix,
+    })
+
+    if (!rateLimit.allowed) {
+      const secondsLeft =
+        rateLimit.lockedUntilMs ||
+        Math.ceil((rateLimit.resetAt - Date.now()) / 1000)
+      throw new AuthError(
+        'RATE_LIMIT_EXCEEDED',
+        `Too many attempts. Try again in ${secondsLeft} seconds`,
+        429,
+      )
+    }
+
+    // Same lookup registration performs, so the two can never disagree.
+    // Case-insensitive: usernames are one identity, however they're typed, and
+    // profile URLs already resolve without regard to case.
+    const existing = await prisma.profile.findFirst({
+      where: { username: { equals: username, mode: 'insensitive' } },
+      select: { id: true },
+    })
+
+    if (!existing) return { available: true, suggestions: [] as string[] }
+
+    return { available: false, suggestions: await suggestUsernames(username) }
+  },
+
   // ==================== REGISTRATION ====================
 
   /**
@@ -103,7 +182,10 @@ export const authService = {
     // 2. Check duplicate user
     const existingUser = await prisma.profile.findFirst({
       where: {
-        OR: [{ email }, { username }],
+        OR: [
+          { email },
+          { username: { equals: username, mode: 'insensitive' } },
+        ],
       },
     })
 

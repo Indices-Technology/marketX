@@ -86,6 +86,55 @@ export const RATE_LIMITS = {
     lockoutMs: 15 * 60 * 1000, // 15 minutes lockout
     keyPrefix: 'auth:refresh',
   },
+  // Seller registration (account + store in one call). Its own namespace and
+  // a looser cap than REGISTER — the wizard is longer, so a retry after a
+  // validation bounce is normal. keyPrefix stays 'reg' to match the keys
+  // already live in Redis.
+  REGISTER_SELLER: {
+    maxAttempts: parseInt(
+      process.env.RATE_LIMIT_REGISTER_SELLER_MAX || '5',
+      10,
+    ),
+    windowMs: parseInt(
+      process.env.RATE_LIMIT_REGISTER_SELLER_WINDOW || String(15 * 60 * 1000),
+      10,
+    ), // 15 minutes
+    message: 'Too many store creation attempts',
+    lockoutMs: 15 * 60 * 1000, // 15 minutes lockout
+    keyPrefix: 'reg',
+  },
+
+  // Seller verification lookup. Public and unauthenticated, and now driven by
+  // the search dock's typeahead, so it needs a ceiling — each call can cost up
+  // to four DB lookups. Generous enough that a buyer checking a few sellers in
+  // a row never notices.
+  VERIFY_SELLER: {
+    maxAttempts: parseInt(process.env.RATE_LIMIT_VERIFY_SELLER_MAX || '40', 10),
+    windowMs: parseInt(
+      process.env.RATE_LIMIT_VERIFY_SELLER_WINDOW || String(5 * 60 * 1000),
+      10,
+    ), // 5 minutes
+    message: 'Too many verification checks',
+    lockoutMs: 5 * 60 * 1000, // 5 minutes lockout
+    keyPrefix: 'reputation:verify',
+  },
+
+  // Username availability check: a typeahead endpoint, so the ceiling is high
+  // enough for real typing but still caps scripted enumeration of usernames.
+  CHECK_USERNAME: {
+    maxAttempts: parseInt(
+      process.env.RATE_LIMIT_CHECK_USERNAME_MAX || '60',
+      10,
+    ),
+    windowMs: parseInt(
+      process.env.RATE_LIMIT_CHECK_USERNAME_WINDOW || String(5 * 60 * 1000),
+      10,
+    ), // 5 minutes
+    message: 'Too many username checks',
+    lockoutMs: 5 * 60 * 1000, // 5 minutes lockout
+    keyPrefix: 'auth:check-username',
+  },
+
   PROFILE_FETCH: {
     maxAttempts: parseInt(process.env.RATE_LIMIT_REFRESH_TOKEN_MAX || '10', 10),
     windowMs: parseInt(

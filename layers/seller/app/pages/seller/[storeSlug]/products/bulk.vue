@@ -54,6 +54,7 @@
       />
 
       <p
+        ref="socialSources"
         class="mb-1 mt-6 text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-neutral-500"
       >
         From your socials
@@ -553,7 +554,23 @@ function onImportFbPost(post: FacebookImportPost) {
   addFromFacebookPost(post)
 }
 
-onMounted(refreshConnections)
+// Deep link from the seller-registration success screen ("Import from
+// Facebook"). Connections load first, so a seller who already linked a Page
+// lands straight in the post picker; one who hasn't gets the section — and its
+// "Connect in Growth" row — scrolled into view instead of a dead end.
+const socialSources = ref<HTMLElement | null>(null)
+
+onMounted(async () => {
+  await refreshConnections()
+  if (route.query.source !== 'facebook') return
+
+  if (fbConnection.value) onFacebookClick()
+  else
+    socialSources.value?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+
+  // Drop the query so a refresh (or a back-navigation) doesn't reopen it.
+  router.replace({ query: { ...route.query, source: undefined } })
+})
 
 function pickFiles() {
   fileInput.value?.click()

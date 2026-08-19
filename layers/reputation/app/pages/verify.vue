@@ -365,32 +365,16 @@ import BrandLogo from '~~/layers/ui/app/components/BrandLogo.vue'
 import StoreAvatar from '~~/layers/profile/app/components/StoreAvatar.vue'
 import { useReputationApi } from '~~/layers/reputation/app/services/reputation.api'
 import { useSeo } from '~~/layers/core/app/composables/useSeo'
+import type {
+  VerifyResult,
+  VerifyMatchedBy,
+} from '~~/layers/reputation/app/types/trust.types'
 
 defineOptions({ name: 'VerifyPage' })
 
 useSeo().setVerifyPage()
 
-interface VerifySeller {
-  store_slug: string
-  store_name: string | null
-  store_logo: string | null
-  store_location: string | null
-  publicId: string | null
-  is_verified: boolean
-  cac_verified: boolean
-  enoughEvidence: boolean
-  tier: string | null
-  headline: string
-}
-type MatchedBy = 'link' | 'id' | 'phone' | 'handle'
-interface VerifyResult {
-  status: 'verified' | 'unverified' | 'unknown'
-  query: string
-  matchedBy?: MatchedBy
-  seller?: VerifySeller
-}
-
-const MATCH_LABELS: Record<MatchedBy, string> = {
+const MATCH_LABELS: Record<VerifyMatchedBy, string> = {
   link: 'Matched by their MarketX link',
   id: 'Matched by Seller ID',
   phone: 'Matched by phone',
@@ -427,10 +411,7 @@ async function run() {
   error.value = false
   result.value = null
   try {
-    const res = (await api.verify(q)) as {
-      success?: boolean
-      data?: VerifyResult
-    }
+    const res = await api.verify(q)
     if (res?.success && res.data) result.value = res.data
     else error.value = true
   } catch {

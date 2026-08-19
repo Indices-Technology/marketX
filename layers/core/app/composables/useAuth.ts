@@ -487,6 +487,34 @@ export const useAuth = () => {
     }
   }
 
+  // ==================== USERNAME AVAILABILITY ====================
+
+  /**
+   * Live availability check for the signup form. Never throws and never touches
+   * the shared auth error state — a typeahead failure shouldn't paint the whole
+   * form red. Returns `null` when the check itself failed, so callers can tell
+   * "this username is taken" apart from "we couldn't find out".
+   */
+  const checkUsernameAvailability = async (
+    username: string,
+  ): Promise<{
+    available: boolean
+    message: string
+    suggestions: string[]
+  } | null> => {
+    try {
+      const result = await authApi.checkUsername(username)
+      return {
+        available: result.available,
+        message: result.message,
+        suggestions: result.suggestions ?? [],
+      }
+    } catch (e) {
+      console.error('Error checking username:', e)
+      return null
+    }
+  }
+
   // ==================== RETURN ====================
 
   return {
@@ -499,6 +527,7 @@ export const useAuth = () => {
     // Methods
     register,
     registerSeller,
+    checkUsernameAvailability,
     login,
     socialLogin,
     logout,

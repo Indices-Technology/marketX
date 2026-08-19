@@ -16,7 +16,7 @@
         class="mb-8 flex justify-center"
         aria-label="MarketX home"
       >
-        <BrandLogo variant="full" class="h-10 w-auto" />
+        <BrandLogo variant="wordmark" class="h-10 w-auto" />
       </NuxtLink>
 
       <!-- ── STEP 0: Choose path ─────────────────────────────────────────────── -->
@@ -246,16 +246,56 @@
 
         <!-- Account form -->
         <form class="space-y-5" novalidate @submit.prevent="handleAccountStep">
-          <!-- Username -->
-          <BaseInput
-            v-model="form.username"
-            :placeholder="$t('auth.register.usernamePlaceholder')"
-            autocomplete="username"
-            :disabled="isBusy"
-            icon-left="solar:user-linear"
-            size="lg"
-            :error="errors.username"
-          />
+          <!-- Username — availability resolves while typing, not at submit -->
+          <div>
+            <BaseInput
+              v-model="form.username"
+              :placeholder="$t('auth.register.usernamePlaceholder')"
+              autocomplete="username"
+              :disabled="isBusy"
+              icon-left="solar:user-linear"
+              :icon-right="usernameIcon"
+              :icon-right-class="usernameIconClass"
+              size="lg"
+              :error="errors.username"
+              @update:model-value="onUsernameInput"
+            >
+              <template v-if="usernameStatus === 'available'" #hint>
+                <span class="text-emerald-600 dark:text-emerald-400"
+                  >Username available</span
+                >
+              </template>
+              <template v-else-if="usernameStatus === 'error'" #hint>
+                <span class="text-amber-600 dark:text-amber-400">
+                  Couldn&apos;t check this username
+                  <button
+                    type="button"
+                    class="ml-1 font-semibold underline"
+                    @click="runUsernameCheck"
+                  >
+                    Retry
+                  </button>
+                </span>
+              </template>
+            </BaseInput>
+
+            <!-- Free alternatives, offered instead of just a red error -->
+            <div
+              v-if="usernameSuggestions.length"
+              class="mt-2 flex flex-wrap items-center gap-1.5"
+            >
+              <span class="ink-faint text-2xs">Try:</span>
+              <button
+                v-for="s in usernameSuggestions"
+                :key="s"
+                type="button"
+                class="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-600 transition-colors hover:bg-blue-100 dark:bg-blue-950/40 dark:text-blue-400 dark:hover:bg-blue-950/60"
+                @click="pickUsernameSuggestion(s)"
+              >
+                {{ s }}
+              </button>
+            </div>
+          </div>
 
           <!-- Email -->
           <BaseInput
@@ -803,29 +843,100 @@
           </button>
         </div>
 
-        <!-- CTA buttons -->
-        <div class="flex flex-col gap-3 sm:flex-row">
-          <NuxtLink
-            :to="`/seller/${createdStoreSlug}/products/create`"
-            class="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-brand px-6 py-4 font-bold text-white shadow-2xl shadow-brand/30 transition hover:bg-[#d81b36]"
+        <!-- Primary CTA -->
+        <NuxtLink
+          :to="`/seller/${createdStoreSlug}/products/create`"
+          class="flex w-full items-center justify-center gap-2 rounded-2xl bg-brand px-6 py-4 font-bold text-white shadow-2xl shadow-brand/30 transition hover:bg-[#d81b36]"
+        >
+          <Icon name="solar:add-circle-linear" size="18" />
+          Add first product
+        </NuxtLink>
+
+        <!-- Most new sellers already have a catalogue somewhere else — adding
+             products one at a time is the slowest way in, so offer the bulk
+             routes right where the store goes live. -->
+        <div class="mt-8 text-left">
+          <p
+            class="text-[10px] font-black uppercase tracking-widest text-brand"
           >
-            <Icon name="solar:add-circle-linear" size="18" />
-            Add first product
+            Already selling somewhere?
+          </p>
+          <h2 class="mt-1 text-lg font-black text-gray-900 dark:text-white">
+            Bring your products over
+          </h2>
+
+          <ul
+            class="mt-3 divide-y divide-gray-100 rounded-2xl border border-gray-100 dark:divide-neutral-800 dark:border-neutral-800"
+          >
+            <li>
+              <NuxtLink
+                :to="`/seller/${createdStoreSlug}/products/bulk`"
+                class="flex items-center justify-between gap-3 px-4 py-3.5 transition-colors hover:bg-gray-50 dark:hover:bg-neutral-800/60"
+              >
+                <span
+                  class="flex min-w-0 items-center gap-2.5 text-sm font-medium text-gray-700 dark:text-neutral-300"
+                >
+                  <Icon
+                    name="solar:document-text-linear"
+                    size="18"
+                    class="shrink-0"
+                  />
+                  Bulk import
+                  <span
+                    class="truncate text-xs font-normal text-gray-400 dark:text-neutral-500"
+                  >
+                    Spreadsheet or paste
+                  </span>
+                </span>
+                <Icon
+                  name="solar:alt-arrow-right-linear"
+                  size="14"
+                  class="shrink-0 text-gray-400 dark:text-neutral-500"
+                />
+              </NuxtLink>
+            </li>
+
+            <!-- Social imports are listed, not linked. Facebook import works
+                 and stays reachable from Growth → Connected accounts while it's
+                 being tested; it isn't pointed at brand-new sellers yet. TikTok
+                 needs the video.list scope the app doesn't hold (see
+                 layers/growth/server/utils/tiktok.oauth.ts). -->
+            <li
+              v-for="src in soonSources"
+              :key="src.id"
+              class="flex items-center justify-between gap-3 px-4 py-3.5"
+            >
+              <span
+                class="flex min-w-0 items-center gap-2.5 text-sm font-medium text-gray-500 dark:text-neutral-400"
+              >
+                <Icon :name="src.icon" size="15" class="shrink-0" />
+                {{ src.label }}
+              </span>
+              <span
+                class="shrink-0 text-xs font-medium text-gray-400 dark:text-neutral-600"
+              >
+                Coming soon
+              </span>
+            </li>
+          </ul>
+        </div>
+
+        <div
+          class="mt-6 flex items-center justify-center gap-6 text-sm text-gray-500 dark:text-neutral-400"
+        >
+          <NuxtLink
+            :to="`/${createdStoreSlug}`"
+            class="transition hover:text-gray-900 dark:hover:text-white"
+          >
+            Preview your store →
           </NuxtLink>
           <NuxtLink
             to="/discover"
-            class="flex flex-1 items-center justify-center gap-2 rounded-2xl border-2 border-gray-300 px-6 py-4 font-bold text-gray-900 transition hover:border-gray-400 hover:bg-gray-50 dark:border-neutral-700 dark:text-white dark:hover:bg-neutral-800"
+            class="transition hover:text-gray-900 dark:hover:text-white"
           >
-            Browse the feed
+            Browse the feed →
           </NuxtLink>
         </div>
-
-        <NuxtLink
-          :to="`/${createdStoreSlug}`"
-          class="mt-4 block text-sm text-gray-500 transition hover:text-gray-900 dark:text-neutral-400 dark:hover:text-white"
-        >
-          Preview your store →
-        </NuxtLink>
       </div>
     </div>
   </div>
@@ -860,6 +971,7 @@ const {
   isLoading: authLoading,
   error: authError,
   message: authMessage,
+  checkUsernameAvailability,
 } = useAuth()
 const { checkSlugAvailability, suggestSlugs, createSeller } =
   useSellerManagement()
@@ -886,6 +998,18 @@ onMounted(() => {
   }
 })
 
+// Import routes that exist but aren't offered to brand-new sellers yet.
+// Facebook import is built and testable from Growth → Connected accounts; it
+// gets a link here once testing signs off. TikTok is waiting on a scope.
+const soonSources = [
+  {
+    id: 'facebook',
+    label: 'Import from Facebook',
+    icon: 'simple-icons:facebook',
+  },
+  { id: 'tiktok', label: 'Import from TikTok', icon: 'simple-icons:tiktok' },
+]
+
 const chooseType = (type: 'buyer' | 'seller') => {
   accountType.value = type
   step.value = 1
@@ -907,6 +1031,80 @@ const errors = reactive({
   password: '',
   confirmPassword: '',
 })
+
+// ── Live username availability ────────────────────────────────────────
+// "Username taken" used to land only at submit — after email, password and
+// confirm-password were all filled in. Check while they type, the same way the
+// store URL field does one step later.
+const usernameStatus = ref<
+  'idle' | 'checking' | 'available' | 'taken' | 'error'
+>('idle')
+const usernameSuggestions = ref<string[]>([])
+let usernameTimer: ReturnType<typeof setTimeout> | null = null
+// Bumped on every keystroke: a slow response for an older value must not
+// overwrite the verdict for what's currently in the box.
+let usernameCheckSeq = 0
+
+const runUsernameCheck = async () => {
+  const username = form.username.trim()
+  if (username.length < 3 || username.length > 20) {
+    usernameStatus.value = 'idle'
+    return
+  }
+
+  const seq = ++usernameCheckSeq
+  usernameStatus.value = 'checking'
+  const result = await checkUsernameAvailability(username)
+  if (seq !== usernameCheckSeq) return
+
+  if (!result) {
+    // The check failed, not the username — don't block submit on our own
+    // hiccup; registration is still the backstop.
+    usernameStatus.value = 'error'
+    return
+  }
+
+  usernameStatus.value = result.available ? 'available' : 'taken'
+  usernameSuggestions.value = result.available ? [] : result.suggestions
+  errors.username = result.available ? '' : result.message
+}
+
+const triggerUsernameCheck = () => {
+  if (usernameTimer) clearTimeout(usernameTimer)
+  usernameTimer = setTimeout(runUsernameCheck, 450)
+}
+
+const onUsernameInput = () => {
+  errors.username = ''
+  usernameStatus.value = 'idle'
+  usernameSuggestions.value = []
+  usernameCheckSeq += 1 // discard anything already in flight
+  triggerUsernameCheck()
+}
+
+const usernameIcon = computed(() => {
+  if (usernameStatus.value === 'checking') return 'eos-icons:loading'
+  if (usernameStatus.value === 'available') return 'solar:check-circle-bold'
+  if (usernameStatus.value === 'taken') return 'solar:close-circle-bold'
+  if (usernameStatus.value === 'error') return 'solar:danger-triangle-bold'
+  return undefined
+})
+
+const usernameIconClass = computed(() => {
+  if (usernameStatus.value === 'checking') return 'animate-spin text-gray-400'
+  if (usernameStatus.value === 'available') return 'text-emerald-500'
+  if (usernameStatus.value === 'taken') return 'text-red-500'
+  if (usernameStatus.value === 'error') return 'text-amber-500'
+  return undefined
+})
+
+const pickUsernameSuggestion = (name: string) => {
+  // Suggestions came back from the server as free, so no re-check needed.
+  form.username = name
+  usernameSuggestions.value = []
+  usernameStatus.value = 'available'
+  errors.username = ''
+}
 
 const isLoading = computed(() => authLoading.value)
 const isBusy = computed(
@@ -931,6 +1129,10 @@ const validateAccountForm = () => {
   }
   if (form.username.trim().length > 20) {
     errors.username = 'Username must be at most 20 characters'
+    return false
+  }
+  if (usernameStatus.value === 'taken') {
+    errors.username = 'This username is taken — choose another'
     return false
   }
   if (!form.email.trim()) {
@@ -972,20 +1174,62 @@ const validateAccountForm = () => {
 const handleAccountStep = async () => {
   if (!validateAccountForm()) return
 
+  // A fast typist can submit before the debounce fires — settle the check here
+  // rather than letting the server be the first to say "taken".
+  if (usernameStatus.value === 'idle' || usernameStatus.value === 'checking') {
+    if (usernameTimer) clearTimeout(usernameTimer)
+    await runUsernameCheck()
+  }
+  if (usernameStatus.value === 'taken') {
+    errors.username = 'This username is taken — choose another'
+    return
+  }
+
   if (accountType.value === 'seller') {
     // Don't call API yet — move to store setup step
     step.value = 2
     return
   }
 
-  // Buyer path — same as before
-  await authRegister(
-    form.email.trim(),
-    form.username.trim(),
-    form.password,
-    form.confirmPassword,
-    '/user-login',
-  )
+  // Buyer path
+  try {
+    await authRegister(
+      form.email.trim(),
+      form.username.trim(),
+      form.password,
+      form.confirmPassword,
+      '/user-login',
+    )
+  } catch (e: unknown) {
+    // useAuth already put the message in the banner; also pin it to the field
+    // that caused it so the fix is where the user is looking.
+    applyServerFieldError(e)
+  }
+}
+
+/**
+ * Maps a duplicate-account error from the register endpoints back onto the
+ * offending field. The server answers with "Email already in use" /
+ * "Username already in use".
+ */
+const applyServerFieldError = (e: unknown): 'username' | 'email' | null => {
+  const err = e as {
+    data?: { statusMessage?: string }
+    statusMessage?: string
+    message?: string
+  }
+  const msg =
+    err?.data?.statusMessage || err?.statusMessage || err?.message || ''
+  if (/username/i.test(msg)) {
+    errors.username = 'This username is taken — choose another'
+    usernameStatus.value = 'taken'
+    return 'username'
+  }
+  if (/email/i.test(msg)) {
+    errors.email = msg
+    return 'email'
+  }
+  return null
 }
 
 const handleSocial = async (provider: 'google' | 'facebook' | 'tiktok') => {
@@ -1174,6 +1418,13 @@ const handleSellerSubmit = async () => {
     createdStoreSlug.value = res.store.store_slug
     step.value = 3
   } catch (e: any) {
+    // A taken username/email belongs to the account step — send them back to
+    // the field instead of showing a store-step error about an invisible input.
+    const field = applyServerFieldError(e)
+    if (field) {
+      step.value = 1
+      return
+    }
     const msg =
       e?.data?.statusMessage ||
       e?.statusMessage ||
@@ -1201,6 +1452,7 @@ const copyStoreLink = async () => {
 
 onUnmounted(() => {
   if (slugTimer) clearTimeout(slugTimer)
+  if (usernameTimer) clearTimeout(usernameTimer)
 })
 </script>
 
