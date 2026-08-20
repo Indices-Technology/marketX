@@ -414,6 +414,23 @@ export const walletService = {
         400,
       )
 
+    // The fee split is computed HERE, not taken from the caller, so exactly one
+    // place decides what gets persisted as owed. The endpoint runs the same
+    // calculation for its preview and its below-fees guard, but what a future
+    // payout executor transfers is whatever this line produced — a caller can no
+    // longer influence the payable by shaping the bankAccount object it passes.
+    const { net, platformFee, transferFee } = calculatePayout(amount)
+
+    // Defence in depth: the endpoint already rejects a fee-consumed amount. If a
+    // second caller ever appears, this stops a wallet being debited for a payout
+    // that would send the seller nothing.
+    if (net <= 0)
+      throw new UserError(
+        'AMOUNT_TOO_SMALL',
+        'Amount does not exceed the withdrawal fees',
+        400,
+      )
+
     const wallet = await walletRepository.getOrCreateWallet(sellerId)
 
     // Atomic conditional decrement — eliminates the read-check-decrement race.
@@ -435,9 +452,18 @@ export const walletService = {
       const created = await tx.payout.create({
         data: {
           walletId: wallet.id,
+          // `amount` stays the gross for every existing reader; `amountGross`
+          // is the same number under an unambiguous name. `amountNet` is the
+          // only field a payout executor may transfer.
           amount,
+          amountGross: amount,
+          amountNet: net,
+          platformFee,
+          transferFee,
           status: 'PENDING',
-          bank_account: bankAccount,
+          // Dual-write: the JSON keeps carrying netAmount so the admin screen's
+          // existing fallback path stays correct until it reads the columns.
+          bank_account: { ...bankAccount, netAmount: net, platformFee, transferFee },
         },
       })
       await tx.transaction.create({
@@ -457,7 +483,10 @@ export const walletService = {
       resource: 'SellerWallet',
       resourceId: wallet.id,
       reason: 'Withdrawal requested',
-      changes: { amount },
+      // Record the whole split, not just the debit: when a payout is queried
+      // later the audit trail must show what the seller was owed, not only what
+      // left the wallet.
+      changes: { amount, net, platformFee, transferFee },
       ipAddress,
       userAgent,
     })

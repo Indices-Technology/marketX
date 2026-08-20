@@ -6,6 +6,7 @@
 import { getClientIP } from '~~/server/layers/shared/utils/security'
 import { isReservedSlug } from '~~/server/layers/shared/utils/reservedSlugs'
 import { normalizePhone } from '~~/shared/utils/phone'
+import { normalizeUsernameValue } from '~~/shared/utils/sellerIdentifier'
 import { AuthError } from '../../types/auth.types'
 import { SellerError } from '~~/layers/seller/server/types/seller.types'
 import RATE_LIMITS from '~~/server/config/rateLimits'
@@ -105,6 +106,10 @@ export default defineEventHandler(async (event) => {
       statusMessage: 'Passwords do not match',
     })
 
+  // Usernames are stored lowercase, so the duplicate check below and the row we
+  // write both use the folded form — see 20260820120000_lowercase_usernames.
+  const normalizedUsername = normalizeUsernameValue(String(username))
+
   // Enforce the same OWASP password policy as POST /auth/register so sellers
   // are never created with weaker credentials than regular users.
   const passwordCheck = enhancedPasswordSchema.safeParse(password)
@@ -165,10 +170,7 @@ export default defineEventHandler(async (event) => {
     // ── 2. Check duplicate user ──────────────────────────────────────────────
     const existing = await prisma.profile.findFirst({
       where: {
-        OR: [
-          { email: email.toLowerCase() },
-          { username: { equals: username, mode: 'insensitive' } },
-        ],
+        OR: [{ email: email.toLowerCase() }, { username: normalizedUsername }],
       },
       select: { email: true },
     })
@@ -201,7 +203,7 @@ export default defineEventHandler(async (event) => {
         data: {
           id: userId,
           email: email.toLowerCase(),
-          username: username.trim(),
+          username: normalizedUsername,
           password_hash: hashedPassword,
           role: 'seller',
         },

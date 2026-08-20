@@ -10,6 +10,7 @@
 import RATE_LIMITS from '~~/server/config/rateLimits'
 import { authRepository } from '../repositories/auth.repository'
 import { AuthError } from '../types/auth.types'
+import { normalizeUsernameValue } from '~~/shared/utils/sellerIdentifier'
 import type { IAuthResponse as AuthResponse } from '~~/shared/types/auth'
 import {
   sendVerificationEmail as sendVerifyEmail,
@@ -34,7 +35,7 @@ const createUniqueUsername = async (seed: string) => {
   let attempt = 0
   while (attempt < 10) {
     const exists = await prisma.profile.findFirst({
-      where: { username: { equals: candidate, mode: 'insensitive' } },
+      where: { username: candidate },
       select: { id: true },
     })
     if (!exists) return candidate
@@ -63,19 +64,15 @@ const suggestUsernames = async (seed: string, limit = 3) => {
     .map((c) => c.slice(0, 30))
     .filter((c) => c.length >= 3)
 
+  // Stored usernames are lowercase, and candidates come from normalizeUsername,
+  // so a plain `in` matches exactly — and uses the unique index.
   const taken = await prisma.profile.findMany({
-    where: {
-      OR: candidates.map((c) => ({
-        username: { equals: c, mode: 'insensitive' as const },
-      })),
-    },
+    where: { username: { in: candidates } },
     select: { username: true },
   })
-  const takenSet = new Set(taken.map((t) => t.username?.toLowerCase()))
+  const takenSet = new Set(taken.map((t) => t.username))
 
-  return candidates
-    .filter((c) => !takenSet.has(c.toLowerCase()))
-    .slice(0, limit)
+  return candidates.filter((c) => !takenSet.has(c)).slice(0, limit)
 }
 
 export const authService = {
@@ -113,11 +110,11 @@ export const authService = {
       )
     }
 
-    // Same lookup registration performs, so the two can never disagree.
-    // Case-insensitive: usernames are one identity, however they're typed, and
-    // profile URLs already resolve without regard to case.
-    const existing = await prisma.profile.findFirst({
-      where: { username: { equals: username, mode: 'insensitive' } },
+    // Same lookup registration performs, so the two can never disagree. The
+    // route folded the input through usernameSchema, and stored usernames are
+    // lowercase, so this is an index lookup rather than a scan.
+    const existing = await prisma.profile.findUnique({
+      where: { username },
       select: { id: true },
     })
 
@@ -156,6 +153,7 @@ export const authService = {
     role: 'user' | 'seller' = 'user',
   ) {
     email = email.toLowerCase()
+    username = normalizeUsernameValue(username)
 
     // 1. Rate Limit (By IP to prevent bot spam)
     const rateLimit = await checkRateLimitAsync(`register:${ipAddress}`, {
@@ -182,10 +180,7 @@ export const authService = {
     // 2. Check duplicate user
     const existingUser = await prisma.profile.findFirst({
       where: {
-        OR: [
-          { email },
-          { username: { equals: username, mode: 'insensitive' } },
-        ],
+        OR: [{ email }, { username }],
       },
     })
 
@@ -937,7 +932,9 @@ export const authService = {
     await authRepository.createAuditLog({
       userId,
       email: '',
-      eventType: includeCurrent ? 'ALL_SESSIONS_REVOKED' : 'OTHER_SESSIONS_REVOKED',
+      eventType: includeCurrent
+        ? 'ALL_SESSIONS_REVOKED'
+        : 'OTHER_SESSIONS_REVOKED',
       reason: `${count} session(s) revoked by user`,
       ipAddress,
       userAgent,

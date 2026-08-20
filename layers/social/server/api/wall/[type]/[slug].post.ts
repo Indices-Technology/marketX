@@ -6,6 +6,7 @@ import { notificationQueue } from '~~/server/queues/notification.queue'
 import { emailQueue } from '~~/server/queues/email.queue'
 import { buildShoutoutReceivedEmail } from '~~/server/utils/email/emailService'
 import { z } from 'zod'
+import { normalizeUsernameValue } from '~~/shared/utils/sellerIdentifier'
 
 const shoutoutSchema = z.object({
   body: z.string().min(1).max(1000).trim(),
@@ -17,21 +18,29 @@ export default defineEventHandler(async (event) => {
     const slug = getRouterParam(event, 'slug')
 
     if (!slug || (type !== 'USER' && type !== 'STORE')) {
-      throw createError({ statusCode: 400, statusMessage: 'Invalid wall type or slug' })
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Invalid wall type or slug',
+      })
     }
 
     const user = await requireAuth(event)
     const raw = await readBody(event)
     const parsed = shoutoutSchema.safeParse(raw)
     if (!parsed.success) {
-      throw createError({ statusCode: 400, statusMessage: parsed.error.errors[0]?.message ?? 'Invalid input' })
+      throw createError({
+        statusCode: 400,
+        statusMessage: parsed.error.errors[0]?.message ?? 'Invalid input',
+      })
     }
 
     // Resolve wall owner — needed to notify them
     let ownerProfileId: string | null = null
     if (type === 'USER') {
       const profile = await prisma.profile.findUnique({
-        where: { username: slug },
+        // Usernames are stored lowercase; fold the URL segment so a
+        // mixed-case link still resolves.
+        where: { username: normalizeUsernameValue(slug) },
         select: { id: true },
       })
       ownerProfileId = profile?.id ?? null
@@ -49,7 +58,10 @@ export default defineEventHandler(async (event) => {
 
     // Don't allow posting on your own wall (you can just make a regular post)
     if (type === 'USER' && ownerProfileId === user.id) {
-      throw createError({ statusCode: 400, statusMessage: 'Post to your feed instead of your own wall' })
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Post to your feed instead of your own wall',
+      })
     }
 
     const shoutout = await prisma.post.create({
@@ -69,7 +81,9 @@ export default defineEventHandler(async (event) => {
         created_at: true,
         wallTargetType: true,
         wallTargetSlug: true,
-        author: { select: { id: true, username: true, avatar: true, role: true } },
+        author: {
+          select: { id: true, username: true, avatar: true, role: true },
+        },
         _count: { select: { likes: true, comments: true } },
       },
     })
@@ -103,7 +117,13 @@ export default defineEventHandler(async (event) => {
             parsed.data.body,
             wallUrl,
           )
-          emailQueue.enqueue({ to: owner.email, subject, html, text, type: 'GENERAL' })
+          emailQueue.enqueue({
+            to: owner.email,
+            subject,
+            html,
+            text,
+            type: 'GENERAL',
+          })
         })
         .catch(() => {})
     }
@@ -111,7 +131,12 @@ export default defineEventHandler(async (event) => {
     return { data: { ...shoutout, type: 'SHOUTOUT', viewerLiked: false } }
   } catch (error: any) {
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
-    logger.logError('[POST /api/wall]', error, { requestId: event.context?.requestId })
-    throw createError({ statusCode: 500, statusMessage: 'Internal server error' })
+    logger.logError('[POST /api/wall]', error, {
+      requestId: event.context?.requestId,
+    })
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Internal server error',
+    })
   }
 })

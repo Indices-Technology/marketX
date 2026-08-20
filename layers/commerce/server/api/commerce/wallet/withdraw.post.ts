@@ -86,11 +86,14 @@ export default defineEventHandler(async (event) => {
       getHeader(event, 'x-forwarded-for') || getClientIP(event) || 'unknown'
     const userAgent = getHeader(event, 'user-agent') || 'unknown'
 
-    // Withdraw the gross from wallet; seller receives net after fees
+    // Withdraw the gross from wallet; seller receives net after fees.
+    // The fee split above is for the guard and the response preview only — the
+    // service recomputes it and owns what is persisted, so the destination
+    // account is passed through unmodified.
     const result = await walletService.withdraw(
       sellerId,
       gross,
-      { ...bankAccount, netAmount: net, platformFee, transferFee },
+      bankAccount,
       ipAddress,
       userAgent,
     )

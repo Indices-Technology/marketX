@@ -4,6 +4,7 @@ import type {
   ContentType,
   ModerationAction,
   ReportReason,
+  PayoutStatus,
 } from '@prisma/client'
 import { normalizePublicId } from '~~/layers/seller/server/utils/publicSellerId'
 
@@ -269,13 +270,20 @@ export const adminRepository = {
 
   // ── Payouts ──────────────────────────────────────────────────────────────
 
-  listPayouts(opts: { status?: string; limit: number; offset: number }) {
+  listPayouts(opts: { status?: PayoutStatus; limit: number; offset: number }) {
     const where = opts.status ? { status: opts.status } : {}
     return prisma.payout.findMany({
       where,
       select: {
         id: true,
         amount: true,
+        // Typed money columns — `amountNet` is what the admin actually transfers.
+        // Selected alongside the legacy JSON so the screen prefers the column and
+        // falls back only for historical rows.
+        amountGross: true,
+        amountNet: true,
+        platformFee: true,
+        transferFee: true,
         status: true,
         bank_account: true,
         transaction_ref: true,
@@ -309,7 +317,11 @@ export const adminRepository = {
       select: {
         id: true,
         walletId: true,
+        // `amount` (gross) is what a REJECTED payout returns to the wallet;
+        // `amountNet` is what a PAID one actually sent to the bank. Both are
+        // needed — using either for both cases misstates one of them.
         amount: true,
+        amountNet: true,
         status: true,
         wallet: {
           select: { seller: { select: { profileId: true, store_name: true } } },

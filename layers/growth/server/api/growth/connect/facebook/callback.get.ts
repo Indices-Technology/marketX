@@ -83,6 +83,12 @@ export default defineEventHandler(async (event) => {
     logger.logError('[GET /api/growth/connect/facebook/callback]', error, {
       requestId: event.context?.requestId,
     })
-    return fail('exchange_failed')
+    // Surface the real reason (e.g. "Facebook assigned_pages error: ...")
+    // instead of a flat "exchange_failed" — actionable beats generic.
+    const reason =
+      error instanceof Error && error.message
+        ? error.message.slice(0, 200)
+        : 'exchange_failed'
+    return fail(reason)
   }
 })

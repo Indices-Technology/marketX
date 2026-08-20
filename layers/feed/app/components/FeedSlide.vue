@@ -28,22 +28,27 @@
         :key="m.id"
         class="relative h-full w-full shrink-0 snap-start snap-always"
       >
-        <video
-          v-if="m.type === 'VIDEO'"
+        <!-- Full-screen frame, so the tolerance is tight: a 9:16 clip stays
+             edge-to-edge, but a square collage or a landscape spec sheet is
+             shown whole over a blurred bed rather than losing a third of
+             itself off the sides. -->
+        <BaseMedia
           :ref="(el) => setVideoRef(el, i)"
-          :src="m.url"
-          :preload="videoPreload(i)"
-          class="h-full w-full object-cover"
-          loop
-          playsinline
-          muted
-        />
-        <img
-          v-else
-          :src="m.url"
-          :alt="item.caption"
-          class="h-full w-full object-cover"
-          loading="lazy"
+          :src="imageNear(i) ? m.url : null"
+          :type="m.type === 'VIDEO' ? 'VIDEO' : 'IMAGE'"
+          :alt="item.caption || 'Post media'"
+          :eager="distance === 0 && i === carouselIndex"
+          backdrop-class="bg-black"
+          v-bind="
+            m.type === 'VIDEO'
+              ? {
+                  preload: videoPreload(i),
+                  loop: true,
+                  playsinline: true,
+                  muted: true,
+                }
+              : {}
+          "
         />
       </div>
     </div>
@@ -116,12 +121,36 @@
       v-if="mediaItems.length > 1"
       class="pointer-events-none absolute inset-x-0 top-[7.5rem] z-20 flex justify-center gap-1.5"
     >
+      <!-- Contrast comes from a box-shadow on each dot, not a backdrop-blurred
+           plate behind them. The plate sat over the horizontally-scrolling
+           carousel, so the browser re-blurred that strip every frame of a
+           swipe; a shadow is painted once and costs nothing while scrolling.
+           Some carrier is still needed — plain white-on-white/40 vanished over
+           a pale photo, a white chair or a satin backdrop, which is most of
+           this feed. -->
       <span
         v-for="(m, i) in mediaItems"
         :key="m.id"
-        class="h-1.5 rounded-full transition-all"
-        :class="i === carouselIndex ? 'w-4 bg-white' : 'w-1.5 bg-white/40'"
+        class="h-1.5 rounded-full shadow-[0_0_3px_rgba(0,0,0,0.75)] transition-all"
+        :class="i === carouselIndex ? 'w-4 bg-white' : 'w-1.5 bg-white/60'"
       />
+    </div>
+
+    <!-- Counter pill. The dots alone are a weak signal on a full-screen slide:
+         they read as decoration until you already know there's something to
+         swipe to. A literal "1/4" says there are four, and the stack glyph
+         says they're photos — the pair Instagram settled on, for the same
+         reason. Shares the dots' top offset so both clear the header and the
+         For You/Deals pill; sits left of the action rail, which starts lower
+         down the right edge. -->
+    <div
+      v-if="mediaItems.length > 1"
+      class="pointer-events-none absolute right-3 top-[7.3rem] z-20 flex items-center gap-1 rounded-full bg-black/55 px-2 py-1 backdrop-blur-sm"
+    >
+      <Icon name="solar:gallery-linear" size="12" class="text-white/90" />
+      <span class="text-[11px] font-semibold leading-none text-white">
+        {{ carouselIndex + 1 }}/{{ mediaItems.length }}
+      </span>
     </div>
 
     <!-- Gradient overlays for text readability — media slides only; the
@@ -299,6 +328,7 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import type { IFeedItem } from '~~/layers/feed/app/types/feed.types'
 import TrustCardOverlay from '~~/layers/feed/app/components/TrustCardOverlay.vue'
+import BaseMedia from '~~/layers/ui/app/components/BaseMedia.vue'
 import {
   useSellerTier,
   TIER_LABELS,
@@ -379,9 +409,20 @@ const textBgStyle = computed(
 // stays paused (matches the old single-video behavior, generalized to N).
 const carouselRef = ref<HTMLElement | null>(null)
 const carouselIndex = ref(0)
-const videoRefs = ref<(HTMLVideoElement | null)[]>([])
+// The ref now lands on BaseMedia, not on the <video> itself, so what's stored
+// is the component and the real element is read back through it on use. It's
+// resolved lazily rather than at ref time on purpose: the media element is
+// behind a v-if inside BaseMedia, so at the moment this callback fires it may
+// not exist yet — capturing `mediaEl` here would pin a null and the slide
+// would never play.
+type MediaSlide = { mediaEl?: HTMLElement | null } | null
+const videoRefs = ref<MediaSlide[]>([])
 const setVideoRef = (el: unknown, i: number) => {
-  videoRefs.value[i] = el as HTMLVideoElement | null
+  videoRefs.value[i] = el as MediaSlide
+}
+const videoAt = (i: number): HTMLVideoElement | null => {
+  const el = videoRefs.value[i]?.mediaEl
+  return el instanceof HTMLVideoElement ? el : null
 }
 
 let scrollRaf: number | null = null
@@ -396,7 +437,8 @@ const onCarouselScroll = () => {
 }
 
 const syncVideoPlayback = () => {
-  videoRefs.value.forEach((v, i) => {
+  videoRefs.value.forEach((_, i) => {
+    const v = videoAt(i)
     if (!v) return
     if (props.isActive && i === carouselIndex.value) {
       v.play().catch(() => {})
@@ -406,7 +448,13 @@ const syncVideoPlayback = () => {
     }
   })
 }
-watch([() => props.isActive, carouselIndex], syncVideoPlayback)
+// flush: 'post' — a video item's <video> only exists once its src is granted
+// (see imageNear), and carouselIndex is what grants it. A default 'pre' watcher
+// runs BEFORE that re-render, so it would look for the element, find nothing,
+// and the clip you just swiped to would sit there paused.
+watch([() => props.isActive, carouselIndex], syncVideoPlayback, {
+  flush: 'post',
+})
 onMounted(syncVideoPlayback)
 
 // Without an explicit preload, a <video> with a src defaults to "metadata" in
@@ -424,6 +472,26 @@ const videoPreload = (i: number) => {
   if (distance.value === 1) return 'metadata'
   if (i === carouselIndex.value) return 'auto'
   return Math.abs(i - carouselIndex.value) === 1 ? 'metadata' : 'none'
+}
+
+/**
+ * The same budget, for stills — and it has to be enforced by withholding the
+ * URL, not by `loading="lazy"`.
+ *
+ * Lazy is a hint about the VIEWPORT, and every item of a horizontal carousel is
+ * one short scroll from it, so Chrome fetches the lot: measured five of five
+ * fetched while still sitting on the first photo. Six photos per slide, several
+ * slides mounted, none of it looked at — the kind of cost that never shows up
+ * in a frame graph and is the whole budget on a mobile connection.
+ *
+ * A slide the user isn't on gets only its first photo, so arriving on it is
+ * never a blank; the slide they ARE on keeps one either side, so a swipe lands
+ * on something already there. BaseMedia renders nothing for a null src, and
+ * loads as soon as one appears.
+ */
+const imageNear = (i: number) => {
+  if (distance.value > 0) return i === 0
+  return Math.abs(i - carouselIndex.value) <= 1
 }
 
 // ── Trust Card ───────────────────────────────────────────────────────

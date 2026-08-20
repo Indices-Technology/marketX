@@ -119,13 +119,15 @@ export async function exchangeFacebookConnection(
   }
   const userToken = longLivedToken || shortLived.access_token
 
+  type PageEntry = {
+    id: string
+    name: string
+    access_token: string
+    category?: string
+  }
+
   const pagesRes = await $fetch<{
-    data?: Array<{
-      id: string
-      name: string
-      access_token: string
-      category?: string
-    }>
+    data?: PageEntry[]
     paging?: unknown
     error?: { message?: string }
   }>(`https://graph.facebook.com/${GRAPH_API_VERSION}/me/accounts`, {
@@ -136,6 +138,43 @@ export async function exchangeFacebookConnection(
   })
   if (pagesRes.error) {
     throw new Error(`Facebook pages error: ${pagesRes.error.message}`)
+  }
+
+  // A Page granted through a Login Configuration (config_id) asset picker
+  // doesn't show up on the classic /me/accounts list — that endpoint reflects
+  // personal Page-admin roles, a separate system from Configuration-shared
+  // assets. /me/assigned_pages is the endpoint for the latter; try it before
+  // giving up. (It can itself require full App Review to return data even
+  // for admins — if so it throws a specific, actionable error instead of the
+  // silent empty array /me/accounts gives.)
+  if (!pagesRes.data || pagesRes.data.length === 0) {
+    const assignedRes = await $fetch<{
+      data?: PageEntry[]
+      error?: { message?: string }
+    }>(`https://graph.facebook.com/${GRAPH_API_VERSION}/me/assigned_pages`, {
+      query: {
+        access_token: userToken,
+        fields: 'id,name,access_token,category',
+      },
+    }).catch((e) => ({
+      data: undefined,
+      error: {
+        message: redactToken(e instanceof Error ? e.message : String(e)),
+      },
+    }))
+    if (assignedRes.error) {
+      throw new Error(
+        `Facebook assigned_pages error: ${assignedRes.error.message}`,
+      )
+    }
+    if (assignedRes.data && assignedRes.data.length > 0) {
+      return assignedRes.data.map((p) => ({
+        pageId: p.id,
+        accessToken: p.access_token,
+        displayName: p.name,
+        category: p.category,
+      }))
+    }
   }
 
   // Diagnostic for the "empty but no error" case — cheap, only fires on the

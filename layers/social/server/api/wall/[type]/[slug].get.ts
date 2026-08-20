@@ -4,6 +4,7 @@
 // filter: all | posts | shoutouts   limit/offset pagination
 
 import { optionalAuth } from '~~/server/layers/shared/middleware/requireAuth'
+import { normalizeUsernameValue } from '~~/shared/utils/sellerIdentifier'
 
 const authorSelect = {
   id: true,
@@ -63,15 +64,18 @@ const postShape = {
 
 export default defineEventHandler(async (event) => {
   try {
-    const type  = getRouterParam(event, 'type')?.toUpperCase()  // USER | STORE
-    const slug  = getRouterParam(event, 'slug')
+    const type = getRouterParam(event, 'type')?.toUpperCase() // USER | STORE
+    const slug = getRouterParam(event, 'slug')
     const query = getQuery(event)
-    const filter = (query.filter as string) || 'all'       // all | posts | shoutouts
-    const limit  = Math.min(Number(query.limit)  || 20, 50)
-    const offset = Math.max(Number(query.offset) || 0,  0)
+    const filter = (query.filter as string) || 'all' // all | posts | shoutouts
+    const limit = Math.min(Number(query.limit) || 20, 50)
+    const offset = Math.max(Number(query.offset) || 0, 0)
 
     if (!slug || (type !== 'USER' && type !== 'STORE')) {
-      throw createError({ statusCode: 400, statusMessage: 'Invalid wall type or slug' })
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Invalid wall type or slug',
+      })
     }
 
     const viewer = await optionalAuth(event)
@@ -81,7 +85,9 @@ export default defineEventHandler(async (event) => {
 
     if (type === 'USER') {
       const profile = await prisma.profile.findUnique({
-        where: { username: slug },
+        // Usernames are stored lowercase; fold the URL segment so a
+        // mixed-case link still resolves.
+        where: { username: normalizeUsernameValue(slug) },
         select: { id: true },
       })
       ownerProfileId = profile?.id ?? null
@@ -163,7 +169,8 @@ export default defineEventHandler(async (event) => {
       author: {
         id: p.author.id,
         username: p.author.username,
-        avatar: p.author.avatar || p.author.sellerProfile?.[0]?.store_logo || null,
+        avatar:
+          p.author.avatar || p.author.sellerProfile?.[0]?.store_logo || null,
         role: p.author.role,
       },
     }))
@@ -176,7 +183,9 @@ export default defineEventHandler(async (event) => {
         select: { postId: true },
       })
       const likedSet = new Set(liked.map((l) => l.postId))
-      enriched.forEach((p) => { p.viewerLiked = likedSet.has(p.id) })
+      enriched.forEach((p) => {
+        p.viewerLiked = likedSet.has(p.id)
+      })
     }
 
     return {
@@ -185,7 +194,12 @@ export default defineEventHandler(async (event) => {
     }
   } catch (error: any) {
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
-    logger.logError('[GET /api/wall]', error, { requestId: event.context?.requestId })
-    throw createError({ statusCode: 500, statusMessage: 'Internal server error' })
+    logger.logError('[GET /api/wall]', error, {
+      requestId: event.context?.requestId,
+    })
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Internal server error',
+    })
   }
 })

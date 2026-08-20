@@ -6,8 +6,15 @@
     <!-- Product image — the hero of a product card. Portrait 4:5, matching every
          other product surface (ShopProductCard, discover grids): product photos
          here are shot portrait, and a 4:3 landscape box sliced the top and
-         bottom off them. Cloudinary crops to this exact ratio with g_auto, so
-         object-cover has nothing left to crop a second time. -->
+         bottom off them.
+
+         Cloudinary now FRAMES to this ratio rather than cropping to it. The
+         card is a marketing artifact the seller sends to a customer, so losing
+         part of the product is the worst outcome available — and the uploads
+         most likely to be shared are exactly the ones a 4:5 crop mangles: 2x2
+         collages, landscape spec sheets, flyers with text to the edges. The
+         delivered image already IS 4:5, so object-cover has nothing left to
+         crop a second time. -->
     <div
       class="relative aspect-[4/5] w-full touch-pan-y select-none overflow-hidden bg-gray-100 dark:bg-neutral-800"
       @touchstart.passive="onTouchStart"
@@ -228,7 +235,7 @@
 import { computed, ref, watch } from 'vue'
 import {
   imgAvatar,
-  imgBanner,
+  imgFramed,
   videoThumb,
 } from '~~/layers/core/app/utils/cloudinary'
 import { formatProductPrice } from '~~/shared/utils/currency'
@@ -269,8 +276,8 @@ const tiles = computed(() => {
     return {
       isVideo,
       url: isVideo
-        ? videoThumb(m.url, { width: COVER_W, height: COVER_H })
-        : imgBanner(m.url, COVER_W, COVER_H),
+        ? videoThumb(m.url, { width: COVER_W, height: COVER_H, crop: 'pad' })
+        : imgFramed(m.url, COVER_W, COVER_H),
     }
   })
 })

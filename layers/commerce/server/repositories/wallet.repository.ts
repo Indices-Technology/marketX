@@ -100,22 +100,15 @@ export const walletRepository = {
     }
   },
 
-  async createPayout(
-    walletId: string,
-    data: {
-      amount: number
-      bank_account: Record<string, unknown>
-      transaction_ref?: string
-    },
-  ) {
-    return prisma.payout.create({
-      data: {
-        walletId,
-        amount: data.amount,
-        status: 'PENDING',
-        bank_account: data.bank_account,
-        transaction_ref: data.transaction_ref,
-      },
-    })
-  },
 }
+
+// NOTE: `createPayout` was REMOVED. It had no callers, and it built a PENDING
+// payout straight from a caller-supplied `amount` with no fee calculation — so
+// it wrote no amountNet, and any future caller would have created a payout whose
+// payable figure did not exist. That is the exact hazard the typed money columns
+// were added to end, and the DB now rejects such a row outright
+// (Payout_pending_requires_net).
+//
+// Payouts are created in exactly one place: walletService.withdraw, which
+// computes the fee split itself. If a second creation path is ever genuinely
+// needed, it must go through that service rather than reconstruct the split.

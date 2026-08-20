@@ -3,11 +3,15 @@
     class="relative flex h-[100dvh] w-full items-center justify-center overflow-hidden bg-black"
   >
     <!-- ─── VIDEO PLAYER ─────────────────────────────────────────────── -->
-    <video
-      ref="videoEl"
+    <!-- A phone-shot vertical clip fills the frame; anything squarer or
+         landscape is shown whole over a blurred bed of its own poster
+         instead of being cropped down to a strip of its middle. -->
+    <BaseMedia
+      ref="mediaRef"
+      type="VIDEO"
       :src="videoUrl"
+      backdrop-class="bg-black"
       :preload="videoPreload"
-      class="h-full w-full object-cover"
       loop
       playsinline
       :muted="isMuted"
@@ -333,6 +337,7 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useState } from '#imports'
 import type { IFeedItem } from '~~/layers/feed/app/types/feed.types'
 import TrustCardOverlay from '~~/layers/feed/app/components/TrustCardOverlay.vue'
+import BaseMedia from '~~/layers/ui/app/components/BaseMedia.vue'
 import {
   useSellerTier,
   TIER_LABELS,
@@ -343,6 +348,7 @@ import { useViewTracker } from '~~/layers/core/app/composables/useViewTracker'
 import {
   imgThumb,
   avatarSrc,
+  videoFeedUrl,
   videoWatermarkUrl,
 } from '~~/layers/core/app/utils/cloudinary'
 import { useCurrency } from '~~/layers/core/app/composables/useCurrency'
@@ -371,7 +377,12 @@ const emit = defineEmits<{
 }>()
 
 // DOM & Media State
-const videoEl = ref<HTMLVideoElement | null>(null)
+// The template ref lands on BaseMedia; everything below drives the real
+// <video> node it exposes, so keep `videoEl` as the element itself.
+const mediaRef = ref<{ mediaEl?: HTMLVideoElement | null } | null>(null)
+const videoEl = computed<HTMLVideoElement | null>(
+  () => (mediaRef.value?.mediaEl as HTMLVideoElement | null) ?? null,
+)
 const musicEl = ref<HTMLAudioElement | null>(null)
 const isPlaying = ref(false)
 const progress = ref(0)
@@ -419,9 +430,11 @@ const videoUrl = computed(() => {
       ? props.reel.media.url
       : ''
   if (!raw) return ''
+  // Never hand the browser the original upload: a seller's 4K phone capture
+  // is tens of megabytes, and the reel only ever renders at 720p.
   return watermarkLabel.value
     ? videoWatermarkUrl(raw, watermarkLabel.value)
-    : raw
+    : videoFeedUrl(raw)
 })
 const taggedProduct = computed(
   () => props.reel.taggedProducts?.[0] ?? props.reel.product ?? null,

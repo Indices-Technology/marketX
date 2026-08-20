@@ -12,13 +12,20 @@
         tintClass || 'bg-gray-50 dark:bg-neutral-800',
       ]"
     >
-      <img
-        v-if="coverImage"
-        :src="coverImage"
+      <!-- A looser tolerance than the feed's: the bento grid's fixed row
+           height means a letterboxed tile is a visibly emptier tile, so a
+           normal product shot should still fill it. Only the genuinely
+           off-shape uploads - the wide flyer, the 2x2 collage - stop being
+           cropped and show whole instead. `containImage` opts a listing out
+           of cropping entirely. -->
+      <BaseMedia
+        v-if="cover"
+        :src="cover.url"
         :alt="product.title"
-        loading="lazy"
-        class="h-full w-full transition-transform duration-500 group-hover:scale-105"
-        :class="containImage ? 'object-contain' : 'object-cover'"
+        :fit="containImage ? 'contain' : 'smart'"
+        :tolerance="0.3"
+        :backdrop-class="tintClass || 'bg-gray-50 dark:bg-neutral-800'"
+        class="transition-transform duration-500 group-hover:scale-105"
       />
       <div v-else class="absolute inset-0 flex items-center justify-center">
         <Icon
@@ -26,6 +33,20 @@
           size="32"
           class="text-gray-300 dark:text-neutral-700"
         />
+      </div>
+
+      <!-- Multi-photo marker. A grid tile shows one frame, so without this
+           there is nothing to tell a shopper the listing has five more — the
+           tile looks identical to a single-photo one. Top-right, tucked under
+           the like button's row so the two never collide. -->
+      <div
+        v-if="mediaCount > 1"
+        class="pointer-events-none absolute right-2 top-11 z-10 flex items-center gap-0.5 rounded-md bg-black/55 px-1.5 py-0.5 backdrop-blur-sm"
+      >
+        <Icon name="solar:gallery-linear" size="10" class="text-white/90" />
+        <span class="text-[9px] font-semibold leading-none text-white">
+          {{ mediaCount }}
+        </span>
       </div>
 
       <!-- Badges (top-left) -->
@@ -222,11 +243,8 @@ import { ref, computed } from 'vue'
 import type { IProduct } from '~~/layers/commerce/app/types/commerce.types'
 import { useProfileStore } from '~~/layers/profile/app/stores/profile.store'
 import { notify } from '@kyvg/vue3-notification'
-import {
-  imgFeed,
-  imgThumb,
-  videoThumb,
-} from '~~/layers/core/app/utils/cloudinary'
+import { videoThumb } from '~~/layers/core/app/utils/cloudinary'
+import BaseMedia from '~~/layers/ui/app/components/BaseMedia.vue'
 import { timeAgo } from '~~/layers/core/app/utils/formatters'
 
 const props = defineProps<{
@@ -261,23 +279,33 @@ const profileStore = useProfileStore()
 const { formatPrice } = useCurrency()
 
 // ── Media ─────────────────────────────────────────────────────────────────────
-const coverImage = computed(() => {
+// The RAW url — BaseMedia owns the transform. Pre-transforming here and
+// letting it transform again is the double crop it exists to fix. A video
+// cover resolves to an uncropped poster frame (`c_limit`), never a playing
+// element: the grid is a browse surface, and N autoplaying videos in it is a
+// data bill on a mobile connection.
+const visualMedia = computed(() => {
   const raw = props.product.media
-  const media = (Array.isArray(raw) ? raw : []).filter(
+  return (Array.isArray(raw) ? raw : []).filter(
     (m) => m.type === 'IMAGE' || m.type === 'VIDEO',
   )
+})
+
+/** Drives the multi-photo marker. Reflects what the payload carries, which the
+    list endpoint caps — a listing with twenty photos reads as the cap, not
+    twenty. Right for a browse tile: it's an "there's more here" cue, not an
+    inventory count. */
+const mediaCount = computed(() => visualMedia.value.length)
+
+const cover = computed(() => {
+  const media = visualMedia.value
   const first = media[0]
-  if (!first) return null
-  // containImage means "show the whole frame" — so the SOURCE has to keep its
-  // aspect ratio too. imgThumb/videoThumb are 400x400 c_fill centre-crops, so
-  // asking for object-contain on top of one just letterboxes an
-  // already-cropped square: the lost pixels never reach the browser.
-  if (props.containImage) {
-    return first.type === 'VIDEO'
-      ? videoThumb(first.url, { width: 720, crop: 'limit' })
-      : imgFeed(first.url)
+  if (!first?.url) return null
+  return {
+    // No size on videoThumb: it yields the bare poster frame, leaving the
+    // sizing/crop to BaseMedia like every still does.
+    url: first.type === 'VIDEO' ? videoThumb(first.url, {}) : first.url,
   }
-  return first.type === 'VIDEO' ? videoThumb(first.url) : imgThumb(first.url)
 })
 
 // ── Pricing ───────────────────────────────────────────────────────────────────

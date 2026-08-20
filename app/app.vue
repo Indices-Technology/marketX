@@ -15,6 +15,7 @@
     <ClientOnly>
       <UploadProgressBar />
       <PwaInstallPrompt />
+      <CookieConsent />
     </ClientOnly>
   </div>
 </template>
@@ -22,6 +23,7 @@
 <script setup lang="ts">
 import UploadProgressBar from '~~/layers/core/app/components/UploadProgressBar.vue'
 import PwaInstallPrompt from '~~/layers/core/app/components/PwaInstallPrompt.vue'
+import CookieConsent from '~~/layers/core/app/components/CookieConsent.vue'
 import { useSeo } from '~~/layers/core/app/composables/useSeo'
 import { useSettings } from '~~/layers/profile/app/composables/useSettings'
 import { watch } from 'vue'

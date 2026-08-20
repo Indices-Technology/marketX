@@ -74,7 +74,7 @@ model Profile {
   // ── Demo / closed-testing ────────────────────────────────────────────────
   /// Seeded demo account (closed-testing release). Their stores/posts are shown
   /// to testers labelled as demo; the cleanup script preserves these rows.
-  isDemo            Boolean          @default(false)
+  isDemo Boolean @default(false)
 
   // ── Moderation ────────────────────────────────────────────────────────────
   isActive          Boolean          @default(true)
@@ -704,13 +704,60 @@ model BankAccount {
 
 model SellerWallet {
   sellerId        String        @unique @db.Uuid
+  /// Released funds. NOT the same as withdrawable — subtract held_balance.
   balance         Float         @default(0)
   pending_balance Float         @default(0)
+  /// Portion of `balance` frozen by open disputes. Withdrawable is
+  /// (balance - held_balance); a DB CHECK keeps this at or below balance.
+  /// Denormalised for the atomic withdrawal guard; the truth is the sum of
+  /// ACTIVE WalletHold rows, and the two are reconcilable.
+  held_balance    Float         @default(0)
   updated_at      DateTime      @updatedAt
   id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   payouts         Payout[]
   seller          SellerProfile @relation(fields: [sellerId], references: [id], onDelete: Cascade)
   transactions    Transaction[]
+  holds           WalletHold[]
+}
+
+/// A freeze on part of a seller's released balance while a dispute is heard.
+///
+/// Exists because reverseOrderCredit can only unwind CREDIT_PENDING rows — once
+/// an order is DELIVERED the money has moved to `balance` and there is nothing
+/// left to reverse. Without a hold, a buyer disputing a delivered order cannot
+/// be made whole if the seller withdraws first.
+model WalletHold {
+  id              String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  walletId        String           @db.Uuid
+  orderId         Int
+  /// The dispute that caused the freeze.
+  ticketId        String           @db.Uuid
+  /// Amount actually frozen — capped at what was still in the wallet.
+  amount          Float
+  /// What the dispute was worth. Greater than `amount` when the seller had
+  /// already withdrawn part of it; the difference is an unsecured claim.
+  amountRequested Float
+  status          WalletHoldStatus @default(ACTIVE)
+  reason          String
+
+  created_at  DateTime  @default(now()) @db.Timestamptz(6)
+  resolved_at DateTime? @db.Timestamptz(6)
+
+  wallet SellerWallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  /// One dispute freezes one wallet exactly once, however often the hook fires.
+  @@unique([ticketId, walletId])
+  @@index([walletId, status])
+  @@index([orderId])
+}
+
+enum WalletHoldStatus {
+  /// Dispute open, funds frozen.
+  ACTIVE
+  /// Resolved in the seller's favour — funds usable again.
+  RELEASED
+  /// Resolved against the seller — funds taken back to refund the buyer.
+  CAPTURED
 }
 
 model Transaction {
@@ -726,14 +773,36 @@ model Transaction {
 
 model Payout {
   walletId        String       @db.Uuid
+  /// GROSS — what was debited from the seller wallet. NEVER send this to a bank.
   amount          Float
-  status          String
+  /// Gross debited from the wallet. Mirrors the legacy `amount` under a name
+  /// that says what it is. DB-enforced NOT NULL.
+  amountGross     Float
+  /// NET owed to the seller — gross minus platformFee and transferFee. THIS is
+  /// the figure a payout executor transfers to a bank; `amount`/`amountGross`
+  /// is what left the wallet and is always larger. Nullable only for historical
+  /// PAID/REJECTED rows predating this column, whose net was never recorded; a
+  /// CHECK constraint makes it mandatory for PENDING/APPROVED/PROCESSING, so
+  /// an executor can never be handed a row it would have to guess about.
+  amountNet       Float?
+  /// Percentage platform commission withheld from gross (server/utils/fees.ts).
+  platformFee     Float?
+  /// Flat per-transfer fee withheld from gross.
+  transferFee     Float?
+  /// Lifecycle of the withdrawal. PROCESSING means the request has been handed
+  /// to a payout provider and the outcome is not yet known — the state a network
+  /// timeout leaves you in, and the one a retry must never treat as "not sent".
+  status          PayoutStatus
   bank_account    Json
   transaction_ref String?
   requested_at    DateTime     @default(now())
   completed_at    DateTime?
   id              String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   wallet          SellerWallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  /// The admin queue always filters by status, and the settlement executor will
+  /// poll for APPROVED/PROCESSING rows. Both are status-first lookups.
+  @@index([status, requested_at(sort: Desc)])
 }
 
 /// Wallet for buyers — holds affiliate commissions earned by non-seller users,
@@ -1608,6 +1677,25 @@ enum PaymentStatus {
   SHIPPING_PAID // POD: shipping fee paid upfront, product amount due on delivery
 }
 
+/// Lifecycle of a seller withdrawal.
+///
+/// PENDING → (APPROVED) → PROCESSING → PAID is the success path; FAILED and
+/// REVERSED are provider-side terminal failures and REJECTED is a human
+/// declining. All three failure states return the gross to the seller wallet.
+///
+/// PROCESSING exists so "handed to the provider, outcome unknown" is a state the
+/// system can be in. Without it a timed-out transfer is indistinguishable from
+/// one never sent, and a retry pays twice.
+enum PayoutStatus {
+  PENDING
+  APPROVED
+  PROCESSING
+  PAID
+  FAILED
+  REVERSED
+  REJECTED
+}
+
 enum VerificationStatus {
   PENDING
   VERIFIED
@@ -1774,17 +1862,17 @@ enum AttributionEventType {
 
 /// The reusable, channel-agnostic template. Created once, approved, reused for months.
 model GrowthAsset {
-  id         String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  sellerId   String              @db.Uuid // scalar ref — no relation (extractable)
+  id         String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sellerId   String            @db.Uuid // scalar ref — no relation (extractable)
   productId  Int? // scalar ref — no relation (extractable)
-  intent     GrowthIntent        @default(SELL)
-  status     GrowthAssetStatus   @default(DRAFT)
+  intent     GrowthIntent      @default(SELL)
+  status     GrowthAssetStatus @default(DRAFT)
   /// { cardImageUrl, cardPublicId, captions: { default, "organic-share", "meta-fb", ... } }
   content    Json
   /// { productRef, sellerPublicId, canonicalUrl, qrPublicId }
   commerce   Json
-  created_at DateTime            @default(now()) @db.Timestamptz(6)
-  updated_at DateTime            @updatedAt @db.Timestamptz(6)
+  created_at DateTime          @default(now()) @db.Timestamptz(6)
+  updated_at DateTime          @updatedAt @db.Timestamptz(6)
 
   distributions AssetDistribution[]
 
@@ -1797,19 +1885,19 @@ model GrowthAsset {
 /// product (the seller's CARD, an affiliate's AFFILIATE link, a random viewer's
 /// ORGANIC_SHARE link) without colliding.
 model AssetDistribution {
-  id           String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  assetId      String        @db.Uuid
-  channel      GrowthChannel
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  assetId         String        @db.Uuid
+  channel         GrowthChannel
   /// Who this specific link belongs to (scalar ref — no relation, extractable).
   /// Null for the seller's own CARD distribution, which is asset-level, not per-viewer.
-  sharerProfileId String?    @db.Uuid
+  sharerProfileId String?       @db.Uuid
   /// Per-distribution trackable short code (e.g. "g7Kp2Q"). Unique — every scan/click resolves here.
-  shortCode    String        @unique
+  shortCode       String        @unique
   /// Set once the channel confirms delivery (remote post id for API channels; null for organic).
-  remotePostId String?
-  scheduledAt  DateTime?     @db.Timestamptz(6)
-  sharedAt     DateTime?     @db.Timestamptz(6)
-  created_at   DateTime      @default(now()) @db.Timestamptz(6)
+  remotePostId    String?
+  scheduledAt     DateTime?     @db.Timestamptz(6)
+  sharedAt        DateTime?     @db.Timestamptz(6)
+  created_at      DateTime      @default(now()) @db.Timestamptz(6)
 
   asset  GrowthAsset        @relation(fields: [assetId], references: [id], onDelete: Cascade)
   events AttributionEvent[]

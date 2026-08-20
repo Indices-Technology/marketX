@@ -12,6 +12,8 @@ vi.mock('~~/layers/profile/app/stores/profile.store', () => ({
 vi.mock('~~/layers/core/app/utils/cloudinary', () => ({
   imgThumb: (url: string) => url,
   videoThumb: (url: string) => url,
+  videoFeedUrl: (url: string) => url,
+  cloudinaryUrl: (url: string) => url,
 }))
 
 // ── Shared fixture ────────────────────────────────────────────────────────────
@@ -110,6 +112,9 @@ describe('ProductCardMini', () => {
     })
     const wrapper = mount(ProductCardMini, { props: { product }, global })
     expect(wrapper.find('img').exists()).toBe(true)
+    // The card hands BaseMedia the raw url and BaseMedia owns the transform,
+    // so what reaches the <img> is whatever cloudinaryUrl returns — identity,
+    // under the mock above.
     expect(wrapper.find('img').attributes('src')).toBe('https://cdn.example.com/img.jpg')
   })
 })

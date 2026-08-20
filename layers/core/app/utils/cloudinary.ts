@@ -22,6 +22,8 @@ export function cloudinaryUrl(
     quality?: 'auto' | 'auto:good' | 'auto:eco' | 'auto:low' | number
     format?: 'auto' | 'webp' | 'avif'
     gravity?: 'auto' | 'face' | 'faces' | 'center'
+    /** Fill colour for the padding `c_pad` leaves. `auto` = sampled from the image. */
+    background?: 'auto' | 'auto:predominant' | 'white' | 'black'
   } = {},
 ): string {
   if (!url) return ''
@@ -38,6 +40,7 @@ export function cloudinaryUrl(
     quality = 'auto:good',
     format = 'auto',
     gravity,
+    background,
   } = opts
 
   const parts: string[] = []
@@ -45,6 +48,7 @@ export function cloudinaryUrl(
   if (height) parts.push(`h_${height}`)
   if (width || height) parts.push(`c_${crop}`)
   if (gravity) parts.push(`g_${gravity}`)
+  if (background) parts.push(`b_${background}`)
   parts.push(`f_${format}`)
   parts.push(`q_${quality}`)
 
@@ -111,14 +115,6 @@ export const imgAvatar = (url: string | null | undefined) =>
   cloudinaryUrl(url, { width: 96, height: 96, crop: 'fill', gravity: 'auto' })
 
 /**
- * Preset: a logo/avatar that gets rasterised into a downloadable or printed
- * image. 96 px is fine on screen but goes soft at the 3–4× pixel ratio the card
- * capture uses, so ask for the real pixels once.
- */
-export const imgAvatarHiDpi = (url: string | null | undefined) =>
-  cloudinaryUrl(url, { width: 288, height: 288, crop: 'fill', gravity: 'auto' })
-
-/**
  * Preset: a banner cropped to the exact box it is rendered in. Pass the box's
  * aspect ratio — asking for one ratio and then letting `object-cover` crop to a
  * different one crops the image twice, which is what makes a banner look zoomed
@@ -129,6 +125,46 @@ export const imgBanner = (
   width: number,
   height: number,
 ) => cloudinaryUrl(url, { width, height, crop: 'fill', gravity: 'auto' })
+
+/**
+ * Preset: a brand mark shown whole inside a fixed square.
+ *
+ * `imgAvatar`'s `c_fill` is right for a photo of a person — crop to the face,
+ * fill the circle. It is wrong for a logo: sellers upload wide wordmarks, and
+ * a square centre-crop cuts the name in half, which is exactly the asset a
+ * shareable card exists to show. `c_pad` scales the whole mark to fit and
+ * fills the leftover with a colour sampled from the logo itself, so it reads
+ * as a deliberate plate rather than a crop.
+ *
+ * (`b_blurred` would be nicer than a flat colour, but it is not enabled on
+ * this Cloudinary plan — the delivery URL 400s with "Invalid color name
+ * blurred". Don't reintroduce it without checking.)
+ */
+/* `size` matters: a card captured at 3-4x pixel ratio for download or print
+   turns a 96 px mark to mush, so those callers ask for the real pixels. */
+export const imgLogo = (url: string | null | undefined, size = 96) =>
+  cloudinaryUrl(url, {
+    width: size,
+    height: size,
+    crop: 'pad',
+    background: 'auto',
+  })
+
+/**
+ * Preset: fit a photo to an EXACT frame without cropping it.
+ *
+ * For the share/export cards, where the frame's ratio is fixed by the design
+ * and the photo's is whatever the seller uploaded. `c_fill` would crop to the
+ * frame — fine for a plain product shot, destructive for the collages and
+ * spec-sheet flyers sellers actually post, which is the whole reason someone
+ * is making a card out of it. `c_pad` keeps the frame filled (no transparent
+ * gaps in a captured PNG) with the image shown whole inside it.
+ */
+export const imgFramed = (
+  url: string | null | undefined,
+  width: number,
+  height: number,
+) => cloudinaryUrl(url, { width, height, crop: 'pad', background: 'auto' })
 
 /**
  * Canonical avatar source: an optimised real avatar, or a LOCAL initials avatar
@@ -258,7 +294,11 @@ export function videoWatermarkUrl(
  */
 export function videoThumb(
   url: string | null | undefined,
-  opts: { width?: number; height?: number; crop?: 'fill' | 'limit' } = {
+  opts: {
+    width?: number
+    height?: number
+    crop?: 'fill' | 'limit' | 'pad'
+  } = {
     width: 400,
     height: 400,
   },
@@ -288,6 +328,10 @@ export function videoThumb(
   // Only meaningful when cropping to fill — `limit` scales, it never discards
   // pixels, so gravity has nothing to choose between.
   if (crop === 'fill' && (opts.width || opts.height)) parts.push('g_auto')
+  // `pad` fills an exact box without cropping; the padding takes a colour
+  // sampled from the frame. Matches imgFramed, so a video slide and a photo
+  // slide in the same card are framed identically.
+  if (crop === 'pad' && (opts.width || opts.height)) parts.push('b_auto')
   parts.push('f_jpg', 'q_auto:good')
 
   // Replace video extension with .jpg

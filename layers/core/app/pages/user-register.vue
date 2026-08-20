@@ -252,6 +252,8 @@
               v-model="form.username"
               :placeholder="$t('auth.register.usernamePlaceholder')"
               autocomplete="username"
+              autocapitalize="none"
+              spellcheck="false"
               :disabled="isBusy"
               icon-left="solar:user-linear"
               :icon-right="usernameIcon"
@@ -1075,6 +1077,11 @@ const triggerUsernameCheck = () => {
 }
 
 const onUsernameInput = () => {
+  // Usernames are stored lowercase, so fold as they type rather than silently
+  // changing what they chose after they submit.
+  const folded = form.username.toLowerCase()
+  if (folded !== form.username) form.username = folded
+
   errors.username = ''
   usernameStatus.value = 'idle'
   usernameSuggestions.value = []
@@ -1100,7 +1107,7 @@ const usernameIconClass = computed(() => {
 
 const pickUsernameSuggestion = (name: string) => {
   // Suggestions came back from the server as free, so no re-check needed.
-  form.username = name
+  form.username = name.toLowerCase()
   usernameSuggestions.value = []
   usernameStatus.value = 'available'
   errors.username = ''

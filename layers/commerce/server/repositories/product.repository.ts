@@ -1,8 +1,21 @@
 /**
  * Slim include for feed/list views — only what a card needs.
- * No offers, no tags, no category, only the first image.
+ * No offers, no tags, no category.
  * Detail pages use productInclude (full data).
  */
+/**
+ * How many photos a card may carry. This was 1, which quietly disabled every
+ * multi-image affordance built on top of it: the feed slide's swipe carousel
+ * and its dots, ShopProductCard's 2-up and 3-up collages, the "+N" badge — all
+ * of them branch on `media.length > 1`, and on a list payload it never was.
+ * The code wasn't broken, it was starved.
+ *
+ * Capped rather than unbounded: a card only ever shows a handful, and the
+ * discover grid asks for 50 products at a time. Six rows of {id,url,type} per
+ * product is ~35 KB more on that request — real on a mobile connection, but
+ * small beside the images themselves, and it's what makes the carousel exist.
+ */
+const CARD_MEDIA_LIMIT = 6
 const productFeedInclude = {
   seller: {
     select: {
@@ -18,7 +31,7 @@ const productFeedInclude = {
   media: {
     where: { isBgMusic: false },
     select: { id: true, url: true, type: true, isBgMusic: true },
-    take: 1,
+    take: CARD_MEDIA_LIMIT,
     orderBy: { created_at: 'asc' as const },
   },
   variants: {

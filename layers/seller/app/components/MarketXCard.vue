@@ -41,7 +41,7 @@
                96 px logo turns to mush. -->
           <img
             v-if="seller.store_logo"
-            :src="imgAvatarHiDpi(seller.store_logo)"
+            :src="imgLogo(seller.store_logo, 288)"
             :alt="seller.store_name"
             crossorigin="anonymous"
             class="h-full w-full object-cover"
@@ -256,7 +256,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { imgAvatarHiDpi, imgBanner } from '~~/layers/core/app/utils/cloudinary'
+import { imgBanner, imgLogo } from '~~/layers/core/app/utils/cloudinary'
 import { resolveCardSettings } from '~~/shared/utils/cardSettings'
 
 // Exposed so parents can snapshot the card to an image (business-card download).
