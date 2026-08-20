@@ -13,6 +13,11 @@ export type LoginInput = z.infer<typeof loginSchema>
 // Single source of truth for username rules. Shared by registration and by the
 // live availability check so the typeahead can never say "looks fine" about a
 // username that registration would later reject.
+//
+// Mixed case is accepted and folded: usernames are STORED lowercase, so the
+// stored value is already the normalized one. That is what lets every lookup be
+// plain indexed equality instead of ILIKE — see the migration
+// 20260820120000_lowercase_usernames.
 export const usernameSchema = z
   .string()
   .min(3, 'Username must be at least 3 characters')
@@ -21,6 +26,7 @@ export const usernameSchema = z
     /^[a-zA-Z0-9_-]+$/,
     'Username can only contain letters, numbers, underscores, and hyphens',
   )
+  .transform((v) => v.toLowerCase())
 
 export const checkUsernameSchema = z.object({ username: usernameSchema })
 export type CheckUsernameInput = z.infer<typeof checkUsernameSchema>

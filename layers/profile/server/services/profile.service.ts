@@ -6,6 +6,7 @@ import { notificationQueue } from '~~/server/queues/notification.queue'
 import { profileRepository } from '../repositories/profile.repository'
 
 import { UserError } from '../types/user.types'
+import { normalizeUsernameValue } from '~~/shared/utils/sellerIdentifier'
 
 export const profileService = {
   // ==================== GET PROFILE ====================
@@ -75,6 +76,9 @@ export const profileService = {
     userAgent: string,
   ) {
     if (data.username) {
+      // Stored lowercase, so the claim check and the write must both use the
+      // folded form or a rename could slip a mixed-case duplicate past.
+      data = { ...data, username: normalizeUsernameValue(data.username) }
       const exists = await profileRepository.checkUsernameExists(
         data.username,
         userId,

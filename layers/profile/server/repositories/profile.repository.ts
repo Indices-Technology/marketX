@@ -5,6 +5,8 @@
  * Centralizes all user-related database operations.
  */
 
+import { normalizeUsernameValue } from '~~/shared/utils/sellerIdentifier'
+
 export const profileRepository = {
   // ============================================
   // READ OPERATIONS
@@ -34,7 +36,9 @@ export const profileRepository = {
 
   async findByUsername(username: string) {
     return prisma.profile.findFirst({
-      where: { username: { equals: username, mode: 'insensitive' } },
+      // Stored usernames are lowercase, so folding the input turns this from an
+      // ILIKE scan into a unique-index lookup. Mixed-case URLs still resolve.
+      where: { username: normalizeUsernameValue(username) },
       include: {
         sellerProfile: true,
       },
@@ -248,7 +252,7 @@ export const profileRepository = {
     username: string,
     excludeUserId?: string,
   ): Promise<boolean> {
-    const where: any = { username: { equals: username, mode: 'insensitive' } }
+    const where: any = { username: normalizeUsernameValue(username) }
     if (excludeUserId) {
       where.id = { not: excludeUserId }
     }

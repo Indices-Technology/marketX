@@ -80,6 +80,16 @@ test.describe('Register page', () => {
     await expect(page.locator('input[type="email"]')).toHaveValue('')
   })
 
+  // Usernames are stored lowercase, so the field folds as you type rather than
+  // quietly changing what you picked after you submit.
+  test('the username field folds mixed case as you type', async ({ page }) => {
+    await openBuyerAccountForm(page)
+
+    const username = page.locator('input[autocomplete="username"]')
+    await username.fill('MixedCase_Name')
+    await expect(username).toHaveValue('mixedcase_name')
+  })
+
   test('a taken username is flagged inline, with a suggestion that fills the field', async ({
     page,
   }) => {

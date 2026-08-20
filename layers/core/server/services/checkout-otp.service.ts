@@ -28,7 +28,7 @@ export async function createUniqueUsername(seed: string): Promise<string> {
   let candidate = base
   for (let i = 0; i < 10; i++) {
     const exists = await prisma.profile.findFirst({
-      where: { username: { equals: candidate, mode: 'insensitive' } },
+      where: { username: candidate },
       select: { id: true },
     })
     if (!exists) return candidate

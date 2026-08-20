@@ -63,27 +63,23 @@ const emit = defineEmits<{
 // because the cards fill their cell (no intrinsic height), so a missing
 // grid-auto-rows would collapse them to nothing.
 
-// Deterministic, non-obvious rhythm: ~1 hero (2×3) + 2 tall (1×3) per 11 cards,
-// the rest normal (1×2). Pattern length 11 (coprime with the column counts) so
-// heroes don't line up into a visible column.
-type Span = 'hero' | 'tall' | 'normal'
-const layoutAt = (i: number): Span => {
-  const m = i % 11
-  if (m === 0) return 'hero'
-  if (m === 4 || m === 8) return 'tall'
-  return 'normal'
-}
+// Deterministic, non-obvious rhythm: ~1 hero (2×3) per 11 cards, the rest 1×3.
+// Pattern length 11 (coprime with the column counts) so heroes don't line up
+// into a visible column.
+//
+// Every non-hero cell is 3 rows, not 2. At 2 rows the media box came out
+// landscape (256×185 on desktop, 180×151 on mobile) while sellers' photos are
+// overwhelmingly portrait — a 240×320 shot lost 46% of itself to the crop, so
+// BaseMedia showed it whole instead and most of the grid ended up letterboxed.
+// At 3 rows the box is portrait (256×333 / 180×281) and the same photo loses
+// 3%, so it fills. Fewer products per screen, but they're products you can see.
+type Span = 'hero' | 'normal'
+const layoutAt = (i: number): Span => (i % 11 === 0 ? 'hero' : 'normal')
 // Inline grid spans — robust against Tailwind purging span/arbitrary classes.
-const spanStyle = (i: number): Record<string, string> => {
-  switch (layoutAt(i)) {
-    case 'hero':
-      return { gridColumn: 'span 2', gridRow: 'span 3' }
-    case 'tall':
-      return { gridRow: 'span 3' }
-    default:
-      return { gridRow: 'span 2' }
-  }
-}
+const spanStyle = (i: number): Record<string, string> =>
+  layoutAt(i) === 'hero'
+    ? { gridColumn: 'span 2', gridRow: 'span 3' }
+    : { gridRow: 'span 3' }
 
 // Soft per-card tints (Selar-style warmth). Low-saturation, dark-aware; shows
 // behind transparent/loading media and on the hero/empty states. No purple.

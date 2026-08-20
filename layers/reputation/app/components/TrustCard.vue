@@ -202,7 +202,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { imgAvatar } from '~~/layers/core/app/utils/cloudinary'
+import { imgLogo } from '~~/layers/core/app/utils/cloudinary'
 import type { TrustSpotlightSeller } from '~~/layers/reputation/app/types/trust.types'
 
 const props = withDefaults(
@@ -234,7 +234,7 @@ const name = computed(() => {
 
 const logoUrl = computed(() => {
   if (!props.seller?.store_logo) return ''
-  return imgAvatar(props.seller.store_logo)
+  return imgLogo(props.seller.store_logo, 144)
 })
 
 const initials = computed(() => {

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
+  normalizeUsernameValue,
   sellerIdentifierKind,
   slugFromSellerLink,
   sellerPublicIdFrom,
@@ -74,5 +75,23 @@ describe('identifier normalizers', () => {
   it('strips the sigil from a handle', () => {
     expect(handleFrom('@Lagos_Fabrics')).toBe('lagos_fabrics')
     expect(handleFrom('lagos fabrics')).toBeNull()
+  })
+})
+
+describe('normalizeUsernameValue', () => {
+  // Usernames are stored lowercase (migration 20260820120000_lowercase_usernames),
+  // so this is the single fold every write and every lookup goes through.
+  it('folds case and trims', () => {
+    expect(normalizeUsernameValue('JoshBJ')).toBe('joshbj')
+    expect(normalizeUsernameValue('  Ada_Styles  ')).toBe('ada_styles')
+  })
+
+  it('is idempotent — folding a folded name changes nothing', () => {
+    const once = normalizeUsernameValue('OkoroSamuel')
+    expect(normalizeUsernameValue(once)).toBe(once)
+  })
+
+  it('leaves the characters a username may contain alone', () => {
+    expect(normalizeUsernameValue('a_b-c9')).toBe('a_b-c9')
   })
 })

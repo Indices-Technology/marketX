@@ -72,8 +72,11 @@
                removes the actual information. The blurred LQIP backdrop
                above fills the letterbox, so the whole frame shows without
                black bars — same treatment PostMediaGallery already uses. -->
+          <!-- imgFeed, not the raw upload: w_720 with no crop keeps the whole
+               frame (which object-contain above depends on) while capping a
+               multi-megabyte phone photo at something a feed can afford. -->
           <img
-            :src="imageItems[0]!.url"
+            :src="imgFeed(imageItems[0]!.url)"
             :alt="product.title"
             loading="lazy"
             class="relative h-full w-full object-contain transition-transform duration-500 group-hover:scale-105"
@@ -92,7 +95,7 @@
             class="overflow-hidden"
           >
             <img
-              :src="item.url"
+              :src="imgThumb(item.url)"
               :alt="product.title"
               loading="lazy"
               class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -104,7 +107,7 @@
         <div v-else class="absolute inset-0 grid grid-cols-2 gap-0.5">
           <div class="overflow-hidden">
             <img
-              :src="imageItems[0]!.url"
+              :src="imgThumb(imageItems[0]!.url)"
               :alt="product.title"
               loading="lazy"
               class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -113,7 +116,7 @@
           <div class="grid grid-rows-2 gap-0.5">
             <div class="overflow-hidden">
               <img
-                :src="imageItems[1]!.url"
+                :src="imgThumb(imageItems[1]!.url)"
                 :alt="product.title"
                 loading="lazy"
                 class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -121,7 +124,7 @@
             </div>
             <div class="relative overflow-hidden">
               <img
-                :src="imageItems[2]!.url"
+                :src="imgThumb(imageItems[2]!.url)"
                 :alt="product.title"
                 loading="lazy"
                 class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"

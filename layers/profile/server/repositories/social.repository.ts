@@ -2,12 +2,15 @@
 
 import { IProfile } from '~~/layers/profile/app/types/profile.types'
 import { ISellerProfile } from '~~/layers/seller/app/types/seller.types'
+import { normalizeUsernameValue } from '~~/shared/utils/sellerIdentifier'
 export const socialRepository = {
   // ==================== PROFILE LOOKUPS ====================
 
   async getUserByUsername(username: string) {
     return await prisma.profile.findFirst({
-      where: { username: { equals: username, mode: 'insensitive' } },
+      // Stored usernames are lowercase, so folding the input turns this from an
+      // ILIKE scan into a unique-index lookup. Mixed-case URLs still resolve.
+      where: { username: normalizeUsernameValue(username) },
       select: {
         id: true,
         username: true,

@@ -217,11 +217,12 @@ export async function runMonitoringChecks() {
  * Setup scheduled monitoring
  * Add to your app initialization
  */
-export function startMonitoring(intervalMinutes: number = 5) {
-  // Run immediately
-  runMonitoringChecks()
-
-  // Run periodically
+export function startMonitoring(intervalMinutes: number = 60) {
+  // Deliberately no check on boot. These are 24-hour rolling metrics, so an
+  // immediate run tells you nothing a run one interval later won't — and on a
+  // platform that starts and stops instances, "on every cold start" is a
+  // surprising amount of database traffic for something with nothing new to
+  // report. Short-lived instances now cost zero monitoring queries.
   setInterval(runMonitoringChecks, intervalMinutes * 60 * 1000)
 
   console.log(

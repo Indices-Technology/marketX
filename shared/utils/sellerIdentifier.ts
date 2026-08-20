@@ -55,3 +55,13 @@ export function sellerIdentifierKind(raw: string): SellerIdentifierKind | null {
   if (q.startsWith('@') && handleFrom(q)) return 'handle'
   return null
 }
+
+/**
+ * Canonical form of a username. Usernames are stored lowercase (migration
+ * 20260820120000_lowercase_usernames), so every write folds through here and
+ * every lookup folds its input the same way — which keeps the queries on plain
+ * equality, and therefore on the unique index.
+ */
+export function normalizeUsernameValue(raw: string): string {
+  return raw.trim().toLowerCase()
+}

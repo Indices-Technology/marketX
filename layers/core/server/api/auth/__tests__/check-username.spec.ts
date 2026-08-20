@@ -50,12 +50,15 @@ test.describe('GET /api/auth/check-username', () => {
     expect(body.available).toBe(false)
     expect(body.suggestions.length).toBeGreaterThan(0)
 
-    // Usernames are one identity however they're typed — profile URLs already
-    // resolve case-insensitively, so claiming must work the same way.
+    // Usernames are one identity however they're typed: they are stored
+    // lowercase, and the folded query resolves to the same row.
     const shouty = await request.get(
       `${ENDPOINT}?username=${username.toUpperCase()}`,
     )
-    expect((await shouty.json()).available).toBe(false)
+    const shoutyBody = await shouty.json()
+    expect(shoutyBody.available).toBe(false)
+    // The endpoint echoes back the canonical form, not what was typed.
+    expect(shoutyBody.username).toBe(username)
 
     const dupe = await request.post('/api/auth/register', {
       data: {
@@ -71,6 +74,33 @@ test.describe('GET /api/auth/check-username', () => {
       const probe = await request.get(`${ENDPOINT}?username=${suggestion}`)
       expect((await probe.json()).available).toBe(true)
     }
+  })
+
+  // Registration accepts mixed case and stores the folded form, so the account
+  // and its profile URL are the lowercase one.
+  test('folds a mixed-case signup to lowercase', async ({ request }) => {
+    const lower = `case${Date.now().toString(36)}`
+    const typed = lower.toUpperCase()
+
+    const reg = await request.post('/api/auth/register', {
+      data: {
+        email: `${lower}@test.com`,
+        username: typed,
+        password: 'ValidPass123!',
+        confirmPassword: 'ValidPass123!',
+      },
+    })
+    expect(reg.status()).toBe(200)
+    expect((await reg.json()).user?.username).toBe(lower)
+
+    // Both spellings resolve to the one account.
+    for (const q of [lower, typed]) {
+      const res = await request.get(`${ENDPOINT}?username=${q}`)
+      expect((await res.json()).available).toBe(false)
+    }
+
+    const profile = await request.get(`/api/profile/${typed}`)
+    expect(profile.status()).toBe(200)
   })
 
   test('answers malformed usernames inline instead of erroring', async ({
