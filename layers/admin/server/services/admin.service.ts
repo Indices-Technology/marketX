@@ -1,4 +1,4 @@
-import type { ContentType, ModerationAction, ModerationStatus, ReportReason, ReportStatus } from '@prisma/client'
+import type { ContentType, ModerationAction, ModerationStatus, PayoutStatus, ReportReason, ReportStatus } from '@prisma/client'
 import { adminRepository } from '~~/layers/admin/server/repositories/admin.repository'
 import { authRepository } from '~~/layers/core/server/repositories/auth.repository'
 import { bust } from '~~/server/utils/cache'
@@ -386,7 +386,7 @@ export const adminService = {
 
   // ── Payouts ──────────────────────────────────────────────────────────────
 
-  async listPayouts(opts: { status?: string; limit: number; offset: number }) {
+  async listPayouts(opts: { status?: PayoutStatus; limit: number; offset: number }) {
     const rows = await adminRepository.listPayouts(opts)
     const hasMore = rows.length > opts.limit
     return {
@@ -421,7 +421,13 @@ export const adminService = {
       })
 
     const sellerProfileId = payout.wallet?.seller?.profileId
-    const amountNaira = (payout.amount / 100).toLocaleString('en-NG')
+    const naira = (kobo: number) => (kobo / 100).toLocaleString('en-NG')
+    // Gross is what left the wallet — the correct figure for a rejection refund.
+    const amountNaira = naira(payout.amount)
+    // Net is what actually reached the bank. Null only on historical rows that
+    // predate the typed columns; those fall back to gross rather than show
+    // nothing, matching what the screen has always displayed for them.
+    const paidNaira = naira(payout.amountNet ?? payout.amount)
 
     if (action === 'PAID') {
       const { count } = await prisma.payout.updateMany({
@@ -440,8 +446,11 @@ export const adminService = {
           userId: sellerProfileId,
           type: 'GENERAL',
           actorId: opts.moderatorId,
-          message: `Your withdrawal of ₦${amountNaira} has been paid out${
-            opts.transactionRef ? ` (ref: ${opts.transactionRef})` : ''
+          // State both figures. "Your withdrawal of ₦X has been paid out" using
+          // the gross reads as though the seller received the pre-fee amount,
+          // which is the exact confusion these columns exist to end.
+          message: `₦${paidNaira} has been paid to your bank account (₦${amountNaira} withdrawn, less fees)${
+            opts.transactionRef ? ` — ref: ${opts.transactionRef}` : ''
           }.`,
         })
       }

@@ -122,10 +122,39 @@
             4. Cookies & Tracking
           </h2>
           <p>
-            We use essential cookies to keep you logged in and remember your
-            preferences (e.g., language, dark mode). We do not use third-party
-            advertising cookies. You can clear cookies at any time through your
-            browser settings; however, doing so will log you out.
+            We use essential cookies to keep you signed in, to protect forms
+            against abuse, and to remember preferences like dark mode. These are
+            required for the site to work, so they are always on.
+          </p>
+          <p class="mt-3">
+            We may also use Meta's advertising tracker to measure which ads
+            bring people to MarketX. That one is optional and off unless you
+            allow it: we ask before it loads, declining changes nothing about
+            how the site works, and you can change your mind at any time from
+            the link below.
+          </p>
+          <p class="mt-3">
+            You can clear cookies at any time through your browser settings;
+            doing so will sign you out.
+          </p>
+          <p v-if="hasOptionalTrackers" class="mt-3">
+            <button
+              type="button"
+              class="font-semibold text-brand underline underline-offset-2 hover:opacity-80"
+              @click="reset"
+            >
+              Change my advertising choice
+            </button>
+            <span class="ml-2 text-sm text-gray-500 dark:text-neutral-400">
+              (currently:
+              {{
+                status === 'accepted'
+                  ? 'allowed'
+                  : status === 'rejected'
+                    ? 'declined'
+                    : 'not set'
+              }})
+            </span>
           </p>
         </section>
 
@@ -180,9 +209,7 @@
             <a
               :href="`mailto:${config.public.supportEmail || 'privacy@marketx.africa'}`"
               class="font-medium text-brand hover:underline"
-              >{{
-                config.public.supportEmail || 'privacy@marketx.africa'
-              }}</a
+              >{{ config.public.supportEmail || 'privacy@marketx.africa' }}</a
             >.
           </p>
         </section>
@@ -244,9 +271,7 @@
             <a
               :href="`mailto:${config.public.supportEmail || 'privacy@marketx.africa'}`"
               class="font-medium text-brand hover:underline"
-              >{{
-                config.public.supportEmail || 'privacy@marketx.africa'
-              }}</a
+              >{{ config.public.supportEmail || 'privacy@marketx.africa' }}</a
             >.
           </p>
         </div>
@@ -260,6 +285,12 @@
 </template>
 
 <script setup lang="ts">
+import { useCookieConsent } from '~~/layers/core/app/composables/useCookieConsent'
+
+// Lets someone revisit the advertising choice from the policy itself, rather
+// than having to clear site data to see the banner again.
+const { status, hasOptionalTrackers, reset } = useCookieConsent()
+
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import RightSideNavLinks from '~~/layers/core/app/layouts/children/RightSideNavLinks.vue'
 

@@ -1,6 +1,15 @@
-// Loads the Meta Pixel when NUXT_PUBLIC_META_PIXEL_ID is set, so ad campaigns
-// (e.g. lead ads driving to the site) show landing-page visits in Ads Manager.
-// A no-op with no env var, so this is safe in every environment including CI.
+// Loads the Meta Pixel when NUXT_PUBLIC_META_PIXEL_ID is set AND the visitor has
+// allowed it, so ad campaigns (e.g. lead ads driving to the site) show
+// landing-page visits in Ads Manager. A no-op with no env var, so this is safe
+// in every environment including CI.
+//
+// The pixel is a third-party advertising tracker, so it must not run before the
+// visitor says yes — silence is not consent. Nothing here loads until
+// useCookieConsent reports 'accepted'; granting it later starts tracking without
+// a reload, and declining reloads the page to drop what was already loaded.
+
+import { watch } from 'vue'
+import { useCookieConsent } from '~~/layers/core/app/composables/useCookieConsent'
 
 declare global {
   interface Window {
@@ -19,6 +28,8 @@ export default defineNuxtPlugin((nuxtApp) => {
   const { public: config } = useRuntimeConfig()
   const pixelId = config.metaPixelId as string
   if (!pixelId) return
+
+  const { trackingAllowed } = useCookieConsent()
 
   const loadPixel = () => {
     if (window.fbq) return
@@ -49,9 +60,23 @@ export default defineNuxtPlugin((nuxtApp) => {
     }
   }
 
-  nuxtApp.hook('app:mounted', () => {
+  // Only ever called behind a consent check.
+  const start = () => {
     loadPixel()
     trackPageView()
+  }
+
+  nuxtApp.hook('app:mounted', () => {
+    if (trackingAllowed.value) start()
   })
-  useRouter().afterEach(() => trackPageView())
+
+  // Consent given after the page loaded — start then, rather than making them
+  // navigate before the choice takes effect.
+  watch(trackingAllowed, (allowed) => {
+    if (allowed) start()
+  })
+
+  useRouter().afterEach(() => {
+    if (trackingAllowed.value) trackPageView()
+  })
 })

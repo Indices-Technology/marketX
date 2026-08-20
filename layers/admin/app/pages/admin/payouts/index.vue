@@ -258,7 +258,11 @@ definePageMeta({ middleware: 'admin', layout: 'admin-layout' })
 
 const FILTERS = [
   { value: 'PENDING', label: 'Pending' },
+  { value: 'APPROVED', label: 'Approved' },
+  { value: 'PROCESSING', label: 'Processing' },
   { value: 'PAID', label: 'Paid' },
+  { value: 'FAILED', label: 'Failed' },
+  { value: 'REVERSED', label: 'Reversed' },
   { value: 'REJECTED', label: 'Rejected' },
   { value: '', label: 'All' },
 ]
@@ -289,21 +293,27 @@ watch(statusFilter, () => {
   offset.value = 0
 })
 
-// Fee breakdown stored on the request at withdrawal time (all in kobo).
-// `netAmount` is what the seller actually receives — i.e. what the admin must
-// transfer. The gross (`p.amount`) is what was debited from the wallet.
+// Fee breakdown for the request (all in kobo).
+//
+// Source of truth is the typed `amountNet` / `platformFee` / `transferFee`
+// columns. The `bank_account` JSON is read only as a fallback, for rows written
+// before those columns existed — new withdrawals populate both.
 function feesOf(p: any): { net: number | null; platformFee: number | null; transferFee: number | null } {
   const ba = p?.bank_account ?? {}
   const num = (v: unknown) => (typeof v === 'number' ? v : null)
   return {
-    net: num(ba.netAmount),
-    platformFee: num(ba.platformFee),
-    transferFee: num(ba.transferFee),
+    net: num(p?.amountNet) ?? num(ba.netAmount),
+    platformFee: num(p?.platformFee) ?? num(ba.platformFee),
+    transferFee: num(p?.transferFee) ?? num(ba.transferFee),
   }
 }
 
 // Amount the admin should actually transfer to the seller (net of fees).
-// Falls back to the gross for legacy payouts recorded before fees were stored.
+//
+// The gross fallback is retained ONLY for historical rows whose net was never
+// recorded. It is deliberately the last resort and it errs high, so it must
+// never become the path for a live payout: a DB CHECK constraint now requires
+// amountNet on anything PENDING, which is what keeps that true.
 function payableOf(p: any): number {
   const { net } = feesOf(p)
   return net ?? p?.amount ?? 0
@@ -316,9 +326,14 @@ function totalFeesOf(p: any): number | null {
   return (platformFee ?? 0) + (transferFee ?? 0)
 }
 
+// Amber = waiting on someone. Blue = money is in flight and its fate is not
+// yet known, which is deliberately NOT green: PROCESSING must never read as
+// settled. Green = confirmed paid. Red = terminal failure, funds returned.
 function statusClass(status: string) {
-  if (status === 'PENDING')
+  if (status === 'PENDING' || status === 'APPROVED')
     return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+  if (status === 'PROCESSING')
+    return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
   if (status === 'PAID')
     return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
   return 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
