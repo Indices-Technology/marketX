@@ -18,6 +18,9 @@ export default defineEventHandler(async (event) => {
         data: {
           wallet: { balance: 0, pending_balance: 0 },
           stats: { totalEarned: 0, totalSpent: 0 },
+          available: 0,
+          held: 0,
+          holds: [],
           stores: [],
         },
       }
@@ -26,13 +29,19 @@ export default defineEventHandler(async (event) => {
     // Fetch wallet + stats per store in parallel
     const storeWallets = await Promise.all(
       sellerProfiles.map(async (sp) => {
-        const { wallet, stats } = await walletService.getWallet(sp.id)
+        const { wallet, stats, available, held, holds } =
+          await walletService.getWallet(sp.id)
         return {
           storeId: sp.id,
           storeName: sp.store_name,
           storeSlug: sp.store_slug,
           wallet,
           stats,
+          // Per-store, because withdrawal is per-store: an aggregate figure
+          // cannot tell a seller which store's money is frozen.
+          available,
+          held,
+          holds,
         }
       }),
     )
@@ -54,12 +63,23 @@ export default defineEventHandler(async (event) => {
       (sum, s) => sum + (s.stats?.totalSpent ?? 0),
       0,
     )
+    // Withdrawable and frozen totals. `balance` on its own is misleading the
+    // moment a dispute is open — a seller shown a balance they cannot withdraw
+    // has no way to understand the refusal without these.
+    const totalAvailable = storeWallets.reduce((sum, s) => sum + (s.available ?? 0), 0)
+    const totalHeld = storeWallets.reduce((sum, s) => sum + (s.held ?? 0), 0)
+    const allHolds = storeWallets.flatMap((s) =>
+      (s.holds ?? []).map((h) => ({ ...h, storeSlug: s.storeSlug })),
+    )
 
     return {
       success: true,
       data: {
         wallet: { balance: totalBalance, pending_balance: totalPending },
         stats: { totalEarned, totalSpent },
+        available: totalAvailable,
+        held: totalHeld,
+        holds: allHolds,
         stores: storeWallets,
       },
     }

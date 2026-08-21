@@ -378,10 +378,206 @@ export const walletService = {
     })
   },
 
+  // ── Dispute holds ──────────────────────────────────────────────────────────
+  //
+  // reverseOrderCredit can only unwind CREDIT_PENDING rows. Once an order is
+  // DELIVERED the money has moved to `balance` and there is nothing left to
+  // reverse — so a buyer disputing a delivered order could not be made whole if
+  // the seller withdrew first. A hold freezes that money while the dispute runs.
+
+  /**
+   * Freeze the released proceeds of a disputed order.
+   *
+   * Only CREDIT_RELEASED rows are held: if the order is still pre-delivery its
+   * credit is CREDIT_PENDING, which reverseOrderCredit already handles, and
+   * holding it too would double-count the same money.
+   *
+   * Idempotent by database constraint — the unique index on (ticketId, walletId)
+   * means a repeated hook fires once, without a read-then-write check that two
+   * concurrent callers could both pass.
+   *
+   * A hold cannot recover money already withdrawn. If the seller has less left
+   * than the order was worth, only what remains is frozen; `amountRequested`
+   * records the full claim so the shortfall is visible rather than silently
+   * clamped away.
+   */
+  async holdForDispute(orderId: number, ticketId: string) {
+    const released = await prisma.transaction.findMany({
+      where: { orderId, type: 'CREDIT_RELEASED' },
+      select: { walletId: true, amount: true },
+    })
+    if (!released.length) return { held: 0, holds: 0 }
+
+    const byWallet = new Map<string, number>()
+    for (const r of released) {
+      byWallet.set(r.walletId, (byWallet.get(r.walletId) ?? 0) + r.amount)
+    }
+
+    let totalHeld = 0
+    let holds = 0
+
+    for (const [walletId, requested] of byWallet) {
+      if (requested <= 0) continue
+      try {
+        const held = await prisma.$transaction(async (tx) => {
+          // One statement decides and applies the cap, so a concurrent
+          // withdrawal cannot slip between "how much is available" and
+          // "freeze that much". GREATEST(0, ...) keeps the CHECK constraints
+          // satisfied when the wallet is already fully held.
+          const rows = await tx.$queryRaw<{ delta: number }[]>`
+            WITH w AS (
+              SELECT id, GREATEST(0, LEAST(${requested}::double precision,
+                                           balance - held_balance)) AS delta
+              FROM "SellerWallet" WHERE id = ${walletId}::uuid
+            )
+            UPDATE "SellerWallet" s
+            SET held_balance = s.held_balance + w.delta
+            FROM w WHERE s.id = w.id
+            RETURNING w.delta AS delta
+          `
+          const delta = rows[0]?.delta ?? 0
+
+          await tx.walletHold.create({
+            data: {
+              walletId,
+              orderId,
+              ticketId,
+              amount: delta,
+              amountRequested: requested,
+              reason: `Dispute on order #${orderId}`,
+            },
+          })
+          return delta
+        })
+        totalHeld += held
+        holds++
+      } catch (e: unknown) {
+        // P2002 = the unique (ticketId, walletId) index fired: this dispute has
+        // already frozen this wallet. Expected on a retry, not an error.
+        if ((e as { code?: string })?.code === 'P2002') continue
+        logger.logError('[wallet] holdForDispute', e, { orderId, ticketId, walletId })
+        throw e
+      }
+    }
+
+    return { held: totalHeld, holds }
+  },
+
+  /**
+   * Dispute resolved in the seller's favour — unfreeze, funds usable again.
+   */
+  async releaseHold(ticketId: string) {
+    const active = await prisma.walletHold.findMany({
+      where: { ticketId, status: 'ACTIVE' },
+      select: { id: true, walletId: true, amount: true },
+    })
+    if (!active.length) return { released: 0 }
+
+    let released = 0
+    for (const h of active) {
+      await prisma.$transaction(async (tx) => {
+        // Conditional claim: only the caller that flips ACTIVE → RELEASED moves
+        // the balance, so two concurrent resolutions cannot both unfreeze.
+        const { count } = await tx.walletHold.updateMany({
+          where: { id: h.id, status: 'ACTIVE' },
+          data: { status: 'RELEASED', resolved_at: new Date() },
+        })
+        if (count === 0) return
+        if (h.amount > 0) {
+          await tx.sellerWallet.update({
+            where: { id: h.walletId },
+            data: { held_balance: { decrement: h.amount } },
+          })
+        }
+        released += h.amount
+      })
+    }
+    return { released }
+  },
+
+  /**
+   * Dispute resolved against the seller — take the frozen money back so the
+   * buyer can be refunded. Debits `balance` and `held_balance` together, which
+   * is what keeps held_balance <= balance true.
+   *
+   * `capAmount` supports PARTIAL_REFUND: capture up to that much and release the
+   * remainder. Omitted means capture the whole hold.
+   */
+  async captureHold(ticketId: string, capAmount?: number) {
+    const active = await prisma.walletHold.findMany({
+      where: { ticketId, status: 'ACTIVE' },
+      select: { id: true, walletId: true, amount: true, orderId: true },
+    })
+    if (!active.length) return { captured: 0 }
+
+    let remaining = capAmount ?? Number.POSITIVE_INFINITY
+    let captured = 0
+
+    for (const h of active) {
+      const take = Math.min(h.amount, Math.max(0, remaining))
+      await prisma.$transaction(async (tx) => {
+        const { count } = await tx.walletHold.updateMany({
+          where: { id: h.id, status: 'ACTIVE' },
+          data: {
+            status: take > 0 ? 'CAPTURED' : 'RELEASED',
+            resolved_at: new Date(),
+          },
+        })
+        if (count === 0) return
+
+        if (h.amount > 0) {
+          await tx.sellerWallet.update({
+            where: { id: h.walletId },
+            data: {
+              // The captured part leaves the wallet; the whole hold is unfrozen
+              // either way, so held_balance always drops by the full amount.
+              balance: { decrement: take },
+              held_balance: { decrement: h.amount },
+            },
+          })
+        }
+        if (take > 0) {
+          await tx.transaction.create({
+            data: {
+              walletId: h.walletId,
+              amount: take,
+              type: 'DISPUTE_CAPTURE',
+              description: `Dispute resolved for buyer — Order #${h.orderId} debited for refund`,
+              orderId: h.orderId,
+            },
+          })
+        }
+        captured += take
+        remaining -= take
+      })
+    }
+    return { captured }
+  },
+
   async getWallet(sellerId: string) {
     const wallet = await walletRepository.getOrCreateWallet(sellerId)
     const stats = await walletRepository.getWalletStats(wallet.id)
-    return { wallet, stats }
+
+    // `balance` alone is misleading once anything is held: a seller seeing
+    // ₦50,000 and being refused a ₦50,000 withdrawal has no way to understand
+    // why. Surface withdrawable and the held amount as first-class values, plus
+    // the disputes responsible, so the UI can explain the difference.
+    const held = wallet.held_balance ?? 0
+    const holds = held > 0
+      ? await prisma.walletHold.findMany({
+          where: { walletId: wallet.id, status: 'ACTIVE' },
+          select: { orderId: true, amount: true, reason: true, created_at: true },
+          orderBy: { created_at: 'desc' },
+        })
+      : []
+
+    return {
+      wallet,
+      stats,
+      available: Math.max(0, wallet.balance - held),
+      held,
+      holds,
+    }
   },
 
   async getTransactions(sellerId: string, limit = 20, offset = 0) {
@@ -437,11 +633,33 @@ export const walletService = {
     // Two concurrent withdrawals can't both pass: the second updateMany matches
     // zero rows once the balance drops below the requested amount.
     const payout = await prisma.$transaction(async (tx) => {
-      const result = await tx.sellerWallet.updateMany({
-        where: { id: wallet.id, balance: { gte: amount } },
-        data: { balance: { decrement: amount } },
-      })
-      if (result.count === 0) {
+      // Raw SQL because the guard compares two columns — Prisma's updateMany
+      // cannot express `balance - held_balance >= amount`, and splitting it into
+      // a read then a write reopens the race this statement exists to close.
+      //
+      // Withdrawable is balance MINUS money frozen by open disputes. Without the
+      // held_balance term a seller could withdraw funds already earmarked to
+      // refund a buyer, which is exactly the hole WalletHold was added to close.
+      const updated = await tx.$executeRaw`
+        UPDATE "SellerWallet"
+        SET balance = balance - ${amount}::double precision
+        WHERE id = ${wallet.id}::uuid
+          AND balance - held_balance >= ${amount}::double precision
+      `
+      if (updated === 0) {
+        // Distinguish the two causes: "you have no money" and "your money is
+        // frozen pending a dispute" are very different messages to a seller.
+        const current = await tx.sellerWallet.findUnique({
+          where: { id: wallet.id },
+          select: { balance: true, held_balance: true },
+        })
+        if ((current?.held_balance ?? 0) > 0) {
+          throw new UserError(
+            'FUNDS_ON_HOLD',
+            `₦${(((current?.held_balance ?? 0)) / 100).toLocaleString('en-NG')} of your balance is on hold pending an open dispute and cannot be withdrawn yet.`,
+            400,
+          )
+        }
         throw new UserError(
           'INSUFFICIENT_BALANCE',
           'Insufficient wallet balance',
