@@ -136,15 +136,37 @@ Not yet migrated to this model:
 
 | Location | Purpose | Impact |
 |---|---|---|
-| `server/queues/pod-reminder.queue.ts` (`startPodReminderCron`) | POD deposit reminders | Low — POD paused at launch (`NUXT_PUBLIC_POD_ENABLED=false`). **Also has a live spam bug**: it dedupes on a floored day count while running hourly, so a matching order gets ~24 identical notifications per day. Fix when converting it to a task. |
+| `server/queues/pod-reminder.queue.ts` (`startPodReminderCron`) | POD deposit reminders | Low — POD paused at launch (`NUXT_PUBLIC_POD_ENABLED=false`). **Has a live spam bug**: it dedupes on a floored day count while running hourly, so a matching order gets ~24 identical notifications per day. Dormant on function hosts (setInterval dies), so it is now gated behind `POD_REMINDER_ENABLED` — off even on the worker instance — to stop an always-on host waking it. Fix the dedupe when converting it to a task. |
 | `server/utils/auth/rateLimiter.ts`, `server/middleware/rate-limit.ts`, `server/utils/auth/otpStore.ts` | In-memory cleanup | Harmless when Redis-backed |
 | `server/utils/monitoring/authMonitoring.ts` | Periodic auth monitoring | Degraded monitoring only |
 
-The BullMQ **workers** (`server/plugins/workers.ts`) are a separate concern and
-still need a long-lived process. On a function host they don't stay up: producers
-keep writing to Redis and nothing drains the queue, so notifications/emails pile
-up rather than falling back to inline. Either run the workers somewhere always-on
-or verify queue depth stays at zero.
+## BullMQ workers — the producer/consumer split
+
+Workers are a separate concern from the schedule above: a BullMQ `Worker` holds a
+blocking Redis read and needs a process that stays awake. On a function host it
+doesn't — producers keep writing to Redis and nothing drains the queue, so
+notifications/emails/WhatsApp pile up rather than falling back to inline.
+
+Resolved by role, not by queue config. `QUEUE_REDIS_URL` stays set everywhere
+(every instance must still *enqueue*); only the always-on deployment *consumes*:
+
+| Deployment | `QUEUE_REDIS_URL` | `WORKERS_ENABLED` | `NITRO_INPROCESS_CRON` | Role |
+|---|---|---|---|---|
+| Web (Vercel) | set | *unset* | `false` | produces jobs |
+| Worker (Railway/Render/Fly) | set | `true` | `true` | consumes + runs the schedule |
+
+**Exactly one deployment sets `WORKERS_ENABLED=true`.** Off by default on
+purpose: a short-lived Worker on a function host doesn't fail loudly, it competes
+for jobs with the real worker, wins some, then freezes holding them — which
+presents as "notifications are flaky" rather than as an outage.
+
+With the worker instance running the schedule in-process, the external scheduler
+is optional — one host does both. Don't run both, or every job fires twice
+(safe, since tasks are idempotent, but wasteful).
+
+**Verify:** queue `waiting` depth returns to zero and stays there, and the web
+instance logs `[workers] WORKERS_ENABLED not set — this instance produces jobs
+only` on boot.
 
 ## Adding a task
 
