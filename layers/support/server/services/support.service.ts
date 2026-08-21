@@ -335,12 +335,21 @@ export const supportService = {
       sellerId: seller.id,
     })
 
+    // Freeze the seller's already-released proceeds for this order.
+    //
+    // Without this, a dispute on a DELIVERED order has no wallet effect at all:
+    // the money sits in `balance`, reverseOrderCredit finds no CREDIT_PENDING
+    // rows to unwind, and the seller can withdraw before the dispute is heard.
+    // Awaited rather than fire-and-forget — a dispute that silently failed to
+    // secure the funds is worse than one that failed to open.
+    await walletService.holdForDispute(order.id, ticket.id)
+
     // Nudge the seller directly (createTicket already notified agents).
     notificationQueue.enqueue({
       userId: seller.profileId,
       type: 'SUPPORT',
       actorId: input.userId,
-      message: `⚠️ A buyer opened a dispute on order #${order.id} (${ticketRef(ticket.ticketNumber)}).`,
+      message: `⚠️ A buyer opened a dispute on order #${order.id} (${ticketRef(ticket.ticketNumber)}). Funds for this order are on hold until it is resolved.`,
       orderId: order.id,
     })
 
@@ -468,7 +477,10 @@ export const supportService = {
 
     // Apply dispute money effects before flipping to RESOLVED.
     if (ticket.type === 'DISPUTE' && input.disputeOutcome && ticket.orderId) {
-      await this.applyDisputeOutcome(ticket.orderId, input.disputeOutcome)
+      await this.applyDisputeOutcome(ticket.orderId, input.disputeOutcome, {
+        ticketId: ticket.id,
+        refundAmount: input.refundAmount,
+      })
     }
 
     const updated = await supportRepository.updateTicket(ticket.id, {
@@ -524,10 +536,33 @@ export const supportService = {
    * reversed on-platform; the buyer's card refund itself is executed out-of-band
    * via Paystack until paymentService.refund exists (see docs/SUPPORT.md §4).
    */
-  async applyDisputeOutcome(orderId: number, outcome: DisputeOutcome) {
-    if (outcome === 'RELEASE_SELLER' || outcome === 'REJECTED') return
+  async applyDisputeOutcome(
+    orderId: number,
+    outcome: DisputeOutcome,
+    opts: { ticketId: string; refundAmount?: number | null },
+  ) {
+    // Every outcome must resolve the hold. An outcome that returns early without
+    // touching it would leave the seller's money frozen indefinitely, which is a
+    // worse failure than not holding it in the first place.
+    if (outcome === 'RELEASE_SELLER' || outcome === 'REJECTED') {
+      await walletService.releaseHold(opts.ticketId)
+      return
+    }
+
+    if (outcome === 'PARTIAL_REFUND') {
+      // Capture up to the agreed refund; the remainder is unfrozen. A null or
+      // zero amount captures nothing and simply releases — the ruling was
+      // recorded without a figure, so taking the whole hold would overreach.
+      await walletService.captureHold(opts.ticketId, opts.refundAmount ?? 0)
+      return
+    }
 
     if (outcome === 'REFUND_BUYER') {
+      // Take back the frozen funds so the buyer can be refunded. Runs alongside
+      // reverseOrderCredit below: that unwinds a still-PENDING credit, this one
+      // recovers an already-released one. An order is in exactly one of those
+      // states, so they never double-count.
+      await walletService.captureHold(opts.ticketId)
       // Reverse the seller's not-yet-released credit, cancel the order, restore stock.
       await walletService.reverseOrderCredit(orderId)
       const order = await prisma.orders.findUnique({
@@ -579,8 +614,10 @@ export const supportService = {
         }
       }
     }
-    // PARTIAL_REFUND: the intended amount is recorded on the ticket (refundAmount);
-    // the wallet/gateway movement is handled manually until partial-refund is wired.
+    // NOTE: the buyer's card refund is still executed out-of-band via the payment
+    // provider (see docs/SUPPORT.md §4). What changed here is only the seller
+    // side: their funds are now actually recovered rather than assumed
+    // recoverable. PARTIAL_REFUND is handled above.
   },
 
   // ── Helpers ────────────────────────────────────────────────────────────────

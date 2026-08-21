@@ -375,6 +375,9 @@ model ProductOffer {
 }
 
 model Orders {
+  /// Currency this order is denominated in. All amounts on it (totalAmount,
+  /// shippingCost, affiliateCut) are minor units OF THIS CURRENCY.
+  currency          String          @default("NGN")
   id                Int             @id @default(autoincrement())
   userId            String          @db.Uuid
   /// Legacy Stripe reference — now used as generic payment reference
@@ -703,6 +706,9 @@ model BankAccount {
 }
 
 model SellerWallet {
+  /// Currency of this wallet. One wallet per seller today; when a second
+  /// corridor lands the unique key becomes (sellerId, currency).
+  currency        String        @default("NGN")
   sellerId        String        @unique @db.Uuid
   /// Released funds. NOT the same as withdrawable — subtract held_balance.
   balance         Float         @default(0)
@@ -761,6 +767,8 @@ enum WalletHoldStatus {
 }
 
 model Transaction {
+  /// Currency of `amount`. Matches the parent wallet.
+  currency    String       @default("NGN")
   walletId    String       @db.Uuid
   amount      Float
   type        String
@@ -772,6 +780,8 @@ model Transaction {
 }
 
 model Payout {
+  /// Currency of the payout. Determines which disbursement rail can send it.
+  currency        String       @default("NGN")
   walletId        String       @db.Uuid
   /// GROSS — what was debited from the seller wallet. NEVER send this to a bank.
   amount          Float
@@ -808,6 +818,8 @@ model Payout {
 /// Wallet for buyers — holds affiliate commissions earned by non-seller users,
 /// refunds, and any future buyer-side credits.
 model BuyerWallet {
+  /// Currency of this wallet.
+  currency     String             @default("NGN")
   id           String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   profileId    String             @unique @db.Uuid
   balance      Float              @default(0)
@@ -817,6 +829,8 @@ model BuyerWallet {
 }
 
 model BuyerTransaction {
+  /// Currency of `amount`. Matches the parent wallet.
+  currency    String      @default("NGN")
   id          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   walletId    String      @db.Uuid
   amount      Float
@@ -1481,6 +1495,8 @@ model UserSquareFollow {
 /// The association's earnings wallet. Accumulates a cut of every completed
 /// order from sellers in the Square. Association officers can request payouts.
 model SquareWallet {
+  /// Currency of this association wallet.
+  currency       String   @default("NGN")
   id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   squareId       String   @unique @db.Uuid
   balance        Float    @default(0) // available for withdrawal
@@ -1497,6 +1513,8 @@ model SquareWallet {
 /// Captures the cut percentage at the time of the transaction so historical
 /// records are accurate even if the rate changes later.
 model SquareTransaction {
+  /// Currency of `cutAmount`. Matches the parent wallet.
+  currency     String   @default("NGN")
   id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   squareId     String   @db.Uuid
   walletId     String   @db.Uuid
@@ -1515,6 +1533,8 @@ model SquareTransaction {
 
 /// A payout request from a Square association (initiated by Chairman or Treasurer).
 model SquarePayout {
+  /// Currency of the payout.
+  currency       String    @default("NGN")
   id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   walletId       String    @db.Uuid
   amount         Float
