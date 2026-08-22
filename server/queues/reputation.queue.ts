@@ -73,15 +73,15 @@ const _queue = queueConnection
 
 export const reputationQueue = {
   /** Fire-and-forget — never await this. */
-  enqueue(data: ReputationSignalInput): void {
+  enqueue(data: ReputationSignalInput): Promise<void> {
     if (_queue) {
-      _queue
+      return _queue
         .add('signal', data)
+        .then(() => undefined)
         .catch((e) => console.error('[reputation.queue] enqueue error:', e))
-    } else {
-      // Fallback: write inline when Redis is not configured.
-      void writeSignal(data)
     }
+    // Fallback: write inline when Redis is not configured.
+    return Promise.resolve(writeSignal(data)).then(() => undefined)
   },
 }
 

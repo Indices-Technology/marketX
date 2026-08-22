@@ -28,15 +28,23 @@ async function notifySellers(orderId: number, message: string) {
   })
 
   const seen = new Set<string>()
+  const pending: Promise<void>[] = []
   for (const item of items) {
     const sellerId = item.variant?.product?.seller?.profileId
     if (!sellerId || seen.has(sellerId)) continue
     seen.add(sellerId)
-    notificationQueue.enqueue(
-      { userId: sellerId, type: 'ORDER', actorId: sellerId, message },
-      { dedupeKey: `order-paid:${orderId}:seller:${sellerId}` },
+    pending.push(
+      notificationQueue.enqueue(
+        { userId: sellerId, type: 'ORDER', actorId: sellerId, message },
+        { dedupeKey: `order-paid:${orderId}:seller:${sellerId}` },
+      ),
     )
   }
+
+  // Wait for the writes to reach Redis before returning. On a function host the
+  // instance freezes the moment the response is sent, so an un-awaited enqueue
+  // races that freeze and usually loses — the money moves and nobody is told.
+  await Promise.all(pending)
 }
 
 /**
@@ -100,7 +108,7 @@ export const paymentConfirmationService = {
 
     // Notify the buyer their order is confirmed (in-app, clickable to the order).
     if (before?.userId) {
-      notificationQueue.enqueue(
+      await notificationQueue.enqueue(
         {
           userId: before.userId,
           type: 'ORDER',
@@ -132,7 +140,7 @@ export const paymentConfirmationService = {
     }
 
     const msg = opts.sellerMessage ?? `New order #${orderId} payment confirmed`
-    notifySellers(orderId, msg).catch((e) =>
+    await notifySellers(orderId, msg).catch((e) =>
       logger.error('confirm: notify sellers failed', {
         orderId,
         error: e?.message ?? e,
@@ -210,7 +218,7 @@ export const paymentConfirmationService = {
 
     const msg =
       opts.sellerMessage ?? `POD order #${orderId} — shipping fee confirmed`
-    notifySellers(orderId, msg).catch((e) =>
+    await notifySellers(orderId, msg).catch((e) =>
       logger.error('confirm pod: notify sellers failed', {
         orderId,
         error: e?.message ?? e,

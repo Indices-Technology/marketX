@@ -54,17 +54,21 @@ export const emailQueue = {
    * with a jobId that's still known (waiting/active/retained), so duplicate
    * triggers (webhook + verify race, double-submit) send exactly one email.
    */
-  enqueue(data: EmailJob, opts?: { dedupeKey?: string }): void {
+  enqueue(data: EmailJob, opts?: { dedupeKey?: string }): Promise<void> {
     if (_queue) {
-      _queue
-        .add('send', data, opts?.dedupeKey ? { jobId: opts.dedupeKey } : undefined)
+      return _queue
+        .add(
+          'send',
+          data,
+          opts?.dedupeKey ? { jobId: opts.dedupeKey } : undefined,
+        )
+        .then(() => undefined)
         .catch((e) => console.error('[email.queue] enqueue error:', e))
-    } else {
-      // Fallback: run inline when Redis not configured
-      _sendEmail(data).catch((e) =>
-        console.error('[email.queue] inline fallback error:', e),
-      )
     }
+    // Fallback: run inline when Redis not configured
+    return _sendEmail(data)
+      .then(() => undefined)
+      .catch((e) => console.error('[email.queue] inline fallback error:', e))
   },
 }
 
