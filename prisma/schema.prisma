@@ -55,7 +55,9 @@ model Profile {
 
   email_verification EmailVerificationToken[]
   password_reset     PasswordResetToken[]
-  audit_logs         AuditLog[]
+  // audit_logs intentionally absent — AuditLog references the actor by scalar
+  // id with no FK, so an audit trail survives the actor being deleted. Query it
+  // with `prisma.auditLog.findMany({ where: { user_id } })`.
   user_settings      UserSettings?
   aiConfig           UserAIConfig?
   aiProfile          UserAIProfile?
@@ -1158,7 +1160,17 @@ model ProductPostTag {
 model AuditLog {
   id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   event_type String // LOGIN_SUCCESS, LOGIN_FAILED, etc.
-  user_id    String   @db.Uuid
+  /// Actor, as a SCALAR ref — deliberately no Prisma relation and no FK.
+  ///
+  /// An audit log is an append-only historical fact. A foreign key made it two
+  /// things it must never be: (1) failable — writing a record for an actor that
+  /// no longer exists (or never did, e.g. a login attempt against a deleted
+  /// account) violated the constraint and the job dead-lettered, silently losing
+  /// the very events most worth keeping; and (2) erasable — `onDelete: Cascade`
+  /// meant deleting a Profile deleted its entire audit history.
+  ///
+  /// Nullable so a write can still be recorded when the actor is unknown.
+  user_id    String?  @db.Uuid
   email      String?
   ip_address String?
   user_agent String?
@@ -1166,8 +1178,6 @@ model AuditLog {
   reason     String?
   metadata   Json?
   created_at DateTime @default(now()) @db.Timestamptz(6)
-
-  user Profile @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([user_id])
   @@index([email])

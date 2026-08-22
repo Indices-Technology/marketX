@@ -2,7 +2,10 @@
 
 export const auditRepository = {
   async createAuditLog(data: {
-    userId: string
+    /** Actor id. Optional: an audit record for an unknown or deleted actor is
+     *  still worth keeping — it is stored as a scalar with no FK, so the write
+     *  cannot fail on the actor's existence. */
+    userId?: string | null
     email: string
     eventType: string
     reason?: string
@@ -15,7 +18,7 @@ export const auditRepository = {
       data: {
         id: crypto.randomUUID(),
         email: data.email,
-        user_id: data.userId,
+        user_id: data.userId || null,
         event_type: data.eventType,
         reason: data.reason,
         ip_address: data.ipAddress,
