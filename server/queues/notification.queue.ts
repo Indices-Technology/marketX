@@ -13,6 +13,7 @@
 
 import { Queue, Worker, type Job } from 'bullmq'
 import { queueConnection } from '../utils/queue'
+import { trackQueueWrite } from '../utils/queueFlush'
 import {
   CreateNotificationArgs,
   notificationService,
@@ -49,14 +50,18 @@ export const notificationQueue = {
    */
   enqueue(data: NotificationJob, opts?: { dedupeKey?: string }): Promise<void> {
     if (_queue) {
-      return _queue
-        .add(
-          'notify',
-          data,
-          opts?.dedupeKey ? { jobId: opts.dedupeKey } : undefined,
-        )
-        .then(() => undefined)
-        .catch((e) => console.error('[notification.queue] enqueue error:', e))
+      return trackQueueWrite(
+        _queue
+          .add(
+            'notify',
+            data,
+            opts?.dedupeKey ? { jobId: opts.dedupeKey } : undefined,
+          )
+          .then(() => undefined)
+          .catch((e) =>
+            console.error('[notification.queue] enqueue error:', e),
+          ),
+      )
     }
     // Fallback: run inline when Redis not configured
     return notificationService

@@ -12,6 +12,7 @@
 
 import { Queue, Worker, type Job } from 'bullmq'
 import { queueConnection } from '../utils/queue'
+import { trackQueueWrite } from '../utils/queueFlush'
 import { prisma } from '../utils/db'
 import type { ReputationSignalInput } from '../../layers/reputation/server/utils/signals'
 import { invalidateProfile } from '../../layers/reputation/server/utils/reputationEngine'
@@ -75,10 +76,12 @@ export const reputationQueue = {
   /** Fire-and-forget — never await this. */
   enqueue(data: ReputationSignalInput): Promise<void> {
     if (_queue) {
-      return _queue
-        .add('signal', data)
-        .then(() => undefined)
-        .catch((e) => console.error('[reputation.queue] enqueue error:', e))
+      return trackQueueWrite(
+        _queue
+          .add('signal', data)
+          .then(() => undefined)
+          .catch((e) => console.error('[reputation.queue] enqueue error:', e)),
+      )
     }
     // Fallback: write inline when Redis is not configured.
     return Promise.resolve(writeSignal(data)).then(() => undefined)

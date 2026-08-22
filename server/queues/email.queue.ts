@@ -14,6 +14,7 @@
 import { Queue, Worker, type Job } from 'bullmq'
 import { Resend } from 'resend'
 import { queueConnection } from '../utils/queue'
+import { trackQueueWrite } from '../utils/queueFlush'
 import { resolveFrom, resolveReplyTo } from '../utils/email/addresses'
 
 export interface EmailJob {
@@ -56,14 +57,16 @@ export const emailQueue = {
    */
   enqueue(data: EmailJob, opts?: { dedupeKey?: string }): Promise<void> {
     if (_queue) {
-      return _queue
-        .add(
-          'send',
-          data,
-          opts?.dedupeKey ? { jobId: opts.dedupeKey } : undefined,
-        )
-        .then(() => undefined)
-        .catch((e) => console.error('[email.queue] enqueue error:', e))
+      return trackQueueWrite(
+        _queue
+          .add(
+            'send',
+            data,
+            opts?.dedupeKey ? { jobId: opts.dedupeKey } : undefined,
+          )
+          .then(() => undefined)
+          .catch((e) => console.error('[email.queue] enqueue error:', e)),
+      )
     }
     // Fallback: run inline when Redis not configured
     return _sendEmail(data)
