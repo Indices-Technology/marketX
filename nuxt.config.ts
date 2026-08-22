@@ -460,6 +460,33 @@ export default defineNuxtConfig({
       privacyEmail:
         process.env.NUXT_PUBLIC_PRIVACY_EMAIL || 'privacy@marketx.africa',
       legalEmail: process.env.NUXT_PUBLIC_LEGAL_EMAIL || 'legal@marketx.africa',
+      // Operating company — MarketX is a product of Indices Technology LTD.
+      // Named here (not hardcoded in components) because it has to appear
+      // identically in the footer, the About page, and the legal pages, where
+      // it identifies the data controller / contracting entity.
+      companyName:
+        process.env.NUXT_PUBLIC_COMPANY_NAME || 'Indices Technology LTD',
+      companyUrl:
+        process.env.NUXT_PUBLIC_COMPANY_URL || 'https://indicestech.com',
+      companyRc: process.env.NUXT_PUBLIC_COMPANY_RC || '7529506',
+      companyAddress:
+        process.env.NUXT_PUBLIC_COMPANY_ADDRESS ||
+        '1, Zion International School Plaza, Agingi, Jebba-Bassa, Plateau State, Nigeria',
+      // The CAC-registered contact address, and the fallback for any route
+      // without a confirmed brand-domain mailbox — an unrouted alias on a
+      // public page loses real inbound mail silently, so routes default here
+      // until their @brandDomain box is actually live.
+      companyEmail:
+        process.env.NUXT_PUBLIC_COMPANY_EMAIL || 'contactindices@gmail.com',
+      // Partnership + API waitlist replies. Buyer/seller support keeps using
+      // supportEmail above; this is a separate desk on purpose.
+      partnersEmail:
+        process.env.NUXT_PUBLIC_PARTNERS_EMAIL || 'partnership@marketx.africa',
+      // TODO: no confirmed mailbox yet — point at @brandDomain once routed.
+      pressEmail:
+        process.env.NUXT_PUBLIC_PRESS_EMAIL || 'contactindices@gmail.com',
+      securityEmail:
+        process.env.NUXT_PUBLIC_SECURITY_EMAIL || 'contactindices@gmail.com',
       baseURL: process.env.NUXT_PUBLIC_BASE_URL || 'http://localhost:3000',
       // Meta Pixel — unset by default (plugin no-ops without it) so ad
       // tracking never loads outside of an explicit campaign environment.

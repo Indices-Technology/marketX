@@ -72,6 +72,7 @@ const toggleTheme = () => {
 const items = [
   { label: 'Near Me', to: '/map', icon: 'solar:map-point-linear' },
   { label: 'Help', to: '/help', icon: 'solar:question-circle-linear' },
+  { label: 'Contact', to: '/contact', icon: 'solar:letter-linear' },
 ]
 </script>
 

@@ -20,6 +20,50 @@
           be bound by these Terms. Please read them carefully.
         </p>
 
+        <!-- Contracting entity. "We" has to resolve to a real registered
+             company, or the agreement names no counterparty. -->
+        <section
+          class="rounded-2xl border border-gray-100 bg-gray-50/60 p-5 dark:border-neutral-800 dark:bg-neutral-900/40"
+        >
+          <h2
+            class="mb-3 text-xl font-bold text-gray-900 dark:text-neutral-100"
+          >
+            Who you are contracting with
+          </h2>
+          <p class="mb-3">
+            "We", "us" and the Platform mean
+            <strong>{{ companyName }}</strong
+            ><template v-if="companyRc"> (RC {{ companyRc }})</template>, a
+            private company limited by shares registered in Nigeria, which
+            operates {{ config.public.siteName || 'MarketX' }} and is the party
+            holding funds in escrow under these Terms.
+          </p>
+          <dl class="space-y-1.5">
+            <div v-if="companyAddress" class="flex flex-wrap gap-2">
+              <dt class="w-40 shrink-0 text-gray-500 dark:text-neutral-400">
+                Registered office
+              </dt>
+              <dd>{{ companyAddress }}</dd>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <dt class="w-40 shrink-0 text-gray-500 dark:text-neutral-400">
+                Legal contact
+              </dt>
+              <dd>
+                <a
+                  :href="`mailto:${config.public.legalEmail}`"
+                  class="font-semibold text-brand hover:underline"
+                  >{{ config.public.legalEmail }}</a
+                >
+              </dd>
+            </div>
+          </dl>
+          <p class="mt-3">
+            These Terms are governed by the laws of the Federal Republic of
+            Nigeria.
+          </p>
+        </section>
+
         <!-- 1 -->
         <section>
           <h2
@@ -296,16 +340,16 @@
           <p class="text-sm text-gray-600 dark:text-neutral-400">
             Contact us at
             <a
-              :href="`mailto:${config.public.supportEmail || 'legal@marketx.africa'}`"
+              :href="`mailto:${config.public.legalEmail}`"
               class="font-medium text-brand hover:underline"
-              >{{
-                config.public.supportEmail || 'legal@marketx.africa'
-              }}</a
+              >{{ config.public.legalEmail }}</a
             >.
           </p>
         </div>
       </div>
     </div>
+
+    <SiteFooter />
 
     <template #right-sidebar>
       <RightSideNavLinks />
@@ -316,8 +360,12 @@
 <script setup lang="ts">
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import RightSideNavLinks from '~~/layers/core/app/layouts/children/RightSideNavLinks.vue'
+import SiteFooter from '~~/layers/core/app/components/SiteFooter.vue'
 
 const config = useRuntimeConfig()
+const companyName = config.public.companyName as string
+const companyRc = config.public.companyRc as string
+const companyAddress = config.public.companyAddress as string
 
 useSeoMeta({
   title: `Terms of Service · ${useRuntimeConfig().public.siteName || 'MarketX'}`,

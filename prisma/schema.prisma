@@ -2201,3 +2201,63 @@ model SocialConnection {
   @@unique([sellerId, platform, providerUserId])
   @@index([sellerId, status])
 }
+
+// ── Partner & API waitlist ───────────────────────────────────────────────────
+
+/// Inbound partnership / API-access requests from the public /partners page.
+///
+/// Deliberately NOT a SupportTicket: a ticket is a conversation that gets
+/// resolved and closed, while a lead is a row in a pipeline that stays
+/// queryable long after the first reply. Reusing tickets would also drop the
+/// company/volume fields these are entirely about, and bury sales leads in the
+/// agent inbox.
+model PartnerLead {
+  id   String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type PartnerLeadType @default(PARTNERSHIP)
+
+  contactName String
+  email       String
+  phone       String?
+  company     String
+  website     String?
+  /// The submitter's job title — decides who on our side should reply.
+  role        String?
+
+  /// What they want to build, and why they're a fit. The point of the form.
+  useCase        String
+  /// Self-reported band ("<1k/mo", "10k+"), never precise — storing it as an
+  /// Int would imply an accuracy the answer does not have.
+  expectedVolume String?
+
+  status PartnerLeadStatus @default(NEW)
+  /// Internal notes as the lead moves through the pipeline. Never returned publicly.
+  notes  String?
+
+  // ── Attribution ────────────────────────────────────────────────────────────
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+
+  contactedAt DateTime? @db.Timestamptz(6)
+  created_at  DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime  @updatedAt @db.Timestamptz(6)
+
+  // Re-submitting the same form updates the existing lead instead of stacking
+  // duplicates — someone who applies twice is one lead, not two. Scoped to type
+  // so a partner can also join the API waitlist.
+  @@unique([email, type])
+  @@index([status, created_at(sort: Desc)])
+  @@index([type, status])
+}
+
+enum PartnerLeadType {
+  PARTNERSHIP
+  API
+}
+
+enum PartnerLeadStatus {
+  NEW
+  CONTACTED
+  APPROVED
+  REJECTED
+}

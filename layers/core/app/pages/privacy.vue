@@ -20,6 +20,47 @@
           platform you agree to the practices described here.
         </p>
 
+        <!-- Data controller. Required identification — a policy that never
+             names the entity responsible for the data is not one a user can
+             actually enforce against. -->
+        <section
+          class="rounded-2xl border border-gray-100 bg-gray-50/60 p-5 dark:border-neutral-800 dark:bg-neutral-900/40"
+        >
+          <h2
+            class="mb-3 text-xl font-bold text-gray-900 dark:text-neutral-100"
+          >
+            Who is responsible for your data
+          </h2>
+          <p class="mb-3">
+            {{ config.public.siteName || 'MarketX' }} is operated by
+            <strong>{{ companyName }}</strong
+            ><template v-if="companyRc"> (RC {{ companyRc }})</template>, a
+            private company limited by shares registered in Nigeria.
+            {{ companyName }} is the data controller for the personal data
+            described in this policy.
+          </p>
+          <dl class="space-y-1.5">
+            <div v-if="companyAddress" class="flex flex-wrap gap-2">
+              <dt class="w-40 shrink-0 text-gray-500 dark:text-neutral-400">
+                Registered office
+              </dt>
+              <dd>{{ companyAddress }}</dd>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <dt class="w-40 shrink-0 text-gray-500 dark:text-neutral-400">
+                Privacy contact
+              </dt>
+              <dd>
+                <a
+                  :href="`mailto:${config.public.privacyEmail}`"
+                  class="font-semibold text-brand hover:underline"
+                  >{{ config.public.privacyEmail }}</a
+                >
+              </dd>
+            </div>
+          </dl>
+        </section>
+
         <!-- 1 -->
         <section>
           <h2
@@ -207,9 +248,9 @@
           <p class="mt-3">
             To exercise any right, contact us at
             <a
-              :href="`mailto:${config.public.supportEmail || 'privacy@marketx.africa'}`"
+              :href="`mailto:${config.public.privacyEmail}`"
               class="font-medium text-brand hover:underline"
-              >{{ config.public.supportEmail || 'privacy@marketx.africa' }}</a
+              >{{ config.public.privacyEmail }}</a
             >.
           </p>
         </section>
@@ -269,14 +310,16 @@
           <p class="text-sm text-gray-600 dark:text-neutral-400">
             Reach out to our privacy team at
             <a
-              :href="`mailto:${config.public.supportEmail || 'privacy@marketx.africa'}`"
+              :href="`mailto:${config.public.privacyEmail}`"
               class="font-medium text-brand hover:underline"
-              >{{ config.public.supportEmail || 'privacy@marketx.africa' }}</a
+              >{{ config.public.privacyEmail }}</a
             >.
           </p>
         </div>
       </div>
     </div>
+
+    <SiteFooter />
 
     <template #right-sidebar>
       <RightSideNavLinks />
@@ -293,8 +336,12 @@ const { status, hasOptionalTrackers, reset } = useCookieConsent()
 
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import RightSideNavLinks from '~~/layers/core/app/layouts/children/RightSideNavLinks.vue'
+import SiteFooter from '~~/layers/core/app/components/SiteFooter.vue'
 
 const config = useRuntimeConfig()
+const companyName = config.public.companyName as string
+const companyRc = config.public.companyRc as string
+const companyAddress = config.public.companyAddress as string
 
 useSeoMeta({
   title: `Privacy Policy · ${useRuntimeConfig().public.siteName || 'MarketX'}`,
