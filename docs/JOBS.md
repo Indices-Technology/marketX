@@ -140,6 +140,30 @@ Not yet migrated to this model:
 | `server/utils/auth/rateLimiter.ts`, `server/middleware/rate-limit.ts`, `server/utils/auth/otpStore.ts` | In-memory cleanup | Harmless when Redis-backed |
 | `server/utils/monitoring/authMonitoring.ts` | Periodic auth monitoring | Degraded monitoring only |
 
+## Producing: await the enqueue on money paths
+
+`enqueue()` returns a promise. It still swallows its own errors, so awaiting can
+never throw — the contract is "best-effort, but you may wait for it to land".
+
+**On a function host you usually must wait.** The instance freezes the moment the
+response is sent, so an un-awaited `queue.add()` races that freeze and often
+loses. This is the producer-side twin of the worker problem below, and it is
+worse because it is silent: nothing is enqueued, so there is no waiting job, no
+failed job, and no log — the event simply never existed.
+
+Observed on order #237: payment confirmed, escrow credited (that write was
+awaited), and neither the buyer nor the seller notification was ever created.
+
+Rule of thumb:
+
+| Path | Await? |
+|---|---|
+| Anything a webhook or request handler triggers, where the message matters — payment confirmed, order status, payout released | **yes** |
+| Scheduled tasks and queue workers (they run on the always-on host and are not frozen) | not required |
+| Passive social noise — likes, follows, view counts | no, cost outweighs it |
+
+Awaiting costs a few milliseconds on the response and buys guaranteed delivery.
+
 ## BullMQ workers — the producer/consumer split
 
 Workers are a separate concern from the schedule above: a BullMQ `Worker` holds a

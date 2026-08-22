@@ -17,6 +17,7 @@
 
 import { Queue, Worker, type Job } from 'bullmq'
 import { queueConnection } from '../utils/queue'
+import { trackQueueWrite } from '../utils/queueFlush'
 
 export interface WhatsAppJob {
   /** E.164 format, e.g. +2348012345678 — pass through shared/utils/phone.ts normalizePhone() first */
@@ -60,20 +61,25 @@ export const whatsappQueue = {
    * with a jobId that's still known (waiting/active/retained), so duplicate
    * triggers (webhook races, double-submit) send exactly one message.
    */
-  enqueue(data: WhatsAppJob, opts?: { dedupeKey?: string }): void {
+  enqueue(data: WhatsAppJob, opts?: { dedupeKey?: string }): Promise<void> {
     if (_queue) {
-      _queue
-        .add(
-          'send',
-          data,
-          opts?.dedupeKey ? { jobId: opts.dedupeKey } : undefined,
-        )
-        .catch((e) => console.error('[whatsapp.queue] enqueue error:', e))
+      return trackQueueWrite(
+        _queue
+          .add(
+            'send',
+            data,
+            opts?.dedupeKey ? { jobId: opts.dedupeKey } : undefined,
+          )
+          .then(() => undefined)
+          .catch((e) => console.error('[whatsapp.queue] enqueue error:', e)),
+      )
     } else {
       // Fallback: run inline when Redis not configured
-      _sendWhatsApp(data).catch((e) =>
-        console.error('[whatsapp.queue] inline fallback error:', e),
-      )
+      return _sendWhatsApp(data)
+        .then(() => undefined)
+        .catch((e) =>
+          console.error('[whatsapp.queue] inline fallback error:', e),
+        )
     }
   },
 }

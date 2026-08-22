@@ -13,6 +13,7 @@
 
 import { Queue, Worker, type Job } from 'bullmq'
 import { queueConnection } from '../utils/queue'
+import { trackQueueWrite } from '../utils/queueFlush'
 import {
   CreateNotificationArgs,
   notificationService,
@@ -47,17 +48,28 @@ export const notificationQueue = {
    * with a jobId that's still known (waiting/active/retained), so duplicate
    * triggers (double-tap, webhook races) create exactly one notification.
    */
-  enqueue(data: NotificationJob, opts?: { dedupeKey?: string }): void {
+  enqueue(data: NotificationJob, opts?: { dedupeKey?: string }): Promise<void> {
     if (_queue) {
-      _queue
-        .add('notify', data, opts?.dedupeKey ? { jobId: opts.dedupeKey } : undefined)
-        .catch((e) => console.error('[notification.queue] enqueue error:', e))
-    } else {
-      // Fallback: run inline when Redis not configured
-      notificationService.createNotification(data).catch((e) =>
-        console.error('[notification.queue] inline fallback error:', e),
+      return trackQueueWrite(
+        _queue
+          .add(
+            'notify',
+            data,
+            opts?.dedupeKey ? { jobId: opts.dedupeKey } : undefined,
+          )
+          .then(() => undefined)
+          .catch((e) =>
+            console.error('[notification.queue] enqueue error:', e),
+          ),
       )
     }
+    // Fallback: run inline when Redis not configured
+    return notificationService
+      .createNotification(data)
+      .then(() => undefined)
+      .catch((e) =>
+        console.error('[notification.queue] inline fallback error:', e),
+      )
   },
 }
 
@@ -78,10 +90,7 @@ export function startNotificationWorker() {
   )
 
   worker.on('failed', (job, err) =>
-    console.error(
-      `[notification.queue] job ${job?.id} failed:`,
-      err.message,
-    ),
+    console.error(`[notification.queue] job ${job?.id} failed:`, err.message),
   )
 
   return worker

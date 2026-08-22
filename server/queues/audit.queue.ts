@@ -13,6 +13,7 @@
 
 import { Queue, Worker, type Job } from 'bullmq'
 import { queueConnection } from '../utils/queue'
+import { trackQueueWrite } from '../utils/queueFlush'
 import { auditService } from '../layers/shared/audit/audit.service'
 
 export interface AuditJob {
@@ -45,17 +46,20 @@ const _queue = queueConnection
 
 export const auditQueue = {
   /** Fire-and-forget — never await this. */
-  enqueue(data: AuditJob): void {
+  enqueue(data: AuditJob): Promise<void> {
     if (_queue) {
-      _queue.add('log', data).catch((e) =>
-        console.error('[audit.queue] enqueue error:', e),
-      )
-    } else {
-      // Fallback: run inline when Redis not configured
-      auditService.logUserAction(data).catch((e) =>
-        console.error('[audit.queue] inline fallback error:', e),
+      return trackQueueWrite(
+        _queue
+          .add('log', data)
+          .then(() => undefined)
+          .catch((e) => console.error('[audit.queue] enqueue error:', e)),
       )
     }
+    // Fallback: run inline when Redis not configured
+    return auditService
+      .logUserAction(data)
+      .then(() => undefined)
+      .catch((e) => console.error('[audit.queue] inline fallback error:', e))
   },
 }
 
