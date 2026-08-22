@@ -160,12 +160,10 @@ export const paymentConfirmationService = {
         }),
       )
     }
-    squareService.creditAssociationsForOrder(orderId).catch((e) =>
-      logger.error('confirm: association credit failed', {
-        orderId,
-        error: e?.message ?? e,
-      }),
-    )
+    // The association cut is NOT credited here any more. It is taken out of the
+    // seller's share when funds are released on delivery, so the association
+    // earns on completed sales only and the totals reconcile against what the
+    // buyer paid. See walletService.releaseFundsOnDelivery.
     analyticsService.trackOrderSale(orderId).catch((e) =>
       logger.error('confirm: sale tracking failed', {
         orderId,

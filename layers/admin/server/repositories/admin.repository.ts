@@ -304,6 +304,14 @@ export const adminRepository = {
             },
           },
         },
+        // Affiliate payouts have no store — the queue shows the person instead.
+        buyerWallet: {
+          select: {
+            id: true,
+            balance: true,
+            profile: { select: { id: true, username: true, avatar: true } },
+          },
+        },
       },
       orderBy: { requested_at: 'desc' }, // most-recent first (queue is filtered to PENDING by default)
       take: opts.limit + 1,
@@ -316,16 +324,21 @@ export const adminRepository = {
       where: { id },
       select: {
         id: true,
-        walletId: true,
         // `amount` (gross) is what a REJECTED payout returns to the wallet;
         // `amountNet` is what a PAID one actually sent to the bank. Both are
         // needed — using either for both cases misstates one of them.
         amount: true,
         amountNet: true,
         status: true,
+        // A payout belongs to exactly one of these. Both are selected because
+        // the rejection refund must return the gross to whichever one it came
+        // from — refunding the wrong kind of wallet would be silent theft.
+        walletId: true,
+        buyerWalletId: true,
         wallet: {
           select: { seller: { select: { profileId: true, store_name: true } } },
         },
+        buyerWallet: { select: { profileId: true } },
       },
     })
   },

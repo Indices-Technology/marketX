@@ -72,23 +72,39 @@ export default defineEventHandler(async (event) => {
     // Restore product stock
     await orderRepository.restoreStock(order.orderItem)
 
-    // Refund the platform fee that was debited from seller wallet at order creation
-    const feeDebits = await prisma.transaction.findMany({
-      where: { orderId: id, type: 'PLATFORM_FEE_DEBIT' },
+    // Refund the platform fee that was debited from the seller's wallet, and
+    // cancel any part of it that was recorded as owed rather than collected.
+    //
+    // Both matter: the fee is charged for a sale that did not happen, so neither
+    // the collected part nor the outstanding part should survive the refusal.
+    // Skipping the owed part would leave the seller carrying a debt for an order
+    // the buyer refused.
+    const feeRows = await prisma.transaction.findMany({
+      where: {
+        orderId: id,
+        type: { in: ['PLATFORM_FEE_DEBIT', 'PLATFORM_FEE_UNCOLLECTED'] },
+      },
     })
-    if (feeDebits.length) {
+    if (feeRows.length) {
       await prisma.$transaction(async (tx) => {
-        for (const debit of feeDebits) {
-          await tx.sellerWallet.update({
-            where: { id: debit.walletId },
-            data: { balance: { increment: debit.amount } },
-          })
+        for (const row of feeRows) {
+          const wasCollected = row.type === 'PLATFORM_FEE_DEBIT'
+          if (wasCollected) {
+            await tx.sellerWallet.update({
+              where: { id: row.walletId },
+              data: { balance: { increment: row.amount } },
+            })
+          }
           await tx.transaction.create({
             data: {
-              walletId: debit.walletId,
-              amount: debit.amount,
-              type: 'PLATFORM_FEE_REFUND',
-              description: `POD platform fee refunded — Order #${id} refused`,
+              walletId: row.walletId,
+              amount: row.amount,
+              // An uncollected fee never moved a balance, so cancelling it must
+              // not move one either — it is written off, not refunded.
+              type: wasCollected ? 'PLATFORM_FEE_REFUND' : 'PLATFORM_FEE_WAIVED',
+              description: wasCollected
+                ? `POD platform fee refunded — Order #${id} refused`
+                : `POD platform fee written off — Order #${id} refused`,
               orderId: id,
             },
           })

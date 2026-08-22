@@ -781,8 +781,13 @@ model Transaction {
 
 model Payout {
   /// Currency of the payout. Determines which disbursement rail can send it.
-  currency        String       @default("NGN")
-  walletId        String       @db.Uuid
+  currency        String        @default("NGN")
+  /// Set for a SELLER payout. Exactly one of walletId / buyerWalletId is set,
+  /// enforced by a CHECK constraint.
+  walletId        String?       @db.Uuid
+  /// Set for a BUYER/affiliate payout — commission earned by a referrer who has
+  /// no seller profile.
+  buyerWalletId   String?       @db.Uuid
   /// GROSS — what was debited from the seller wallet. NEVER send this to a bank.
   amount          Float
   /// Gross debited from the wallet. Mirrors the legacy `amount` under a name
@@ -805,14 +810,16 @@ model Payout {
   status          PayoutStatus
   bank_account    Json
   transaction_ref String?
-  requested_at    DateTime     @default(now())
+  requested_at    DateTime      @default(now())
   completed_at    DateTime?
-  id              String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  wallet          SellerWallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  wallet          SellerWallet? @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  buyerWallet     BuyerWallet?  @relation(fields: [buyerWalletId], references: [id], onDelete: Cascade)
 
   /// The admin queue always filters by status, and the settlement executor will
   /// poll for APPROVED/PROCESSING rows. Both are status-first lookups.
   @@index([status, requested_at(sort: Desc)])
+  @@index([buyerWalletId])
 }
 
 /// Wallet for buyers — holds affiliate commissions earned by non-seller users,
@@ -826,6 +833,7 @@ model BuyerWallet {
   updated_at   DateTime           @updatedAt
   profile      Profile            @relation(fields: [profileId], references: [id], onDelete: Cascade)
   transactions BuyerTransaction[]
+  payouts      Payout[]
 }
 
 model BuyerTransaction {
@@ -1409,7 +1417,7 @@ model Square {
   physicalAddress String?
 
   // Association financial config — how much of GMV goes to the association
-  associationCutPercent Float @default(0.5)
+  associationCutPercent Float @default(0.2)
 
   // Denormalised counters — updated by the service layer on membership/follow changes
   memberCount   Int @default(0)
