@@ -26,9 +26,36 @@ export interface BuyerTransactionsResponse {
   }
 }
 
+export interface BuyerWithdrawResponse {
+  success: boolean
+  data: {
+    payout: { id: string; status: string; requested_at: string }
+    breakdown: {
+      gross: number
+      net: number
+      platformFee: number
+      transferFee: number
+    }
+  }
+}
+
 export class BuyerWalletApiClient extends BaseApiClient {
   getWallet(): Promise<BuyerWalletResponse> {
     return this.request('/api/commerce/buyer-wallet', { method: 'GET' })
+  }
+
+  /**
+   * Cash out affiliate commission. `amount` is the GROSS in kobo — fees come out
+   * of it, so the bank receives `breakdown.net`.
+   */
+  withdraw(body: {
+    amount: number
+    bankAccount: { account_number: string; bank_code: string; name: string }
+  }): Promise<BuyerWithdrawResponse> {
+    return this.request('/api/commerce/buyer-wallet/withdraw', {
+      method: 'POST',
+      body,
+    })
   }
 
   getTransactions(params?: { limit?: number; offset?: number }): Promise<BuyerTransactionsResponse> {

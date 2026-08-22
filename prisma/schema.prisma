@@ -55,7 +55,9 @@ model Profile {
 
   email_verification EmailVerificationToken[]
   password_reset     PasswordResetToken[]
-  audit_logs         AuditLog[]
+  // audit_logs intentionally absent — AuditLog references the actor by scalar
+  // id with no FK, so an audit trail survives the actor being deleted. Query it
+  // with `prisma.auditLog.findMany({ where: { user_id } })`.
   user_settings      UserSettings?
   aiConfig           UserAIConfig?
   aiProfile          UserAIProfile?
@@ -724,6 +726,7 @@ model SellerWallet {
   seller          SellerProfile @relation(fields: [sellerId], references: [id], onDelete: Cascade)
   transactions    Transaction[]
   holds           WalletHold[]
+  batchItems      SettlementBatchItem[]
 }
 
 /// A freeze on part of a seller's released balance while a dispute is heard.
@@ -815,6 +818,7 @@ model Payout {
   id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   wallet          SellerWallet? @relation(fields: [walletId], references: [id], onDelete: Cascade)
   buyerWallet     BuyerWallet?  @relation(fields: [buyerWalletId], references: [id], onDelete: Cascade)
+  batchItem       SettlementBatchItem?
 
   /// The admin queue always filters by status, and the settlement executor will
   /// poll for APPROVED/PROCESSING rows. Both are status-first lookups.
@@ -834,6 +838,7 @@ model BuyerWallet {
   profile      Profile            @relation(fields: [profileId], references: [id], onDelete: Cascade)
   transactions BuyerTransaction[]
   payouts      Payout[]
+  batchItems   SettlementBatchItem[]
 }
 
 model BuyerTransaction {
@@ -1155,7 +1160,17 @@ model ProductPostTag {
 model AuditLog {
   id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   event_type String // LOGIN_SUCCESS, LOGIN_FAILED, etc.
-  user_id    String   @db.Uuid
+  /// Actor, as a SCALAR ref — deliberately no Prisma relation and no FK.
+  ///
+  /// An audit log is an append-only historical fact. A foreign key made it two
+  /// things it must never be: (1) failable — writing a record for an actor that
+  /// no longer exists (or never did, e.g. a login attempt against a deleted
+  /// account) violated the constraint and the job dead-lettered, silently losing
+  /// the very events most worth keeping; and (2) erasable — `onDelete: Cascade`
+  /// meant deleting a Profile deleted its entire audit history.
+  ///
+  /// Nullable so a write can still be recorded when the actor is unknown.
+  user_id    String?  @db.Uuid
   email      String?
   ip_address String?
   user_agent String?
@@ -1163,8 +1178,6 @@ model AuditLog {
   reason     String?
   metadata   Json?
   created_at DateTime @default(now()) @db.Timestamptz(6)
-
-  user Profile @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([user_id])
   @@index([email])
@@ -1714,6 +1727,98 @@ enum PaymentStatus {
 /// PROCESSING exists so "handed to the provider, outcome unknown" is a state the
 /// system can be in. Without it a timed-out transfer is indistinguishable from
 /// one never sent, and a retry pays twice.
+/// A prepared payout run awaiting a human decision.
+///
+/// Preparing a batch NEVER moves money: it reads wallets and writes proposals.
+/// Items become real Payout rows only on approval. That separation is what lets
+/// the engine run in shadow mode against live balances with no risk.
+model SettlementBatch {
+  id       String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  status   SettlementBatchStatus @default(DRAFT)
+  currency String                @default("NGN")
+
+  /// Prepared for observation only. A shadow batch can never be approved or
+  /// executed — enforced by a CHECK, not by convention.
+  shadow Boolean @default(true)
+
+  periodStart DateTime @db.Timestamptz(6)
+  periodEnd   DateTime @db.Timestamptz(6)
+
+  payoutCount  Int   @default(0)
+  flaggedCount Int   @default(0)
+  totalGross   Float @default(0)
+  totalNet     Float @default(0)
+  totalFees    Float @default(0)
+
+  /// Hash over each item's id, net amount and destination at preparation time.
+  /// Recomputed before execution; a mismatch aborts the batch, so what was
+  /// approved and what is sent cannot diverge.
+  approvalDigest String?
+
+  preparedAt DateTime  @default(now()) @db.Timestamptz(6)
+  approvedAt DateTime? @db.Timestamptz(6)
+  /// A moderator id, or a policy name like "SYSTEM:policy-v1" once low-risk
+  /// items may be auto-approved. Deliberately not a user FK.
+  approvedBy String?
+  executedAt DateTime? @db.Timestamptz(6)
+  notes      String?
+
+  items SettlementBatchItem[]
+
+  @@index([status, preparedAt(sort: Desc)])
+}
+
+/// One proposed payout inside a batch. Not a Payout — a proposal for one.
+model SettlementBatchItem {
+  id      String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  batchId String @db.Uuid
+
+  /// Exactly one of these is set, mirroring Payout.
+  walletId      String? @db.Uuid
+  buyerWalletId String? @db.Uuid
+
+  amountGross Float
+  amountNet   Float
+  platformFee Float
+  transferFee Float
+
+  /// Risk codes that fired, e.g. ["FIRST_PAYOUT", "BANK_CHANGED_RECENTLY"].
+  /// Codes rather than prose so they can be filtered, counted and tuned.
+  flags String[] @default([])
+
+  /// Flagged items default to excluded — a human opts them back IN, with a
+  /// reason. Attention goes only where the machine is unsure.
+  excluded      Boolean @default(false)
+  excludeReason String?
+
+  /// Set when approval turns this proposal into a real payout. Unique: a payout
+  /// originates from at most one proposal (the DB enforces this with a partial
+  /// unique index, which Prisma models as @unique here).
+  payoutId String? @unique @db.Uuid
+
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+
+  batch       SettlementBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  wallet      SellerWallet?   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  buyerWallet BuyerWallet?    @relation(fields: [buyerWalletId], references: [id], onDelete: Cascade)
+  payout      Payout?         @relation(fields: [payoutId], references: [id], onDelete: SetNull)
+
+  @@index([batchId])
+}
+
+enum SettlementBatchStatus {
+  /// Prepared, not yet submitted for a decision.
+  DRAFT
+  /// Awaiting a human.
+  PENDING_APPROVAL
+  /// Approved; payouts created, not yet handed to a provider.
+  APPROVED
+  /// Handed to a disbursement provider.
+  EXECUTING
+  COMPLETED
+  CANCELLED
+}
+
 enum PayoutStatus {
   PENDING
   APPROVED

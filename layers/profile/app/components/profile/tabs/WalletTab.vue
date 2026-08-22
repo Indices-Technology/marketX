@@ -80,6 +80,30 @@
           </div>
         </div>
 
+        <!-- Cash out affiliate commission.
+             Until now this balance could be earned and seen but never withdrawn. -->
+        <div
+          class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"
+        >
+          <div class="min-w-0">
+            <p class="text-sm font-semibold text-gray-900 dark:text-neutral-100">
+              Withdraw your earnings
+            </p>
+            <p class="mt-0.5 text-[12px] text-gray-500 dark:text-neutral-400">
+              Sent to your bank account. Fees are deducted from the amount you
+              request, so you'll see the exact figure before confirming.
+            </p>
+          </div>
+          <BaseButton
+            size="sm"
+            variant="primary"
+            :disabled="buyerBalance <= 0"
+            @click="openBuyerWithdraw"
+          >
+            {{ buyerBalance > 0 ? 'Withdraw' : 'Nothing to withdraw' }}
+          </BaseButton>
+        </div>
+
         <!-- Buyer transaction history -->
         <div
           class="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
@@ -365,6 +389,69 @@
       ><!-- end seller wallet --> </template
     ><!-- end v-else (loaded) -->
   </div>
+  <!-- Affiliate withdrawal -->
+  <BaseModal
+    :model-value="buyerWithdraw.open"
+    title="Withdraw earnings"
+    max-width="sm"
+    @update:model-value="(v: boolean) => !v && closeBuyerWithdraw()"
+  >
+    <div class="space-y-4">
+      <div class="rounded-xl bg-gray-50 p-3 text-[13px] dark:bg-neutral-800/50">
+        <div class="flex items-center justify-between">
+          <span class="text-gray-500 dark:text-neutral-400">Available</span>
+          <span class="font-semibold text-gray-900 dark:text-neutral-100">
+            {{ formatAmount(buyerBalance) }}
+          </span>
+        </div>
+      </div>
+
+      <BaseInput
+        v-model="buyerWithdraw.amount"
+        type="number"
+        label="Amount to withdraw"
+        placeholder="0.00"
+      />
+      <BaseInput
+        v-model="buyerWithdraw.accountName"
+        label="Account name"
+        placeholder="As it appears on your bank account"
+      />
+      <BaseInput
+        v-model="buyerWithdraw.accountNumber"
+        label="Account number"
+        placeholder="10 digits"
+      />
+      <BaseInput
+        v-model="buyerWithdraw.bankCode"
+        label="Bank code"
+        placeholder="e.g. 058"
+      />
+
+      <p
+        v-if="buyerWithdraw.error"
+        class="rounded-lg bg-red-50 px-3 py-2 text-[12px] text-red-600 dark:bg-red-900/20 dark:text-red-400"
+      >
+        {{ buyerWithdraw.error }}
+      </p>
+    </div>
+
+    <template #footer>
+      <div class="flex justify-end gap-2">
+        <BaseButton size="sm" variant="secondary" @click="closeBuyerWithdraw">
+          Cancel
+        </BaseButton>
+        <BaseButton
+          size="sm"
+          variant="primary"
+          :disabled="buyerWithdraw.submitting"
+          @click="submitBuyerWithdraw"
+        >
+          {{ buyerWithdraw.submitting ? 'Requesting…' : 'Request withdrawal' }}
+        </BaseButton>
+      </div>
+    </template>
+  </BaseModal>
 </template>
 
 <script setup lang="ts">
@@ -391,7 +478,69 @@ const {
   transactionsTotal: buyerTransactionsTotal,
   fetchWallet: fetchBuyerWallet,
   fetchTransactions: fetchBuyerTransactions,
+  withdraw: withdrawBuyerEarnings,
 } = useBuyerWallet()
+
+// ── Affiliate withdrawal ────────────────────────────────────────────────────
+const buyerWithdraw = reactive({
+  open: false,
+  amount: '',
+  accountName: '',
+  accountNumber: '',
+  bankCode: '',
+  submitting: false,
+  error: '',
+})
+
+function openBuyerWithdraw() {
+  buyerWithdraw.error = ''
+  buyerWithdraw.open = true
+}
+
+function closeBuyerWithdraw() {
+  buyerWithdraw.open = false
+  buyerWithdraw.submitting = false
+}
+
+async function submitBuyerWithdraw() {
+  buyerWithdraw.error = ''
+
+  // Amounts are entered in naira but the ledger is kobo throughout. Converting
+  // here — not in the composable — keeps the API surface in one unit.
+  const naira = Number(buyerWithdraw.amount)
+  if (!naira || naira <= 0) {
+    buyerWithdraw.error = 'Enter an amount greater than zero.'
+    return
+  }
+  const kobo = Math.round(naira * 100)
+  if (kobo > buyerBalance.value) {
+    buyerWithdraw.error = 'That is more than your available balance.'
+    return
+  }
+  if (!/^\d{10}$/.test(buyerWithdraw.accountNumber.trim())) {
+    buyerWithdraw.error = 'Account number must be 10 digits.'
+    return
+  }
+  if (!buyerWithdraw.accountName.trim() || !buyerWithdraw.bankCode.trim()) {
+    buyerWithdraw.error = 'Account name and bank code are required.'
+    return
+  }
+
+  buyerWithdraw.submitting = true
+  try {
+    await withdrawBuyerEarnings(kobo, {
+      account_number: buyerWithdraw.accountNumber.trim(),
+      bank_code: buyerWithdraw.bankCode.trim(),
+      name: buyerWithdraw.accountName.trim(),
+    })
+    closeBuyerWithdraw()
+    buyerWithdraw.amount = ''
+  } catch (e: any) {
+    buyerWithdraw.error =
+      e?.statusMessage || e?.message || 'Withdrawal failed. Please try again.'
+    buyerWithdraw.submitting = false
+  }
+}
 
 const loadMoreBuyerTx = () => fetchBuyerTransactions(20, buyerTransactions.value.length)
 

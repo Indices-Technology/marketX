@@ -47,6 +47,33 @@ export const useBuyerWallet = () => {
     }
   }
 
+  /**
+   * Cash out affiliate commission.
+   *
+   * `amount` is the GROSS in kobo: fees are deducted from it, so the bank
+   * receives the returned `breakdown.net`. Refetches the wallet afterwards so
+   * the balance on screen reflects the debit immediately rather than after a
+   * page change.
+   */
+  const withdraw = async (
+    amount: number,
+    bankAccount: { account_number: string; bank_code: string; name: string },
+  ) => {
+    store.setLoading(true)
+    store.setError(null)
+    try {
+      const result = await api.withdraw({ amount, bankAccount })
+      await fetchWallet()
+      await fetchTransactions()
+      return result.data
+    } catch (e: unknown) {
+      store.setError(extractErrorMessage(e, 'Withdrawal failed'))
+      throw e
+    } finally {
+      store.setLoading(false)
+    }
+  }
+
   return {
     isLoading,
     error,
@@ -56,5 +83,6 @@ export const useBuyerWallet = () => {
     transactionsTotal,
     fetchWallet,
     fetchTransactions,
+    withdraw,
   }
 }
