@@ -41,7 +41,19 @@ export default defineEventHandler(async (event) => {
               include: {
                 product: {
                   include: {
-                    seller: { select: { profileId: true } },
+                    seller: {
+                      select: {
+                        profileId: true,
+                        // Public business fields, used to tell a buyer where to
+                        // collect and how to reach the seller. Deliberately NOT
+                        // shipFromAddress/City/State — that is where a courier
+                        // collects, usually a seller's home, given for GIG
+                        // booking and never for publication to buyers.
+                        store_name: true,
+                        store_phone: true,
+                        store_location: true,
+                      },
+                    },
                     media: {
                       take: 1,
                       where: { isBgMusic: false },
@@ -63,7 +75,11 @@ export default defineEventHandler(async (event) => {
       (item) => item.variant.product.seller?.profileId === user.id,
     )
     if (!isSeller)
-      throw new UserError('FORBIDDEN', 'Only a seller in this order can update its status', 403)
+      throw new UserError(
+        'FORBIDDEN',
+        'Only a seller in this order can update its status',
+        403,
+      )
 
     const statusChanging = body.status !== order.status
 
@@ -120,11 +136,30 @@ export default defineEventHandler(async (event) => {
     })
 
     if (statusChanging) {
+      // Collection details for a pickup order. "Arrange collection with the
+      // seller" was unactionable — it named neither a place nor a way to make
+      // contact, which is the whole point of the message.
+      //
+      // Only public business fields are used. store_phone is currently set by
+      // 8 of 29 sellers, so the fallback is not an edge case: it routes the
+      // buyer to the in-app conversation, which exists for every order and
+      // exposes nobody's number.
+      const pickupSeller = order.orderItem[0]?.variant?.product?.seller
+      const pickupWhere = [
+        pickupSeller?.store_name,
+        pickupSeller?.store_location,
+      ]
+        .filter(Boolean)
+        .join(' — ')
+      const pickupHow = pickupSeller?.store_phone
+        ? `Call ${pickupSeller.store_phone} to arrange collection.`
+        : 'Message the seller in the app to arrange collection.'
+
       // Notify + email buyer on all seller-driven status changes
       const buyerMessages: Partial<Record<string, string>> = {
         CONFIRMED: `Your order #${id} has been confirmed by the seller and is being prepared.`,
         SHIPPED: `Your order #${id} has been shipped${body.trackingNumber ? ` · Tracking: ${body.trackingNumber}` : ''}. Funds will be released in 7 days if not confirmed.`,
-        READY_FOR_PICKUP: `Your order #${id} is ready for pickup — arrange collection with the seller. Funds will be released in 7 days if not confirmed.`,
+        READY_FOR_PICKUP: `Your order #${id} is ready for pickup${pickupWhere ? ` at ${pickupWhere}` : ''}. ${pickupHow} Funds will be released in 7 days if not confirmed.`,
         DELIVERED: order.isPickup
           ? `Your order #${id} has been marked as picked up.`
           : `Your order #${id} has been marked as delivered.`,
@@ -145,33 +180,50 @@ export default defineEventHandler(async (event) => {
           // and a carrier event for the same transition don't double-notify.
           { dedupeKey: `ship:${id}:${body.status}` },
         )
-        prisma.profile.findUnique({ where: { id: order.userId }, select: { email: true } })
+        prisma.profile
+          .findUnique({ where: { id: order.userId }, select: { email: true } })
           .then((buyer) => {
-            if (!buyer?.email || buyer.email.includes('@checkout.marketx.')) return
-            const { subject, html, text } = buildOrderStatusEmail(id, body.status, {
-              // GIG drop-off sets `waybill`; self-delivery sets `trackingNumber`.
-              trackingNumber: body.trackingNumber ?? body.waybill,
-              shipper: body.shipper,
-              orderUrl: `${useRuntimeConfig().public.baseURL}/buyer/orders/${id}`,
-              items: order.orderItem.map((oi) => ({
-                title: oi.variant?.product?.title ?? 'Item',
-                quantity: oi.quantity,
-                priceKobo: oi.price,
-                image: oi.variant?.product?.media?.[0]?.url,
-              })),
-              itemsTotalKobo: order.totalAmount,
-              shippingKobo: order.shippingCost,
-              // GIG SMSes the buyer a PIN they must give the courier to collect.
-              deliveryPinNote: order.shippingProvider === 'gig',
-              shipTo: {
-                name: order.name,
-                address: [order.address, order.county, order.shipState, order.country]
-                  .filter(Boolean)
-                  .join(', '),
-                phone: order.shipPhone ?? undefined,
+            if (!buyer?.email || buyer.email.includes('@checkout.marketx.'))
+              return
+            const { subject, html, text } = buildOrderStatusEmail(
+              id,
+              body.status,
+              {
+                // GIG drop-off sets `waybill`; self-delivery sets `trackingNumber`.
+                trackingNumber: body.trackingNumber ?? body.waybill,
+                shipper: body.shipper,
+                orderUrl: `${useRuntimeConfig().public.baseURL}/buyer/orders/${id}`,
+                items: order.orderItem.map((oi) => ({
+                  title: oi.variant?.product?.title ?? 'Item',
+                  quantity: oi.quantity,
+                  priceKobo: oi.price,
+                  image: oi.variant?.product?.media?.[0]?.url,
+                })),
+                itemsTotalKobo: order.totalAmount,
+                shippingKobo: order.shippingCost,
+                // GIG SMSes the buyer a PIN they must give the courier to collect.
+                deliveryPinNote: order.shippingProvider === 'gig',
+                shipTo: {
+                  name: order.name,
+                  address: [
+                    order.address,
+                    order.county,
+                    order.shipState,
+                    order.country,
+                  ]
+                    .filter(Boolean)
+                    .join(', '),
+                  phone: order.shipPhone ?? undefined,
+                },
               },
+            )
+            emailQueue.enqueue({
+              to: buyer.email,
+              subject,
+              html,
+              text,
+              type: 'GENERAL',
             })
-            emailQueue.enqueue({ to: buyer.email, subject, html, text, type: 'GENERAL' })
           })
           .catch((e) => logger.logError('[status email buyer]', e))
       }
@@ -192,7 +244,10 @@ export default defineEventHandler(async (event) => {
   } catch (error: unknown) {
     if (error && typeof error === 'object' && 'statusCode' in error) throw error
     if (error instanceof ZodError)
-      throw createError({ statusCode: 400, statusMessage: 'Invalid request body' })
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Invalid request body',
+      })
     if (error instanceof UserError)
       throw createError({
         statusCode: error.status,
