@@ -360,6 +360,8 @@
     </div>
 
     <!-- Right Sidebar Slot -->
+    <SiteFooter />
+
     <template #right-sidebar>
       <RightSideNavLinks />
     </template>
@@ -373,6 +375,7 @@
 import { ref, computed } from 'vue'
 import HomeLayout from '~~/layers/feed/app/layouts/HomeLayout.vue'
 import RightSideNavLinks from '~~/layers/core/app/layouts/children/RightSideNavLinks.vue'
+import SiteFooter from '~~/layers/core/app/components/SiteFooter.vue'
 import SupportNewTicketModal from '~~/layers/support/app/components/SupportNewTicketModal.vue'
 import { useSeo } from '~~/layers/core/app/composables/useSeo'
 
@@ -420,7 +423,7 @@ const faqs = [
     category: 'selling',
     question: 'How do payouts work for sellers?',
     answer:
-      'When a buyer purchases an item, the funds are held securely in escrow until the item is delivered. Once the buyer confirms delivery (or after a 3-day dispute window), the funds are released to your Seller Wallet. You can then withdraw to your bank account.',
+      'When a buyer purchases an item, the funds are held securely in escrow until the item is delivered. Once the buyer confirms delivery — or automatically 7 days after you mark the order shipped or ready for pickup, if they never respond — the funds are released to your Seller Wallet. You can then request a payout to your bank account.',
   },
   {
     category: 'ai',

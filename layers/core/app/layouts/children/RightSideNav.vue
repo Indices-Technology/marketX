@@ -438,6 +438,11 @@
               >Help</NuxtLink
             >
             <NuxtLink
+              to="/contact"
+              class="hover:text-gray-700 dark:hover:text-neutral-300"
+              >Contact</NuxtLink
+            >
+            <NuxtLink
               to="/terms"
               class="hover:text-gray-700 dark:hover:text-neutral-300"
               >Terms</NuxtLink
@@ -455,7 +460,7 @@
           </div>
           <p class="mt-3 text-[11px] text-gray-400 dark:text-neutral-600">
             © {{ new Date().getFullYear() }}
-            {{ $config.public.siteName || 'MarketX' }}. All rights reserved.
+            {{ $config.public.companyName }}. All rights reserved.
           </p>
         </div>
       </div>

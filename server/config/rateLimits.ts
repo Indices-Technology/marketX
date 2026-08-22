@@ -135,6 +135,21 @@ export const RATE_LIMITS = {
     keyPrefix: 'auth:check-username',
   },
 
+  // Partner / API waitlist form: public and unauthenticated, so it needs a
+  // ceiling. Low cap — a genuine applicant submits once, maybe twice after a
+  // validation bounce; anything past that is a bot filling the sales pipeline
+  // with junk.
+  PARTNER_LEAD: {
+    maxAttempts: parseInt(process.env.RATE_LIMIT_PARTNER_LEAD_MAX || '5', 10),
+    windowMs: parseInt(
+      process.env.RATE_LIMIT_PARTNER_LEAD_WINDOW || String(60 * 60 * 1000),
+      10,
+    ), // 1 hour
+    message: 'Too many applications',
+    lockoutMs: 60 * 60 * 1000, // 1 hour lockout
+    keyPrefix: 'partners:lead',
+  },
+
   PROFILE_FETCH: {
     maxAttempts: parseInt(process.env.RATE_LIMIT_REFRESH_TOKEN_MAX || '10', 10),
     windowMs: parseInt(

@@ -621,6 +621,48 @@ export const useSeo = () => {
     })
   }
 
+  const setContactPage = () => {
+    const desc = `Contact ${siteName} — support, partnerships, press, security and privacy. We reply within 24 hours on working days.`
+    useSeoMeta({
+      title: 'Contact Us',
+      description: desc,
+      ogTitle: `Contact ${siteName}`,
+      ogDescription: desc,
+      ogUrl: `${baseURL}/contact`,
+    })
+  }
+
+  const setPartnersPage = () => {
+    const desc = `Partner with ${siteName} — logistics, payments, trade associations and agencies. Join the API waitlist.`
+    useSeoMeta({
+      title: 'Partnerships & API',
+      description: desc,
+      ogTitle: `Partner with ${siteName}`,
+      ogDescription: desc,
+      ogUrl: `${baseURL}/partners`,
+    })
+  }
+
+  const setCookiePolicyPage = () => {
+    useSeoMeta({
+      title: 'Cookie Policy',
+      description: `How ${siteName} uses cookies and similar technologies, and how to control them.`,
+      ogTitle: `Cookie Policy | ${siteName}`,
+      ogUrl: `${baseURL}/policy/cookies`,
+    })
+  }
+
+  /** Help centre article pages — one helper, the slug varies. */
+  const setHelpArticlePage = (title: string, description: string, slug: string) => {
+    useSeoMeta({
+      title,
+      description,
+      ogTitle: `${title} | ${siteName}`,
+      ogDescription: description,
+      ogUrl: `${baseURL}/help/${slug}`,
+    })
+  }
+
   const setTermsPage = () => {
     useSeoMeta({
       title: 'Terms of Service',
@@ -662,7 +704,11 @@ export const useSeo = () => {
     // Static
     setAboutPage,
     setHelpPage,
+    setHelpArticlePage,
+    setContactPage,
+    setPartnersPage,
     setPrivacyPage,
     setTermsPage,
+    setCookiePolicyPage,
   }
 }

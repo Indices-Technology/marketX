@@ -124,6 +124,16 @@
             >About {{ config.public.siteName || 'MarketX' }}</NuxtLink
           >
           <NuxtLink
+            to="/contact"
+            class="transition-colors hover:text-gray-800 dark:hover:text-gray-300"
+            >Contact</NuxtLink
+          >
+          <NuxtLink
+            to="/partners"
+            class="transition-colors hover:text-gray-800 dark:hover:text-gray-300"
+            >Partners</NuxtLink
+          >
+          <NuxtLink
             to="/support"
             class="transition-colors hover:text-gray-800 dark:hover:text-gray-300"
             >Support Center</NuxtLink
@@ -134,7 +144,7 @@
         >
           <p>
             © {{ new Date().getFullYear() }}
-            {{ config.public.siteName || 'MarketX' }}. All rights reserved.
+            {{ config.public.companyName }}. All rights reserved.
           </p>
         </div>
       </div>
