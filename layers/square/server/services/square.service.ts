@@ -76,6 +76,20 @@ const OFFICER_SELECT = {
 
 // ── Service ───────────────────────────────────────────────────────────────────
 
+type PrismaTx = Omit<
+  typeof prisma,
+  '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
+>
+
+export interface AssociationCut {
+  squareId: string
+  squareName: string | null
+  /** The association's wallet, not the seller's. */
+  walletId: string
+  cutPercent: number
+  cutAmount: number
+}
+
 export const squareService = {
   // ── Browse & fetch ──────────────────────────────────────────────────────────
 
@@ -678,103 +692,99 @@ export const squareService = {
   // ── Association wallet ──────────────────────────────────────────────────────
 
   /**
-   * Iterates every seller in an order and calls creditAssociation for each.
-   * Mirrors the same seller-amount computation used by walletService.creditSellersOnPayment.
-   * Call this non-blocking after walletService.creditSellersOnPayment.
+   * Resolve the association cut owed on a seller's released amount.
+   *
+   * Pure lookup + arithmetic — writes nothing. The caller applies it, so the
+   * seller's debit and the association's credit are computed from ONE figure and
+   * cannot drift apart.
+   *
+   * Keyed by walletId rather than sellerId because the caller (walletService's
+   * release path) works in wallet terms; the seller is resolved from it here.
+   *
+   * `cutAmount` is rounded to whole minor units and the caller gives the seller
+   * the remainder, so `sellerShare + cutAmount === base` exactly, with no
+   * rounding leak in either direction.
    */
-  async creditAssociationsForOrder(orderId: number) {
-    const items = await prisma.orderItem.findMany({
-      where: { orderId },
-      include: {
-        variant: {
-          include: {
-            product: {
-              select: {
-                price: true,
-                discount: true,
-                seller: { select: { id: true } },
-              },
-            },
-          },
-        },
-      },
+  async resolveAssociationCut(
+    walletId: string,
+    base: number,
+    tx: PrismaTx = prisma,
+  ): Promise<AssociationCut | null> {
+    if (base <= 0) return null
+
+    const wallet = await tx.sellerWallet.findUnique({
+      where: { id: walletId },
+      select: { seller: { select: { primarySquareId: true } } },
     })
+    const squareId = wallet?.seller?.primarySquareId
+    if (!squareId) return null // seller belongs to no Square
 
-    const sellerAmounts = new Map<string, number>()
-    for (const item of items) {
-      const product = item.variant?.product
-      const sellerId = product?.seller?.id
-      if (!sellerId) continue
-      const price = item.variant.price ?? product.price
-      const discount = product.discount ?? 0
-      // Amount in kobo to match walletService units
-      const amountKobo = Math.round(
-        price * (1 - discount / 100) * item.quantity * 100,
-      )
-      sellerAmounts.set(
-        sellerId,
-        (sellerAmounts.get(sellerId) ?? 0) + amountKobo,
-      )
-    }
-
-    await Promise.allSettled(
-      Array.from(sellerAmounts.entries())
-        .filter(([, amount]) => amount > 0)
-        .map(([sellerId, orderAmount]) =>
-          squareService.creditAssociation({ sellerId, orderId, orderAmount }),
-        ),
-    )
-  },
-
-  /**
-   * Called from the order completion flow.
-   * Credits the primary Square's wallet with the association's cut.
-   */
-  async creditAssociation(opts: {
-    sellerId: string
-    orderId: number
-    orderAmount: number // in same currency unit as the order
-  }) {
-    const { sellerId, orderId, orderAmount } = opts
-
-    const seller = await prisma.sellerProfile.findUnique({
-      where: { id: sellerId },
-      select: { primarySquareId: true },
-    })
-    if (!seller?.primarySquareId) return null // seller not in a Square
-
-    const square = await prisma.square.findUnique({
-      where: { id: seller.primarySquareId },
+    const square = await tx.square.findUnique({
+      where: { id: squareId },
       select: {
         id: true,
+        name: true,
         associationCutPercent: true,
         wallet: { select: { id: true } },
       },
     })
     if (!square?.wallet) return null
 
-    const cutAmount = (orderAmount * square.associationCutPercent) / 100
+    const pct = square.associationCutPercent ?? 0
+    if (pct <= 0) return null
 
-    await prisma.$transaction([
-      prisma.squareTransaction.create({
-        data: {
-          squareId: square.id,
-          walletId: square.wallet.id,
-          orderId,
-          sellerAmount: orderAmount,
-          cutPercent: square.associationCutPercent,
-          cutAmount,
-        },
-      }),
-      prisma.squareWallet.update({
-        where: { id: square.wallet.id },
-        data: {
-          balance: { increment: cutAmount },
-          totalEarned: { increment: cutAmount },
-        },
-      }),
-    ])
+    // Never let a misconfigured percentage take more than the seller earned.
+    const cutAmount = Math.min(base, Math.round((base * pct) / 100))
+    if (cutAmount <= 0) return null
 
-    return { squareId: square.id, cutAmount }
+    return {
+      squareId: square.id,
+      squareName: square.name,
+      walletId: square.wallet.id,
+      cutPercent: pct,
+      cutAmount,
+    }
   },
+
+  /**
+   * Write the association credit resolved above. Runs inside the caller's
+   * transaction so the seller's reduced credit and this credit commit together
+   * or not at all.
+   */
+  async applyAssociationCredit(
+    cut: AssociationCut,
+    orderId: number,
+    sellerAmount: number,
+    tx: PrismaTx = prisma,
+  ) {
+    await tx.squareTransaction.create({
+      data: {
+        squareId: cut.squareId,
+        walletId: cut.walletId,
+        orderId,
+        sellerAmount,
+        cutPercent: cut.cutPercent,
+        cutAmount: cut.cutAmount,
+      },
+    })
+    await tx.squareWallet.update({
+      where: { id: cut.walletId },
+      data: {
+        balance: { increment: cut.cutAmount },
+        totalEarned: { increment: cut.cutAmount },
+      },
+    })
+  },
+
+  // NOTE: `creditAssociationsForOrder` / `creditAssociation` were REMOVED.
+  //
+  // They credited the association wallet at payment time from an amount
+  // recomputed off current product prices, while debiting nobody. Two defects in
+  // one: the platform's stated liabilities exceeded what it had collected, and
+  // the cut was based on the product's price TODAY rather than what the buyer
+  // actually paid, so a later price edit changed a historical cut.
+  //
+  // The cut is now taken out of the seller's share at release, from the exact
+  // amount held for that order. See walletService.releaseFundsOnDelivery.
+
 }

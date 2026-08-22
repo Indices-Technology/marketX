@@ -106,8 +106,14 @@ export const podService = {
 
     for (const [sellerId, { orderId, fee }] of bySeller) {
       if (fee <= 0) continue
+      // Idempotency covers BOTH outcomes. Keying only on PLATFORM_FEE_DEBIT meant
+      // an order that collected nothing left no marker, so every later run
+      // retried it and could stack duplicate debits once funds appeared.
       const already = await prisma.transaction.findFirst({
-        where: { orderId, type: 'PLATFORM_FEE_DEBIT' },
+        where: {
+          orderId,
+          type: { in: ['PLATFORM_FEE_DEBIT', 'PLATFORM_FEE_UNCOLLECTED'] },
+        },
         select: { id: true },
       })
       if (already) continue
@@ -116,22 +122,60 @@ export const podService = {
           const wallet = await tx.sellerWallet.findUniqueOrThrow({
             where: { sellerId },
           })
-          await tx.sellerWallet.update({
-            where: { id: wallet.id },
-            data: { balance: { decrement: fee } },
-          })
-          await tx.transaction.create({
-            data: {
-              walletId: wallet.id,
-              amount: fee,
-              type: 'PLATFORM_FEE_DEBIT',
-              description: `POD platform fee — Order #${orderId}`,
-              orderId,
-            },
-          })
+
+          // Collect only what is genuinely free.
+          //
+          // This used to be an unguarded decrement, which could drive a balance
+          // negative. Since dispute holds landed it is worse than that: the
+          // held_balance <= balance CHECK makes the whole statement FAIL when a
+          // seller has money frozen, and the catch below swallowed it — so the
+          // fee was silently never collected and never retried.
+          //
+          // Take what is available down to the held floor, and record any
+          // shortfall explicitly so it is visible and can be chased, instead of
+          // vanishing into a log line.
+          const collectible = Math.max(0, wallet.balance - wallet.held_balance)
+          const take = Math.min(fee, collectible)
+
+          if (take > 0) {
+            await tx.sellerWallet.update({
+              where: { id: wallet.id },
+              data: { balance: { decrement: take } },
+            })
+            await tx.transaction.create({
+              data: {
+                walletId: wallet.id,
+                amount: take,
+                type: 'PLATFORM_FEE_DEBIT',
+                description:
+                  take < fee
+                    ? `POD platform fee (partial) — Order #${orderId}`
+                    : `POD platform fee — Order #${orderId}`,
+                orderId,
+              },
+            })
+          }
+
+          const shortfall = fee - take
+          if (shortfall > 0) {
+            // A record, not a balance movement: the seller owes this. Written in
+            // the same transaction as the partial debit so the two can never
+            // disagree about how much was actually taken.
+            await tx.transaction.create({
+              data: {
+                walletId: wallet.id,
+                amount: shortfall,
+                type: 'PLATFORM_FEE_UNCOLLECTED',
+                description: `POD platform fee owed — Order #${orderId} (insufficient free balance${
+                  wallet.held_balance > 0 ? ', funds on hold' : ''
+                })`,
+                orderId,
+              },
+            })
+          }
         })
       } catch (e) {
-        console.error('[pod] platform fee debit failed (owed)', {
+        console.error('[pod] platform fee debit failed', {
           sellerId,
           orderId,
           fee,

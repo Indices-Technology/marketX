@@ -420,7 +420,8 @@ export const adminService = {
         statusMessage: `Payout already ${payout.status.toLowerCase()}`,
       })
 
-    const sellerProfileId = payout.wallet?.seller?.profileId
+    const sellerProfileId =
+      payout.wallet?.seller?.profileId ?? payout.buyerWallet?.profileId
     const naira = (kobo: number) => (kobo / 100).toLocaleString('en-NG')
     // Gross is what left the wallet — the correct figure for a rejection refund.
     const amountNaira = naira(payout.amount)
@@ -464,18 +465,37 @@ export const adminService = {
         if (count === 0)
           throw createError({ statusCode: 409, statusMessage: 'Payout already processed' })
 
-        await tx.sellerWallet.update({
-          where: { id: payout.walletId },
-          data: { balance: { increment: payout.amount } },
-        })
-        await tx.transaction.create({
-          data: {
-            walletId: payout.walletId,
-            amount: payout.amount,
-            type: 'CREDIT',
-            description: `Withdrawal #${payoutId.slice(0, 8)} rejected — funds returned`,
-          },
-        })
+        // Return the GROSS to whichever wallet it left. A payout is owned by a
+        // seller wallet or a buyer (affiliate) wallet, never both — refunding
+        // the wrong one would credit a stranger and leave the real owner short.
+        const note = `Withdrawal #${payoutId.slice(0, 8)} rejected — funds returned`
+        if (payout.walletId) {
+          await tx.sellerWallet.update({
+            where: { id: payout.walletId },
+            data: { balance: { increment: payout.amount } },
+          })
+          await tx.transaction.create({
+            data: {
+              walletId: payout.walletId,
+              amount: payout.amount,
+              type: 'CREDIT',
+              description: note,
+            },
+          })
+        } else if (payout.buyerWalletId) {
+          await tx.buyerWallet.update({
+            where: { id: payout.buyerWalletId },
+            data: { balance: { increment: payout.amount } },
+          })
+          await tx.buyerTransaction.create({
+            data: {
+              walletId: payout.buyerWalletId,
+              amount: payout.amount,
+              type: 'CREDIT',
+              description: note,
+            },
+          })
+        }
       })
 
       if (sellerProfileId) {

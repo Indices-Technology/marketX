@@ -9,6 +9,7 @@ import {
   buildFundsReleasedEmail,
 } from '~~/server/utils/email/emailService'
 import { verifyShippingQuote } from '~~/layers/shipping/server/utils/quoteToken'
+import { squareService } from '~~/layers/square/server/services/square.service'
 
 /**
  * True when this order's shipping is fulfilled by the seller themselves
@@ -190,14 +191,45 @@ export const walletService = {
       }
       for (const [walletId, total] of totals) {
         if (total <= 0) continue
-        // Move the exact held amount from pending → available.
+
+        // The association cut comes OUT OF THE SELLER'S SHARE, taken here at
+        // release rather than credited separately at payment.
+        //
+        // It used to be credited to the association wallet without being debited
+        // from anyone, so the sum of all wallet balances exceeded the money
+        // actually collected. Splitting the seller's own released amount keeps
+        // the identity exact:
+        //
+        //   line total = affiliate commission + association cut + seller amount
+        //
+        // Taking it at release (not payment) also means a cancelled or reversed
+        // order needs no separate association unwind — the whole pending credit
+        // reverses as one figure, exactly as it did before.
+        const cut = await squareService.resolveAssociationCut(walletId, total, tx)
+        const sellerShare = total - (cut?.cutAmount ?? 0)
+
         await tx.sellerWallet.update({
           where: { id: walletId },
           data: {
+            // Pending always drops by the full held amount; only the part that
+            // reaches the seller's usable balance is reduced by the cut.
             pending_balance: { decrement: total },
-            balance: { increment: total },
+            balance: { increment: sellerShare },
           },
         })
+
+        if (cut && cut.cutAmount > 0) {
+          await squareService.applyAssociationCredit(cut, orderId, total, tx)
+          await tx.transaction.create({
+            data: {
+              walletId,
+              amount: cut.cutAmount,
+              type: 'ASSOCIATION_CUT',
+              description: `Order #${orderId} — ${cut.cutPercent}% association cut to ${cut.squareName ?? 'your Square'}`,
+              orderId,
+            },
+          })
+        }
       }
       return totals
     })
@@ -552,6 +584,156 @@ export const walletService = {
       })
     }
     return { captured }
+  },
+
+  // ── Affiliate (buyer wallet) payouts ───────────────────────────────────────
+
+  /**
+   * Withdraw affiliate commission from a BuyerWallet.
+   *
+   * Affiliates who are not sellers earn real commission that, until now, had no
+   * route out of the platform. This mirrors the seller path exactly — the gross
+   * leaves the wallet, the payout row carries the net, one atomic conditional
+   * decrement guards against two simultaneous requests.
+   *
+   * THE TALLY
+   *
+   * What can be withdrawn here can never exceed what was deducted from goods.
+   * The chain holds end to end:
+   *
+   *   orderItem.affiliateCut  is clamped at order time to <= the line total
+   *   Orders.affiliateCut     is the exact sum of its items' cuts
+   *   AFFILIATE_CREDIT        credits that same figure, once (idempotency-guarded)
+   *   balance                 only ever moves by those credits and these debits
+   *
+   * so:  goods line total = affiliate commission + association cut + seller amount
+   *
+   * `assertAffiliateTally` re-checks this against the ledger before the money
+   * moves, so a bug anywhere upstream stops the payout rather than overpaying.
+   */
+  async withdrawAffiliateEarnings(
+    profileId: string,
+    amount: number,
+    bankAccount: BankAccount,
+    ipAddress: string,
+    userAgent: string,
+  ) {
+    if (amount <= 0)
+      throw new UserError('INVALID_AMOUNT', 'Amount must be greater than 0', 400)
+
+    const { net, platformFee, transferFee } = calculatePayout(amount)
+    if (net <= 0)
+      throw new UserError(
+        'AMOUNT_TOO_SMALL',
+        'Amount does not exceed the withdrawal fees',
+        400,
+      )
+
+    const wallet = await buyerWalletRepository.getOrCreate(profileId)
+
+    // Independent check against the transaction ledger. The balance column is a
+    // running total; this asks the source records whether that total is one this
+    // wallet is actually entitled to. Cheap, and it fails closed.
+    await this.assertAffiliateTally(wallet.id)
+
+    const payout = await prisma.$transaction(async (tx) => {
+      const updated = await tx.$executeRaw`
+        UPDATE "BuyerWallet"
+        SET balance = balance - ${amount}::double precision
+        WHERE id = ${wallet.id}::uuid
+          AND balance >= ${amount}::double precision
+      `
+      if (updated === 0)
+        throw new UserError(
+          'INSUFFICIENT_BALANCE',
+          'Insufficient wallet balance',
+          400,
+        )
+
+      const created = await tx.payout.create({
+        data: {
+          buyerWalletId: wallet.id,
+          amount,
+          amountGross: amount,
+          amountNet: net,
+          platformFee,
+          transferFee,
+          status: 'PENDING',
+          bank_account: { ...bankAccount, netAmount: net, platformFee, transferFee },
+        },
+      })
+      await tx.buyerTransaction.create({
+        data: {
+          walletId: wallet.id,
+          amount,
+          type: 'DEBIT',
+          description: `Affiliate withdrawal request #${created.id.slice(0, 8)}`,
+        },
+      })
+      return created
+    })
+
+    auditQueue.enqueue({
+      userId: profileId,
+      action: 'AFFILIATE_WITHDRAWAL',
+      resource: 'BuyerWallet',
+      resourceId: wallet.id,
+      reason: 'Affiliate withdrawal requested',
+      changes: { amount, net, platformFee, transferFee },
+      ipAddress,
+      userAgent,
+    })
+
+    return {
+      payout,
+      breakdown: { gross: amount, net, platformFee, transferFee },
+    }
+  },
+
+  /**
+   * Guard: a buyer wallet's balance must be explainable by its own ledger.
+   *
+   * credits (affiliate commission, refunds, other credits) minus debits must
+   * equal the stored balance. If they disagree, something upstream has credited
+   * money that was never deducted from an order — exactly the class of bug that
+   * made association cuts inflate platform liabilities — and no payout should be
+   * created until it is understood.
+   */
+  async assertAffiliateTally(buyerWalletId: string) {
+    const [wallet, credits, debits] = await Promise.all([
+      prisma.buyerWallet.findUniqueOrThrow({
+        where: { id: buyerWalletId },
+        select: { balance: true },
+      }),
+      prisma.buyerTransaction.aggregate({
+        where: {
+          walletId: buyerWalletId,
+          type: { in: ['AFFILIATE_CREDIT', 'CREDIT', 'REFUND'] },
+        },
+        _sum: { amount: true },
+      }),
+      prisma.buyerTransaction.aggregate({
+        where: { walletId: buyerWalletId, type: 'DEBIT' },
+        _sum: { amount: true },
+      }),
+    ])
+
+    const expected = (credits._sum.amount ?? 0) - (debits._sum.amount ?? 0)
+    // Tolerance of one minor unit absorbs float representation only — not a
+    // genuine discrepancy, which will be orders of magnitude larger.
+    if (Math.abs(expected - wallet.balance) > 1) {
+      logger.logError(
+        '[wallet] affiliate tally mismatch',
+        new Error('Buyer wallet balance does not match its transaction ledger'),
+        { buyerWalletId, balance: wallet.balance, expected },
+      )
+      throw new UserError(
+        'LEDGER_MISMATCH',
+        'This wallet is under review and cannot be withdrawn from right now.',
+        409,
+      )
+    }
+    return expected
   },
 
   async getWallet(sellerId: string) {
