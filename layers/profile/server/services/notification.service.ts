@@ -105,44 +105,69 @@ export const notificationService = {
         read: false,
       })
 
-      // Push to the user's open SSE stream if they are currently online
-      // This is fire-and-forget — if they're offline the notification is
-      // still in the DB and will appear next time they load the app
-      sseConnections.send(userId, 'notification', notification)
+      // Everything below is best-effort. The durable write has already
+      // committed, so a failure here must NOT fail the job — BullMQ would
+      // retry and create a duplicate notification.
+      try {
+        // Push to the user's open SSE stream if they are currently online
+        // This is fire-and-forget — if they're offline the notification is
+        // still in the DB and will appear next time they load the app
+        sseConnections.send(userId, 'notification', notification)
 
-      // WhatsApp delivery — only for curated business-critical types, and only
-      // for users with a verified phone. Best-effort: failures here must never
-      // block or roll back the in-app notification (which already succeeded).
-      if (WHATSAPP_ELIGIBLE_TYPES.has(type)) {
-        prisma.profile
-          .findUnique({
-            where: { id: userId },
-            select: { phone: true, phone_verified: true },
-          })
-          .then((profile) => {
-            if (profile?.phone && profile.phone_verified) {
-              whatsappQueue.enqueue({
-                to: profile.phone,
-                templateName: WHATSAPP_NOTIFICATION_TEMPLATE,
-                languageCode: 'en_US',
-                params: [message || `New ${type} notification`],
-                type: 'UTILITY',
-              })
-            }
-          })
-          .catch((e) =>
-            logger.warn('[notification.service] WhatsApp lookup failed', {
-              userId,
-              error: e instanceof Error ? e.message : String(e),
-            }),
-          )
+        // WhatsApp delivery — only for curated business-critical types, and only
+        // for users with a verified phone. Best-effort: failures here must never
+        // block or roll back the in-app notification (which already succeeded).
+        if (WHATSAPP_ELIGIBLE_TYPES.has(type)) {
+          prisma.profile
+            .findUnique({
+              where: { id: userId },
+              select: { phone: true, phone_verified: true },
+            })
+            .then((profile) => {
+              if (profile?.phone && profile.phone_verified) {
+                whatsappQueue.enqueue({
+                  to: profile.phone,
+                  templateName: WHATSAPP_NOTIFICATION_TEMPLATE,
+                  languageCode: 'en_US',
+                  params: [message || `New ${type} notification`],
+                  type: 'UTILITY',
+                })
+              }
+            })
+            .catch((e) =>
+              logger.warn('[notification.service] WhatsApp lookup failed', {
+                userId,
+                error: e instanceof Error ? e.message : String(e),
+              }),
+            )
+        }
+      } catch (sideEffect: unknown) {
+        logger.warn('[notification.service] post-write side effect failed', {
+          userId,
+          error:
+            sideEffect instanceof Error
+              ? sideEffect.message
+              : String(sideEffect),
+        })
       }
 
       return notification
     } catch (error: unknown) {
-      // Notifications are non-blocking/non-critical. Log error but don't crash.
+      // The durable write failed — THROW. Do not swallow.
+      //
+      // This used to `return null`. Callers reach this through
+      // notificationQueue, whose worker awaits the promise, so swallowing made
+      // the BullMQ job report SUCCESS: it was never retried, never
+      // dead-lettered, and never alerted on. The notification simply vanished
+      // while every queue metric said it had been delivered — the failure
+      // behind the missing order notifications.
+      //
+      // Throwing restores the machinery that already exists: 3 attempts with
+      // exponential backoff, then the failed set, then alertOnFinalFailure at
+      // 'critical'. Every direct caller already wraps this in .catch(), so this
+      // cannot produce an unhandled rejection.
       logger.error('Error creating notification:', error)
-      return null
+      throw error
     }
   },
 
