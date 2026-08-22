@@ -284,7 +284,15 @@ export default defineNuxtConfig({
   nitro: {
     plugins: ['plugins/monitoring', 'plugins/workers', 'plugins/dbMetrics'],
     compressPublicAssets: true,
-    minify: true,
+    // Minification collapses the whole server bundle onto ONE line, so any
+    // uncaught exception at boot makes Node print the entire program as the
+    // "source context" — megabytes of minified code with the actual message
+    // buried past whatever the log viewer will render. Undebuggable in practice.
+    //
+    // Set NITRO_MINIFY=false on a deployment to get a readable stack trace.
+    // Server code is never downloaded by a browser, so this costs bundle size
+    // and a little cold-start, nothing user-facing.
+    minify: process.env.NITRO_MINIFY !== 'false',
     experimental: {
       websocket: true,
       tasks: true,
