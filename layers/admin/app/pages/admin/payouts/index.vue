@@ -65,22 +65,31 @@
         </thead>
         <tbody class="divide-y divide-gray-50 dark:divide-neutral-800">
           <tr v-for="p in payouts" :key="p.id">
-            <!-- Store -->
+            <!-- Payee: a store for a seller payout, a person for an affiliate
+                 payout. Rendering only the store showed affiliate rows as
+                 "Unknown store" — an anonymous bank account an admin would be
+                 asked to send real money to. -->
             <td class="px-4 py-3">
               <div class="flex items-center gap-2.5">
                 <img
-                  :src="avatarSrc(p.wallet?.seller?.store_logo, p.wallet?.seller?.store_name)"
+                  :src="avatarSrc(payeeOf(p).avatar, payeeOf(p).name)"
                   class="h-7 w-7 shrink-0 rounded-full object-cover"
                   alt=""
                 />
                 <div class="min-w-0">
                   <p class="truncate font-medium text-gray-900 dark:text-neutral-100">
-                    {{ p.wallet?.seller?.store_name || 'Unknown store' }}
+                    {{ payeeOf(p).name }}
                   </p>
                   <p class="truncate text-[11px] text-gray-400 dark:text-neutral-500">
-                    @{{ p.wallet?.seller?.store_slug || '—' }}
+                    {{ payeeOf(p).handle }}
                   </p>
                 </div>
+                <span
+                  v-if="payeeOf(p).isAffiliate"
+                  class="shrink-0 rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-semibold text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300"
+                >
+                  Affiliate
+                </span>
               </div>
             </td>
             <!-- Amount: payable (net) is what the admin transfers; gross is what
@@ -156,9 +165,9 @@
       <div v-if="modal.payout" class="space-y-4">
         <div class="rounded-xl bg-gray-50 p-3 text-[13px] dark:bg-neutral-800/50">
           <div class="flex items-center justify-between">
-            <span class="text-gray-500 dark:text-neutral-400">Store</span>
+            <span class="text-gray-500 dark:text-neutral-400">Paying</span>
             <span class="font-medium text-gray-900 dark:text-neutral-100">
-              {{ modal.payout.wallet?.seller?.store_name }}
+              {{ payeeOf(modal.payout).name }}
             </span>
           </div>
           <div class="mt-1 flex items-center justify-between">
@@ -305,6 +314,36 @@ function feesOf(p: any): { net: number | null; platformFee: number | null; trans
     net: num(p?.amountNet) ?? num(ba.netAmount),
     platformFee: num(p?.platformFee) ?? num(ba.platformFee),
     transferFee: num(p?.transferFee) ?? num(ba.transferFee),
+  }
+}
+
+// Who is being paid.
+//
+// A payout belongs to exactly one wallet: a seller's store, or a buyer wallet
+// holding affiliate commission earned by someone with no store. The admin has
+// to be able to tell which — they are about to send money to the bank account
+// on this row, and "Unknown store" is not an identity.
+function payeeOf(p: any): {
+  name: string
+  handle: string
+  avatar: string | null
+  isAffiliate: boolean
+} {
+  const seller = p?.wallet?.seller
+  if (seller) {
+    return {
+      name: seller.store_name || 'Unnamed store',
+      handle: seller.store_slug ? `@${seller.store_slug}` : '—',
+      avatar: seller.store_logo ?? null,
+      isAffiliate: false,
+    }
+  }
+  const profile = p?.buyerWallet?.profile
+  return {
+    name: profile?.username || 'Affiliate',
+    handle: profile?.username ? `@${profile.username}` : 'affiliate commission',
+    avatar: profile?.avatar ?? null,
+    isAffiliate: true,
   }
 }
 

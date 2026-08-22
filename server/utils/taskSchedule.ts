@@ -56,6 +56,17 @@ export const SCHEDULED_TASKS: ScheduledTaskDef[] = [
     critical: false,
   },
   {
+    name: 'prepareSettlementBatch',
+    // Daily, early morning UTC — after the overnight release cron has run, so a
+    // batch sees the funds it released rather than missing them by hours.
+    cron: '30 4 * * *',
+    purpose:
+      'Prepares a settlement batch of payable wallets. Proposal only: writes no Payout rows and moves no money. Runs in shadow mode until SETTLEMENT_SHADOW=false.',
+    // Not critical while shadow: nothing depends on it running, and a missed run
+    // costs one day of observation. Flip this to true when settlement is armed.
+    critical: false,
+  },
+  {
     name: 'processQueues',
     cron: '* * * * *',
     purpose:
